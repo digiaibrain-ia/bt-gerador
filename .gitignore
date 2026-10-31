@@ -1,0 +1,32 @@
+# Dependências e saídas de build local
+node_modules/
+coverage/
+test-results/
+.playwright/
+dashboard/dist/
+
+# Segredos e credenciais (nunca no Git)
+.env
+.env.*
+!.env.example
+nodered/flows_cred.json
+nodered/settings.js
+nodered/.config.*.json
+*.pem
+*.key
+
+# Dados reais (ensaios, clientes, logs de campo) -> backup no Drive
+dados/
+ensaios/
+logs/
+*.log
+
+# TIA Portal: projeto binário fica fora do Git (backup no Drive)
+*.ap[0-9]*
+*.zap[0-9]*
+
+# Sistema e editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
