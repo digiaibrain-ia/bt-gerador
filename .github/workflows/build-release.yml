@@ -1,0 +1,27 @@
+# Gera o HTML único e publica no GitHub Release quando se cria uma tag medidor-vX.Y.Z.
+name: build-release
+on:
+  push:
+    tags: ['medidor-v*']
+  pull_request:
+    paths: ['dashboard/**']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Build (PR: só valida)
+        if: github.event_name == 'pull_request'
+        run: node dashboard/build/build.js
+      - name: Build (tag: confere versão)
+        if: github.event_name == 'push'
+        run: node dashboard/build/build.js --expect-version "${GITHUB_REF_NAME#medidor-v}"
+      - name: Publicar Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" dashboard/dist/*.html --title "$GITHUB_REF_NAME" --generate-notes
