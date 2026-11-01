@@ -149,6 +149,6 @@ repositórios" ou selecionar manualmente cada um).
   manualmente quando percebemos algo estranho (como aconteceu nesta reconciliação). Uma melhoria futura
   possível seria uma rotina de comparação, se fizer sentido para o projeto.
 - O README do repositório descreve uma estrutura de pastas (`nodered/flows/bt1`, `bt2`; `plc/bt1`, `bt2`,
-  `shared`; pasta `tests/`) que **ainda não existe** fisicamente no repositório — é a reorganização BT1/BT2
+  `btg`; pasta `tests/`) que **ainda não existe** fisicamente no repositório — é a reorganização BT1/BT2
   planejada para a "virada de chave" de numeração (ver `docs/PLANO_NUMERACAO_BLOCOS_PLC.md` e as notas de
   29/10 sobre a CPU 1515 única). Até lá, README e estrutura real ficam temporariamente desalinhados.

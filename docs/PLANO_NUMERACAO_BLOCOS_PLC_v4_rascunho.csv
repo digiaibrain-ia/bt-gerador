@@ -1,10 +1,10 @@
 faixa_inicio,faixa_fim,escopo,conteudo,status
-1,499,COMUM,"seletor global, safety (porta, disjuntores, exaustao), diagnostico",a_desenvolver
-500,549,COMUM,"DB de competencia - disponibilidade broadcast (4 bits liberado[1..4], vindo da 1200, lido por BT1 e BT2)",a_desenvolver
-550,569,COMUM,"DB de competencia - solicitacao por BT (BT1_solicita[1..4], BT2_solicita[1..4], BT1_cancela[1..4], BT2_cancela[1..4])",a_desenvolver
-570,589,COMUM,"DB de competencia - liberacao (automatica pela 1200 ao detectar fim de uso, OU forcada pelo operador via CB forcarLiberacao[1..4])",a_desenvolver
-590,599,COMUM,"DB de competencia - heartbeat/comOk 1515 <-> 1200",a_desenvolver
-600,999,COMUM,reserva,reserva
+1,499,BTG,"seletor global, safety (porta, disjuntores, exaustao), diagnostico",a_desenvolver
+500,549,BTG,"DB de competencia - disponibilidade broadcast (4 bits liberado[1..4], vindo da 1200, lido por BT1 e BT2)",a_desenvolver
+550,569,BTG,"DB de competencia - solicitacao por BT (BT1_solicita[1..4], BT2_solicita[1..4], BT1_cancela[1..4], BT2_cancela[1..4])",a_desenvolver
+570,589,BTG,"DB de competencia - liberacao (automatica pela 1200 ao detectar fim de uso, OU forcada pelo operador via CB forcarLiberacao[1..4])",a_desenvolver
+590,599,BTG,"DB de competencia - heartbeat/comOk 1515 <-> 1200",a_desenvolver
+600,999,BTG,reserva,reserva
 1000,1999,BT1,"mesmo gabarito do BT2 (cards do BT1, deslocamento fixo)",a_desenvolver
 2000,2099,BT2,"DSE (telemetria) - equivalente ao DB52 atual",confirmado_migrar
 2100,2199,BT2,"SNAP MANUAL / Registro do ensaio - equivalente ao DB53 atual",confirmado_migrar

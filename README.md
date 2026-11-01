@@ -16,7 +16,7 @@ Detalhes: [docs/arquitetura.md](docs/arquitetura.md).
 | `dashboard/src/` | Fonte do dashboard (HTML base + módulos) |
 | `dashboard/build/` | Script que monta o HTML único |
 | `nodered/flows/bt1`, `bt2` | Fluxos JSON exportados (sem credenciais) |
-| `plc/bt1`, `bt2`, `shared` | Blocos SCL e DB exportados em texto |
+| `plc/bt1`, `bt2`, `btg` | Blocos SCL e DB exportados em texto (`btg` = geral/comum aos dois BTs) |
 | `docs/` | Arquitetura, decisões (ADR), contratos HTTP |
 | `catalogo/` | CSV de modelos de gerador |
 | `tests/` | Testes e roteiros de validação |

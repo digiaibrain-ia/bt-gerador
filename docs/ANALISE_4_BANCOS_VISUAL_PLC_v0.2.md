@@ -140,4 +140,4 @@ mesma razão da v0.1 deste documento: baseado na premissa "somente leitura" já 
 2. Confirmação das faixas de numeração v4 (CSV) com o usuário.
 3. BT2 primeiro, BT1 depois — este documento e o CSV já assumem essa ordem, mas a migração física só
    ocorre quando o usuário pedir explicitamente para "adiantar tudo do banco 2".
-4. Reorganização de pastas do GitHub (`bt1/`, `bt2/`, `comum/`) junto com o item 3, não antes.
+4. Reorganização de pastas do GitHub (`bt1/`, `bt2/`, `btg/`) junto com o item 3, não antes.
