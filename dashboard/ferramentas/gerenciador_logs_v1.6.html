@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="pt-BR">
+<!-- gerenciador_logs_v1.6 · 29/10/2026 — AJUDA padrão (ajuda_v0.1.js). Resto igual à v1.5. -->
+<!-- gerenciador_logs_v1.5 · 29/10/2026 — DICA DE INTERFACE (dica_ui_v0.1.js): Alt+I liga/desliga a etiqueta com tipo, id e coordenadas do elemento; Alt+clique fixa. Resto igual à v1.4. -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="1.6">
+<title>Gerenciador de logs · BT2</title>
+<!--
+  gerenciador_logs_v1.6.html — [DEV.OBS] Gerenciador de logs (só desenvolvedor). Versão 1.4 · 29/10/2026.
+  v1.4 (29/10/2026): MENU ÚNICO "Exportar ▾" (JSON, Markdown, PDF) no lugar dos 3 botões soltos; abre por cima de qualquer janela. O conteúdo exportado não mudou.
+  gerenciador_logs_v1.3.html — versão 1.3 · 29/10/2026.
+  v1.3 (29/10/2026): ABAS POR PÁGINA. Além do medidor, o gerenciador agora observa as outras páginas do projeto — gráfico (grafico_ensaio v0.4) e mapa dos FBs (mapa_fbs v0.6) —
+  cada uma na sua aba (Medidor | Gráfico | Mapa dos FBs), com contagem e marca vermelha quando a aba tem falha. Filtros, Resumo e tabela passam a valer para a ABA ativa;
+  o JSON e o Markdown exportados levam TODAS as abas (campo app em cada evento, coluna "origem" no Markdown) — é o arquivo para mandar de volta ao Claude validar os HTML.
+  As páginas só começam a enviar depois que este gerenciador pede (nada trafega sem observador). Leigo: uma aba por tela do sistema, para a gente conferir cada uma separadamente.
+  gerenciador_logs_v1.html — [DEV.OBS] Gerenciador de logs (só desenvolvedor). Versão 1.2 · 24/10/2026.
+  v1.2 (24/10/2026): (1) divisória do painel de detalhe REDIMENSIONÁVEL NO TOQUE: área de toque de 40 px (pointer:coarse) e limite máximo calculado pela altura da JANELA
+  (antes dependia da altura da área da tabela, que no celular fica pequena e travava o painel em ~90 px); (2) Card/Tipo/Resultado/Origem explicados também sem mouse: botão "? Legenda"
+  abre um painel com todas as siglas (as que estão no log aparecem em destaque) e as listas suspensas passam a mostrar a descrição curta na própria opção; (3) todos os tooltips revisados
+  (HTML ≥ 1.9.76: tipo "teste", Card DEV.OPS, resultados, seletora/"Ligar banco"); (4) Operador secreto [DEV.OPS]: o Resumo e o Markdown ganham a seção com o que o robô de teste do
+  medidor encontrou (✔ ✖ ⚠ por fase); (5) em tela estreita o Resumo nasce recolhido (sobra espaço para a tabela e para a divisória).
+  v1.1 (23/10/2026, a partir do log bt2_logs_20261023_170541): (1) falhas/avisos que se repetem (≥3×) viram UMA linha "×N" (o log tinha 182× "GET /api/gerador → 404"), com
+  caixa "Diagnóstico" no painel de detalhe; (2) coluna Estado e textos com banco + posição ("BC56 1,2 · BC400 1") em vez do índice global base 0 que levou a confundir BC56 com BC400
+  (HTML ≥ 1.9.74 já manda assim; log antigo aparece marcado); (3) tooltips em tudo (legenda das siglas de Card/Tipo/Res., baseada em PADRAO_SIGLAS_CARDS.md; funciona também por toque);
+  (4) painel de detalhe com abrir/fechar e divisória arrastável (mouse, toque e teclado ↑ ↓), estado guardado no navegador; (5) olhos animados "em observação"; (6) Markdown exportado
+  com falhas repetidas agrupadas (arquivo menor para mandar de volta).
+  SÓ OBSERVA: nunca comanda chave, gerador, ensaio nem PLC. Lê:
+    1) GET {Servidor}/api/dev/logs?desde=<seq>  — buffer do flow nodered/dev-logs-api-v1.0.json (eventos que o medidor_gerador >= v1.9.73 publica);
+    2) canal local (BroadcastChannel 'bt2-dev-obs' e janela que abriu esta aba): funciona mesmo sem Node-RED, no mesmo navegador (Demo local);
+    3) (opcional) GET {Servidor}/api/logs/56 e /api/logs/400 — log da comunicação que os flows de chaves v2.3 já têm.
+  Guarda uma cópia no navegador (localStorage) para sobreviver a F5, e exporta JSON (máquina) e Markdown (leitura) para mandar de volta ao Claude.
+  Servidor: ?srv=http://ip:1880 (o botão do medidor já passa) → senão "medidor.srvUrl" salvo no navegador → senão a origem desta página.
+-->
+<style>
+  :root{--bg:#f4f4f1;--card:#fff;--txt:#141414;--mut:#5d5d58;--line:#d9d9d3;--ok:#1c7a43;--warn:#9a6a00;--bad:#b3261e;--blue:#1d5fa8;--band:#e9ecef;--head:#17324d}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.35 system-ui,Segoe UI,Arial,sans-serif;display:flex;flex-direction:column}
+  header.top{background:var(--head);color:#fff;padding:8px 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  header.top h1{margin:0;font-size:16px;font-weight:700;letter-spacing:.01em}
+  header.top h1 small{font-weight:400;opacity:.75;margin-left:6px;font-size:12px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:2px 9px;font-size:12px;white-space:nowrap}
+  .chip.ok{border-color:#7fd6a2}.chip.bad{border-color:#ff9a92;background:rgba(179,38,30,.35)}.chip.warn{border-color:#f1c75b}
+  .bar{padding:8px 14px;display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;background:var(--card);border-bottom:1px solid var(--line)}
+  .bar label{display:inline-flex;gap:5px;align-items:center;font-size:12px}
+  .bar input[type=text],.bar select{font:inherit;font-size:12px;padding:3px 6px;border:1px solid #b8bec6;border-radius:4px;background:#fff;color:var(--txt)}
+  #srv{width:250px}
+  button{font:inherit;font-size:12px;padding:4px 10px;border:1px solid #8b96a3;border-radius:5px;background:#fff;color:var(--txt);cursor:pointer}
+  button:hover{background:#eef2f6}
+  button.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+  button.pri:hover{background:#174f8d}
+  button.dng{border-color:var(--bad);color:var(--bad)}
+  button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #1d6fd0;outline-offset:1px}
+  .sep{width:1px;align-self:stretch;background:var(--line)}
+  details.res{background:var(--card);border-bottom:1px solid var(--line);padding:4px 14px}
+  details.res summary{cursor:pointer;font-weight:600;font-size:12px;padding:2px 0}
+  .rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px 18px;padding:6px 0 4px}
+  .rgrid h4{margin:0 0 3px;font-size:11px;text-transform:none;color:var(--mut);font-weight:700}
+  .rgrid div div{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
+  .rgrid .top5 div{display:block;font-size:12px}
+  .filt{padding:6px 14px;display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;background:var(--band);border-bottom:1px solid var(--line)}
+  /* v1.3: abas por página. Tamanho fixo por aba (REGRA_LAYOUT_ESTAVEL): a marca de falha é um pontinho absoluto, o contador não muda a largura mínima. */
+  .abas{display:flex;gap:2px;flex-wrap:wrap;padding:6px 14px 0;background:var(--band);border-bottom:1px solid var(--line)}
+  .abas button{position:relative;font:inherit;font-size:12.5px;font-weight:600;padding:6px 14px 6px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:#dfe3e7;color:var(--mut);cursor:pointer;min-width:132px}
+  .abas button[aria-selected=true]{background:#fff;color:var(--head);box-shadow:inset 0 3px 0 var(--blue)}
+  .abas button small{font-weight:400;font-variant-numeric:tabular-nums;margin-left:4px}
+  .abas button .bad{position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--bad)}
+  .abas button:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+  .filt label{display:inline-flex;gap:5px;align-items:center;font-size:12px;min-width:0;max-width:100%}
+  .filt input[type=text],.filt select{font:inherit;font-size:12px;padding:3px 6px;border:1px solid #b8bec6;border-radius:4px;background:#fff;min-width:0;max-width:100%} /* v1.2: opções com descrição ("sigla — texto") alargavam o select e a página ganhava rolagem horizontal no celular */
+  #q{width:200px}
+  .cont{flex:1;min-height:0;display:flex;flex-direction:column}
+  .twrap{flex:1;min-height:120px;overflow:auto;background:var(--card)}
+  table{border-collapse:collapse;width:100%;font-size:12px}
+  caption{text-align:left;padding:4px 14px;color:var(--mut);font-size:11.5px;position:sticky;left:0}
+  th{position:sticky;top:0;background:#dde3ea;text-align:left;padding:4px 7px;font-size:11.5px;border-bottom:1px solid #b8c0ca;z-index:1}
+  td{padding:3px 7px;border-bottom:1px solid #eceae6;vertical-align:top;font-variant-numeric:tabular-nums}
+  td.h{white-space:nowrap}td.d{white-space:nowrap;color:var(--mut)}
+  td.a{min-width:280px;word-break:break-word}
+  td.e{color:var(--mut);font-size:11.5px}
+  tr{cursor:pointer}
+  tr:hover td{background:#f3f6fa}
+  tr.sel td{background:#dcebfb}
+  tr.r-falha td{background:#fdeceb}tr.r-falha:hover td{background:#fbdcd9}
+  tr.r-aviso td{background:#fff5d6}tr.r-aviso:hover td{background:#fdecb0}
+  tr.t-nota td{background:#e4f2e8;font-weight:600}
+  tr.t-sistema td.a{color:var(--mut)}
+  .b{display:inline-block;padding:0 6px;border-radius:9px;font-size:11px;border:1px solid transparent;font-weight:600}
+  .b.ok{color:var(--ok);border-color:#9bd3b3;background:#e8f6ee}.b.info{color:var(--mut);border-color:#cfcfc8;background:#f1f1ee}
+  .b.aviso{color:var(--warn);border-color:#e3c46b;background:#fff5d6}.b.falha{color:var(--bad);border-color:#e9a39e;background:#fdeceb}
+  .o{font-size:10.5px;color:var(--mut)}
+  /* v1.1: painel de detalhe com abrir/fechar + divisória arrastável */
+  .split{flex:none;height:12px;background:var(--band);border-top:2px solid var(--head);cursor:row-resize;touch-action:none;display:flex;align-items:center;justify-content:center;user-select:none}
+  .split::after{content:'';width:48px;height:4px;border-radius:2px;background:#8b96a3;transition:background .12s}
+  .split:hover::after,.split.arrasta::after,.split:focus-visible::after{background:var(--blue)}
+  .cont.detfechado .split{display:none}
+  /* v1.2: no toque (celular/tablet) a divisória precisa de área de pegada de dedo */
+  @media (pointer:coarse){.split{height:40px}.split::after{width:88px;height:6px}}
+  /* v1.2: painel de legenda das siglas (visível também sem mouse) */
+  .legbtn{background:#fff;border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-weight:700;cursor:pointer}
+  .legbtn[aria-expanded=true]{background:var(--head);color:#fff;border-color:var(--head)}
+  .legpan{margin:0;padding:8px 12px;background:#fff;border-bottom:1px solid var(--line);font-size:12px;max-height:46vh;overflow:auto}
+  .legpan[hidden]{display:none}
+  .legpan h4{margin:6px 0 3px;font-size:12px}
+  .legpan dl{display:grid;grid-template-columns:max-content 1fr;gap:2px 10px;margin:0}
+  .legpan dt{font-weight:700;font-family:ui-monospace,Consolas,monospace}
+  .legpan dt.uso{color:var(--blue)}
+  .legpan dd{margin:0;color:var(--txt)}
+  /* v1.2: resumo do Operador secreto */
+  .opsl{font-size:12px;line-height:1.4}.opsl .f{color:var(--bad);font-weight:700}.opsl .a{color:var(--warn)}.opsl .k{color:var(--ok)}
+  .detbox{flex:none;height:var(--deth,190px);display:flex;flex-direction:column;min-height:0;background:#fff}
+  .detbox.fechado{height:auto;border-top:2px solid var(--head)}
+  .dethead{display:flex;align-items:center;gap:10px;padding:3px 14px;background:var(--band);border-bottom:1px solid var(--line);min-height:28px}
+  .detbox.fechado .dethead{border-bottom:0}
+  #detResumo{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mut);font-size:12px}
+  #det{flex:1;min-height:0;overflow:auto;background:#fff;padding:6px 14px}
+  .detbox.fechado #det{display:none}
+  #det pre{margin:0;font:11.5px/1.35 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+  #det .vazio{color:var(--mut)}
+  .dica{background:#fff5d6;border:1px solid #e3c46b;color:#5a4300;padding:5px 9px;border-radius:5px;margin:0 0 6px;font-size:12px}
+  .dica b{font-weight:700}
+  /* v1.1: linha agrupada (falha/aviso repetido) e coluna Estado legível */
+  .xn{display:inline-block;margin-left:6px;padding:0 7px;border-radius:9px;background:var(--head);color:#fff;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+  tr.grp td.a .o{margin-left:6px}
+  td.e{min-width:190px;word-break:break-word}
+  /* v1.1: tooltip próprio (também por toque) */
+  #tip{position:fixed;z-index:60;max-width:min(340px,calc(100vw - 16px));background:#0f2233;color:#f2f6fa;font-size:12px;line-height:1.35;padding:6px 9px;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.28);pointer-events:none;display:none;white-space:normal}
+  th[data-tip],.chip[data-tip],.xn,td[data-tip]{cursor:help}
+  /* v1.1: olhos "em observação" */
+  .olhos{flex:none;width:58px;height:28px;display:block}
+  .olhos svg{display:block;width:100%;height:100%;overflow:visible}
+  .olhos .esc{fill:#f4f6f8;stroke:#9fb4c8;stroke-width:1.2;transition:stroke .2s}
+  .olhos .pp{fill:#0d1b2a}.olhos .br{fill:#fff}
+  .olhos .pup{transition:transform .24s cubic-bezier(.25,.8,.3,1)}
+  .olhos .olho{transition:transform .09s ease-in}
+  .olhos.pisca .olho,.olhos.dorme .olho{transform:scaleY(.08)}
+  .olhos .p{transform-box:fill-box;transform-origin:center;transition:transform .15s}
+  .olhos.alerta .p{transform:scale(1.3)}
+  .olhos.alerta .esc{stroke:#ff9a92}
+  .aviso-bloq{background:#fff1c9;border:1px solid #c99a00;color:#5a4300;padding:6px 14px;font-size:12.5px;display:none}
+  @media (max-width:760px){#srv{width:100%}.chips{margin-left:0;min-width:0;max-width:100%}.chip{white-space:normal;word-break:break-word}.cont,.twrap{min-width:0}.twrap{min-height:300px}header.top .olhos{width:48px;height:23px}}
+  @media print{
+    body{display:block;height:auto;background:#fff}
+    .bar,.filt,.split,.detbox,#tip,.olhos,.aviso-bloq,header.top .chips{display:none!important}
+    header.top{background:#fff;color:#000;padding:0 0 6px}
+    .twrap{overflow:visible}th{position:static}
+    details.res{display:block;border:0}details.res>summary{display:none}
+    tr.sel td{background:inherit}
+    tr{break-inside:avoid}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="olhos" id="olhos" role="img" aria-label="Em observação" data-tip="Em observação: este gerenciador só lê e registra o que o medidor e o Node-RED publicam — nunca comanda chave, gerador, ensaio nem PLC. Olhos fechados = tela pausada; pupilas arregaladas = chegou uma falha ou aviso.">
+    <svg viewBox="0 0 64 30" aria-hidden="true" focusable="false">
+      <g class="olho" style="transform-origin:17px 15px"><ellipse class="esc" cx="17" cy="15" rx="13" ry="11"/><g class="pup"><g class="p"><circle class="pp" cx="17" cy="15" r="5.2"/><circle class="br" cx="15.2" cy="13" r="1.5"/></g></g></g>
+      <g class="olho" style="transform-origin:47px 15px"><ellipse class="esc" cx="47" cy="15" rx="13" ry="11"/><g class="pup"><g class="p"><circle class="pp" cx="47" cy="15" r="5.2"/><circle class="br" cx="45.2" cy="13" r="1.5"/></g></g></g>
+    </svg>
+  </div>
+  <h1>Gerenciador de logs <small>[DEV.OBS] · BT2 · v1.4 · só observa</small></h1>
+  <div class="chips" id="chips" role="status" aria-live="polite"></div>
+</header>
+
+<div id="tip" role="tooltip"></div>
+<div class="aviso-bloq" id="avBloq">O medidor está com os testes TRAVADOS: digite a senha do Demo no painel principal (botão Demo) e este gerenciador começa a receber os eventos.</div>
+
+<div class="bar">
+  <label for="srv" data-tip="Endereço do Node-RED (ex.: http://172.17.210.156:1880). O botão do medidor já abre esta tela com o mesmo endereço do campo Demo › Servidor.">Servidor</label><input type="text" id="srv" autocomplete="off" placeholder="http://ip:1880" data-tip="Endereço do Node-RED que guarda os eventos (GET /api/dev/logs). Em branco = só o canal local do navegador.">
+  <label for="iv" data-tip="De quanto em quanto tempo esta tela pergunta ao Node-RED por eventos novos.">a cada</label>
+  <select id="iv"><option value="500">0,5 s</option><option value="1000" selected>1 s</option><option value="2000">2 s</option><option value="5000">5 s</option></select>
+  <label data-tip="Junta aos eventos o log de comunicação que os flows de chaves guardam (POST ok/falha, tempo). Serve para comparar o que a tela mandou com o que o Node-RED recebeu. Precisa do flow de chaves v2.3."><input type="checkbox" id="usaChaves" checked> incluir log das chaves (<code>/api/logs/56</code>, <code>/400</code>)</label>
+  <span class="sep"></span>
+  <button type="button" id="bPausa" data-tip="Congela a tabela para você ler. Os eventos continuam chegando e sendo guardados; ao retomar, tudo aparece.">⏸ Pausar tela</button>
+  <button type="button" id="bNota" data-tip="Insere uma anotação sua na linha do tempo (ex.: 'iniciei o teste 3'). Aparece no JSON e no Markdown exportados.">➕ Anotação</button>
+  <span class="sep"></span>
+  <button type="button" id="bExp" class="pri" aria-haspopup="menu" data-tip="Um menu só: JSON (todas as abas, é o arquivo que vale mandar de volta ao Claude), Markdown (resumo para colar no chat) e PDF (só a tabela e o resumo).">⬇ Exportar ▾</button>
+  <button type="button" id="bLoad" data-tip="Traz para esta tela os eventos de um JSON exportado antes (não duplica o que já está aqui).">📂 Abrir JSON</button><input type="file" id="fLoad" accept=".json,application/json" style="display:none">
+  <span class="sep"></span>
+  <button type="button" id="bLimpa" data-tip="Limpa só esta tela (e a cópia guardada neste navegador). Não mexe no Node-RED nem no medidor.">Limpar tela</button>
+  <button type="button" id="bZera" class="dng" data-tip="Esvazia o buffer de eventos do Node-RED (POST /api/dev/logs/limpar) e limpa esta tela. Só apaga o LOG; não mexe em chaves, ensaio nem PLC.">Zerar no Node-RED</button>
+</div>
+
+<nav class="abas" id="abas" role="tablist" aria-label="Páginas observadas"></nav>
+
+<details class="res" id="resumo" open>
+  <summary data-tip="Contagens do que está na tela: por resultado, tipo e Card, período, versões do HTML, as falhas/avisos que mais se repetem e o que o Operador secreto encontrou.">Resumo do que foi observado</summary>
+  <div class="rgrid" id="rgrid"></div>
+</details>
+
+<div class="filt">
+  <label for="fCard" data-tip="Sigla do Card (bloco da tela) ou do popup onde o evento nasceu: modo = Modo · ens = Etapas do ensaio · gra = Gráfico · med = Leitura das grandezas · bco = Cargas / banco de carga (.HD Chaves, .SU Setup, .LOG Log) · reg = Registro do ensaio · app = geral · DEV.* = ferramentas do desenvolvedor (DEM Demo, CARDS, OBS Gerenciador, OPS Operador secreto). Toque em ? Legenda para a lista completa.">Card</label><select id="fCard"><option value="">todos</option></select>
+  <label for="fTipo" data-tip="Tipo de evento: transicao (um estado mudou) · clique · alteracao (um campo mudou) · api (chamada ao Node-RED) · flow (log guardado no Node-RED) · mensagem (aviso ao operador) · ocorrencia (código CHV/COM…) · erro (JavaScript) · sistema · nota (sua) · teste (Operador secreto).">Tipo</label><select id="fTipo"><option value="">todos</option></select>
+  <label for="fRes" data-tip="Resultado: ok = confirmado · info = só registro · aviso = fora do normal, mas a ação seguiu · falha = deu errado. Para caçar problema use “só avisos e falhas”.">Resultado</label>
+  <select id="fRes"><option value="">todos</option><option value="af">só avisos e falhas</option><option value="falha">só falhas</option><option value="aviso">só avisos</option><option value="ok">só ok</option><option value="info">só info</option></select>
+  <label for="q" data-tip="Procura o texto na ação, nos detalhes, no Card e no tipo (sem diferenciar maiúsculas).">Buscar</label><input type="text" id="q" placeholder="texto na ação ou nos detalhes" autocomplete="off">
+  <button type="button" class="legbtn" id="bLeg" aria-expanded="false" aria-controls="legPan" data-tip="Abre a legenda das siglas de Card, tipos de evento, resultados e origens — funciona também no celular (onde não existe “passar o mouse”). As siglas que aparecem no log atual ficam em destaque.">? Legenda</button>
+  <label data-tip="Mantém a tabela rolada até o evento mais novo. Rolar para cima ou clicar numa linha desliga; voltar ao fim liga de novo."><input type="checkbox" id="seguir" checked> seguir o último evento</label>
+  <label data-tip="Falhas e avisos IGUAIS que se repetem 3 vezes ou mais viram uma linha só, com ×N, hora da primeira e da última. Desmarque para ver todas as ocorrências."><input type="checkbox" id="agrupa" checked> agrupar falhas repetidas (≥3×)</label>
+</div>
+
+<div class="legpan" id="legPan" hidden></div>
+
+<div class="cont" id="cont">
+  <div class="twrap" id="twrap">
+    <table id="tab">
+      <caption id="cap"></caption>
+      <thead><tr><th data-tip="Hora em que o evento aconteceu (hh:mm:ss.mmm), segundo o relógio do navegador do medidor.">Hora</th><th data-tip="Tempo desde a linha anterior da tabela.">Δ</th><th data-tip="De onde veio a linha. HTML = evento do medidor (canal local ou Node-RED). flow = log de comunicação das chaves guardado no Node-RED. gerenciador = anotação ou aviso desta tela. arquivo = JSON aberto.">Origem</th><th data-tip="Sigla do Card ou popup (padrão PADRAO_SIGLAS_CARDS.md). Mouse: passe sobre a sigla da linha; toque: toque na sigla. A lista completa está em ? Legenda.">Card</th><th data-tip="Tipo de evento. Mouse: passe sobre o tipo da linha; toque: toque nele. A lista completa está em ? Legenda.">Tipo</th><th data-tip="O que aconteceu, em texto. Chaves aparecem com banco e posição dentro do banco (BC56 3 = 3ª chave do banco de 56 kW; em lista, “BC56 1,2” = chaves 1 e 2), a mesma posição que a API usa em /api/chaves/{banco}/…">Ação</th><th data-tip="Resultado: ok, info, aviso ou falha (significado em ? Legenda).">Res.</th><th data-tip="Foto do estado da tela no instante do evento: modo, gerador, simulação, ensaio, chaves ligadas (verde) e comandadas (laranja), chave do Setup e, por banco, seletora Auto/Manual e “Ligar banco” (só existem no Demo local por enquanto).">Estado no momento</th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+  <div class="split" id="split" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="Arraste para aumentar ou diminuir o painel de detalhe (setas para cima e para baixo também funcionam; Enter abre ou fecha)" data-tip="Arraste esta barra (mouse ou dedo) para cima ou para baixo para aumentar ou diminuir o painel de detalhe. Teclado: ↑ ↓ ajustam, Enter abre/fecha. Duplo clique/toque também abre/fecha."></div>
+  <section class="detbox" id="detbox" aria-label="Detalhe do evento">
+    <div class="dethead">
+      <button type="button" id="bDet" aria-expanded="true" aria-controls="det" data-tip="Abre ou fecha o painel com o evento completo. Fechado, esta barra mostra um resumo da linha selecionada.">▾ Detalhe do evento</button>
+      <span id="detResumo"></span>
+    </div>
+    <div id="det" aria-live="polite"><span class="vazio">Clique numa linha para ver o evento completo (estado antes/depois, detalhes, rota, tempo).</span></div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+const VER='1.4',LS_KEY='bt2.devobs.v1',LS_UI='bt2.devobs.ui',MAX_EV=8000,LIM_VIEW=1500,LIM_GRUPO=3;
+const $=id=>document.getElementById(id);
+const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const trunc=(s,n)=>{s=String(s==null?'':s);return s.length>n?s.slice(0,n-1)+'…':s};
+const pad=(n,l)=>String(n).padStart(l||2,'0');
+
+/* ---------- estado ---------- */
+const S={app:'medidor',ev:[],idx:new Map(),cursor:0,boot:null,srv:'',limpoEm:0,pausado:false,sujo:true,ordenar:false,
+  srvSt:{ok:null,ms:null,flow:null,erro:'',perdidos:0,n:0},
+  can:{st:'aguardando',n:0},
+  fl:{'56':{st:null,erro:''},'400':{st:null,erro:''}},
+  sel:null,view:[],notaN:0,sessaoG:'g'+Date.now().toString(36),ultSalva:0,pollT:null};
+
+/* ---------- preferências de tela (guardadas no navegador) ---------- */
+const UI={app:'medidor',detAberto:true,detH:((window.innerHeight<700||window.innerWidth<760)?130:190),agrupa:true};
+try{const u=JSON.parse(localStorage.getItem(LS_UI)||'null');if(u&&typeof u==='object'){
+  if(typeof u.detAberto==='boolean')UI.detAberto=u.detAberto;
+  if(isFinite(u.detH))UI.detH=Math.max(70,Math.min(1200,+u.detH));
+  if(typeof u.agrupa==='boolean')UI.agrupa=u.agrupa;
+  if(typeof u.app==='string'&&u.app)UI.app=u.app}}catch(e){}
+function salvaUI(){try{localStorage.setItem(LS_UI,JSON.stringify(UI))}catch(e){}}
+S.app=UI.app||'medidor';
+$('agrupa').checked=UI.agrupa;
+if(window.innerWidth<760)$('resumo').open=false; // celular: o resumo começa recolhido para sobrar tela para a tabela (toque em "Resumo" abre)
+
+/* ---------- olhos "em observação" (só enfeite de estado: nunca comanda nada) ---------- */
+const OL={el:$('olhos'),pups:Array.prototype.slice.call(document.querySelectorAll('#olhos .pup')),i:-1,lin:0,t:null,tb:null,ta:null,ate:0,
+  red:!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)};
+const COLS=[-6,-3.5,-1,1.5,4,6.5],LINS=[-3,-0.5,2,3.8]; // varredura em "linhas de tabela": esquerda→direita, desce uma linha, recomeça
+function olhaPara(dx,dy){
+  const k=Math.sqrt((dx/6.8)*(dx/6.8)+(dy/4.6)*(dy/4.6));if(k>1){dx/=k;dy/=k}
+  OL.pups.forEach(p=>{p.style.transform='translate('+dx.toFixed(2)+'px,'+dy.toFixed(2)+'px)'});
+}
+function pisca(){OL.el.classList.add('pisca');clearTimeout(OL.tb);OL.tb=setTimeout(()=>OL.el.classList.remove('pisca'),130)}
+function varre(){
+  clearTimeout(OL.t);
+  if(OL.red)return;
+  if(S.pausado){OL.el.classList.add('dorme');OL.el.setAttribute('aria-label','Tela pausada');olhaPara(0,3);OL.t=setTimeout(varre,700);return}
+  OL.el.classList.remove('dorme');OL.el.setAttribute('aria-label','Em observação');
+  if(Date.now()<OL.ate){OL.t=setTimeout(varre,120);return}      // acabou de chegar evento: segue olhando para onde a tabela cresce
+  OL.i++;if(OL.i>=COLS.length){OL.i=0;OL.lin=(OL.lin+1)%LINS.length}
+  olhaPara(COLS[OL.i],LINS[OL.lin]);
+  if(Math.random()<.14)pisca();
+  OL.t=setTimeout(varre,320+Math.random()*520);
+}
+function olhaEvento(res){ // evento novo: olhos correm para baixo/direita; falha/aviso arregala a pupila
+  if(OL.red||S.pausado)return;
+  OL.ate=Date.now()+450;olhaPara(6,4);
+  if(res==='falha'||res==='aviso'){OL.el.classList.add('alerta');clearTimeout(OL.ta);OL.ta=setTimeout(()=>OL.el.classList.remove('alerta'),res==='falha'?2200:1200)}
+}
+if(OL.red)olhaPara(0,2.5);else varre();
+
+/* ---------- servidor padrão ---------- */
+(function(){
+  let u='';
+  try{u=new URLSearchParams(location.search).get('srv')||''}catch(e){}
+  if(!u){try{u=localStorage.getItem('medidor.srvUrl')||''}catch(e){}}
+  if(!u&&(location.protocol==='http:'||location.protocol==='https:')&&location.origin&&location.origin!=='null')u=location.origin;
+  S.srv=u.trim().replace(/\/+$/,'');
+  $('srv').value=S.srv;
+})();
+
+/* ---------- eventos: normalizar, deduplicar, guardar ---------- */
+function chave(e){return e._k||(e._k=(e.sessao||'?')+'|'+(e.n==null?e.t+'|'+e.acao:e.n))}
+function norm(e,o){
+  if(!e||typeof e!=='object')return null;
+  const x={};for(const k of Object.keys(e)){if(k[0]!=='_')x[k]=e[k]}
+  x.t=x.t||new Date().toISOString();x.acao=String(x.acao==null?'':x.acao);x.res=x.res||'info';x.tipo=x.tipo||'evento';x.card=x.card||'app';
+  x._ts=Date.parse(x.t)||0;x._o=o||'html';
+  return x;
+}
+function add(lista,origem){
+  let novos=0;
+  for(const e0 of lista){
+    const e=norm(e0,origem);if(!e)continue;
+    if(S.limpoEm&&e._ts<=S.limpoEm)continue;            // "Limpar tela": não deixa o backlog antigo voltar
+    const k=chave(e),antigo=S.idx.get(k);
+    if(antigo){if(e.seq&&!antigo.seq){antigo.seq=e.seq;antigo.rx=e.rx}continue}
+    if(S.ev.length&&e._ts<S.ev[S.ev.length-1]._ts)S.ordenar=true;
+    S.ev.push(e);S.idx.set(k,e);novos++;
+  }
+  if(novos){
+    if(origem!=='arquivo'&&novos<=20&&S.ev.length)olhaEvento(S.ev[S.ev.length-1].res);
+    if(S.ev.length>MAX_EV){const sai=S.ev.splice(0,S.ev.length-MAX_EV);sai.forEach(x=>S.idx.delete(chave(x)))}
+    S.sujo=true;
+  }
+  return novos;
+}
+function ordena(){
+  if(!S.ordenar)return;S.ordenar=false;
+  S.ev.sort((a,b)=>(a._ts-b._ts)||(a.sessao<b.sessao?-1:a.sessao>b.sessao?1:0)||((a.n||0)-(b.n||0)));
+}
+function marca(card,tipo,acao,res,det){ // evento do próprio gerenciador (reinício do Node-RED, buracos, anotação)
+  add([{sessao:S.sessaoG,n:++S.notaN,t:new Date().toISOString(),card,tipo,acao,res,det:det||null,est:null,v:'gerenciador '+VER,modo:null}],'gerenciador');
+}
+
+/* ---------- persistência local (sobrevive a F5) ---------- */
+function salva(){
+  const agora=Date.now();if(agora-S.ultSalva<3000)return;S.ultSalva=agora;
+  const corpo=n=>JSON.stringify({v:1,cursor:S.cursor,boot:S.boot,limpoEm:S.limpoEm,ev:S.ev.slice(-n).map(e=>{const o={};for(const k of Object.keys(e)){if(k[0]!=='_')o[k]=e[k]}o._o=e._o;return o})});
+  try{localStorage.setItem(LS_KEY,corpo(3000))}catch(e){try{localStorage.setItem(LS_KEY,corpo(1200))}catch(e2){}}
+}
+(function(){
+  try{
+    const j=JSON.parse(localStorage.getItem(LS_KEY)||'null');
+    if(j&&j.v===1&&Array.isArray(j.ev)){
+      S.cursor=j.cursor||0;S.boot=j.boot||null;S.limpoEm=j.limpoEm||0;
+      j.ev.forEach(e=>{const o=e._o||'html';delete e._o;const x=norm(e,o);if(x&&!S.idx.has(chave(x))){S.ev.push(x);S.idx.set(chave(x),x)}});
+      S.ordenar=true;
+    }
+  }catch(e){}
+})();
+
+/* ---------- fonte 1: Node-RED (GET /api/dev/logs) ---------- */
+async function pollSrv(){
+  let proximo=+$('iv').value;
+  if(!S.srv){S.srvSt.ok=null;S.srvSt.erro='sem URL do Servidor';agenda(proximo);return}
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),4000),t0=performance.now();
+  try{
+    const r=await fetch(S.srv+'/api/dev/logs?desde='+S.cursor+'&limit=500',{cache:'no-store',signal:ctl.signal});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok||!j||j.ok!==true)throw new Error('HTTP '+r.status+(r.status===404?' — a rota /api/dev/logs não existe: importe nodered/dev-logs-api-v1.0.json no Node-RED':(j&&j.erro?': '+j.erro:'')));
+    S.srvSt.ms=Math.round(performance.now()-t0);S.srvSt.ok=true;S.srvSt.erro='';S.srvSt.flow=j.flow||null;
+    if(S.boot&&j.boot!==S.boot){ // Node-RED reiniciou: buffer e numeração zeraram
+      marca('app','sistema','Node-RED reiniciou: o buffer do servidor foi zerado (eventos antigos só existem na cópia deste navegador)','aviso',{bootAntes:S.boot,bootAgora:j.boot});
+      S.boot=j.boot;S.cursor=0;proximo=0;
+    }else{
+      S.boot=j.boot;
+      if(j.perdidos>0){S.srvSt.perdidos+=j.perdidos;marca('app','sistema',j.perdidos+' evento(s) perdido(s): o buffer do Node-RED encheu antes de esta tela ler','falha',{perdidos:j.perdidos})}
+      const ev=Array.isArray(j.eventos)?j.eventos:[];
+      if(ev.length){add(ev,'html');S.cursor=ev[ev.length-1].seq;S.srvSt.n+=ev.length}
+      if(j.truncado)proximo=0;
+    }
+  }catch(e){S.srvSt.ok=false;S.srvSt.erro=(e&&e.name==='AbortError')?'sem resposta em 4 s':String(e&&e.message||e)}
+  finally{clearTimeout(tm)}
+  agenda(proximo);
+}
+function agenda(ms){clearTimeout(S.pollT);S.pollT=setTimeout(pollSrv,ms)}
+
+/* ---------- fonte 2: canal local ---------- */
+let CAN=null;try{if('BroadcastChannel' in window)CAN=new BroadcastChannel('bt2-dev-obs')}catch(e){}
+function onMsg(d){
+  if(!d||typeof d!=='object')return;
+  if(d.k==='ev'&&d.e){add([d.e],'html');S.can.st='recebendo';S.can.n++}
+  else if(d.k==='backlog'&&Array.isArray(d.eventos)){add(d.eventos,'html');S.can.st='recebendo';S.can.n+=d.eventos.length}
+  else if(d.k==='bloqueado'){if(S.can.st!=='recebendo')S.can.st='bloqueado'}
+}
+if(CAN)CAN.onmessage=m=>onMsg(m.data);
+window.addEventListener('message',m=>{if(window.opener&&m.source===window.opener)onMsg(m.data)}); // só da janela que abriu esta aba
+function pede(){
+  try{if(CAN)CAN.postMessage({k:'pede'})}catch(e){}
+  try{if(window.opener&&!window.opener.closed)window.opener.postMessage({k:'pede'},'*')}catch(e){}
+}
+pede();setInterval(()=>{if(S.can.st!=='recebendo')pede()},3000);
+
+/* ---------- fonte 3: log das chaves (flows v2.3: GET /api/logs/56|400) ---------- */
+async function pollChaves(){
+  if(!S.srv||!$('usaChaves').checked)return;
+  for(const b of ['56','400']){
+    const f=S.fl[b];if(f.st==='404')continue;
+    const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),4000);
+    try{
+      const r=await fetch(S.srv+'/api/logs/'+b+'?limit=300',{cache:'no-store',signal:ctl.signal});
+      if(r.status===404){f.st='404';f.erro='rota inexistente (flow de chaves anterior à v2.3)';continue}
+      const j=await r.json().catch(()=>null);
+      if(!r.ok||!j||!Array.isArray(j.logs))throw new Error('HTTP '+r.status);
+      add(j.logs.slice().reverse().map(x=>({sessao:'flow:BC'+b,n:null,t:x.t,card:'bco',tipo:'flow',
+        acao:('BC'+b+' '+x.rota+' '+trunc(x.dado||'',140)).trim()+' → '+x.status,res:x.ok?'ok':'falha',
+        det:{banco:b,rota:x.rota,status:x.status,ms:x.ms,erro:x.erro||null,flow:j.flow||null},est:null,v:j.flow||null,modo:null})),'flow');
+      f.st='ok';f.erro='';
+    }catch(e){f.st='erro';f.erro=(e&&e.name==='AbortError')?'sem resposta em 4 s':String(e&&e.message||e)}
+    finally{clearTimeout(tm)}
+  }
+}
+setInterval(pollChaves,3000);
+
+/* ---------- v1.3: abas por página ---------- */
+const NOMES_APP={medidor:'Medidor',grafico:'Gráfico',mapa:'Mapa dos FBs'};
+const appDe=e=>e.app||'medidor';                                   // eventos antigos e do log das chaves não têm app: são do medidor
+const evApp=()=>S.ev.filter(e=>appDe(e)===S.app);
+const origemDe=e=>appDe(e)!=='medidor'?appDe(e):(e._o==='html'?'HTML':(e._o==='flow'?'flow':e._o));
+function desenhaAbas(){
+  const m={medidor:{n:0,f:0},grafico:{n:0,f:0},mapa:{n:0,f:0}};                  // as 3 abas sempre existem (mesmo vazias); páginas novas aparecem sozinhas
+  S.ev.forEach(e=>{const a=appDe(e);(m[a]=m[a]||{n:0,f:0}).n++;if(e.res==='falha')m[a].f++});
+  const sig=JSON.stringify(m)+S.app;const nav=$('abas');if(nav.dataset.sig===sig)return;nav.dataset.sig=sig;
+  nav.innerHTML=Object.keys(m).map(a=>'<button type="button" role="tab" data-app="'+esc(a)+'" aria-selected="'+(a===S.app)+'"'+tp('Mostra só o que a página "'+(NOMES_APP[a]||a)+'" registrou. Filtros, Resumo e tabela valem para esta aba; o JSON e o Markdown exportados levam todas.')+'>'+esc(NOMES_APP[a]||a)+'<small>'+m[a].n+'</small>'+(m[a].f?'<span class="bad" title="'+m[a].f+' falha(s) nesta aba"></span>':'')+'</button>').join('');
+}
+$('abas').addEventListener('click',ev=>{
+  const b=ev.target.closest('button[data-app]');if(!b||b.dataset.app===S.app)return;
+  S.app=b.dataset.app;UI.app=S.app;salvaUI();S.sel=null;S.sujo=true;
+  ['fCard','fTipo','fRes'].forEach(id=>{$(id).value='';delete $(id).dataset.sig});$('q').value='';   // as listas de Card/Tipo mudam de aba para aba
+  limpaDet();desenhaAbas();render();desenhaResumo();
+});
+
+/* ---------- filtros e tabela ---------- */
+function passa(e){
+  if(appDe(e)!==S.app)return false;                                // v1.3: só a aba ativa
+  const c=$('fCard').value,t=$('fTipo').value,r=$('fRes').value,q=$('q').value.trim().toLowerCase();
+  if(c&&e.card!==c)return false;
+  if(t&&e.tipo!==t)return false;
+  if(r==='af'){if(e.res!=='aviso'&&e.res!=='falha')return false}else if(r&&e.res!==r)return false;
+  if(q){const h=(e.acao+' '+(e.det?JSON.stringify(e.det):'')+' '+e.card+' '+e.tipo).toLowerCase();if(h.indexOf(q)<0)return false}
+  return true;
+}
+function hora(ts){const d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())+'.'+pad(d.getMilliseconds(),3)}
+function horaFull(ts){const d=new Date(ts);return pad(d.getDate())+'/'+pad(d.getMonth()+1)+' '+hora(ts)}
+function delta(ms){if(ms<1000)return '+'+ms+' ms';if(ms<60000)return '+'+(ms/1000).toFixed(1).replace('.',',')+' s';if(ms<3600000)return '+'+Math.floor(ms/60000)+' min '+Math.round((ms%60000)/1000)+' s';return '+'+(ms/3600000).toFixed(1).replace('.',',')+' h'}
+/* v1.1: legendas (siglas de Card = claude/PADRAO_SIGLAS_CARDS.md; tipos e resultados = o que o medidor v1.9.73+ grava) */
+const LG_CARD={'gra.jan':'Página do gráfico em janela própria (grafico_ensaio) — aba Gráfico',mapa:'Página do mapa dos FBs (mapa_fbs) — aba Mapa dos FBs',modo:'Card Modo — bolinhas PLC / Node-RED / HTML e fonte dos dados',ens:'Card Etapas do ensaio — cronômetro, etapas, salvar',gra:'Card Gráfico — carga × tempo',
+  med:'Card Leitura das grandezas — DSE: tensão, corrente, água, motor',bco:'Card Cargas · banco de carga — chaves do BC56 e do BC400',reg:'Card Registro do ensaio — DB53, preenchimento, etapas gravadas',
+  app:'Aplicação (geral) — sem card próprio; erro interno da tela',
+  'bco.HD':'Popup Chaves · Habilitar/Desabilitar (dlgChHD), dentro do card Cargas','bco.SU':'Popup Setup (kW real) (dlgChSetup), dentro do card Cargas','bco.LOG':'Popup Log da comunicação das chaves (dlgLogs), dentro do card Cargas',
+  'ens.DAD':'Popup Dados do ensaio (dlgDados), dentro do card Etapas do ensaio','modo.POP':'Popup ⚙ Modo — tipo, salvamento, gráfico e modo do Node-RED (dlgModo)',
+  'med.MOT':'Popup Falhas do motor (dlgMotor), dentro de Leitura das grandezas','med.FX':'Popup Faixas de alarme (dlgParam / dlgAgua), dentro de Leitura das grandezas',
+  'DEV.DEM':'Ferramenta do desenvolvedor: popup Demo e Servidor (dlgDemo)','DEV.CARDS':'Ferramenta do desenvolvedor: 🧪 Cards x flow (dlgDevCards)','DEV.OBS':'Ferramenta do desenvolvedor: este Gerenciador de logs',
+  'DEV.OPS':'Ferramenta do desenvolvedor: Operador secreto — robô de teste do medidor (HTML ≥ 1.9.76), aperta os botões como um operador e confere cada trava'};
+const LG_TIPO={transicao:'Mudança de estado detectada pela tela (modo, gerador, ensaio, chaves, popups, comunicação, seletora dos bancos)',clique:'Clique do operador/testador em botão, chave ou link',
+  alteracao:'Mudança de um campo (caixa de seleção, número, texto)',api:'Chamada HTTP da tela ao Node-RED (rota, status, tempo): todo POST e os GET que falharam',
+  flow:'Linha do log de comunicação das chaves que o próprio flow do Node-RED guarda (GET /api/logs/{banco})',mensagem:'Mensagem mostrada ao operador (aviso na tela, alert ou confirm)',
+  ocorrencia:'Ocorrência do módulo Mensagens e falhas (código tipo CHV-001, COM-002)',erro:'Erro de JavaScript ou promessa rejeitada na página do medidor',sistema:'Evento de sistema (página iniciada, Node-RED reiniciou, buraco no log)',nota:'Anotação sua, digitada neste gerenciador',teste:'Conferência do Operador secreto (HTML ≥ 1.9.76): cada passo que o robô de teste executou, com ok / aviso / falha'};
+const LG_RES={ok:'Confirmado: HTTP 2xx com ok:true, ou voltou ao normal',info:'Registro informativo (clique, mudança de estado)',aviso:'Algo fora do normal que não impediu a ação (mensagem ao operador, ocorrência de aviso)',falha:'Falhou: chamada recusada ou sem resposta, erro de JavaScript, ocorrência de falha ou conferência do Operador secreto que não bateu'};
+const LG_ORIG={grafico:'Evento publicado pela página do gráfico (grafico_ensaio)',mapa:'Evento publicado pela página do mapa dos FBs (mapa_fbs)',HTML:'Evento publicado pelo medidor (canal local ou Node-RED)',flow:'Linha do log de comunicação das chaves guardada no Node-RED',gerenciador:'Anotação ou aviso criado por esta tela',arquivo:'Veio de um JSON aberto neste gerenciador'};
+const tp=t=>t?' data-tip="'+esc(t)+'"':'';
+
+/* v1.1: diagnóstico curto para as falhas que aparecem no log (só afirma o que o status HTTP já diz) */
+function dica(e){
+  if(!e||e.res!=='falha'||e.tipo!=='api')return '';
+  const d=e.det||{},st=d.status,r=d.rota||'a rota';
+  if(st===404)return 'HTTP 404: o Node-RED respondeu, mas não existe nenhum nó "http in" publicado para '+r+'. Confira se o flow que atende essa rota foi importado e implantado (Deploy) e se o caminho começa com /api/ (claude/PADRAO_ROTAS_API_NODERED.md). Enquanto não existir, a tela repete a leitura e o log repete a falha.';
+  if(st===503)return 'HTTP 503: o flow está no ar, mas o PLC está sem leitura recente (rede, S7 ou PLC). Veja o texto de erro do flow no campo erroSrv.';
+  if(st===400||st===409)return 'HTTP '+st+': o flow recusou o comando por uma regra de validação (ex.: chave desabilitada, chave selecionada no Setup, gerador ligado). O motivo está em erroSrv/corpo.';
+  if(st>=500)return 'HTTP '+st+': erro dentro do Node-RED/flow. Veja o Debug do Node-RED no mesmo horário.';
+  if(!st)return 'Sem resposta HTTP: Node-RED fora do ar, rede/endereço errado, bloqueio do navegador (CORS, http × https) ou tempo esgotado. Confira o campo Servidor do medidor.';
+  return '';
+}
+const gkey=e=>e.card+'|'+e.tipo+'|'+e.res+'|'+e.acao;
+/* v1.1: falha/aviso IGUAL repetido ≥ LIM_GRUPO vira uma linha na posição da 1ª ocorrência. Devolve linhas {e,g}; g = null ou {evs,real,primeira,ultima}.
+   "real" soma as ocorrências que o medidor omitiu de propósito (det.omitidas: no máx. 1 falha de GET a cada 10 s por rota). */
+function agrupar(lista,forcar){
+  if(!forcar&&!$('agrupa').checked)return lista.map(e=>({e,g:null}));
+  const m=new Map();
+  lista.forEach(e=>{if(e.res!=='falha'&&e.res!=='aviso')return;const k=gkey(e);let g=m.get(k);if(!g){g={evs:[]};m.set(k,g)}g.evs.push(e)});
+  const lin=[];
+  lista.forEach(e=>{
+    if(e.res==='falha'||e.res==='aviso'){
+      const g=m.get(gkey(e));
+      if(g.evs.length>=LIM_GRUPO){
+        if(g.evs[0]!==e)return;
+        g.real=g.evs.reduce((a,x)=>a+1+((x.det&&+x.det.omitidas)||0),0);g.primeira=g.evs[0]._ts;g.ultima=g.evs[g.evs.length-1]._ts;
+        lin.push({e,g});return;
+      }
+    }
+    lin.push({e,g:null});
+  });
+  return lin;
+}
+function estRes(e){
+  const s=e.est;if(!s)return '';
+  const tem=Array.isArray(s.ch)&&s.ch.length;
+  // HTML ≥ 1.9.74 manda o texto com banco + posição; o log antigo só tinha o índice global base 0 (por isso BC56 e BC400 se confundiam)
+  const lig=s.chL!=null?(s.chL!=='nenhuma'?'ligadas '+s.chL:''):(tem?'ch['+s.ch.join(',')+'] (índice global base 0, HTML ≤ 1.9.73)':'');
+  const cmd=s.cmdL!=null&&s.cmdL!=='nenhuma'?'comandadas '+s.cmdL:'';
+  const setup=s.setupL!=null?'setup '+s.setupL:(s.setup!=null?'setup #'+s.setup+' (índice global)':'');
+  const bk=['56','400'].map(b=>{const se=s['sel'+b],li=s['lig'+b];return (se!=null||li)?'BC'+b+(se==null?'':se==='auto'?' Auto':' Manual')+(li?' ligado':''):''}).filter(Boolean).join(' · ');
+  return [s.modo,s.gen?'gen '+s.gen:'',s.sim||'',s.ens?'ens '+s.ens+(s.et!=null?' e'+s.et:''):'',lig,cmd,bk,setup].filter(Boolean).join(' · ');
+}
+const curto=t=>String(t||'').replace(/^(Card|Popup|Ferramenta do desenvolvedor:)\s*/,'').split(' — ')[0].split(' (')[0].slice(0,46); // v1.2: descrição curta para a opção da lista (o celular não mostra title)
+function atualizaSelects(){
+  const cont=(campo)=>{const m={};evApp().forEach(e=>{m[e[campo]]=(m[e[campo]]||0)+1});return m};
+  const fill=(id,campo)=>{
+    const sel=$(id),at=sel.value,m=cont(campo),ks=Object.keys(m).sort();
+    const sig=ks.join('|');if(sel.dataset.sig===sig)return;sel.dataset.sig=sig;
+    const lg=id==='fCard'?LG_CARD:(id==='fTipo'?LG_TIPO:{});
+    sel.innerHTML='<option value="">todos</option>'+ks.map(k=>'<option value="'+esc(k)+'"'+(lg[k]?' title="'+esc(lg[k])+'"':'')+'>'+esc(k)+(lg[k]?' — '+esc(curto(lg[k])):'')+' ('+m[k]+')</option>').join('');
+    sel.value=ks.indexOf(at)>=0?at:'';
+  };
+  fill('fCard','card');fill('fTipo','tipo');
+}
+function render(){
+  ordena();desenhaAbas();atualizaSelects();
+  const todos=S.ev.filter(passa),lin=agrupar(todos),vis=lin.slice(-LIM_VIEW);S.view=vis;
+  const wrap=$('twrap');
+  let ant=0,h='';
+  vis.forEach((L,i)=>{
+    const e=L.e,g=L.g;
+    const d=i?delta(Math.max(0,e._ts-ant)):'';ant=e._ts;
+    const o=origemDe(e);
+    const xn=g?'<span class="xn"'+tp('Esta falha/aviso se repetiu '+g.real+' vez(es) entre '+hora(g.primeira)+' e '+hora(g.ultima)+' ('+g.evs.length+' linha(s) no log; o medidor limita a 1 falha de leitura a cada 10 s por rota e conta as omitidas). Clique para ver a primeira e a última. Desmarque "agrupar falhas repetidas" para ver todas.')+'>×'+g.real+'</span> <span class="o">até '+hora(g.ultima)+'</span>':'';
+    h+='<tr data-i="'+i+'" class="r-'+esc(e.res)+' t-'+esc(e.tipo)+(g?' grp':'')+(S.sel===chave(e)?' sel':'')+'"><td class="h">'+hora(e._ts)+'</td><td class="d">'+d+'</td><td'+tp(LG_ORIG[o])+'><span class="o">'+esc(o)+'</span></td><td'+tp(LG_CARD[e.card])+'>'+esc(e.card)+'</td><td'+tp(LG_TIPO[e.tipo])+'>'+esc(e.tipo)+'</td><td class="a">'+esc(e.acao)+xn+'</td><td'+tp(LG_RES[e.res])+'><span class="b '+esc(e.res)+'">'+esc(e.res)+'</span></td><td class="e">'+esc(estRes(e))+'</td></tr>';
+  });
+  // o balão aberto numa célula da tabela não some quando a tabela é redesenhada: reancora na mesma linha/coluna
+  let ancora=null;try{if(tipEl&&$('tb').contains(tipEl)){const tr=tipEl.closest('tr'),td=tipEl.closest('td');ancora=[Array.prototype.indexOf.call($('tb').children,tr),Array.prototype.indexOf.call(tr.children,td)]}}catch(x){}
+  $('tb').innerHTML=h;
+  if(ancora){const n=$('tb').children[ancora[0]]&&$('tb').children[ancora[0]].children[ancora[1]];if(n&&n.getAttribute('data-tip'))tipMostra(n);else tipEsconde()}
+  const nAgr=lin.length<todos.length?' · '+(todos.length-lin.length)+' repetido(s) agrupado(s)':'';
+  $('cap').textContent=todos.length+' evento(s) no filtro de '+evApp().length+' da aba '+(NOMES_APP[S.app]||S.app)+nAgr+(lin.length>vis.length?' · mostrando as últimas '+vis.length+' linhas (use os filtros ou baixe o arquivo para ver todas)':'');
+  tipVerifica();
+  if($('seguir').checked){S.progTs=Date.now();wrap.scrollTop=wrap.scrollHeight}
+  S.sujo=false;
+}
+function mostraDet(L){
+  const e=L.e,g=L.g;let o,dc=dica(e);
+  if(g){
+    const ult=g.evs[g.evs.length-1],n=g.evs.length,iv=n>1?Math.round((g.ultima-g.primeira)/(n-1)):0;
+    o={grupo:{ocorrenciasReais:g.real,linhasNoLog:n,primeira:new Date(g.primeira).toISOString(),ultima:new Date(g.ultima).toISOString(),duracao:delta(g.ultima-g.primeira).slice(1),intervaloMedioEntreLinhas:iv?delta(iv).slice(1):null},
+      primeira:limpoEv(e),ultima:n>1?limpoEv(ult):'(igual à primeira)'};
+  }else o=limpoEv(e);
+  $('det').innerHTML=(dc?'<div class="dica"><b>Diagnóstico:</b> '+esc(dc)+'</div>':'')+'<pre>'+esc(JSON.stringify(o,null,2))+'</pre>';
+  $('detResumo').textContent=hora(e._ts)+' · '+e.card+' · '+trunc(e.acao,110)+(g?'  (×'+g.real+')':'');
+}
+$('tb').addEventListener('click',ev=>{
+  const tr=ev.target.closest('tr[data-i]');if(!tr)return;
+  const L=S.view[+tr.dataset.i];if(!L)return;
+  S.sel=chave(L.e);
+  mostraDet(L);
+  document.querySelectorAll('#tb tr.sel').forEach(x=>x.classList.remove('sel'));tr.classList.add('sel');
+  $('seguir').checked=false;
+});
+$('agrupa').addEventListener('change',()=>{UI.agrupa=$('agrupa').checked;salvaUI();S.sujo=true;render()});
+['fCard','fTipo','fRes'].forEach(id=>$(id).addEventListener('change',()=>{S.sujo=true;render()}));
+$('q').addEventListener('input',()=>{S.sujo=true});
+$('seguir').addEventListener('change',()=>{if($('seguir').checked){S.sel=null;S.sujo=true}});
+$('twrap').addEventListener('scroll',()=>{ // o operador rolou para cima = para de seguir; voltou ao fim = volta a seguir
+  if(Date.now()-(S.progTs||0)<250)return;
+  const w=$('twrap'),fim=w.scrollHeight-w.scrollTop-w.clientHeight<30;
+  if($('seguir').checked!==fim){$('seguir').checked=fim;if(fim)S.sujo=true}
+});
+
+/* ---------- resumo ---------- */
+function resumo(lista){
+  const c=(f)=>{const m={};lista.forEach(e=>{const k=f(e);if(k!=null&&k!=='')m[k]=(m[k]||0)+1});return m};
+  const por=c(e=>e.res),tipo=c(e=>e.tipo),card=c(e=>e.card),modos=c(e=>e.est&&e.est.modo||e.modo),vers=c(e=>e.v),sess=c(e=>e.sessao);
+  const ts=lista.map(e=>e._ts).filter(Boolean),ini=ts.length?Math.min.apply(null,ts):0,fim=ts.length?Math.max.apply(null,ts):0;
+  // v1.1: conta as ocorrências REAIS (soma det.omitidas: o medidor registra no máx. 1 falha de GET a cada 10 s por rota) e não funde códigos HTTP diferentes (404 × 503)
+  const g={};lista.filter(e=>e.res==='falha'||e.res==='aviso').forEach(e=>{const k=e.res+' · '+e.card+' · '+e.acao.slice(0,90);g[k]=(g[k]||0)+1+((e.det&&+e.det.omitidas)||0)});
+  const top=Object.keys(g).sort((a,b)=>g[b]-g[a]).slice(0,8).map(k=>({k,n:g[k]}));
+  // v1.2: Operador secreto = eventos card DEV.OPS tipo "teste" (menos os marcadores de início/fim da execução)
+  const opsEv=lista.filter(e=>e.card==='DEV.OPS'&&e.tipo==='teste'&&!/^Operador secreto: (início|fim)/.test(e.acao));
+  const ops={ok:opsEv.filter(e=>e.res==='ok').length,falha:opsEv.filter(e=>e.res==='falha').length,aviso:opsEv.filter(e=>e.res==='aviso'||e.res==='info').length,
+    itens:opsEv.filter(e=>e.res!=='ok'),execucoes:lista.filter(e=>e.card==='DEV.OPS'&&/^Operador secreto: início/.test(e.acao)).length};
+  return{ops,total:lista.length,porResultado:por,porTipo:tipo,porCard:card,modos:Object.keys(modos),versoes:Object.keys(vers),sessoes:Object.keys(sess).length,
+    inicio:ini?new Date(ini).toISOString():null,fim:fim?new Date(fim).toISOString():null,duracaoMs:fim-ini,topAvisosFalhas:top};
+}
+function kv(m){const ks=Object.keys(m).sort((a,b)=>m[b]-m[a]);return ks.length?ks.map(k=>'<div><span>'+esc(k)+'</span><b>'+m[k]+'</b></div>').join(''):'<div><span>—</span></div>'}
+function desenhaResumo(){
+  const r=resumo(evApp());
+  $('rgrid').innerHTML=
+    '<div><h4>Eventos</h4><div><span>total</span><b>'+r.total+'</b></div><div><span>sessões do HTML</span><b>'+r.sessoes+'</b></div>'+
+      '<div><span>período</span><b>'+(r.inicio?hora(Date.parse(r.inicio))+' → '+hora(Date.parse(r.fim)):'—')+'</b></div>'+
+      '<div><span>duração</span><b>'+(r.inicio?delta(r.duracaoMs).slice(1):'—')+'</b></div></div>'+
+    '<div><h4>Por resultado</h4>'+kv(r.porResultado)+'</div>'+
+    '<div><h4>Por tipo</h4>'+kv(r.porTipo)+'</div>'+
+    '<div><h4>Por Card</h4>'+kv(r.porCard)+'</div>'+
+    '<div><h4>Modos / versões do HTML</h4><div><span>modos</span><b>'+esc(r.modos.join(', ')||'—')+'</b></div><div><span>versões</span><b>'+esc(r.versoes.join(', ')||'—')+'</b></div></div>'+
+    (r.ops.ok+r.ops.falha+r.ops.aviso?'<div class="top5 opsl"><h4>Operador secreto ('+r.ops.execucoes+' execução(ões))</h4><div><span class="k">✔ '+r.ops.ok+'</span> · <span class="'+(r.ops.falha?'f':'')+'">✖ '+r.ops.falha+'</span> · <span class="a">⚠ '+r.ops.aviso+'</span></div>'
+      +r.ops.itens.slice(0,8).map(e=>'<div><span class="'+(e.res==='falha'?'f':'a')+'">'+(e.res==='falha'?'✖':'⚠')+'</span> '+esc(e.acao)+(e.det&&e.det.det?' <small>— '+esc(String(e.det.det).slice(0,90))+'</small>':'')+'</div>').join('')
+      +(r.ops.itens.length>8?'<div>… e mais '+(r.ops.itens.length-8)+' (filtre Card = DEV.OPS)</div>':'')+'</div>':'')+
+    '<div class="top5"><h4>Avisos e falhas mais repetidos</h4>'+(r.topAvisosFalhas.length?r.topAvisosFalhas.map(x=>'<div>'+x.n+'× '+esc(x.k)+'</div>').join(''):'<div>nenhum</div>')+'</div>';
+}
+
+/* ---------- chips de estado ---------- */
+function chips(){
+  const a=[];
+  const s=S.srvSt;
+  const tN='Leitura do buffer de eventos no Node-RED (GET /api/dev/logs): tempo de resposta, nome do flow e quantos eventos já foram lidos.';
+  if(!S.srv)a.push(['warn','Node-RED: sem URL (só canal local)','Sem endereço do Node-RED no campo Servidor: só chegam eventos pelo canal local (medidor aberto neste mesmo navegador).']);
+  else if(s.ok===true)a.push(['ok','Node-RED ● '+s.ms+' ms · '+esc(s.flow||'?')+' · '+s.n+' lidos',tN]);
+  else if(s.ok===false)a.push(['bad','Node-RED ✕ '+esc(trunc(s.erro,90)),'Falha ao ler o Node-RED: '+s.erro+'. Os eventos do canal local continuam chegando.']);
+  else a.push(['warn','Node-RED ○ conectando…',tN]);
+  const cs={recebendo:['ok','Canal local ● recebendo ('+S.can.n+')','Canal do navegador (BroadcastChannel): recebe os eventos do medidor aberto neste mesmo navegador. Funciona no Demo local, sem Node-RED.'],
+    aguardando:['warn','Canal local ○ aguardando o medidor','Ainda não chegou nada do medidor por este navegador. Abra o medidor (v1.9.73 ou mais novo) neste mesmo navegador e digite a senha do Demo.'],
+    bloqueado:['warn','Canal local ⚠ medidor travado (senha do Demo)','O medidor está com os testes travados: digite a senha do Demo no painel principal para ele começar a enviar.']}[S.can.st];
+  a.push(cs);
+  if($('usaChaves').checked&&S.srv){
+    const t=['56','400'].map(b=>{const f=S.fl[b];return 'BC'+b+' '+(f.st==='ok'?'●':f.st==='404'?'sem rota':f.st==='erro'?'✕':'○')});
+    a.push([['56','400'].every(b=>S.fl[b].st==='ok')?'ok':'warn','Log chaves: '+t.join(' · '),'Log de comunicação que os flows de chaves guardam (GET /api/logs/56 e /400). "sem rota" = flow de chaves anterior à v2.3.']);
+  }
+  if(s.perdidos)a.push(['bad','Perdidos no servidor: '+s.perdidos,'Eventos que o buffer do Node-RED descartou antes de esta tela ler (buffer cheio). Use um intervalo de leitura menor.']);
+  a.push(['','Eventos: '+S.ev.length,'Quantidade de eventos guardados nesta tela (limite '+MAX_EV+'; os mais antigos saem primeiro).']);
+  $('chips').innerHTML=a.map(x=>'<span class="chip '+x[0]+'"'+tp(x[2])+'>'+x[1]+'</span>').join('');
+  $('avBloq').style.display=(S.can.st==='bloqueado'&&!(S.srvSt.ok===true&&S.srvSt.n>0))?'block':'none';
+}
+
+/* ---------- exportar ---------- */
+function stamp(){const d=new Date();return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())}
+function baixa(nome,tipo,texto){
+  const url=URL.createObjectURL(new Blob([texto],{type:tipo})),a=document.createElement('a');
+  a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+function limpoEv(e){const o={};for(const k of Object.keys(e)){if(k[0]!=='_')o[k]=e[k]}o.origem=e._o;return o}
+function exportaJson(){
+  ordena();
+  const doc={formato:'bt2-dev-obs/1',gerador:'gerenciador_logs_v'+VER,geradoEm:new Date().toISOString(),servidor:S.srv||null,bootNodeRed:S.boot,
+    resumo:(()=>{const rs=resumo(S.ev);rs.ops={ok:rs.ops.ok,falha:rs.ops.falha,aviso:rs.ops.aviso,execucoes:rs.ops.execucoes};rs.porPagina=Object.fromEntries(Object.keys(NOMES_APP).concat(S.ev.map(appDe)).filter((a,i,v)=>v.indexOf(a)===i).map(a=>[a,S.ev.filter(e=>appDe(e)===a).length]));return rs})(),eventos:S.ev.map(limpoEv)}; // v1.2: o resumo do JSON leva só as contagens do Operador secreto (os eventos já estão na lista)
+  baixa('bt2_logs_'+stamp()+'.json','application/json',JSON.stringify(doc,null,1));
+}
+const cel=t=>String(t==null?'':t).replace(/\|/g,'\\|').replace(/\r?\n/g,' ');
+function exportaMd(){
+  ordena();const r=resumo(S.ev),L=[];
+  L.push('# Log de observação — BT2 [DEV.OBS]','');
+  L.push('- Gerado em: '+horaFull(Date.now())+' (gerenciador_logs_v'+VER+')');
+  L.push('- Servidor: '+(S.srv||'—')+(S.boot?' · boot do flow: '+S.boot:''));
+  L.push('- Período: '+(r.inicio?horaFull(Date.parse(r.inicio))+' → '+horaFull(Date.parse(r.fim))+' ('+delta(r.duracaoMs).slice(1)+')':'—'));
+  L.push('- Eventos: '+r.total+' · sessões do HTML: '+r.sessoes+' · versões: '+(r.versoes.join(', ')||'—')+' · modos: '+(r.modos.join(', ')||'—'));
+  L.push('- Por página (aba): '+Object.keys(NOMES_APP).concat(S.ev.map(appDe)).filter((a,i,v)=>v.indexOf(a)===i).map(a=>(NOMES_APP[a]||a)+' '+S.ev.filter(e=>appDe(e)===a).length).join(' · '),'');
+  L.push('## Resumo','');
+  const tab=(tit,m)=>{L.push('**'+tit+'**','','| item | qtd |','|---|---|');Object.keys(m).sort((a,b)=>m[b]-m[a]).forEach(k=>L.push('| '+cel(k)+' | '+m[k]+' |'));L.push('')};
+  tab('Por resultado',r.porResultado);tab('Por tipo',r.porTipo);tab('Por Card',r.porCard);
+  const af=S.ev.filter(e=>e.res==='falha'||e.res==='aviso'),afl=agrupar(af,true);
+  L.push('## Falhas e avisos ('+af.length+' evento(s) em '+afl.length+' linha(s); iguais repetidos '+LIM_GRUPO+'× ou mais aparecem agrupados — o JSON tem todos)','');
+  if(af.length){L.push('| hora | res. | card | ação | × | até | detalhe / diagnóstico |','|---|---|---|---|---|---|---|');afl.forEach(x=>{const e=x.e;L.push('| '+hora(e._ts)+' | '+e.res+' | '+cel(e.card)+' | '+cel(e.acao)+' | '+(x.g?x.g.real:'')+' | '+(x.g?hora(x.g.ultima):'')+' | '+cel(trunc((dica(e)?dica(e)+' ':'')+(e.det?JSON.stringify(e.det):''),260))+' |')})}else L.push('Nenhuma.');
+  if(r.ops.ok+r.ops.falha+r.ops.aviso){
+    L.push('','## Operador secreto ['+r.ops.execucoes+' execução(ões)]','','- Conferências: **'+r.ops.ok+' ✔ ok · '+r.ops.falha+' ✖ falha · '+r.ops.aviso+' ⚠ aviso**','');
+    if(r.ops.itens.length){L.push('| hora | res. | conferência | detalhe |','|---|---|---|---|');r.ops.itens.forEach(e=>L.push('| '+hora(e._ts)+' | '+e.res+' | '+cel(e.acao)+' | '+cel(trunc(e.det&&e.det.det?e.det.det:'',200))+' |'))}
+    else L.push('Nenhuma falha ou aviso.');
+  }
+  L.push('','## Anotações','');
+  const nt=S.ev.filter(e=>e.tipo==='nota');
+  if(nt.length)nt.forEach(e=>L.push('- '+hora(e._ts)+' — '+cel(e.acao)));else L.push('Nenhuma.');
+  const tl=agrupar(S.ev,true);
+  L.push('','## Linha do tempo ('+S.ev.length+' evento(s) em '+tl.length+' linha(s))','','| hora | Δ | origem | card | tipo | ação | res. | estado |','|---|---|---|---|---|---|---|---|');
+  let ant=0;tl.forEach((x,i)=>{const e=x.e;L.push('| '+hora(e._ts)+' | '+(i?delta(Math.max(0,e._ts-ant)):'')+' | '+origemDe(e)+' | '+cel(e.card)+' | '+cel(e.tipo)+' | '+cel(e.acao)+(x.g?' **×'+x.g.real+' até '+hora(x.g.ultima)+'**':'')+' | '+e.res+' | '+cel(estRes(e))+' |');ant=e._ts});
+  L.push('','---','Gerado por gerenciador_logs_v'+VER+' — só observa; nada aqui comanda chave, gerador ou PLC.');
+  baixa('bt2_logs_'+stamp()+'.md','text/markdown',L.join('\n'));
+}
+$('bExp').onclick=e=>EXPMENU.menu(e.currentTarget,[   // v1.4: um menu só (antes: 3 botões)
+  {rot:'JSON (.json)',dica:'TODAS as abas — o arquivo para mandar de volta ao Claude',fn:exportaJson},
+  {rot:'Markdown (.md)',dica:'resumo para ler ou colar no chat (repetidos saem agrupados)',fn:exportaMd},
+  '-',
+  {rot:'PDF (imprimir)',dica:'só a tabela e o resumo — na janela de impressão escolha “Salvar como PDF”',fn:()=>{S.pausado=false;render();window.print()}}]);
+$('bLoad').onclick=()=>$('fLoad').click();
+$('fLoad').onchange=()=>{
+  const f=$('fLoad').files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const j=JSON.parse(rd.result),lista=Array.isArray(j)?j:(j&&Array.isArray(j.eventos)?j.eventos:null);
+      if(!lista)throw new Error('arquivo sem a lista "eventos"');
+      const sv=S.limpoEm;S.limpoEm=0;const n=add(lista,'arquivo');S.limpoEm=sv;S.sujo=true;
+      alert(n+' evento(s) novo(s) trazido(s) de '+f.name+' ('+(lista.length-n)+' já estavam aqui).');
+    }catch(e){alert('Não consegui abrir '+f.name+': '+e.message)}
+    $('fLoad').value='';
+  };
+  rd.readAsText(f);
+};
+
+/* ---------- ações da barra ---------- */
+$('bPausa').onclick=()=>{
+  S.pausado=!S.pausado;$('bPausa').textContent=S.pausado?'▶ Retomar tela':'⏸ Pausar tela';
+  if(!S.pausado)S.sujo=true;
+  varre(); // olhos fecham (tela pausada) ou voltam a varrer na hora
+};
+$('bNota').onclick=()=>{
+  const t=prompt('Anotação para a linha do tempo (ex.: "iniciei o teste 3: AUTO com ensaio ativo"):');
+  if(t&&t.trim()){marca('app','nota',t.trim(),'info');S.sujo=true}
+};
+$('bLimpa').onclick=()=>{
+  if(!confirm('Limpar esta tela e a cópia guardada neste navegador?\n\nO Node-RED e o medidor continuam com o que já têm; só o que acontecer a partir de agora volta a aparecer aqui.'))return;
+  S.limpoEm=Date.now();S.ev=[];S.idx.clear();S.sel=null;S.srvSt.perdidos=0;S.sujo=true;S.ultSalva=0;
+  limpaDet();
+};
+$('bZera').onclick=async()=>{
+  if(!S.srv){alert('Sem URL do Servidor.');return}
+  if(!confirm('Zerar o buffer do Node-RED (POST /api/dev/logs/limpar) e limpar esta tela?\n\nIsso só apaga o LOG; não mexe em chaves, ensaio nem PLC.'))return;
+  try{
+    const r=await fetch(S.srv+'/api/dev/logs/limpar',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok||!j||j.ok!==true)throw new Error('HTTP '+r.status+(j&&j.erro?': '+j.erro:''));
+    S.limpoEm=Date.now();S.ev=[];S.idx.clear();S.sel=null;S.srvSt.perdidos=0;S.sujo=true;S.ultSalva=0;limpaDet();
+    alert('Node-RED zerado ('+j.limpos+' evento(s) apagados).');
+  }catch(e){alert('Não consegui zerar o Node-RED: '+e.message)}
+};
+$('srv').addEventListener('change',()=>{
+  S.srv=$('srv').value.trim().replace(/\/+$/,'');S.cursor=0;S.boot=null;S.srvSt={ok:null,ms:null,flow:null,erro:'',perdidos:0,n:0};
+  S.fl={'56':{st:null,erro:''},'400':{st:null,erro:''}};agenda(0);
+});
+$('usaChaves').addEventListener('change',()=>{S.fl={'56':{st:null,erro:''},'400':{st:null,erro:''}};pollChaves()});
+
+/* ---------- tooltips (v1.1): [data-tip] com mouse, foco do teclado e toque ---------- */
+const TIP=$('tip');let tipEl=null,tipT=null;
+function tipPos(el){
+  const r=el.getBoundingClientRect(),tw=TIP.offsetWidth,th=TIP.offsetHeight,vw=document.documentElement.clientWidth,vh=window.innerHeight;
+  let x=r.left+r.width/2-tw/2,y=r.bottom+8;
+  if(y+th>vh-4)y=r.top-th-8;if(y<4)y=4;
+  x=Math.max(8,Math.min(vw-tw-8,x));
+  TIP.style.left=x+'px';TIP.style.top=y+'px';
+}
+function tipMostra(el){const t=el.getAttribute('data-tip');if(!t)return;tipEl=el;TIP.textContent=t;TIP.style.display='block';TIP.style.left='0px';TIP.style.top='0px';tipPos(el)}
+function tipEsconde(){tipEl=null;TIP.style.display='none';clearTimeout(tipT)}
+function tipVerifica(){if(tipEl&&!document.body.contains(tipEl))tipEsconde()}
+const tipAlvo=e=>(e.target&&e.target.closest)?e.target.closest('[data-tip]'):null;
+document.addEventListener('mouseover',e=>{const el=tipAlvo(e);if(el){if(el!==tipEl)tipMostra(el)}else if(tipEl)tipEsconde()});
+document.addEventListener('focusin',e=>{const el=tipAlvo(e);if(el)tipMostra(el)});
+document.addEventListener('focusout',tipEsconde);
+document.addEventListener('touchstart',e=>{const el=tipAlvo(e);clearTimeout(tipT);if(el){tipMostra(el);tipT=setTimeout(tipEsconde,3800)}else tipEsconde()},{passive:true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')tipEsconde()});
+window.addEventListener('scroll',tipEsconde,true);
+document.addEventListener('mouseleave',tipEsconde);
+
+/* ---------- painel de detalhe (v1.1): abrir/fechar + divisória arrastável (mouse, toque, teclado) ---------- */
+const SPL=$('split'),DBX=$('detbox'),CONT=$('cont'),DET_MIN=70;
+// v1.2: antes só CONT.clientHeight-170 — no celular a área da tabela é pequena e o painel ficava travado perto de DET_MIN (não crescia no toque).
+// Agora o teto é o maior entre isso e 60 % da altura da JANELA; em tela estreita a página simplesmente rola.
+const detMax=()=>Math.max(DET_MIN+20,CONT.clientHeight-170,Math.round(window.innerHeight*0.6));
+function aplicaDet(){
+  UI.detH=Math.max(DET_MIN,Math.min(detMax(),UI.detH));
+  DBX.style.setProperty('--deth',Math.round(UI.detH)+'px');
+  DBX.classList.toggle('fechado',!UI.detAberto);CONT.classList.toggle('detfechado',!UI.detAberto);
+  const b=$('bDet');b.setAttribute('aria-expanded',UI.detAberto?'true':'false');b.textContent=(UI.detAberto?'▾':'▸')+' Detalhe do evento';
+  SPL.setAttribute('aria-valuemin',DET_MIN);SPL.setAttribute('aria-valuemax',Math.round(detMax()));SPL.setAttribute('aria-valuenow',Math.round(UI.detH));
+  if($('seguir').checked){S.progTs=Date.now();const w=$('twrap');w.scrollTop=w.scrollHeight} // a tabela encolheu/cresceu: continua no último evento
+}
+function alternaDet(){UI.detAberto=!UI.detAberto;aplicaDet();salvaUI()}
+let arr=null;
+SPL.addEventListener('pointerdown',e=>{if(!UI.detAberto)return;arr={y:e.clientY,h:UI.detH};try{SPL.setPointerCapture(e.pointerId)}catch(x){}SPL.classList.add('arrasta');e.preventDefault()});
+SPL.addEventListener('pointermove',e=>{if(!arr)return;UI.detH=arr.h+(arr.y-e.clientY);aplicaDet()});
+const fimArr=()=>{if(!arr)return;arr=null;SPL.classList.remove('arrasta');salvaUI()};
+['pointerup','pointercancel','lostpointercapture'].forEach(n=>SPL.addEventListener(n,fimArr));
+SPL.addEventListener('dblclick',alternaDet);
+SPL.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp')UI.detH+=24;else if(e.key==='ArrowDown')UI.detH-=24;else if(e.key==='Home')UI.detH=detMax();else if(e.key==='End')UI.detH=DET_MIN;
+  else if(e.key==='Enter'||e.key===' '){e.preventDefault();alternaDet();return}else return;
+  e.preventDefault();aplicaDet();salvaUI();
+});
+$('bDet').onclick=alternaDet;
+window.addEventListener('resize',aplicaDet);
+function limpaDet(){$('det').innerHTML='<span class="vazio">Clique numa linha para ver o evento completo (estado antes/depois, detalhes, rota, tempo).</span>';$('detResumo').textContent=''}
+
+/* ---------- legenda das siglas (v1.2): painel visível também no toque ---------- */
+function desenhaLegenda(){
+  const usa=(campo)=>{const m={};S.ev.forEach(e=>{m[e[campo]]=1});return m};
+  const bloco=(tit,lg,uso)=>'<h4>'+tit+'</h4><dl>'+Object.keys(lg).map(k=>'<dt'+(uso&&uso[k]?' class="uso"':'')+'>'+esc(k)+'</dt><dd>'+esc(lg[k])+'</dd>').join('')+'</dl>';
+  $('legPan').innerHTML='<p style="margin:0 0 4px;color:var(--mut)">Siglas dos Cards: padrão <b>PADRAO_SIGLAS_CARDS.md</b>. Em azul: as que aparecem no log atual.</p>'
+    +bloco('Card / popup',LG_CARD,usa('card'))+bloco('Tipo de evento',LG_TIPO,usa('tipo'))+bloco('Resultado',LG_RES,usa('res'))+bloco('Origem da linha',LG_ORIG,null);
+}
+$('bLeg').onclick=()=>{const ab=$('legPan').hidden;if(ab)desenhaLegenda();$('legPan').hidden=!ab;$('bLeg').setAttribute('aria-expanded',ab?'true':'false');aplicaDet()};
+try{if(window.matchMedia&&window.matchMedia('(max-width:760px)').matches)$('resumo').open=false}catch(e){} // v1.2: celular — o Resumo nasce recolhido
+/* ---------- laço de tela ---------- */
+setInterval(()=>{
+  if(!S.pausado&&S.sujo)render();
+  chips();
+  if(!S.pausado&&Date.now()-(S.ultRes||0)>1500){S.ultRes=Date.now();desenhaResumo()}
+  salva();
+},400);
+agenda(0);pollChaves();aplicaDet();render();desenhaResumo();chips();
+window.devObsMgr={S,UI,add,render,exportaJson,exportaMd,pollSrv,agrupar,dica,estRes,aplicaDet,alternaDet};
+})();
+</script>
+<script>
+/* =====================================================================================================================
+   exportar_menu_v0.1.js — MENU ÚNICO "Exportar ▾" + gerador mínimo de PDF (sem biblioteca, funciona offline)
+   Projeto bancos de teste · 29/10/2026 · fonte dos trechos que vão colados (inline) em: grafico_ensaio_v0.5, mapa_fbs_v0.7, gerenciador_logs_v1.4.
+
+   PARA QUE SERVE (leigo): um botão só, "Exportar ▾", que abre uma listinha com TODOS os formatos daquela tela (PDF, imagem, planilha, texto…).
+   Antes cada tela tinha botões soltos e o menu aparecia ATRÁS das janelas; agora ele aparece sempre por cima.
+
+   POR QUE (técnico): janelas <dialog> abertas com showModal() ficam na "camada de cima" (top layer) do navegador; um <div> comum, mesmo com
+   z-index enorme, fica por baixo delas. A solução é o atributo popover (showPopover()), que também entra na camada de cima.
+   Se o navegador não tiver popover (Chrome < 114), cai no modo antigo (div fixo com z-index alto).
+
+   API:
+     EXPMENU.menu(botao, [{rot, dica, fn}, ...])   abre o menu embaixo do botão (Esc ou clique fora fecha; setas ↑ ↓ navegam)
+     EXPMENU.baixa(blob, nome)                      download de um Blob
+     PDFMIN.imagem(canvas, titulo, linhas[])        -> Blob de um PDF A4 paisagem de 1 página: título, linhas de texto e a imagem do canvas
+   NÃO FAZ: não comanda nada, não lê PLC/DSE, não grava em disco sozinho (só o navegador, no download).
+   ===================================================================================================================== */
+const EXPMENU = (function () {
+  'use strict';
+  let m = null;
+  /* estilo próprio (a página não precisa ter CSS do menu). Cores neutras, legíveis em tema claro e escuro. */
+  (function () {
+    if (document.getElementById('expmenu-css')) return;
+    const s = document.createElement('style'); s.id = 'expmenu-css';
+    s.textContent = '.expmenu{position:fixed;margin:0;inset:auto;z-index:2147483000;background:#fff;color:#1b2a3a;border:1px solid #9aa5b1;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.35);display:flex;flex-direction:column;min-width:210px;max-width:min(340px,96vw);padding:3px;overflow:visible;font:13px system-ui,Segoe UI,Arial,sans-serif}' +
+      '.expmenu button{border:0;background:none;text-align:left;padding:7px 10px;font:inherit;color:inherit;cursor:pointer;border-radius:4px}' +
+      '.expmenu button:hover,.expmenu button:focus-visible{background:#e8eef6;outline:none}' +
+      '.expmenu small{display:block;color:#51606f;font-size:11px}' +
+      '.expmenu hr{border:0;border-top:1px solid #d3d9e0;margin:3px 2px;width:auto}';
+    document.head.appendChild(s);
+  })();
+  const fecha = () => {
+    if (m) { try { if (m.hidePopover && m.matches(':popover-open')) m.hidePopover(); } catch (e) {} m.remove(); m = null; }
+    document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true);
+  };
+  const fora = e => { if (m && !m.contains(e.target)) fecha(); };
+  const tecla = e => {
+    if (e.key === 'Escape') { fecha(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      const bs = [...m.querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+      bs[(i + (e.key === 'ArrowDown' ? 1 : bs.length - 1)) % bs.length].focus(); e.preventDefault();
+    }
+  };
+  function menu(btn, itens) {
+    fecha();
+    m = document.createElement('div'); m.className = 'expmenu'; m.setAttribute('role', 'menu');
+    itens.forEach(it => {
+      if (it === '-') { m.appendChild(document.createElement('hr')); return; }
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem');
+      b.innerHTML = it.rot + (it.dica ? '<small>' + it.dica + '</small>' : '');
+      b.onclick = () => { fecha(); try { it.fn(); } catch (e) { console.error('Exportar', e); alert('Não foi possível exportar: ' + (e && e.message || e)); } };
+      m.appendChild(b);
+    });
+    m.setAttribute('popover', 'manual'); document.body.appendChild(m);
+    try { m.showPopover(); } catch (e) { /* sem popover: fica o z-index alto do CSS */ }
+    const r = btn.getBoundingClientRect();
+    m.style.left = Math.max(4, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + 'px';
+    m.style.top = Math.max(4, Math.min(r.bottom + 2, innerHeight - m.offsetHeight - 8)) + 'px';
+    setTimeout(() => { document.addEventListener('pointerdown', fora, true); document.addEventListener('keydown', tecla, true); }, 0);
+    const p = m.querySelector('button'); if (p) p.focus();
+  }
+  function baixa(blob, nome) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  return { menu, baixa, fecha };
+})();
+
+/* ---------- gerador mínimo de PDF (A4 paisagem 842×595 pt; fonte Helvetica; 1 imagem JPEG por documento) ---------- */
+const PDFMIN = (function () {
+  'use strict';
+  const esc = s => String(s).replace(/[–—]/g, '-').replace(/[^\x00-\xFF]/g, '?').replace(/[\\()]/g, '\\$&');
+  function Pg() { this.o = []; }
+  /* texto: x,y em pt a partir do canto SUPERIOR esquerdo; b = negrito */
+  Pg.prototype.t = function (x, y, s, sz, b) { this.o.push('BT /' + (b ? 'F2' : 'F1') + ' ' + sz + ' Tf ' + x.toFixed(2) + ' ' + (595 - y).toFixed(2) + ' Td (' + esc(s) + ') Tj ET'); };
+  Pg.prototype.im = function (x, y, w, h) { this.o.push('q ' + w.toFixed(2) + ' 0 0 ' + h.toFixed(2) + ' ' + x.toFixed(2) + ' ' + (595 - y - h).toFixed(2) + ' cm /Im1 Do Q'); };
+  function blob(pgs, jpg, iw, ih) {
+    const enc = s => { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+    const ch = [], off = []; let len = 0; const add = u => { ch.push(u); len += u.length; };
+    const N = 5 + 2 * pgs.length;
+    add(enc('%PDF-1.4\n'));
+    const obj = (n, body) => { off[n] = len; add(enc(n + ' 0 obj\n' + body + '\nendobj\n')); };
+    const stm = (n, dict, bytes) => { off[n] = len; add(enc(n + ' 0 obj\n<<' + dict + '/Length ' + bytes.length + '>>\nstream\n')); add(bytes); add(enc('\nendstream\nendobj\n')); };
+    obj(1, '<</Type/Catalog/Pages 2 0 R>>');
+    obj(2, '<</Type/Pages/Kids[' + pgs.map((_, i) => (7 + 2 * i) + ' 0 R').join(' ') + ']/Count ' + pgs.length + '>>');
+    obj(3, '<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>');
+    obj(4, '<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>');
+    stm(5, '/Type/XObject/Subtype/Image/Width ' + iw + '/Height ' + ih + '/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode', jpg);
+    pgs.forEach((p, i) => {
+      stm(6 + 2 * i, '', enc(p.o.join('\n')));
+      obj(7 + 2 * i, '<</Type/Page/Parent 2 0 R/MediaBox[0 0 842 595]/Contents ' + (6 + 2 * i) + ' 0 R/Resources<</Font<</F1 3 0 R/F2 4 0 R>>/XObject<</Im1 5 0 R>>>>>>');
+    });
+    const xr = len; let x = 'xref\n0 ' + (N + 1) + '\n0000000000 65535 f \n';
+    for (let n = 1; n <= N; n++) x += String(off[n]).padStart(10, '0') + ' 00000 n \n';
+    x += 'trailer\n<</Size ' + (N + 1) + '/Root 1 0 R>>\nstartxref\n' + xr + '\n%%EOF';
+    add(enc(x));
+    return new Blob(ch, { type: 'application/pdf' });
+  }
+  /** PDF de 1 página: título, linhas de texto e a imagem do canvas (proporção preservada, cabe no A4 paisagem). */
+  function imagem(cv, titulo, linhas) {
+    const pg = new Pg(); pg.t(36, 34, titulo, 14, true);
+    let y = 52; (linhas || []).forEach(l => { pg.t(36, y, l, 8.5); y += 12; });
+    const iw = cv.width, ih = cv.height, top = y + 4, maxW = 770, maxH = 595 - top - 30;
+    let w = maxW, h = w * ih / iw; if (h > maxH) { h = maxH; w = h * iw / ih; }
+    pg.im(36, top, w, h);
+    pg.t(36, 575, 'Gerado em ' + new Date().toLocaleString('pt-BR'), 7);
+    const jpg = Uint8Array.from(atob(cv.toDataURL('image/jpeg', 0.92).split(',')[1]), c => c.charCodeAt(0));
+    return blob([pg], jpg, iw, ih);
+  }
+  return { Pg, blob, imagem };
+})();
+</script>
+<script>
+/* =====================================================================================================================
+   dica_ui_v0.1.js — DICA DE INTERFACE: "que elemento é este?" (nome do tipo + id de programação + coordenadas) · 29/10/2026
+   Colado (inline) em todos os HTML do projeto (medidor, gráfico, mapa dos FBs, gerenciador de logs, amostras, simulador de rodízio,
+   visor da API, painel BT2). Documento: modulos/DICA_UI_v0.1.md.
+
+   PARA QUE SERVE (leigo): para conversar com a programação sem dizer "aquele botãozinho lá". Ligando este modo, ao passar o mouse sobre
+   qualquer coisa da tela aparece uma etiqueta com (1) o NOME DO TIPO do elemento (Botão, Chip, Card, Janela…), (2) o ID usado no código
+   (ex.: #bAnalisar, #cardBancoCargas) e (3) as COORDENADAS na tela. Alt + clique "fixa" a etiqueta: ela fica aberta até você fechar (✕ ou Esc)
+   e tem o botão "Copiar" para colar numa mensagem. Um contorno tracejado mostra exatamente qual é o elemento.
+
+   COMO LIGAR: tecla  Alt + I  (liga/desliga; lembra a escolha) · ou abrir a página com  ?ui=1  · ou  DICAUI.liga(true)  pelo console.
+   Desligado por padrão: o operador não vê nada diferente (a dica é ferramenta de quem desenvolve/valida).
+
+   NOME CORRETO DOS ELEMENTOS (pergunta do operador): a etiqueta que aparece ao passar o mouse e some ao sair = "tooltip" (dica de ferramenta).
+   A que fica aberta até ser fechada, sem travar a tela = "popover" (é o que o Alt+clique cria, e o aviso de risco do módulo JANELAS).
+   A mensagem que aparece num canto e some sozinha = "toast" (snackbar). Janela que trava a tela de trás = "diálogo modal".
+
+   POR QUE ASSIM (técnico): usa o atributo popover="manual" (camada de cima do navegador) para a etiqueta aparecer ACIMA de <dialog> abertos; se o
+   navegador não tiver popover, cai para position:fixed com z-index alto. O contorno é uma <div> fixa sobre o retângulo do elemento — NÃO mexe no
+   elemento, então não muda o layout (REGRA_LAYOUT_ESTAVEL_v0.1). Enquanto o modo está ligado, o atributo title do elemento sob o mouse é guardado
+   e o texto vai para dentro da etiqueta (evita duas dicas empilhadas); é devolvido ao sair.
+   O que ele NÃO faz: não altera nenhum dado, não lê PLC/Node-RED, não envia nada para fora. Clique normal continua funcionando; só Alt+clique é
+   capturado (para fixar). Coordenadas: "tela" = posição na janela do navegador (px); "mouse" = cursor na janela; "monitor" = cursor no monitor.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.DICAUI) return;
+  const CHAVE = 'bt2.dicaui';
+  let ligado = false, tip = null, caixa = null, fixa = null, ult = null, tmr = 0;
+  try { ligado = localStorage.getItem(CHAVE) === '1'; } catch (e) {}
+  if (/[?&]ui=1\b/.test(location.search)) ligado = true;
+  const temPop = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
+
+  /* ---------- CSS próprio (injetado uma vez; cores neutras, legíveis em tema claro e escuro) ---------- */
+  const css = document.createElement('style');
+  css.textContent = `
+  .dicaui-tip,.dicaui-fixa{position:fixed;margin:0;inset:auto;z-index:2147483200;max-width:min(360px,92vw);padding:6px 9px;border-radius:7px;border:1px solid #5d6b7a;
+    background:#10202f;color:#eaf2fa;font:12px/1.35 system-ui,Segoe UI,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;overflow:visible}
+  .dicaui-fixa{pointer-events:auto;padding-right:30px}
+  .dicaui-tip b,.dicaui-fixa b{color:#8fd0ff}.dicaui-tip i,.dicaui-fixa i{font-style:normal;color:#ffd27a}
+  .dicaui-tip small,.dicaui-fixa small{display:block;color:#aebccb;font-size:11px}
+  .dicaui-fixa .x{position:absolute;top:3px;right:4px;width:20px;height:20px;border:0;border-radius:4px;background:transparent;color:#eaf2fa;cursor:pointer;font:700 13px/1 system-ui}
+  .dicaui-fixa .x:hover{background:rgba(255,255,255,.18)}
+  .dicaui-fixa .cp{margin-top:5px;font:600 11px system-ui;padding:2px 8px;border-radius:5px;border:1px solid #8fd0ff;background:transparent;color:#8fd0ff;cursor:pointer}
+  .dicaui-caixa{position:fixed;margin:0;inset:auto;z-index:2147483100;pointer-events:none;border:2px dashed #ff9f1c;background:rgba(255,159,28,.08);box-sizing:border-box;padding:0}
+  `;
+  (document.head || document.documentElement).appendChild(css);
+
+  /* ---------- nome do tipo (PT-BR) a partir da tag, do papel (role) e das classes ---------- */
+  const cls = e => { const c = e.getAttribute && e.getAttribute('class'); return c ? String(c) : ''; };
+  function tipoDe(e) {
+    const t = (e.tagName || '').toLowerCase(), c = cls(e), role = e.getAttribute && e.getAttribute('role');
+    if (e.classList && e.classList.contains('jwbtn')) return 'Botão de tamanho da janela (⤢)';
+    if (t === 'dialog') return e.hasAttribute('open') && e.classList.contains('jflut') ? 'Janela flutuante (dialog)' : 'Janela (dialog)';
+    if (/\b(chip|enschip|gchip|gd-chip)\b/.test(c)) return 'Chip';
+    if (t === 'section' && /\bpanel\b/.test(c)) return 'Painel (seção de cards)';
+    if (/\bcard\b/.test(c)) return 'Card';
+    if (/\bbx\b/.test(c)) return 'Bloco FB (cartão do mapa)';
+    if (/\binfo\b/.test(c) && e.closest && e.closest('.bx')) return 'Ícone de informação (i)';
+    if (/\bjt\b/.test(c)) return 'Barra de título da janela';
+    if (t === 'button' || role === 'button' || (t === 'input' && /^(button|submit|reset)$/.test(e.type))) return 'Botão';
+    if (t === 'select') return 'Lista suspensa (select)';
+    if (t === 'textarea') return 'Campo de texto longo';
+    if (t === 'input') return e.type === 'checkbox' ? 'Caixa de seleção' : e.type === 'radio' ? 'Opção (radio)' : e.type === 'range' ? 'Controle deslizante' : 'Campo de entrada (' + (e.type || 'text') + ')';
+    if (role === 'tab') return 'Aba';
+    if (t === 'a') return 'Link';
+    if (t === 'canvas') return 'Gráfico (canvas)';
+    if (t === 'table') return 'Tabela';
+    if (t === 'svg') return 'Desenho (svg)';
+    if (/^h[1-6]$/.test(t)) return 'Título (' + t + ')';
+    if (t === 'label') return 'Rótulo';
+    if (t === 'iframe') return 'Quadro embutido (iframe)';
+    if (/\b(popover|jwtip|expmenu)\b/.test(c) || e.hasAttribute && e.hasAttribute('popover')) return 'Popover / menu';
+    return 'Elemento <' + t + '>';
+  }
+  const conhecido = e => { const t = (e.tagName || '').toLowerCase(); return !!(e.id || /^(button|input|select|textarea|a|dialog|table|canvas|label|iframe)$/.test(t) || /\b(chip|enschip|gchip|card|bx|jwbtn|jt|panel)\b/.test(cls(e)) || (e.getAttribute && /^(button|tab)$/.test(e.getAttribute('role') || ''))); };
+  /* sobe da folha (um <span> de texto, por exemplo) até o primeiro elemento que tenha id ou seja de um tipo conhecido */
+  function alvoDe(e) { let x = e; for (let i = 0; x && i < 8; i++, x = x.parentElement) if (conhecido(x)) return x; return e; }
+
+  function descreve(e, ev) {
+    const r = e.getBoundingClientRect(), id = e.id || '', pai = !id && e.closest ? e.closest('[id]') : null;
+    const t = e.dataset && e.dataset.dicauiT != null ? e.dataset.dicauiT : (e.getAttribute && e.getAttribute('title')) || e.getAttribute && e.getAttribute('aria-label') || '';
+    const n = v => Math.round(v);
+    return { tipo: tipoDe(e), id, pai: pai ? pai.id : '', dica: t, x: n(r.left), y: n(r.top), w: n(r.width), h: n(r.height),
+             mx: ev ? n(ev.clientX) : null, my: ev ? n(ev.clientY) : null, sx: ev ? n(ev.screenX) : null, sy: ev ? n(ev.screenY) : null };
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function html(d) {
+    return '<b>' + esc(d.tipo) + '</b> · ' + (d.id ? '<i>#' + esc(d.id) + '</i>' : '<i>(sem id)</i>' + (d.pai ? ' dentro de <i>#' + esc(d.pai) + '</i>' : '')) +
+      '<small>tela x ' + d.x + ' · y ' + d.y + ' · ' + d.w + '×' + d.h + ' px</small>' +
+      (d.mx != null ? '<small>mouse ' + d.mx + ',' + d.my + ' · monitor ' + d.sx + ',' + d.sy + '</small>' : '') +
+      (d.dica ? '<small>dica: ' + esc(d.dica) + '</small>' : '');
+  }
+  const texto = d => d.tipo + ' ' + (d.id ? '#' + d.id : '(sem id)' + (d.pai ? ' dentro de #' + d.pai : '')) + ' | tela x=' + d.x + ' y=' + d.y + ' ' + d.w + 'x' + d.h + 'px' + (d.mx != null ? ' | mouse ' + d.mx + ',' + d.my + ' monitor ' + d.sx + ',' + d.sy : '') + (d.dica ? ' | dica: ' + d.dica : '') + ' | página ' + (location.pathname.split('/').pop() || '');
+
+  /* ---------- peças visuais ---------- */
+  function cria(classe, pop) {
+    const d = document.createElement('div'); d.className = classe; if (pop && temPop) d.setAttribute('popover', 'manual'); (document.body || document.documentElement).appendChild(d); return d;
+  }
+  const abre = d => { if (temPop) { try { if (!d.matches(':popover-open')) d.showPopover(); } catch (e) {} } else d.style.display = 'block'; };
+  const fecha = d => { if (!d) return; if (temPop) { try { d.hidePopover(); } catch (e) {} } else d.style.display = 'none'; };
+  function iniPecas() {
+    if (!tip) { tip = cria('dicaui-tip', true); caixa = cria('dicaui-caixa', true); fecha(tip); fecha(caixa); }
+  }
+  function posiciona(el, x, y) {
+    const w = el.offsetWidth || 240, h = el.offsetHeight || 60;
+    el.style.left = Math.max(4, Math.min(innerWidth - w - 4, x + 14)) + 'px';
+    el.style.top = Math.max(4, Math.min(innerHeight - h - 4, y + 18)) + 'px';
+  }
+  function contorna(e) { const r = e.getBoundingClientRect(); Object.assign(caixa.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }); abre(caixa); }
+
+  /* ---------- eventos ---------- */
+  function devolveTitle() { if (ult && ult.dataset && ult.dataset.dicauiT != null) { ult.setAttribute('title', ult.dataset.dicauiT); delete ult.dataset.dicauiT; } }
+  function mover(ev) {
+    if (!ligado) return;
+    const crua = ev.target; if (!crua || (crua.closest && crua.closest('.dicaui-tip,.dicaui-fixa,.dicaui-caixa'))) return;
+    const e = alvoDe(crua);
+    if (e !== ult) {
+      devolveTitle(); ult = e;
+      if (e.getAttribute && e.hasAttribute('title') && !(e.dataset && e.dataset.dicauiT != null)) { e.dataset.dicauiT = e.getAttribute('title'); e.removeAttribute('title'); }
+      contorna(e);
+    }
+    const d = descreve(e, ev); tip.innerHTML = html(d); abre(tip); posiciona(tip, ev.clientX, ev.clientY);
+  }
+  function sair() { fecha(tip); fecha(caixa); devolveTitle(); ult = null; }
+  function fixar(ev) {
+    if (!ligado || !ev.altKey) return;
+    const e = alvoDe(ev.target); if (e.closest && e.closest('.dicaui-fixa')) return;
+    ev.preventDefault(); ev.stopPropagation();                 // Alt+clique é só para fixar: não aciona o botão por baixo
+    const d = descreve(e, ev); fechaFixa();
+    fixa = cria('dicaui-fixa', true); fixa.innerHTML = html(d) + '<button type="button" class="cp">Copiar</button><button type="button" class="x" aria-label="Fechar">✕</button>';
+    fixa.querySelector('.x').onclick = fechaFixa;
+    fixa.querySelector('.cp').onclick = ev2 => { const t = texto(d); try { navigator.clipboard.writeText(t); ev2.target.textContent = 'Copiado'; } catch (x) { ev2.target.textContent = 'Selecione e copie'; } };
+    abre(fixa); posiciona(fixa, ev.clientX, ev.clientY); contorna(e);
+  }
+  function fechaFixa() { if (fixa) { fecha(fixa); fixa.remove(); fixa = null; } fecha(caixa); }
+  document.addEventListener('mousemove', mover, true);
+  document.addEventListener('mouseleave', sair, true);
+  document.addEventListener('click', fixar, true);
+  document.addEventListener('keydown', ev => {
+    if (ev.altKey && !ev.ctrlKey && !ev.metaKey && (ev.key === 'i' || ev.key === 'I')) { ev.preventDefault(); liga(!ligado, true); }
+    else if (ev.key === 'Escape' && fixa) fechaFixa();
+  }, true);
+
+  function liga(b, avisa) {
+    ligado = !!b; try { localStorage.setItem(CHAVE, ligado ? '1' : '0'); } catch (e) {}
+    iniPecas();
+    if (!ligado) { sair(); fechaFixa(); }
+    if (avisa) { tip.innerHTML = '<b>Dica de interface ' + (ligado ? 'ligada' : 'desligada') + '</b><small>Alt+I liga/desliga · Alt+clique fixa a etiqueta</small>'; abre(tip); posiciona(tip, innerWidth / 2 - 130, 40); setTimeout(() => { if (!ult) fecha(tip); }, 1800); }
+  }
+  const inicia = () => { iniPecas(); if (ligado) liga(true, false); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inicia); else inicia();
+  global.DICAUI = { liga, alterna: () => liga(!ligado, true), ativo: () => ligado, descreve, tipoDe };
+})(window);
+</script>
+<script>
+/* =====================================================================================================================
+   ajuda_v0.1.js — BOTÃO "AJUDA" PADRÃO + JANELA DE AJUDA, igual em todo HTML do projeto · 29/10/2026
+   Colado (inline) em: mapa_fbs_v0.11, gerenciador_logs_v1.6, api_cards_visor_v0.3, index.html v0.2 (o medidor, o gráfico e o simulador de amostras
+   já têm a própria Ajuda). Documento: modulos/AJUDA_v0.1.md.
+
+   REGRA DO PROJETO (decisão do operador, 29/10/2026): "toda HTML tem que vir com AJUDA". Este módulo é o jeito mais barato de cumprir a regra:
+   cada página só informa o TEXTO (AJUDA.inicia({...})); o botão, a janela, o fechar (✕ no canto direito, Esc) e a seção padrão da
+   "Dica de interface (Alt+I)" já vêm prontos.
+
+   PARA QUE SERVE (leigo): um botão "Ajuda" que abre uma janelinha dizendo, em português simples, para que serve a tela, como usar, o que cada
+   botão faz e o significado das palavras técnicas (glossário).
+
+   COMO USAR (programação):
+     AJUDA.inicia({ titulo:'Mapa dos FBs', resumo:'texto curto', secoes:[{t:'Como usar', l:['passo 1','passo 2']}], glossario:[['FB','bloco de função']],
+                    onde:'header' })      // onde = seletor CSS do lugar do botão; sem ele (ou não achado) o botão fica fixo no canto superior direito
+   POR QUE ASSIM (técnico): <dialog> aberto com show() (não modal): não trava a tela de trás, e quem tem o módulo JANELAS ganha o ⤢ automaticamente.
+   Sem JANELAS a janela ainda se redimensiona pelo canto (resize:both). Não altera dados, não lê PLC/Node-RED, não envia nada.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.AJUDA) return;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let dlg = null;
+  const css = document.createElement('style');
+  css.textContent = `
+  #dlgAjuda{position:fixed;top:8vh;left:50%;transform:translateX(-50%);margin:0;width:min(640px,94vw);max-height:84vh;overflow:auto;resize:both;padding:0;
+    border:1px solid #7a8794;border-radius:10px;background:#fff;color:#16222e;font:14px/1.45 system-ui,"Segoe UI",sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:2147482000}
+  @media (prefers-color-scheme:dark){#dlgAjuda{background:#1b2229;color:#e8edf2;border-color:#4d5964}}
+  #dlgAjuda .jt{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid rgba(128,128,128,.4);position:sticky;top:0;background:inherit}
+  #dlgAjuda .jt b{flex:1;font-size:15px}
+  #dlgAjuda .jx{width:28px;height:28px;border:1px solid rgba(128,128,128,.55);border-radius:6px;background:transparent;color:inherit;cursor:pointer;font:700 14px/1 system-ui}
+  #dlgAjuda .jx:hover{background:rgba(128,128,128,.25)}
+  #dlgAjuda .cp{padding:6px 16px 14px}
+  #dlgAjuda h3{font-size:13px;margin:14px 0 4px;color:#2a6fb3}
+  @media (prefers-color-scheme:dark){#dlgAjuda h3{color:#7db7f0}}
+  #dlgAjuda ul{margin:4px 0 4px 18px;padding:0}#dlgAjuda li{margin:2px 0}
+  #dlgAjuda dt{font-weight:650;margin-top:4px}#dlgAjuda dd{margin:0 0 2px 0;color:inherit;opacity:.85}
+  #dlgAjuda kbd{border:1px solid rgba(128,128,128,.6);border-bottom-width:2px;border-radius:4px;padding:0 5px;font:12px system-ui}
+  #bAjudaPadrao{font:600 13px system-ui,sans-serif;padding:5px 12px;border:1px solid #7a8794;border-radius:7px;background:transparent;color:inherit;cursor:pointer}
+  #bAjudaPadrao:hover{background:rgba(128,128,128,.22)}
+  #bAjudaPadrao.fixo{position:fixed;top:8px;right:10px;z-index:2147481000;background:#fff;color:#16222e}
+  @media (prefers-color-scheme:dark){#bAjudaPadrao.fixo{background:#1b2229;color:#e8edf2}}`;
+  (document.head || document.documentElement).appendChild(css);
+
+  function inicia(c) {
+    c = c || {};
+    const corpo = '<p>' + esc(c.resumo || '') + '</p>' +
+      (c.secoes || []).map(s => '<h3>' + esc(s.t) + '</h3><ul>' + s.l.map(x => '<li>' + x + '</li>').join('') + '</ul>').join('') +
+      ((c.glossario && c.glossario.length) ? '<h3>Glossário</h3><dl>' + c.glossario.map(g => '<dt>' + esc(g[0]) + '</dt><dd>' + g[1] + '</dd>').join('') + '</dl>' : '') +
+      '<h3>Descobrir o nome de qualquer elemento da tela</h3><ul><li>Tecle <kbd>Alt</kbd>+<kbd>I</kbd>: ao passar o mouse aparece o tipo (Botão, Chip, Card…), o <b>id de programação</b> e as coordenadas. <kbd>Alt</kbd>+clique fixa a etiqueta e tem o botão Copiar. <kbd>Alt</kbd>+<kbd>I</kbd> de novo desliga.</li></ul>';
+    dlg = document.createElement('dialog'); dlg.id = 'dlgAjuda'; dlg.className = 'jan livre';
+    dlg.innerHTML = '<div class="jt"><b>Ajuda · ' + esc(c.titulo || document.title) + '</b><button type="button" class="jx" data-fecha aria-label="Fechar">✕</button></div><div class="cp">' + corpo + '</div>';
+    document.body.appendChild(dlg);
+    dlg.querySelector('.jx').onclick = fecha;
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dlg.open) fecha(); });
+    const b = document.createElement('button'); b.type = 'button'; b.id = 'bAjudaPadrao'; b.textContent = 'Ajuda'; b.setAttribute('aria-haspopup', 'dialog');
+    b.title = 'Para que serve esta tela e como usar'; b.onclick = () => (dlg.open ? fecha() : abre());
+    const onde = c.onde && document.querySelector(c.onde);
+    if (onde) onde.appendChild(b); else { b.classList.add('fixo'); document.body.appendChild(b); }
+  }
+  const abre = () => { if (dlg && !dlg.open) dlg.show(); };
+  const fecha = () => { if (dlg && dlg.open) dlg.close(); };
+  global.AJUDA = { inicia, abre, fecha };
+})(window);
+AJUDA.inicia({"titulo": "Gerenciador de logs", "onde": "header.top", "resumo": "Recebe e organiza os registros [DEV.OBS] do medidor, do gráfico e do mapa (o que cada tela fez e como respondeu), em abas, para achar a causa de um problema. Só lê e registra: nunca comanda chave, gerador, ensaio nem PLC.", "secoes": [{"t": "Como usar", "l": ["<b>Servidor</b>: endereço do Node-RED (ex.: http://IP:1880). O botão do medidor já abre esta tela com o endereço certo. Em branco = só o canal local do navegador.", "<b>a cada</b>: de quanto em quanto tempo pergunta por eventos novos.", "<b>Pausar tela</b>: congela a tabela para ler; os eventos continuam sendo guardados.", "<b>Nota</b>: insere uma anotação sua na linha do tempo (ex.: \"iniciei o teste 3\").", "<b>incluir log das chaves</b>: junta o log de comunicação dos flows de chaves, para comparar o que a tela mandou com o que o Node-RED recebeu.", "Passe o mouse sobre qualquer botão ou campo para ver a explicação."]}, {"t": "Se aparecer o aviso de testes TRAVADOS", "l": ["Digite a senha do Demo no painel principal do medidor; depois o gerenciador começa a receber os eventos."]}], "glossario": [["[DEV.OBS]", "registro de observabilidade do desenvolvedor: só observa"], ["Evento", "uma linha do log: o que aconteceu, em qual tela, quando"], ["Olhos no topo", "em observação; fechados = tela pausada; pupilas arregaladas = chegou falha ou aviso"]]});
+</script>
+</body>
+</html>

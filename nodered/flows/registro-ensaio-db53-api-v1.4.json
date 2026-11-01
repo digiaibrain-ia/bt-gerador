@@ -1,0 +1,826 @@
+[
+  {
+    "id": "reg_tab",
+    "type": "tab",
+    "label": "Registro do Ensaio DB53 (API)",
+    "disabled": false,
+    "info": "Card REGISTRO DO ENSAIO - BT2 - DB53 (db053_BancoTeste2_SnapManual) - flow registro-ensaio-v1.4 (22/10/2026).\nRegra do projeto: cada card tem o seu DB e o seu flow (nome do tab identifica o card).\nRotas HTTP (padrao /api/): GET /api/ensaio/snap, POST /api/ensaio/snap/preenchimento, POST /api/ensaio/snap/etapa, POST /api/ensaio/snap/limpar.\nTransitorio: GET/POST /api/ensaio/modo (manual/auto, em memoria do flow) continuam aqui ate existir o flow do card Modo (DB58).\nLOGICA IDENTICA a selecao-ensaio-v1.3 (modo manual escreve e le de volta o DB53; modo AUTO ainda sem DB). Mudou so: nome do card, rotas /ensaio/* -> /api/ensaio/*, ids reg_*, campo \"flow\" nas respostas GET.\nInstalacao: apague o tab antigo \"Selecao do ensaio (manual/auto)\" (rotas /ensaio/*) ANTES de importar; faca Deploy.\nIP/rack/slot e numero do DB ficam num lugar so: no no s7 endpoint e nos enderecos DB53,... dele.\nNAO altera o Node-RED DSE nem o cliente .31.",
+    "env": [
+      {
+        "name": "SEL_BT",
+        "value": "BT2",
+        "type": "str"
+      }
+    ]
+  },
+  {
+    "id": "reg_cm_topo",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "HTTP IN",
+    "x": 140,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "reg_cm_val",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "Validadores",
+    "x": 380,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "reg_cm_fila",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "Fila",
+    "x": 640,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "reg_cm_gate",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "Modo manual?",
+    "x": 860,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "reg_cm_s7",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "S7: escreve, espera, le de volta",
+    "x": 1080,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "reg_cm_resp",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "Resposta",
+    "x": 1700,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "reg_cm_err",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "Erros / timeout",
+    "x": 140,
+    "y": 560,
+    "wires": []
+  },
+  {
+    "id": "reg_cm_n1",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "NOTA 1: modo AUTO = 503 ate existir DB seletor + DB SNAP AUTO. (modo manual/auto sai daqui quando existir o flow do card Modo)",
+    "x": 300,
+    "y": 700,
+    "wires": []
+  },
+  {
+    "id": "reg_cm_n2",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "NOTA 2: valor sem leitura (null) vai pro PLC como 0.0.",
+    "x": 300,
+    "y": 740,
+    "wires": []
+  },
+  {
+    "id": "reg_cm_n3",
+    "type": "comment",
+    "z": "reg_tab",
+    "name": "NOTA 3: s7 in precisa estar em Mode = All variables (confira no editor).",
+    "x": 300,
+    "y": 780,
+    "wires": []
+  },
+  {
+    "id": "reg_in_get_modo",
+    "type": "http in",
+    "z": "reg_tab",
+    "name": "GET /api/ensaio/modo",
+    "url": "/api/ensaio/modo",
+    "method": "get",
+    "upload": false,
+    "x": 160,
+    "y": 80,
+    "wires": [
+      [
+        "reg_fn_get_modo"
+      ]
+    ]
+  },
+  {
+    "id": "reg_in_post_modo",
+    "type": "http in",
+    "z": "reg_tab",
+    "name": "POST /api/ensaio/modo",
+    "url": "/api/ensaio/modo",
+    "method": "post",
+    "upload": false,
+    "x": 160,
+    "y": 140,
+    "wires": [
+      [
+        "reg_fn_post_modo"
+      ]
+    ]
+  },
+  {
+    "id": "reg_in_preen",
+    "type": "http in",
+    "z": "reg_tab",
+    "name": "POST /api/ensaio/snap/preenchimento",
+    "url": "/api/ensaio/snap/preenchimento",
+    "method": "post",
+    "upload": false,
+    "x": 160,
+    "y": 200,
+    "wires": [
+      [
+        "reg_fn_val_preen"
+      ]
+    ]
+  },
+  {
+    "id": "reg_in_etapa",
+    "type": "http in",
+    "z": "reg_tab",
+    "name": "POST /api/ensaio/snap/etapa",
+    "url": "/api/ensaio/snap/etapa",
+    "method": "post",
+    "upload": false,
+    "x": 160,
+    "y": 260,
+    "wires": [
+      [
+        "reg_fn_val_etapa"
+      ]
+    ]
+  },
+  {
+    "id": "reg_in_get_snap",
+    "type": "http in",
+    "z": "reg_tab",
+    "name": "GET /api/ensaio/snap",
+    "url": "/api/ensaio/snap",
+    "method": "get",
+    "upload": false,
+    "x": 160,
+    "y": 320,
+    "wires": [
+      [
+        "reg_fn_val_get_snap"
+      ]
+    ]
+  },
+  {
+    "id": "reg_in_limpar",
+    "type": "http in",
+    "z": "reg_tab",
+    "name": "POST /api/ensaio/snap/limpar",
+    "url": "/api/ensaio/snap/limpar",
+    "method": "post",
+    "upload": false,
+    "x": 160,
+    "y": 380,
+    "wires": [
+      [
+        "reg_fn_val_limpar"
+      ]
+    ]
+  },
+  {
+    "id": "reg_out",
+    "type": "http response",
+    "z": "reg_tab",
+    "name": "HTTP response",
+    "statusCode": "",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "x": 1760,
+    "y": 240,
+    "wires": []
+  },
+  {
+    "id": "reg_fn_get_modo",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "GET modo (memoria)",
+    "func": "const m = flow.get('sel_modo') || 'manual';\nmsg.statusCode = 200;\nmsg.payload = { flow: 'registro-ensaio-v1.4', modo: m, bt: env.get('SEL_BT') || 'BT2', ts: Date.now() };\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 80,
+    "wires": [
+      [
+        "reg_out"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_post_modo",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "POST modo (memoria)",
+    "func": "const m = (msg.payload || {}).modo;\nif (m !== 'manual' && m !== 'auto') {\n  msg.statusCode = 400;\n  msg.payload = { ok: false, erro: 'modo invalido: deve ser manual ou auto' };\n  return msg;\n}\nflow.set('sel_modo', m);\nmsg.statusCode = 200;\nmsg.payload = { ok: true, modo: m };\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 140,
+    "wires": [
+      [
+        "reg_out"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_val_preen",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "valida preenchimento",
+    "func": "const campos = (msg.payload || {}).campos;\nif (!campos || typeof campos !== 'object') {\n  msg.statusCode = 400; msg.payload = { ok: false, erro: 'campos ausente' };\n  return [null, msg];\n}\nmsg._selRota = 'POST_PREEN';\nreturn [msg, null];\n",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 200,
+    "wires": [
+      [
+        "reg_fn_fila"
+      ],
+      [
+        "reg_out"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_val_etapa",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "valida etapa",
+    "func": "// Valores chegam prontos do HTML (media de 2 s). Aqui so se valida o formato.\nconst b = msg.payload || {};\nconst CAMPOS = ['cargaReal','potencia','tempMotor','Va','Vb','Vc','Ia','Ib','Ic','rpm','bateria','tEstab','cronometro'];\nconst falha = (t) => { msg.statusCode = 400; msg.payload = { ok: false, erro: t }; return [null, msg]; };\nif (b.confirmado !== true) return falha('etapa sem confirmacao do operador');\nif (!Number.isInteger(b.indice) || b.indice < 1 || b.indice > 6) return falha('indice deve ser inteiro de 1 a 6');\nif (typeof b.etapa !== 'number' || !isFinite(b.etapa)) return falha('etapa (% alvo) invalida');\nconst v = b.valores || {};\nfor (const k of CAMPOS) {\n  if (!(k in v)) return falha('valores.' + k + ' ausente');\n  if (v[k] !== null && (typeof v[k] !== 'number' || !isFinite(v[k]))) return falha('valores.' + k + ' invalido (numero ou null)');\n}\nmsg._selRota = 'POST_ETAPA';\nreturn [msg, null];\n",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 260,
+    "wires": [
+      [
+        "reg_fn_fila"
+      ],
+      [
+        "reg_out"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_val_get_snap",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "GET snap",
+    "func": "msg._selRota = 'GET_SNAP';\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 320,
+    "wires": [
+      [
+        "reg_fn_fila"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_val_limpar",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "valida limpar",
+    "func": "if ((msg.payload || {}).confirmado !== true) {\n  msg.statusCode = 400; msg.payload = { ok: false, erro: 'limpar requer confirmado:true' };\n  return [null, msg];\n}\nmsg._selRota = 'POST_LIMPAR';\nreturn [msg, null];\n",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 380,
+    "wires": [
+      [
+        "reg_fn_fila"
+      ],
+      [
+        "reg_out"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_fila",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "fila (uma gravacao por vez)",
+    "func": "const TRAVA_MAX = 10000;\nconst reqId = Date.now() + '_' + Math.random().toString(36).slice(2, 8);\nmsg._selReqId = reqId;\nmsg.topic = reqId;\nconst cache = flow.get('sel_req_cache') || {};\ncache[reqId] = { req: msg.req, res: msg.res };\nflow.set('sel_req_cache', cache);\nconst ocu = flow.get('sel_fila_ocupado');\nif (ocu) {\n  if (Date.now() - ocu.ts > TRAVA_MAX) {\n    node.warn('fila: liberando trava antiga reqId=' + ocu.reqId);\n  } else {\n    const fila = flow.get('sel_fila_espera') || [];\n    fila.push(msg);\n    flow.set('sel_fila_espera', fila);\n    return null;\n  }\n}\nflow.set('sel_fila_ocupado', { reqId, ts: Date.now() });\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 640,
+    "y": 240,
+    "wires": [
+      [
+        "reg_fn_gate",
+        "reg_wd"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_libera",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "libera fila",
+    "func": "const fila = flow.get('sel_fila_espera') || [];\nconst prox = fila.shift();\nflow.set('sel_fila_espera', fila);\nif (prox) {\n  flow.set('sel_fila_ocupado', { reqId: prox._selReqId, ts: Date.now() });\n  node.send(prox);\n} else {\n  flow.set('sel_fila_ocupado', null);\n}\nreturn null;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1560,
+    "y": 480,
+    "wires": [
+      [
+        "reg_fn_gate",
+        "reg_wd"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_gate",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "modo manual (trava DESLIGADA - so existe manual)",
+    "func": "// TRAVA DE MODO DESLIGADA (v1.3): ainda nao existe automatico (falta DB seletor e DB SNAP AUTO), entao toda gravacao vai direto pro DB53 manual, sem checar flow.sel_modo.\n// Quando o automatico existir, volta a checar aqui (ou troca a arquitetura pra Link In/Out).\nreturn [msg, null];",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 880,
+    "y": 240,
+    "wires": [
+      [
+        "reg_fn_prep"
+      ],
+      [
+        "reg_fn_fim"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_prep",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "monta escritas por variavel",
+    "func": "const CAMPOS = ['cargaReal','potencia','tempMotor','Va','Vb','Vc','Ia','Ib','Ic','rpm','bateria','tEstab','cronometro'];\nconst S = (v, max) => String(v == null ? '' : v).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\\x20-\\x7E]/g, '?').slice(0, max);\nconst N = (v) => { const n = (typeof v === 'number') ? v : (typeof v === 'string' && v.trim() !== '' ? Number(v.replace(',', '.')) : NaN); return isFinite(n) ? n : 0; };\nconst GRUPOS = [['motor','Motor'],['alternador','Alt'],['controlador','Ctrl'],['retificador','Ret'],['rat','Rat'],['bateria','Bat']];\nconst SUBS = [['fabricante','Fabricante'],['modelo','Modelo'],['serie','Serie']];\n\nlet ctx;\nif (msg._selFase === 'salva') {\n  ctx = flow.get('sel_ctx');\n  if (!ctx) return null;\n  ctx.fase = 'salva';\n  ctx.lerAgora = false;\n  flow.set('sel_ctx', ctx);\n  const w = [{ variable: 'etapa' + ctx.idx + 'Salva', payload: true }];\n  return [w, { payload: null, _selReqId: ctx.reqId }, null];\n}\n\nconst rota = msg._selRota;\nctx = { rota, reqId: msg._selReqId, fase: 'vals', lerAgora: false };\nconst writes = [];\n\nif (rota === 'GET_SNAP') {\n  ctx.lerAgora = true;\n  flow.set('sel_ctx', ctx);\n  return [null, null, { payload: '', _selReqId: ctx.reqId }];\n}\n\nif (rota === 'POST_PREEN') {\n  const c = (msg.payload || {}).campos || {};\n  const eq = c.equipamentos || {};\n  const nums = [N(c.frequenciaHz), N(c.tensaoV), N(c.tempAmbienteC), N(c.potenciaKw)];\n  const esp = { serie: S(c.serie, 20), versao: S(c.versao, 12), data: S(c.data, 10), fase: S(c.fase, 12), nums };\n  ctx.esp = esp;\n  writes.push({ variable: 'preenchValido', payload: true });\n  writes.push({ variable: 'serie', payload: esp.serie });\n  writes.push({ variable: 'versao', payload: esp.versao });\n  writes.push({ variable: 'data', payload: esp.data });\n  writes.push({ variable: 'fase', payload: esp.fase });\n  writes.push({ variable: 'preenchNums', payload: [nums] });\n  for (const [k, K] of GRUPOS) for (const [s, SS] of SUBS) {\n    writes.push({ variable: 'equip' + K + SS, payload: S((eq[k] || {})[s], 20) });\n  }\n}\nelse if (rota === 'POST_ETAPA') {\n  const b = msg.payload || {};\n  const vals = CAMPOS.map(k => N((b.valores || {})[k]));\n  ctx.idx = b.indice;\n  ctx.esp = { vals, perc: Math.round(b.etapa) };\n  writes.push({ variable: 'etapa' + b.indice + 'Perc', payload: Math.round(b.etapa) });\n  writes.push({ variable: 'etapa' + b.indice + 'Vals', payload: [vals] });\n}\nelse if (rota === 'POST_LIMPAR') {\n  writes.push({ variable: 'preenchValido', payload: false });\n  for (const v of ['serie','versao','data','fase']) writes.push({ variable: v, payload: '' });\n  writes.push({ variable: 'preenchNums', payload: [[0,0,0,0]] });\n  for (const [k, K] of GRUPOS) for (const [s, SS] of SUBS) writes.push({ variable: 'equip' + K + SS, payload: '' });\n  for (let i = 1; i <= 6; i++) {\n    writes.push({ variable: 'etapa' + i + 'Salva', payload: false });\n    writes.push({ variable: 'etapa' + i + 'Perc', payload: 0 });\n    writes.push({ variable: 'etapa' + i + 'Vals', payload: [[0,0,0,0,0,0,0,0,0,0,0,0,0]] });\n  }\n}\nelse {\n  msg.statusCode = 500; msg.payload = { ok: false, erro: 'rota nao tratada: ' + rota };\n  return [null, null, null];\n}\nflow.set('sel_ctx', ctx);\nreturn [writes, { payload: null, _selReqId: ctx.reqId }, null];\n",
+    "outputs": 3,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1100,
+    "y": 200,
+    "wires": [
+      [
+        "reg_s7_write"
+      ],
+      [
+        "reg_delay"
+      ],
+      [
+        "reg_s7_read"
+      ]
+    ]
+  },
+  {
+    "id": "reg_s7_write",
+    "type": "s7 out",
+    "z": "reg_tab",
+    "endpoint": "reg_ep_bc",
+    "variable": "",
+    "name": "escreve DB53",
+    "x": 1340,
+    "y": 160,
+    "wires": []
+  },
+  {
+    "id": "reg_delay",
+    "type": "delay",
+    "z": "reg_tab",
+    "name": "espera 1500ms (> ciclo S7)",
+    "pauseType": "delay",
+    "timeout": "1500",
+    "timeoutUnits": "milliseconds",
+    "rate": "1",
+    "nbRateUnits": "1",
+    "rateUnits": "second",
+    "randomFirst": "1",
+    "randomLast": "5",
+    "randomUnits": "seconds",
+    "drop": false,
+    "allowrate": false,
+    "outputs": 1,
+    "x": 1340,
+    "y": 240,
+    "wires": [
+      [
+        "reg_fn_libera_leitura"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_libera_leitura",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "libera leitura",
+    "func": "// So aceita a leitura DEPOIS da espera (o s7 in tambem pode emitir a cada ciclo, com dado velho).\nconst ctx = flow.get('sel_ctx');\nif (!ctx) return null;\nctx.lerAgora = true;\nflow.set('sel_ctx', ctx);\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1560,
+    "y": 240,
+    "wires": [
+      [
+        "reg_s7_read"
+      ]
+    ]
+  },
+  {
+    "id": "reg_s7_read",
+    "type": "s7 in",
+    "z": "reg_tab",
+    "endpoint": "reg_ep_bc",
+    "mode": "all",
+    "variable": "",
+    "diff": false,
+    "name": "le DB53 (todas)",
+    "x": 1560,
+    "y": 320,
+    "wires": [
+      [
+        "reg_fn_conf"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_conf",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "confere leitura x escrita",
+    "func": "const ctx = flow.get('sel_ctx');\nif (!ctx || !ctx.lerAgora) return null;           // emissao ciclica fora de hora: ignora\nconst cache = flow.get('sel_req_cache') || {};\nif (!cache[ctx.reqId]) return null;                // ja respondido (ex.: timeout)\nctx.lerAgora = false;                              // consome uma leitura por vez\nflow.set('sel_ctx', ctx);\n\nconst CAMPOS = ['cargaReal','potencia','tempMotor','Va','Vb','Vc','Ia','Ib','Ic','rpm','bateria','tEstab','cronometro'];\nconst GRUPOS = [['motor','Motor'],['alternador','Alt'],['controlador','Ctrl'],['retificador','Ret'],['rat','Rat'],['bateria','Bat']];\nconst SUBS = [['fabricante','Fabricante'],['modelo','Modelo'],['serie','Serie']];\nconst read = msg.payload || {};\nconst norm = (v) => (Array.isArray(v) && Array.isArray(v[0])) ? v[0] : (Array.isArray(v) ? v : []);\nconst close = (a, b) => Math.abs(a - b) <= Math.max(0.05, Math.abs(a) * 0.005);\nconst r3 = (x) => (typeof x === 'number' && isFinite(x)) ? Math.round(x * 1000) / 1000 : 0;\n\nconst fim = (code, body) => [null, { _selReqId: ctx.reqId, statusCode: code, payload: body }];\n\nif (ctx.rota === 'POST_PREEN') {\n  const e = ctx.esp, n = norm(read.preenchNums);\n  if (read.preenchValido !== true) return fim(500, { ok: false, erro: 'leitura de volta nao conferiu: preenchValido' });\n  for (const k of ['serie','versao','data','fase']) {\n    if (String(read[k]) !== e[k]) return fim(500, { ok: false, erro: 'leitura de volta nao conferiu: ' + k + ' escrito=' + e[k] + ' lido=' + read[k] });\n  }\n  for (let i = 0; i < 4; i++) if (!close(e.nums[i], n[i])) return fim(500, { ok: false, erro: 'leitura de volta nao conferiu: numero ' + i });\n  return fim(200, { ok: true });\n}\n\nif (ctx.rota === 'POST_LIMPAR') {\n  let sujo = read.preenchValido !== false;\n  for (let i = 1; i <= 6; i++) if (read['etapa' + i + 'Salva'] !== false) sujo = true;\n  return sujo ? fim(500, { ok: false, erro: 'leitura de volta apos limpar nao conferiu' }) : fim(200, { ok: true });\n}\n\nif (ctx.rota === 'POST_ETAPA') {\n  const i = ctx.idx;\n  if (ctx.fase === 'salva') {\n    return read['etapa' + i + 'Salva'] === true ? fim(200, { ok: true })\n      : fim(500, { ok: false, erro: 'bit salva nao confirmado na leitura de volta' });\n  }\n  const v = norm(read['etapa' + i + 'Vals']);\n  if (read['etapa' + i + 'Perc'] !== ctx.esp.perc) return fim(500, { ok: false, erro: 'leitura de volta nao conferiu: etapa (%)' });\n  for (let k = 0; k < CAMPOS.length; k++) {\n    if (!close(ctx.esp.vals[k], v[k])) return fim(500, { ok: false, erro: 'leitura de volta nao conferiu: ' + CAMPOS[k] + ' escrito=' + ctx.esp.vals[k] + ' lido=' + v[k] });\n  }\n  // valores conferem -> sobe o bit salva (segunda escrita) e volta para conferir\n  return [{ _selFase: 'salva', _selReqId: ctx.reqId, payload: null }, null];\n}\n\nif (ctx.rota === 'GET_SNAP') {\n  const nums = norm(read.preenchNums);\n  const eqp = {};\n  for (const [k, K] of GRUPOS) { eqp[k] = {}; for (const [s, SS] of SUBS) eqp[k][s] = read['equip' + K + SS] || ''; }\n  const preenchimento = read.preenchValido === true ? {\n    serie: read.serie || '', versao: read.versao || '', data: read.data || '', fase: read.fase || '',\n    frequenciaHz: r3(nums[0]), tensaoV: r3(nums[1]), tempAmbienteC: r3(nums[2]), potenciaKw: r3(nums[3]),\n    equipamentos: eqp\n  } : null;\n  const etapas = [];\n  for (let i = 1; i <= 6; i++) {\n    const salva = read['etapa' + i + 'Salva'] === true;\n    const v = norm(read['etapa' + i + 'Vals']);\n    const valores = {};\n    CAMPOS.forEach((k, j) => valores[k] = r3(v[j]));\n    etapas.push({ indice: i, etapa: salva ? read['etapa' + i + 'Perc'] : null, salva, valores: salva ? valores : null });\n  }\n  return fim(200, { flow: 'registro-ensaio-v1.4', modo: flow.get('sel_modo') || 'manual', preenchimento, etapas, lidoEm: new Date().toISOString() });\n}\nreturn fim(500, { ok: false, erro: 'rota nao tratada: ' + ctx.rota });\n",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1780,
+    "y": 320,
+    "wires": [
+      [
+        "reg_fn_prep"
+      ],
+      [
+        "reg_fn_fim"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_fim",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "responde + libera fila",
+    "func": "const reqId = msg._selReqId;\nconst cache = flow.get('sel_req_cache') || {};\nconst orig = cache[reqId];\nif (!orig) return null;                         // ja respondido\nmsg.req = orig.req; msg.res = orig.res;\ndelete cache[reqId];\nflow.set('sel_req_cache', cache);\nflow.set('sel_ctx', null);\nif (!msg.headers) msg.headers = {};\nmsg.headers['Content-Type'] = 'application/json';\nnode.send([msg, { payload: null }, { topic: reqId, reset: true }]);\nreturn null;\n",
+    "outputs": 3,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1700,
+    "y": 440,
+    "wires": [
+      [
+        "reg_out"
+      ],
+      [
+        "reg_fn_libera"
+      ],
+      [
+        "reg_wd"
+      ]
+    ]
+  },
+  {
+    "id": "reg_wd",
+    "type": "trigger",
+    "z": "reg_tab",
+    "name": "watchdog 8s (PLC off/timeout)",
+    "op1": "",
+    "op1type": "nul",
+    "op2": "timeout",
+    "op2type": "str",
+    "duration": "8000",
+    "extend": false,
+    "overrideDelay": false,
+    "units": "ms",
+    "reset": "",
+    "bytopic": "topic",
+    "topic": "topic",
+    "outputs": 1,
+    "x": 880,
+    "y": 600,
+    "wires": [
+      [
+        "reg_fn_wd_fire"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_wd_fire",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "monta 503 de timeout",
+    "func": "const reqId = msg.topic;\nconst cache = flow.get('sel_req_cache') || {};\nif (!cache[reqId]) return null;                 // ja foi respondido\nmsg._selReqId = reqId;\nmsg.statusCode = 503;\nmsg.payload = { ok: false, erro: 'tempo esgotado aguardando o PLC (timeout). Verifique se o PLC esta online e o DB existe.' };\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1120,
+    "y": 600,
+    "wires": [
+      [
+        "reg_fn_fim"
+      ]
+    ]
+  },
+  {
+    "id": "reg_catch",
+    "type": "catch",
+    "z": "reg_tab",
+    "name": "erro nao tratado",
+    "scope": null,
+    "uncaught": true,
+    "x": 200,
+    "y": 620,
+    "wires": [
+      [
+        "reg_fn_catch"
+      ]
+    ]
+  },
+  {
+    "id": "reg_fn_catch",
+    "type": "function",
+    "z": "reg_tab",
+    "name": "resposta 500",
+    "func": "if (!msg._selReqId) { node.warn('catch (sem requisicao): ' + (msg.error && msg.error.message)); return null; }\nmsg.statusCode = 500;\nmsg.payload = { ok: false, erro: 'erro interno: ' + (msg.error && msg.error.message ? msg.error.message : 'desconhecido') };\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 440,
+    "y": 620,
+    "wires": [
+      [
+        "reg_fn_fim"
+      ]
+    ]
+  },
+  {
+    "id": "reg_ep_bc",
+    "type": "s7 endpoint",
+    "transport": "iso-on-tcp",
+    "address": "172.17.209.135",
+    "port": "102",
+    "rack": "0",
+    "slot": "1",
+    "localtsaphi": "01",
+    "localtsaplo": "00",
+    "remotetsaphi": "01",
+    "remotetsaplo": "00",
+    "connmode": "rack-slot",
+    "adapter": "",
+    "busaddr": "2",
+    "cycletime": "1000",
+    "timeout": "2000",
+    "name": "PLC Bancos de Carga (DB53) - IP/rack/slot aqui",
+    "vartable": [
+      {
+        "name": "preenchValido",
+        "addr": "DB53,X0.0"
+      },
+      {
+        "name": "serie",
+        "addr": "DB53,S2.20"
+      },
+      {
+        "name": "versao",
+        "addr": "DB53,S24.12"
+      },
+      {
+        "name": "data",
+        "addr": "DB53,S38.10"
+      },
+      {
+        "name": "fase",
+        "addr": "DB53,S50.12"
+      },
+      {
+        "name": "preenchNums",
+        "addr": "DB53,REAL64.4"
+      },
+      {
+        "name": "equipMotorFabricante",
+        "addr": "DB53,S80.20"
+      },
+      {
+        "name": "equipMotorModelo",
+        "addr": "DB53,S102.20"
+      },
+      {
+        "name": "equipMotorSerie",
+        "addr": "DB53,S124.20"
+      },
+      {
+        "name": "equipAltFabricante",
+        "addr": "DB53,S146.20"
+      },
+      {
+        "name": "equipAltModelo",
+        "addr": "DB53,S168.20"
+      },
+      {
+        "name": "equipAltSerie",
+        "addr": "DB53,S190.20"
+      },
+      {
+        "name": "equipCtrlFabricante",
+        "addr": "DB53,S212.20"
+      },
+      {
+        "name": "equipCtrlModelo",
+        "addr": "DB53,S234.20"
+      },
+      {
+        "name": "equipCtrlSerie",
+        "addr": "DB53,S256.20"
+      },
+      {
+        "name": "equipRetFabricante",
+        "addr": "DB53,S278.20"
+      },
+      {
+        "name": "equipRetModelo",
+        "addr": "DB53,S300.20"
+      },
+      {
+        "name": "equipRetSerie",
+        "addr": "DB53,S322.20"
+      },
+      {
+        "name": "equipRatFabricante",
+        "addr": "DB53,S344.20"
+      },
+      {
+        "name": "equipRatModelo",
+        "addr": "DB53,S366.20"
+      },
+      {
+        "name": "equipRatSerie",
+        "addr": "DB53,S388.20"
+      },
+      {
+        "name": "equipBatFabricante",
+        "addr": "DB53,S410.20"
+      },
+      {
+        "name": "equipBatModelo",
+        "addr": "DB53,S432.20"
+      },
+      {
+        "name": "equipBatSerie",
+        "addr": "DB53,S454.20"
+      },
+      {
+        "name": "etapa1Salva",
+        "addr": "DB53,X476.0"
+      },
+      {
+        "name": "etapa1Perc",
+        "addr": "DB53,INT478"
+      },
+      {
+        "name": "etapa1Vals",
+        "addr": "DB53,REAL480.13"
+      },
+      {
+        "name": "etapa2Salva",
+        "addr": "DB53,X532.0"
+      },
+      {
+        "name": "etapa2Perc",
+        "addr": "DB53,INT534"
+      },
+      {
+        "name": "etapa2Vals",
+        "addr": "DB53,REAL536.13"
+      },
+      {
+        "name": "etapa3Salva",
+        "addr": "DB53,X588.0"
+      },
+      {
+        "name": "etapa3Perc",
+        "addr": "DB53,INT590"
+      },
+      {
+        "name": "etapa3Vals",
+        "addr": "DB53,REAL592.13"
+      },
+      {
+        "name": "etapa4Salva",
+        "addr": "DB53,X644.0"
+      },
+      {
+        "name": "etapa4Perc",
+        "addr": "DB53,INT646"
+      },
+      {
+        "name": "etapa4Vals",
+        "addr": "DB53,REAL648.13"
+      },
+      {
+        "name": "etapa5Salva",
+        "addr": "DB53,X700.0"
+      },
+      {
+        "name": "etapa5Perc",
+        "addr": "DB53,INT702"
+      },
+      {
+        "name": "etapa5Vals",
+        "addr": "DB53,REAL704.13"
+      },
+      {
+        "name": "etapa6Salva",
+        "addr": "DB53,X756.0"
+      },
+      {
+        "name": "etapa6Perc",
+        "addr": "DB53,INT758"
+      },
+      {
+        "name": "etapa6Vals",
+        "addr": "DB53,REAL760.13"
+      }
+    ]
+  }
+]

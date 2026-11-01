@@ -1,0 +1,1221 @@
+[
+  {
+    "id": "chv2_tab",
+    "type": "tab",
+    "label": "Chaves BC56 (API) v2.5",
+    "disabled": false,
+    "info": "v2.5 (25/10/2026) - banco BC56 (DB150) + setup por chaveamento (DB152). ATENCAO AO IMPORTAR: apague a aba \"Chaves BC56 (API) v2.4\" antes do Deploy (rotas iguais: a primeira aba registrada responde).\nORDEM: 1) DB152 v0.2 e FB100 v0.3 no PLC (DB NOVO; o DB150 NAO muda); 2) este flow. O DB152 e lido por um SEGUNDO s7 endpoint (isolado): se o DB152 nao existir no PLC, so os dados por tensao ficam indisponiveis (GET devolve porTensao:null e /salvar,/limpar,/tensao respondem 503) - as demais rotas de chaves continuam funcionando.\nMudancas v2.5: nova rota POST /api/chaves/56/tensao {tensao:0|220|380|440} (informa o chaveamento do banco ao PLC; 409 se houver chave selecionada); GET devolve tensaoSel (0..3), tensaoV e porTensao{220,380,440}{setupOk,kwReal,rMedidoOhm,vMedidaV}; /salvar exige chaveamento informado (409); /limpar apaga SO o chaveamento ativo (exige informado); rTeoricoOhm <=0 vira null (R teorico nao e mais calculado: V_ref desconhecida).\nOFFSETS DO DB152 sao ASSUMIDOS (conferir na coluna Deslocamento do TIA): tensaoSel INT 1356; kwReal REAL 6 (48); rMedidoOhm REAL 198 (48); vMedidaV REAL 390 (48); setupOk bits a partir de 1350.0 (6 bytes). Ver db152_*_SetupPorTensao_v0.2.db.\n\nv2.4 (24/10/2026) - banco BC56 (DB150). ATENCAO AO IMPORTAR: apague a aba \"Chaves BC56 (API) v2.3\" antes do Deploy (rotas iguais: a primeira aba registrada responde).\nORDEM OBRIGATORIA: 1) DB150 v0.2 no PLC (membros novos no fim: cbBanco.ligar X460.0, sbBanco.seletoraAuto X462.0, sbBanco.comEt200Ok X462.1); 2) FB101 v0.4 + DB38/DB39 v0.2 no ET200 e FC4 ajustado; 3) este flow. Sem o passo 1 a leitura do s7 in falha (endereco fora do DB) e TODAS as rotas param.\nMudancas v2.4: GET devolve bancoLigado, seletora (auto|manual|null) e comEt200Ok; nova rota POST /api/chaves/56/banco {ligar:bool}; /ligar e /selecionar exigem banco ligado (409); vigia \"HTML sumiu\" tambem desliga o banco.\n\nv2.2 (22/10/2026). ATENCAO AO IMPORTAR: apague TODAS as abas \"Chaves BC56 (API)\" anteriores (v1/v2/v2.1) antes de dar Deploy. Duas abas com as mesmas rotas /api/chaves/56... = a PRIMEIRA registrada responde e a outra e ignorada (comandos atendidos pela aba antiga nao entram no log).\nMudancas v2.2: GET responde do cache da leitura ciclica (sem fila; 503 imediato se o PLC parar de responder); campo \"flow\":\"chaves-v2.2\" nas respostas GET/logs; correcao do campo \"banco\" (BC400 respondia \"56\").\n\nFlow do card \"Chaves do banco de carga\" - banco BC56 (DB150), PLC da Carga (172.17.209.135). v2 (21/10/2026).\n\nROTAS (padrao do projeto: todas comecam com /api/):\n GET  /api/chaves/56            -> estado (habilitada, ligada=sb feedback, cbLigar=comando, setupOk, kwReal...)\n POST /api/chaves/56/ligar      -> {indice:1..16, ligar:bool} liga/desliga UMA chave (escreve cb.ligar[n]) - NOVO v2\n POST /api/chaves/56/habilitar  -> {indice, habilitada}  (ao desabilitar, tambem derruba cb.ligar[n])\n POST /api/chaves/56/selecionar -> {indice:0..16} chave do Setup (FB100 aciona cb.ligar da escolhida)\n POST /api/chaves/56/salvar | /usarKwReal | /limpar\n\nv2 vs v1: cycletime S7 1000->200 ms e espera de releitura 1500->450 ms (resposta bem mais rapida; se aparecer 'leitura de volta nao conferiu', suba a espera para 700 ms); nova rota /ligar; GET devolve cbLigar.\nATENCAO cb.ligar tem 2 escritores: FB100 (ao mudar chaveSel zera todas e liga so a escolhida) e esta rota /ligar (operacao manual). /ligar true e bloqueado com 409 se houver chave selecionada no Setup.\nOffsets: DB150 nao otimizado, confirmados por export TIA do operador (cb.ligar[1..16] = X0.0..X1.7, confirmado por print do TIA em 21/10/2026).\nSubstitui o flow 'Chaves BC56 (DB150)' (v1): apague a aba antiga ao importar este.",
+    "env": [
+      {
+        "name": "WD_HTML_S",
+        "value": "30",
+        "type": "num"
+      }
+    ]
+  },
+  {
+    "id": "chv2_ep",
+    "type": "s7 endpoint",
+    "transport": "iso-on-tcp",
+    "address": "172.17.209.135",
+    "port": "102",
+    "rack": "0",
+    "slot": "1",
+    "localtsaphi": "01",
+    "localtsaplo": "00",
+    "remotetsaphi": "01",
+    "remotetsaplo": "00",
+    "connmode": "rack-slot",
+    "adapter": "",
+    "busaddr": "2",
+    "cycletime": "200",
+    "timeout": "2000",
+    "name": "PLC da Carga",
+    "vartable": [
+      {
+        "name": "CbLigar1",
+        "addr": "DB150,X0.0"
+      },
+      {
+        "name": "CbLigar2",
+        "addr": "DB150,X0.1"
+      },
+      {
+        "name": "CbLigar3",
+        "addr": "DB150,X0.2"
+      },
+      {
+        "name": "CbLigar4",
+        "addr": "DB150,X0.3"
+      },
+      {
+        "name": "CbLigar5",
+        "addr": "DB150,X0.4"
+      },
+      {
+        "name": "CbLigar6",
+        "addr": "DB150,X0.5"
+      },
+      {
+        "name": "CbLigar7",
+        "addr": "DB150,X0.6"
+      },
+      {
+        "name": "CbLigar8",
+        "addr": "DB150,X0.7"
+      },
+      {
+        "name": "CbLigar9",
+        "addr": "DB150,X1.0"
+      },
+      {
+        "name": "CbLigar10",
+        "addr": "DB150,X1.1"
+      },
+      {
+        "name": "CbLigar11",
+        "addr": "DB150,X1.2"
+      },
+      {
+        "name": "CbLigar12",
+        "addr": "DB150,X1.3"
+      },
+      {
+        "name": "CbLigar13",
+        "addr": "DB150,X1.4"
+      },
+      {
+        "name": "CbLigar14",
+        "addr": "DB150,X1.5"
+      },
+      {
+        "name": "CbLigar15",
+        "addr": "DB150,X1.6"
+      },
+      {
+        "name": "CbLigar16",
+        "addr": "DB150,X1.7"
+      },
+      {
+        "name": "Ligada1",
+        "addr": "DB150,X2.0"
+      },
+      {
+        "name": "Ligada2",
+        "addr": "DB150,X2.1"
+      },
+      {
+        "name": "Ligada3",
+        "addr": "DB150,X2.2"
+      },
+      {
+        "name": "Ligada4",
+        "addr": "DB150,X2.3"
+      },
+      {
+        "name": "Ligada5",
+        "addr": "DB150,X2.4"
+      },
+      {
+        "name": "Ligada6",
+        "addr": "DB150,X2.5"
+      },
+      {
+        "name": "Ligada7",
+        "addr": "DB150,X2.6"
+      },
+      {
+        "name": "Ligada8",
+        "addr": "DB150,X2.7"
+      },
+      {
+        "name": "Ligada9",
+        "addr": "DB150,X3.0"
+      },
+      {
+        "name": "Ligada10",
+        "addr": "DB150,X3.1"
+      },
+      {
+        "name": "Ligada11",
+        "addr": "DB150,X3.2"
+      },
+      {
+        "name": "Ligada12",
+        "addr": "DB150,X3.3"
+      },
+      {
+        "name": "Ligada13",
+        "addr": "DB150,X3.4"
+      },
+      {
+        "name": "Ligada14",
+        "addr": "DB150,X3.5"
+      },
+      {
+        "name": "Ligada15",
+        "addr": "DB150,X3.6"
+      },
+      {
+        "name": "Ligada16",
+        "addr": "DB150,X3.7"
+      },
+      {
+        "name": "Habilitada1",
+        "addr": "DB150,X4.0"
+      },
+      {
+        "name": "Habilitada2",
+        "addr": "DB150,X4.1"
+      },
+      {
+        "name": "Habilitada3",
+        "addr": "DB150,X4.2"
+      },
+      {
+        "name": "Habilitada4",
+        "addr": "DB150,X4.3"
+      },
+      {
+        "name": "Habilitada5",
+        "addr": "DB150,X4.4"
+      },
+      {
+        "name": "Habilitada6",
+        "addr": "DB150,X4.5"
+      },
+      {
+        "name": "Habilitada7",
+        "addr": "DB150,X4.6"
+      },
+      {
+        "name": "Habilitada8",
+        "addr": "DB150,X4.7"
+      },
+      {
+        "name": "Habilitada9",
+        "addr": "DB150,X5.0"
+      },
+      {
+        "name": "Habilitada10",
+        "addr": "DB150,X5.1"
+      },
+      {
+        "name": "Habilitada11",
+        "addr": "DB150,X5.2"
+      },
+      {
+        "name": "Habilitada12",
+        "addr": "DB150,X5.3"
+      },
+      {
+        "name": "Habilitada13",
+        "addr": "DB150,X5.4"
+      },
+      {
+        "name": "Habilitada14",
+        "addr": "DB150,X5.5"
+      },
+      {
+        "name": "Habilitada15",
+        "addr": "DB150,X5.6"
+      },
+      {
+        "name": "Habilitada16",
+        "addr": "DB150,X5.7"
+      },
+      {
+        "name": "SetupOk1",
+        "addr": "DB150,X6.0"
+      },
+      {
+        "name": "SetupOk2",
+        "addr": "DB150,X6.1"
+      },
+      {
+        "name": "SetupOk3",
+        "addr": "DB150,X6.2"
+      },
+      {
+        "name": "SetupOk4",
+        "addr": "DB150,X6.3"
+      },
+      {
+        "name": "SetupOk5",
+        "addr": "DB150,X6.4"
+      },
+      {
+        "name": "SetupOk6",
+        "addr": "DB150,X6.5"
+      },
+      {
+        "name": "SetupOk7",
+        "addr": "DB150,X6.6"
+      },
+      {
+        "name": "SetupOk8",
+        "addr": "DB150,X6.7"
+      },
+      {
+        "name": "SetupOk9",
+        "addr": "DB150,X7.0"
+      },
+      {
+        "name": "SetupOk10",
+        "addr": "DB150,X7.1"
+      },
+      {
+        "name": "SetupOk11",
+        "addr": "DB150,X7.2"
+      },
+      {
+        "name": "SetupOk12",
+        "addr": "DB150,X7.3"
+      },
+      {
+        "name": "SetupOk13",
+        "addr": "DB150,X7.4"
+      },
+      {
+        "name": "SetupOk14",
+        "addr": "DB150,X7.5"
+      },
+      {
+        "name": "SetupOk15",
+        "addr": "DB150,X7.6"
+      },
+      {
+        "name": "SetupOk16",
+        "addr": "DB150,X7.7"
+      },
+      {
+        "name": "KwReal",
+        "addr": "DB150,REAL8.16"
+      },
+      {
+        "name": "RmedidoOhm",
+        "addr": "DB150,REAL72.16"
+      },
+      {
+        "name": "RteoricoOhm",
+        "addr": "DB150,REAL136.16"
+      },
+      {
+        "name": "Nominal",
+        "addr": "DB150,REAL392.16"
+      },
+      {
+        "name": "SetupData",
+        "addr": "DB150,BYTE200.192"
+      },
+      {
+        "name": "ChaveSel",
+        "addr": "DB150,INT456"
+      },
+      {
+        "name": "Salvar",
+        "addr": "DB150,X458.0"
+      },
+      {
+        "name": "UsarKwReal",
+        "addr": "DB150,X458.1"
+      },
+      {
+        "name": "LigarBanco",
+        "addr": "DB150,X460.0"
+      },
+      {
+        "name": "SeletoraAuto",
+        "addr": "DB150,X462.0"
+      },
+      {
+        "name": "ComEt200Ok",
+        "addr": "DB150,X462.1"
+      }
+    ]
+  },
+  {
+    "id": "chv2_in_get",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "GET /api/chaves/56",
+    "url": "/api/chaves/56",
+    "method": "get",
+    "upload": false,
+    "wires": [
+      [
+        "chv2_val_get"
+      ]
+    ],
+    "x": 140,
+    "y": 80
+  },
+  {
+    "id": "chv2_in_hab",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "POST /api/chaves/56/habilitar",
+    "url": "/api/chaves/56/habilitar",
+    "method": "post",
+    "upload": false,
+    "wires": [
+      [
+        "chv2_val_hab"
+      ]
+    ],
+    "x": 140,
+    "y": 160
+  },
+  {
+    "id": "chv2_in_sel",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "POST /api/chaves/56/selecionar",
+    "url": "/api/chaves/56/selecionar",
+    "method": "post",
+    "upload": false,
+    "wires": [
+      [
+        "chv2_val_sel"
+      ]
+    ],
+    "x": 140,
+    "y": 240
+  },
+  {
+    "id": "chv2_in_salv",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "POST /api/chaves/56/salvar",
+    "url": "/api/chaves/56/salvar",
+    "method": "post",
+    "upload": false,
+    "wires": [
+      [
+        "chv2_val_salv"
+      ]
+    ],
+    "x": 140,
+    "y": 320
+  },
+  {
+    "id": "chv2_in_usar",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "POST /api/chaves/56/usarKwReal",
+    "url": "/api/chaves/56/usarKwReal",
+    "method": "post",
+    "upload": false,
+    "wires": [
+      [
+        "chv2_val_usar"
+      ]
+    ],
+    "x": 140,
+    "y": 400
+  },
+  {
+    "id": "chv2_in_limpar",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "POST /api/chaves/56/limpar",
+    "url": "/api/chaves/56/limpar",
+    "method": "post",
+    "upload": false,
+    "wires": [
+      [
+        "chv2_val_limpar"
+      ]
+    ],
+    "x": 140,
+    "y": 480
+  },
+  {
+    "id": "chv2_out",
+    "type": "http response",
+    "z": "chv2_tab",
+    "name": "HTTP response",
+    "statusCode": "",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "x": 1850,
+    "y": 80
+  },
+  {
+    "id": "chv2_val_get",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "GET chaves (cache da leitura ciclica)",
+    "func": "// v2.2 (22/10/2026): GET responde DIRETO do cache da leitura ciclica do 's7 in' (a cada 200 ms),\n// sem entrar na fila e sem provocar leitura. Motivos: (1) a tela consulta 1x/s os dois bancos - na fila isso acumulava\n// pedidos quando o PLC caia; (2) cache velho (> 2,5 s) = PLC sem leitura -> responde 503 NA HORA (a tela mostra\n// \"PLC sem resposta\" sem esperar o watchdog de 8 s).\nflow.set('chv2_html_ts', Date.now());   // v2.3: vigia 'HTML sumiu' (qualquer GET conta como HTML vivo)\nconst live = flow.get('chv2_live');\nconst ts = flow.get('chv2_live_ts') || 0;\nconst idade = ts ? Date.now() - ts : null;\nmsg.headers = { 'Content-Type': 'application/json' };\nif (!live || idade === null || idade > 2500) {\n  msg.statusCode = 503;\n  msg.payload = { ok: false, flow: 'chaves-v2.5', erro: 'PLC sem leitura recente' + (idade === null ? ' (nenhuma leitura desde o deploy)' : ' (ha ' + Math.round(idade / 1000) + ' s)') + ' - verifique rede/PLC', idadeMs: idade };\n  // log: no maximo 1 falha de GET a cada 10 s (para nao encher o log quando o PLC cai)\n  const agora = Date.now();\n  if (agora - (flow.get('chv2_gerr_ts') || 0) > 10000) {\n    flow.set('chv2_gerr_ts', agora);\n    const logs = flow.get('chv2_logs') || [];\n    logs.push({ t: new Date().toISOString(), rota: 'GET', dado: '', status: 503, ok: false, ms: 0, erro: msg.payload.erro });\n    if (logs.length > 1000) logs.shift();\n    flow.set('chv2_logs', logs);\n  }\n  return msg;\n}\nconst read = live;\nconst arr16 = (pref) => { const a = []; for (let i = 1; i <= 16; i++) a.push(read[pref + i] === true); return a; };\nconst norm = (v) => (Array.isArray(v) && Array.isArray(v[0])) ? v[0] : (Array.isArray(v) ? v : []);\nconst r2 = (x) => (typeof x === 'number' && isFinite(x)) ? Math.round(x * 100) / 100 : null;\n// v2.5: dados por chaveamento (DB por tensao, lido por um 2o endpoint isolado)\nconst T = flow.get('chv2_tens'), ts2 = flow.get('chv2_tens_ts') || 0;\nlet porT = null;\nif (T && Date.now() - ts2 <= 5000) {\n  const ok = norm(T.SetupOkV), kw = norm(T.KwRealV), rm = norm(T.RmedidoV), vm = norm(T.VmedidaV);\n  const dados = {};\n  [220, 380, 440].forEach((v, c) => {\n    const sl = (a) => a.slice(c * 16, c * 16 + 16).map(r2);\n    const oks = [];\n    for (let k = 0; k < 16; k++) { const pp = c * 16 + k; oks.push(((ok[pp >> 3] || 0) >> (pp & 7) & 1) === 1); }\n    dados[String(v)] = { setupOk: oks, kwReal: sl(kw), rMedidoOhm: sl(rm), vMedidaV: sl(vm) };\n  });\n  porT = { sel: T.TensaoSel, dados };\n}\nmsg.statusCode = 200;\nmsg.payload = {\n  flow: 'chaves-v2.5',\n  banco: '56',\n  habilitada: arr16('Habilitada'),\n  ligada: arr16('Ligada'),\n  cbLigar: arr16('CbLigar'),\n  setupOk: arr16('SetupOk'),\n  kwReal: norm(read.KwReal).map(r2),\n  rMedidoOhm: norm(read.RmedidoOhm).map(r2),\n  rTeoricoOhm: norm(read.RteoricoOhm).map(x => (typeof x === 'number' && x > 0) ? r2(x) : null),   // v2.5: 0 = nao calculado (V_ref desconhecida)\n  nominal: norm(read.Nominal).map(r2),\n  chaveSel: read.ChaveSel || 0,\n  usarKwReal: read.UsarKwReal === true,\n  bancoLigado: read.LigarBanco === true,                    // v2.4: cbBanco.ligar\n  comEt200Ok: read.ComEt200Ok === true,                     // v2.4: sbBanco.comEt200Ok (ComOk do FB101)\n  seletora: read.ComEt200Ok === true ? (read.SeletoraAuto === true ? 'auto' : 'manual') : null, // v2.4: null = sem comunicacao com o ET200\n  tensaoSel: porT ? porT.sel : null,                         // v2.5: 0 = nao informado, 1/2/3 = 220/380/440 V; null = DB sem leitura\n  tensaoV: [220, 380, 440],\n  porTensao: porT ? porT.dados : null,                       // v2.5: setup guardado por chaveamento\n  wdZerou: flow.get('chv2_wd_zerou') || null,   // v2.3: {ts, qtd} do ultimo corte do vigia\n  idadeMs: idade,\n  lidoEm: new Date().toISOString()\n};\nreturn msg;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_out"
+      ]
+    ],
+    "x": 330,
+    "y": 80
+  },
+  {
+    "id": "chv2_val_hab",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "valida habilitar",
+    "func": "const b = msg.payload || {};\nconst falha = (t) => { msg.statusCode = 400; msg.payload = { ok: false, erro: t }; return [null, msg]; };\nif (!Number.isInteger(b.indice) || b.indice < 1 || b.indice > 16) return falha('indice deve ser inteiro de 1 a 16');\nif (typeof b.habilitada !== 'boolean') return falha('habilitada deve ser true/false');\nmsg._rota = 'HABILITAR';\nreturn [msg, null];\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_fila"
+      ],
+      [
+        "chv2_out"
+      ]
+    ],
+    "x": 330,
+    "y": 160
+  },
+  {
+    "id": "chv2_val_sel",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "valida selecionar",
+    "func": "const b = msg.payload || {};\nconst falha = (t, code) => { msg.statusCode = code || 400; msg.payload = { ok: false, erro: t }; return [null, msg]; };\nif (!Number.isInteger(b.indice) || b.indice < 0 || b.indice > 16) return falha('indice deve ser inteiro de 0 a 16 (0 = nenhuma)');\nif (b.indice > 0) {\n  const live = flow.get('chv2_live');\n  if (!live) return falha('aguardando a 1a leitura do PLC - tente de novo em instantes', 503);\n  if (live.LigarBanco !== true) return falha('banco BC56 desligado - acione \"Ligar banco\" antes de calibrar (seletora em Auto)', 409);   // v2.4\n  if (live['Habilitada' + b.indice] !== true) return falha('chave ' + b.indice + ' esta desabilitada (habilite antes de selecionar)');\n}\nmsg._rota = 'SELECIONAR';\nreturn [msg, null];\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_fila"
+      ],
+      [
+        "chv2_out"
+      ]
+    ],
+    "x": 330,
+    "y": 240
+  },
+  {
+    "id": "chv2_val_salv",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "valida salvar",
+    "func": "const b = msg.payload || {};\nconst falha = (t, code) => { msg.statusCode = code || 400; msg.payload = { ok: false, erro: t }; return [null, msg]; };\nif (b.confirmado !== true) return falha('salvar requer confirmado:true');\nconst live = flow.get('chv2_live');\nif (!live) return falha('aguardando a 1a leitura do PLC - tente de novo em instantes', 503);\nif (!live.ChaveSel) return falha('nenhuma chave selecionada (POST /selecionar antes)');\nconst T = flow.get('chv2_tens'), ts2 = flow.get('chv2_tens_ts') || 0;   // v2.5: Setup por chaveamento\nif (!T || Date.now() - ts2 > 5000) return falha('DB152 sem leitura recente - nao salvei (confira o DB152 v0.2 no PLC)', 503);\nif (!(T.TensaoSel >= 1 && T.TensaoSel <= 3)) return falha('informe o chaveamento (220/380/440 V) antes de salvar o Setup', 409);\nmsg._rota = 'SALVAR';\nmsg._chaveSel = live.ChaveSel;\nreturn [msg, null];\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_fila"
+      ],
+      [
+        "chv2_out"
+      ]
+    ],
+    "x": 330,
+    "y": 320
+  },
+  {
+    "id": "chv2_val_usar",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "valida usarKwReal",
+    "func": "const b = msg.payload || {};\nif (typeof b.usar !== 'boolean') { msg.statusCode = 400; msg.payload = { ok: false, erro: 'usar deve ser true/false' }; return [null, msg]; }\nmsg._rota = 'USARKWREAL';\nreturn [msg, null];\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_fila"
+      ],
+      [
+        "chv2_out"
+      ]
+    ],
+    "x": 330,
+    "y": 400
+  },
+  {
+    "id": "chv2_val_limpar",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "valida limpar",
+    "func": "if ((msg.payload || {}).confirmado !== true) {\n  msg.statusCode = 400; msg.payload = { ok: false, erro: 'limpar requer confirmado:true' };\n  return [null, msg];\n}\nconst T = flow.get('chv2_tens'), ts2 = flow.get('chv2_tens_ts') || 0;\nif (!T || Date.now() - ts2 > 5000) { msg.statusCode = 503; msg.payload = { ok: false, erro: 'DB152 sem leitura recente - nao limpei' }; return [null, msg]; }\nif (!(T.TensaoSel >= 1 && T.TensaoSel <= 3)) { msg.statusCode = 409; msg.payload = { ok: false, erro: 'informe o chaveamento (220/380/440 V) antes de limpar: o Setup e guardado por chaveamento' }; return [null, msg]; }\nmsg._tensaoSel = T.TensaoSel;\nmsg._rota = 'LIMPAR';\nreturn [msg, null];\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_fila"
+      ],
+      [
+        "chv2_out"
+      ]
+    ],
+    "x": 330,
+    "y": 480
+  },
+  {
+    "id": "chv2_fila",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "fila (uma gravacao por vez)",
+    "func": "const TRAVA_MAX = 10000;\nconst reqId = Date.now() + '_' + Math.random().toString(36).slice(2, 8);\nmsg._reqId = reqId;\nmsg.topic = reqId;\nif (msg._rota !== 'ZERAR') flow.set('chv2_html_ts', Date.now());   // v2.3\nconst cache = flow.get('chv2_req_cache') || {};\ncache[reqId] = { req: msg.req, res: msg.res };\nflow.set('chv2_req_cache', cache);\nconst ocu = flow.get('chv2_fila_ocupado');\nif (ocu) {\n  if (Date.now() - ocu.ts > TRAVA_MAX) {\n    node.warn('fila: liberando trava antiga reqId=' + ocu.reqId);\n  } else {\n    const fila = flow.get('chv2_fila_espera') || [];\n    // v2.4: 'Desligar banco' e o vigia (ZERAR) furam a fila - comando de seguranca nao espera gravacoes comuns\n    const prio = (msg._rota === 'BANCO' && msg.payload && msg.payload.ligar === false) || msg._rota === 'ZERAR';\n    if (prio) fila.unshift(msg); else fila.push(msg);\n    flow.set('chv2_fila_espera', fila);\n    return null;\n  }\n}\nflow.set('chv2_fila_ocupado', { reqId, ts: Date.now() });\nreturn msg;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_monta",
+        "chv2_wd"
+      ]
+    ],
+    "x": 520,
+    "y": 80
+  },
+  {
+    "id": "chv2_libera_fila",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "libera fila",
+    "func": "const fila = flow.get('chv2_fila_espera') || [];\nconst prox = fila.shift();\nflow.set('chv2_fila_espera', fila);\nif (prox) {\n  flow.set('chv2_fila_ocupado', { reqId: prox._reqId, ts: Date.now() });\n  node.send(prox);\n} else {\n  flow.set('chv2_fila_ocupado', null);\n}\nreturn null;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_monta",
+        "chv2_wd"
+      ]
+    ],
+    "x": 520,
+    "y": 160
+  },
+  {
+    "id": "chv2_monta",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "monta escritas por variavel",
+    "func": "// fase 2 do SALVAR: despulsa (Salvar=false), depois de confirmado o SetupOk na fase 1\nif (msg._fase === 'despulsa') {\n  const ctx = flow.get('chv2_ctx');\n  if (!ctx) return null;\n  ctx.fase = 'despulsa';\n  ctx.lerAgora = false;\n  flow.set('chv2_ctx', ctx);\n  const w = [{ variable: 'Salvar', payload: false }];\n  return [w, { payload: null, _reqId: ctx.reqId }, null];\n}\n\nconst rota = msg._rota;\nlet ctx = { rota, reqId: msg._reqId, fase: 'escreve', lerAgora: false };\nconst writes = [];\nconst ZERO16 = new Array(16).fill(0);\nconst ZERO192 = new Array(192).fill(0);\nconst w2 = [];   // v2.5: escritas no DB por tensao (4a saida)\n\nif (rota === 'GET') {\n  ctx.lerAgora = true;\n  flow.set('chv2_ctx', ctx);\n  return [null, null, { payload: '', _reqId: ctx.reqId }];\n}\n\nif (rota === 'HABILITAR') {\n  const b = msg.payload;\n  ctx.esp = { indice: b.indice, v: !!b.habilitada };\n  if (!b.habilitada) writes.push({ variable: 'CbLigar' + b.indice, payload: false });   // v2: desabilitar derruba o comando da chave\n  writes.push({ variable: 'Habilitada' + b.indice, payload: !!b.habilitada });\n}\nelse if (rota === 'LIGAR') {\n  const b = msg.payload;\n  ctx.esp = { indice: b.indice, v: !!b.ligar };\n  writes.push({ variable: 'CbLigar' + b.indice, payload: !!b.ligar });\n}\nelse if (rota === 'BANCO') {   // v2.4: Ligar/Desligar banco (cbBanco.ligar)\n  const b = msg.payload;\n  ctx.esp = { v: !!b.ligar };\n  if (!b.ligar) for (let i = 1; i <= 16; i++) writes.push({ variable: 'CbLigar' + i, payload: false }); // desligar banco abre as chaves (o FB101 tambem faz)\n  writes.push({ variable: 'LigarBanco', payload: !!b.ligar });\n}\nelse if (rota === 'SELECIONAR') {\n  const b = msg.payload;\n  ctx.esp = { v: b.indice };\n  writes.push({ variable: 'ChaveSel', payload: b.indice });\n}\nelse if (rota === 'SALVAR') {\n  ctx.esp = { chaveSel: msg._chaveSel };\n  writes.push({ variable: 'Salvar', payload: true });\n}\nelse if (rota === 'USARKWREAL') {\n  const b = msg.payload;\n  ctx.esp = { v: !!b.usar };\n  writes.push({ variable: 'UsarKwReal', payload: !!b.usar });\n}\nelse if (rota === 'ZERAR') {\n  // v2.3: job INTERNO do vigia (nao vem de HTTP). Derruba o comando das 16 chaves; nao mexe em Habilitada/Setup.\n  ctx.esp = { zerar: true, qtd: msg._qtd || 0 };\n  for (let i = 1; i <= 16; i++) writes.push({ variable: 'CbLigar' + i, payload: false });\n  writes.push({ variable: 'LigarBanco', payload: false });   // v2.4: vigia tambem desliga o banco\n}\nelse if (rota === 'LIMPAR') {\n  for (let i = 1; i <= 16; i++) writes.push({ variable: 'SetupOk' + i, payload: false });\n  writes.push({ variable: 'KwReal', payload: [ZERO16] });\n  writes.push({ variable: 'RmedidoOhm', payload: [ZERO16] });\n  writes.push({ variable: 'RteoricoOhm', payload: [ZERO16] });\n  writes.push({ variable: 'SetupData', payload: [ZERO192] });\n  // v2.5: o FB100 v0.3 ESPELHA o chaveamento ativo nos arrays acima a cada scan; para o LIMPAR valer, apaga-se a linha do chaveamento ATIVO no DB por tensao\n  const tv = msg._tensaoSel;   // 1..3 (validado em 'valida limpar')\n  ctx.esp = { tensaoSel: tv };\n  w2.push({ variable: 'OkLin' + tv, payload: [[0, 0]] });\n  w2.push({ variable: 'KwLin' + tv, payload: [ZERO16] });\n  w2.push({ variable: 'RmLin' + tv, payload: [ZERO16] });\n}\nelse {\n  msg.statusCode = 500; msg.payload = { ok: false, erro: 'rota nao tratada: ' + rota };\n  return [null, null, null];\n}\nflow.set('chv2_ctx', ctx);\nreturn [writes, { payload: null, _reqId: ctx.reqId }, null, w2];\n",
+    "outputs": 4,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_s7_write"
+      ],
+      [
+        "chv2_delay"
+      ],
+      [
+        "chv2_s7_read"
+      ],
+      [
+        "chv2_s7_write2"
+      ]
+    ],
+    "x": 710,
+    "y": 80
+  },
+  {
+    "id": "chv2_s7_write",
+    "type": "s7 out",
+    "z": "chv2_tab",
+    "endpoint": "chv2_ep",
+    "variable": "",
+    "name": "escreve DB150",
+    "wires": [],
+    "x": 900,
+    "y": 80
+  },
+  {
+    "id": "chv2_delay",
+    "type": "delay",
+    "z": "chv2_tab",
+    "name": "espera 450ms (> ciclo S7 200ms)",
+    "pauseType": "delay",
+    "timeout": "450",
+    "timeoutUnits": "milliseconds",
+    "rate": "1",
+    "nbRateUnits": "1",
+    "rateUnits": "second",
+    "randomFirst": "1",
+    "randomLast": "5",
+    "randomUnits": "seconds",
+    "drop": false,
+    "allowrate": false,
+    "outputs": 1,
+    "wires": [
+      [
+        "chv2_libera_leitura"
+      ]
+    ],
+    "x": 900,
+    "y": 160
+  },
+  {
+    "id": "chv2_libera_leitura",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "libera leitura",
+    "func": "const ctx = flow.get('chv2_ctx');\nif (!ctx) return null;\nctx.lerAgora = true;\nflow.set('chv2_ctx', ctx);\nreturn msg;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_s7_read"
+      ]
+    ],
+    "x": 1090,
+    "y": 80
+  },
+  {
+    "id": "chv2_s7_read",
+    "type": "s7 in",
+    "z": "chv2_tab",
+    "endpoint": "chv2_ep",
+    "mode": "all",
+    "variable": "",
+    "diff": false,
+    "name": "le DB150 (todas)",
+    "wires": [
+      [
+        "chv2_confere",
+        "chv2_cache_vivo"
+      ]
+    ],
+    "x": 1280,
+    "y": 80
+  },
+  {
+    "id": "chv2_cache_vivo",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "guarda leitura ao vivo (cache)",
+    "func": "// Tap incondicional: toda leitura do ciclo (auto ou provocada) atualiza o cache usado pelas validacoes\n// (ex.: Habilitada[indice] no /selecionar, ChaveSel no /salvar) sem precisar de outro offset novo.\nflow.set('chv2_live', msg.payload);\nflow.set('chv2_live_ts', Date.now());   // v2.2: idade da leitura (GET devolve 503 se > 2,5 s)\nreturn null;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      []
+    ],
+    "x": 1470,
+    "y": 80
+  },
+  {
+    "id": "chv2_confere",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "confere leitura x escrita",
+    "func": "const ctx = flow.get('chv2_ctx');\nif (!ctx || !ctx.lerAgora) return null;           // emissao ciclica fora de hora: ignora\nconst cache = flow.get('chv2_req_cache') || {};\nif (!cache[ctx.reqId]) return null;                // ja respondido (ex.: timeout)\nctx.lerAgora = false;\nflow.set('chv2_ctx', ctx);\n\nconst read = msg.payload || {};\nconst arr16 = (pref) => { const a = []; for (let i = 1; i <= 16; i++) a.push(read[pref + i] === true); return a; };\nconst norm = (v) => (Array.isArray(v) && Array.isArray(v[0])) ? v[0] : (Array.isArray(v) ? v : []);\nconst r2 = (x) => (typeof x === 'number' && isFinite(x)) ? Math.round(x * 100) / 100 : null;\n\nconst fim = (code, body) => [null, { _reqId: ctx.reqId, statusCode: code, payload: body }];\n\nif (ctx.rota === 'GET') {\n  return fim(200, {\n    banco: '56',\n    habilitada: arr16('Habilitada'),\n    ligada: arr16('Ligada'),\n    cbLigar: arr16('CbLigar'),\n    setupOk: arr16('SetupOk'),\n    kwReal: norm(read.KwReal).map(r2),\n    rMedidoOhm: norm(read.RmedidoOhm).map(r2),\n    rTeoricoOhm: norm(read.RteoricoOhm).map(r2),\n    nominal: norm(read.Nominal).map(r2),\n    chaveSel: read.ChaveSel || 0,\n    usarKwReal: read.UsarKwReal === true,\n    bancoLigado: read.LigarBanco === true,                    // v2.4: cbBanco.ligar\n    comEt200Ok: read.ComEt200Ok === true,                     // v2.4: sbBanco.comEt200Ok (ComOk do FB101)\n    seletora: read.ComEt200Ok === true ? (read.SeletoraAuto === true ? 'auto' : 'manual') : null, // v2.4: null = sem comunicacao com o ET200\n    lidoEm: new Date().toISOString()\n  });\n}\n\nif (ctx.rota === 'LIGAR') {\n  const ok = read['CbLigar' + ctx.esp.indice] === ctx.esp.v;\n  return ok ? fim(200, { ok: true }) : fim(500, { ok: false, erro: 'leitura de volta nao conferiu: cbLigar[' + ctx.esp.indice + ']' });\n}\n\nif (ctx.rota === 'HABILITAR') {\n  const ok = read['Habilitada' + ctx.esp.indice] === ctx.esp.v;\n  return ok ? fim(200, { ok: true }) : fim(500, { ok: false, erro: 'leitura de volta nao conferiu: habilitada[' + ctx.esp.indice + ']' });\n}\n\nif (ctx.rota === 'SELECIONAR') {\n  const ok = read.ChaveSel === ctx.esp.v;\n  return ok ? fim(200, { ok: true }) : fim(500, { ok: false, erro: 'leitura de volta nao conferiu: chaveSel' });\n}\n\nif (ctx.rota === 'SALVAR') {\n  if (ctx.fase === 'despulsa') {\n    const okDespulsa = read.Salvar === false;\n    if (!okDespulsa) return fim(500, { ok: false, erro: 'nao consegui religar o pulso Salvar=false depois de salvar (proxima chave pode nao salvar - avise o operador)' });\n    return ctx.setupOk\n      ? fim(200, { ok: true })\n      : fim(500, { ok: false, erro: 'PLC nao confirmou o Setup (SetupOk nao foi pra true - confira \"kW sem carga\"/BaseOK no FB100)' });\n  }\n  // fase 'escreve' (1a leitura, logo apos escrever Salvar=true): confere SetupOk e sempre despulsa em seguida\n  ctx.setupOk = read['SetupOk' + ctx.esp.chaveSel] === true;\n  flow.set('chv2_ctx', ctx);\n  return [{ _fase: 'despulsa', _reqId: ctx.reqId, payload: null }, null];\n}\n\nif (ctx.rota === 'BANCO') {   // v2.4\n  const ok = read.LigarBanco === ctx.esp.v;\n  if (ok) return fim(200, { ok: true });\n  return fim(500, { ok: false, erro: ctx.esp.v\n    ? 'PLC nao manteve o Ligar banco (FB101 zera se a seletora nao esta em Auto ou sem comunicacao com o ET200)'\n    : 'leitura de volta nao conferiu: cbBanco.ligar ainda TRUE' });\n}\n\nif (ctx.rota === 'ZERAR') {\n  let resta = 0;\n  for (let i = 1; i <= 16; i++) if (read['CbLigar' + i] !== false) resta++;\n  if (read.LigarBanco !== false) resta++;   // v2.4: o banco tambem tem que estar desligado\n  return resta ? fim(500, { ok: false, erro: 'vigia: leitura de volta mostrou ' + resta + ' cbLigar ainda TRUE apos zerar' }) : fim(200, { ok: true });\n}\n\nif (ctx.rota === 'USARKWREAL') {\n  const ok = read.UsarKwReal === ctx.esp.v;\n  return ok ? fim(200, { ok: true }) : fim(500, { ok: false, erro: 'leitura de volta nao conferiu: usarKwReal' });\n}\n\nif (ctx.rota === 'LIMPAR') {\n  let sujo = false;\n  for (let i = 1; i <= 16; i++) if (read['SetupOk' + i] !== false) sujo = true;\n  return sujo ? fim(500, { ok: false, erro: 'leitura de volta apos limpar nao conferiu (setupOk)' }) : fim(200, { ok: true });\n}\nreturn fim(500, { ok: false, erro: 'rota nao tratada: ' + ctx.rota });\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_monta"
+      ],
+      [
+        "chv2_responde"
+      ]
+    ],
+    "x": 1470,
+    "y": 160
+  },
+  {
+    "id": "chv2_responde",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "responde + libera fila",
+    "func": "const reqId = msg._reqId;\nconst cache = flow.get('chv2_req_cache') || {};\nconst orig = cache[reqId];\nif (!orig) return null;\n// --- v2.1 log de comunicacao (so POST, e GET que falhou; o GET de 1 s da tela nao entra) ---\ntry {\n  const _ctx = flow.get('chv2_ctx') || {};\n  const _rota = _ctx.rota || '?';\n  const _st = msg.statusCode || 200;\n  if (_rota !== 'GET' || _st !== 200) {\n    const _logs = flow.get('chv2_logs') || [];\n    _logs.push({ t: new Date().toISOString(), rota: _rota, dado: _ctx.esp ? JSON.stringify(_ctx.esp) : '', status: _st, ok: _st === 200, ms: Date.now() - parseInt(String(reqId).split('_')[0], 10), erro: (msg.payload && msg.payload.erro) || '' });\n    if (_logs.length > 1000) _logs.shift();\n    flow.set('chv2_logs', _logs);\n  }\n} catch (e) { node.warn('log: ' + e.message); }\nconst c0 = flow.get('chv2_ctx') || {};\nif (c0.rota === 'ZERAR' && (msg.statusCode || 200) === 200) flow.set('chv2_wd_zerou', { ts: new Date().toISOString(), qtd: (c0.esp && c0.esp.qtd) || 0 });\nconst semHttp = !orig.res;           // v2.3: job interno (ZERAR) nao tem requisicao HTTP a responder\nmsg.req = orig.req; msg.res = orig.res;\ndelete cache[reqId];\nflow.set('chv2_req_cache', cache);\nflow.set('chv2_ctx', null);\nif (!msg.headers) msg.headers = {};\nmsg.headers['Content-Type'] = 'application/json';\nnode.send([semHttp ? null : msg, { payload: null }, { topic: reqId, reset: true }]);\nreturn null;\n",
+    "outputs": 3,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_out"
+      ],
+      [
+        "chv2_libera_fila"
+      ],
+      [
+        "chv2_wd"
+      ]
+    ],
+    "x": 1660,
+    "y": 80
+  },
+  {
+    "id": "chv2_wd",
+    "type": "trigger",
+    "z": "chv2_tab",
+    "name": "watchdog 8s (PLC off/timeout)",
+    "op1": "",
+    "op1type": "nul",
+    "op2": "timeout",
+    "op2type": "str",
+    "duration": "8000",
+    "extend": false,
+    "overrideDelay": false,
+    "units": "ms",
+    "reset": "",
+    "bytopic": "topic",
+    "topic": "topic",
+    "outputs": 1,
+    "wires": [
+      [
+        "chv2_wd_503"
+      ]
+    ],
+    "x": 1850,
+    "y": 160
+  },
+  {
+    "id": "chv2_wd_503",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "monta 503 de timeout",
+    "func": "const reqId = msg.topic;\nconst cache = flow.get('chv2_req_cache') || {};\nif (!cache[reqId]) return null;\nmsg._reqId = reqId;\nmsg.statusCode = 503;\nmsg.payload = { ok: false, erro: 'tempo esgotado aguardando o PLC (timeout). Verifique se o PLC esta online e o DB150 existe.' };\nreturn msg;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_responde"
+      ]
+    ],
+    "x": 1850,
+    "y": 240
+  },
+  {
+    "id": "chv2_catch",
+    "type": "catch",
+    "z": "chv2_tab",
+    "name": "erro nao tratado",
+    "scope": null,
+    "uncaught": true,
+    "wires": [
+      [
+        "chv2_resp500"
+      ]
+    ],
+    "x": 330,
+    "y": 560
+  },
+  {
+    "id": "chv2_resp500",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "resposta 500",
+    "func": "if (!msg._reqId) { node.warn('catch (sem requisicao): ' + (msg.error && msg.error.message)); return null; }\nmsg.statusCode = 500;\nmsg.payload = { ok: false, erro: 'erro interno: ' + (msg.error && msg.error.message ? msg.error.message : 'desconhecido') };\nreturn msg;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_responde"
+      ]
+    ],
+    "x": 520,
+    "y": 240
+  },
+  {
+    "id": "chv2_in_lig",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "POST /api/chaves/56/ligar",
+    "url": "/api/chaves/56/ligar",
+    "method": "post",
+    "upload": false,
+    "wires": [
+      [
+        "chv2_val_lig"
+      ]
+    ],
+    "x": 140,
+    "y": 520
+  },
+  {
+    "id": "chv2_val_lig",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "valida ligar",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_fila"
+      ],
+      [
+        "chv2_out"
+      ]
+    ],
+    "x": 330,
+    "y": 520,
+    "func": "const b = msg.payload || {};\nconst falha = (t, code) => { msg.statusCode = code || 400; msg.payload = { ok: false, erro: t }; return [null, msg]; };\nif (!Number.isInteger(b.indice) || b.indice < 1 || b.indice > 16) return falha('indice deve ser inteiro de 1 a 16');\nif (typeof b.ligar !== 'boolean') return falha('ligar deve ser true/false');\nconst live = flow.get('chv2_live');\nif (!live) return falha('aguardando a 1a leitura do PLC - tente de novo em instantes', 503);\nif (b.ligar) {                       // desligar e sempre permitido (seguranca)\n  if (live.LigarBanco !== true) return falha('banco BC56 desligado - acione \"Ligar banco\" antes (seletora em Auto)', 409);   // v2.4\n  if (live['Habilitada' + b.indice] !== true) return falha('chave ' + b.indice + ' esta desabilitada (habilite antes de ligar)');\n  if (live.ChaveSel) return falha('Setup em andamento (chave ' + live.ChaveSel + ' selecionada) - desmarque no Setup antes de ligar outras', 409);\n}\nmsg._rota = 'LIGAR';\nreturn [msg, null];\n"
+  },
+  {
+    "id": "chv2_in_logs",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "GET /api/logs/56",
+    "url": "/api/logs/56",
+    "method": "get",
+    "upload": false,
+    "wires": [
+      [
+        "chv2_get_logs"
+      ]
+    ],
+    "x": 140,
+    "y": 560
+  },
+  {
+    "id": "chv2_get_logs",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "devolve log BC56",
+    "func": "const limit = Math.min(parseInt((msg.req.query || {}).limit) || 100, 1000);\nconst logs = flow.get('chv2_logs') || [];\nconst ult = logs.slice(-limit).reverse();            // mais recente primeiro\nconst falhas = logs.filter(x => !x.ok).length;\nconst ms = logs.map(x => x.ms).sort((a, b) => a - b);\nmsg.statusCode = 200;\nmsg.payload = { flow: 'chaves-v2.5', banco: '56', total: logs.length, falhas: falhas,\n  msMedio: ms.length ? Math.round(ms.reduce((a, b) => a + b, 0) / ms.length) : 0,\n  msMax: ms.length ? ms[ms.length - 1] : 0, lidoEm: new Date().toISOString(), logs: ult };\nmsg.headers = { 'Content-Type': 'application/json' };\nreturn msg;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_out"
+      ]
+    ],
+    "x": 330,
+    "y": 560
+  },
+  {
+    "id": "chv2_wd_inj",
+    "type": "inject",
+    "z": "chv2_tab",
+    "name": "a cada 1 s (vigia HTML)",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "1",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "5",
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 140,
+    "y": 640,
+    "wires": [
+      [
+        "chv2_wd_html"
+      ]
+    ]
+  },
+  {
+    "id": "chv2_wd_html",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "vigia: HTML sumiu -> ZERAR cbLigar",
+    "func": "// v2.3 (22/10/2026) - VIGIA \"HTML SUMIU\" (BC56, DB150)\n// Motivo: o comando cbLigar fica TRUE no PLC mesmo depois de fechar o navegador. Se o HTML nao consulta este flow\n// por WD_HTML_S segundos (padrao 30; muda em: aba > Propriedades > Variaveis de ambiente), zera CbLigar1..16 pela\n// mesma fila das escritas (job interno 'ZERAR': escreve, espera 450 ms, le de volta e confere).\n// So age se: (1) ha leitura recente do PLC (<= 2,5 s) - sem PLC nao ha como escrever; (2) existe algum cbLigar TRUE;\n// (3) a fila esta livre; (4) passaram 5 s da ultima tentativa (se falhar, tenta de novo).\n// Nao mexe em Habilitada, Setup, kW real, Salvar nem ChaveSel.\nconst AGORA = Date.now();\nconst LIM_S = Number(env.get('WD_HTML_S')) || 30;\nconst live = flow.get('chv2_live');\nconst ts = flow.get('chv2_live_ts') || 0;\nif (!live || AGORA - ts > 2500) return null;\nlet t0 = flow.get('chv2_start_ts');\nif (!t0) { t0 = AGORA; flow.set('chv2_start_ts', t0); }       // apos Deploy/reinicio, conta a partir daqui\nconst ref = Math.max(flow.get('chv2_html_ts') || 0, t0);\nif (AGORA - ref < LIM_S * 1000) return null;\nlet qtd = 0;\nfor (let i = 1; i <= 16; i++) if (live['CbLigar' + i] === true) qtd++;\nconst bancoLig = live.LigarBanco === true;   // v2.4: banco ligado sem HTML tambem conta\nif (!qtd && !bancoLig) return null;\nif (flow.get('chv2_fila_ocupado')) return null;\nif (AGORA - (flow.get('chv2_wd_last') || 0) < 5000) return null;\nflow.set('chv2_wd_last', AGORA);\nnode.warn('vigia HTML sumiu: ' + qtd + ' cbLigar TRUE' + (bancoLig ? ' + banco ligado' : '') + ' sem HTML ha > ' + LIM_S + ' s - zerando (DB150)');\nreturn { _rota: 'ZERAR', _qtd: qtd, payload: null };\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 640,
+    "wires": [
+      [
+        "chv2_fila"
+      ]
+    ]
+  },
+  {
+    "id": "chv2_in_banco",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "POST /api/chaves/56/banco",
+    "url": "/api/chaves/56/banco",
+    "method": "post",
+    "upload": false,
+    "wires": [
+      [
+        "chv2_val_banco"
+      ]
+    ],
+    "x": 140,
+    "y": 600
+  },
+  {
+    "id": "chv2_val_banco",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "valida banco (ligar/desligar)",
+    "func": "// v2.4 (24/10/2026): Ligar/Desligar banco -> cbBanco.ligar. Desligar e SEMPRE permitido (seguranca).\n// Ligar exige comunicacao 1515-ET200 viva e seletora em Auto (o FB101 v0.4 aplica a mesma regra no PLC).\nconst b = msg.payload || {};\nconst falha = (t, code) => { msg.statusCode = code || 400; msg.payload = { ok: false, erro: t }; return [null, msg]; };\nif (typeof b.ligar !== 'boolean') return falha('ligar deve ser true/false');\nif (b.ligar) {\n  const live = flow.get('chv2_live');\n  if (!live) return falha('aguardando a 1a leitura do PLC - tente de novo em instantes', 503);\n  if (live.ComEt200Ok !== true) return falha('sem comunicacao 1515-ET200 (FB101 ComOk = FALSE) - banco nao pode ligar', 409);\n  if (live.SeletoraAuto !== true) return falha('seletora do banco BC56 em Manual (local) - gire para Auto (remoto)', 409);\n}\nmsg._rota = 'BANCO';\nreturn [msg, null];\n",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "chv2_fila"
+      ],
+      [
+        "chv2_out"
+      ]
+    ],
+    "x": 400,
+    "y": 600
+  },
+  {
+    "id": "chv2_ep2",
+    "type": "s7 endpoint",
+    "transport": "iso-on-tcp",
+    "address": "172.17.209.135",
+    "port": "102",
+    "rack": "0",
+    "slot": "1",
+    "localtsaphi": "01",
+    "localtsaplo": "00",
+    "remotetsaphi": "01",
+    "remotetsaplo": "00",
+    "connmode": "rack-slot",
+    "adapter": "",
+    "busaddr": "2",
+    "cycletime": "1000",
+    "timeout": "2000",
+    "name": "PLC da Carga (DB152 por tensao)",
+    "vartable": [
+      {
+        "name": "TensaoSel",
+        "addr": "DB152,INT1356"
+      },
+      {
+        "name": "KwRealV",
+        "addr": "DB152,REAL6.48"
+      },
+      {
+        "name": "RmedidoV",
+        "addr": "DB152,REAL198.48"
+      },
+      {
+        "name": "VmedidaV",
+        "addr": "DB152,REAL390.48"
+      },
+      {
+        "name": "SetupOkV",
+        "addr": "DB152,BYTE1350.6"
+      },
+      {
+        "name": "OkLin1",
+        "addr": "DB152,BYTE1350.2"
+      },
+      {
+        "name": "KwLin1",
+        "addr": "DB152,REAL6.16"
+      },
+      {
+        "name": "RmLin1",
+        "addr": "DB152,REAL198.16"
+      },
+      {
+        "name": "OkLin2",
+        "addr": "DB152,BYTE1352.2"
+      },
+      {
+        "name": "KwLin2",
+        "addr": "DB152,REAL70.16"
+      },
+      {
+        "name": "RmLin2",
+        "addr": "DB152,REAL262.16"
+      },
+      {
+        "name": "OkLin3",
+        "addr": "DB152,BYTE1354.2"
+      },
+      {
+        "name": "KwLin3",
+        "addr": "DB152,REAL134.16"
+      },
+      {
+        "name": "RmLin3",
+        "addr": "DB152,REAL326.16"
+      }
+    ]
+  },
+  {
+    "id": "chv2_s7_read2",
+    "type": "s7 in",
+    "z": "chv2_tab",
+    "endpoint": "chv2_ep2",
+    "mode": "all",
+    "variable": "",
+    "diff": false,
+    "name": "le DB152 (todas)",
+    "x": 330,
+    "y": 700,
+    "wires": [
+      [
+        "chv2_cache2"
+      ]
+    ]
+  },
+  {
+    "id": "chv2_cache2",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "guarda leitura por tensao (cache)",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 620,
+    "y": 700,
+    "func": "flow.set('chv2_tens', msg.payload);\nflow.set('chv2_tens_ts', Date.now());\nreturn null;",
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "chv2_s7_write2",
+    "type": "s7 out",
+    "z": "chv2_tab",
+    "endpoint": "chv2_ep2",
+    "variable": "",
+    "name": "escreve DB152",
+    "x": 1500,
+    "y": 200,
+    "wires": []
+  },
+  {
+    "id": "chv2_in_tens",
+    "type": "http in",
+    "z": "chv2_tab",
+    "name": "POST /api/chaves/56/tensao",
+    "url": "/api/chaves/56/tensao",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 140,
+    "y": 640,
+    "wires": [
+      [
+        "chv2_val_tens"
+      ]
+    ]
+  },
+  {
+    "id": "chv2_val_tens",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "valida tensao",
+    "outputs": 3,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 330,
+    "y": 640,
+    "func": "// v2.5: informa ao PLC o chaveamento do banco (220/380/440 V). Escreve DB152 (TensaoSel = 1..3) e confere a releitura.\nconst b = msg.payload || {};\nconst falha = (t, code) => { msg.statusCode = code || 400; msg.payload = { ok: false, erro: t }; return [null, null, msg]; };\nconst mapa = { 0: 0, 220: 1, 380: 2, 440: 3 };   // v2.6: 0 = desliga o chaveamento (TensaoSel = 0 = nao informado)\nconst idx = mapa[Number(b.tensao)];\nif (idx === undefined) return falha('tensao deve ser 0 (nao informado), 220, 380 ou 440');\nconst live = flow.get('chv2_live');\nif (!live) return falha('aguardando a 1a leitura do PLC - tente de novo em instantes', 503);\nif (live.ChaveSel) return falha('ha uma chave selecionada no Setup - desmarque-a antes de mudar o chaveamento', 409);\nconst ts2 = flow.get('chv2_tens_ts') || 0;\nif (!ts2 || Date.now() - ts2 > 5000) return falha('DB152 sem leitura recente - confira se o DB existe no PLC (v0.2) e a rede', 503);\nflow.set('chv2_html_ts', Date.now());\nmsg._idx = idx; msg._tensao = Number(b.tensao); msg._t0 = Date.now();\nreturn [[{ variable: 'TensaoSel', payload: idx }], msg, null];",
+    "wires": [
+      [
+        "chv2_s7_write2"
+      ],
+      [
+        "chv2_delay2"
+      ],
+      [
+        "chv2_out"
+      ]
+    ]
+  },
+  {
+    "id": "chv2_delay2",
+    "type": "delay",
+    "z": "chv2_tab",
+    "name": "espera 1500ms (> ciclo S7 1000ms)",
+    "pauseType": "delay",
+    "timeout": "1500",
+    "timeoutUnits": "milliseconds",
+    "rate": "1",
+    "nbRateUnits": "1",
+    "rateUnits": "second",
+    "randomFirst": "1",
+    "randomLast": "5",
+    "randomUnits": "seconds",
+    "drop": false,
+    "allowrate": false,
+    "outputs": 1,
+    "x": 900,
+    "y": 640,
+    "wires": [
+      [
+        "chv2_confere_tens"
+      ]
+    ]
+  },
+  {
+    "id": "chv2_confere_tens",
+    "type": "function",
+    "z": "chv2_tab",
+    "name": "confere tensao",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1150,
+    "y": 640,
+    "func": "const t = flow.get('chv2_tens') || {};\nconst ok = t.TensaoSel === msg._idx;\nmsg.statusCode = ok ? 200 : 500;\nmsg.payload = ok ? { ok: true, tensao: msg._tensao, tensaoSel: msg._idx } : { ok: false, erro: 'leitura de volta nao conferiu: tensaoSel (lido ' + t.TensaoSel + ', esperado ' + msg._idx + ')' };\nmsg.headers = { 'Content-Type': 'application/json' };\ntry {\n  const logs = flow.get('chv2_logs') || [];\n  logs.push({ t: new Date().toISOString(), rota: 'TENSAO', dado: JSON.stringify({ tensao: msg._tensao }), status: msg.statusCode, ok: ok, ms: Date.now() - (msg._t0 || Date.now()), erro: ok ? '' : msg.payload.erro });\n  if (logs.length > 1000) logs.shift();\n  flow.set('chv2_logs', logs);\n} catch (e) { node.warn('log: ' + e.message); }\nreturn msg;",
+    "wires": [
+      [
+        "chv2_out"
+      ]
+    ]
+  }
+]

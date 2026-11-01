@@ -1,0 +1,83 @@
+DATA_BLOCK "db158_BC400_Chaves"
+TITLE = db158_BC400_Chaves (DB158)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.2
+NON_RETAIN
+////====================================
+//// db158_BC400_Chaves (DB158)
+//// O QUE FAZ : card "Chaves do banco de carga" - banco BC400 (13 chaves, 400 kW nominal). Mesma funcao e
+////             mesmo layout interno do db150_BC56_Chaves (DB150) - estrutura identica, so o conteudo de
+////             setup.nominal[] muda. Pode servir BT1 ou BT2, associacao feita pelo Node-RED.
+//// POR QUE DB GLOBAL SEM OTIMIZACAO : o Node-RED (node-red-contrib-s7) grava/le por offset fixo via S7
+////             (PUT/GET), por isso o layout e fixo e nao pode ser reordenado.
+//// AGRUPAMENTO cb/sb/setup : mesmo padrao do exemplo db20_exemploStruct.db (Reginaldo Lobo, 19/10/2026).
+//// ESCRITORES : identico ao DB150 (ver cabecalho completo la) - cb.ligar[] pelo FB100/DB162, sb.ligada[]
+////             pelo mapeamento de I/O, setup.habilitada*/chaveSel/salvar pelo Node-RED/HTML, setup.nominal[]
+////             constante de projeto, demais campos de setup.* pelo FB100 ao salvar.
+//// RELACAO COM OUTROS DBs : DB162 e a instancia do FB100 para este banco (VAR_IN_OUT, sem copia).
+////             Renomeado de db55_BancoTeste2_Chaves (sufixo 400) conforme
+////             claude/PLANO_NUMERACAO_BLOCOS_PLC.md v2 (20/10/2026) - ainda NAO migrado no PLC real,
+////             congelado ate apos a janela de teste de quinta/sexta.
+//// PENDENCIA : mesma do DB150 - "EnsaioAtivo" fixo FALSE ate o DB "Dados do ensaio" existir.
+//// v0.2 (24/10/2026): acrescentados NO FIM do DB (offsets antigos intactos, Node-RED v2.3 continua valendo
+////             para os campos antigos): cbBanco.ligar (DBX460.0) e sbBanco.seletoraAuto/comEt200Ok
+////             (DBX462.0/462.1). Escritores: cbBanco.ligar = Node-RED (POST /api/chaves/{banco}/banco) e
+////             FB101 (zera por seguranca); sbBanco.* = FB101 (saidas SeletoraAuto e ComOk).
+////             Nao foi possivel usar cb.ligarBanco/sb.seletoraAuto (decisao D3) sem deslocar sb e setup.
+////             ATENCAO: o download de DB nao otimizado com membros novos REINICIALIZA o DB (perde
+////             habilitada/setupOk/kwReal/rMedidoOhm). Antes: "Snapshot dos valores atuais" e
+////             "Aplicar snapshot como valores iniciais" no TIA.
+//// Fonte: claude/ESPECIFICACAO_CARD_CHAVES_DB55_FB200.md + claude/PLANO_NUMERACAO_BLOCOS_PLC.md (projeto "NOde-red")
+////=====================================
+   VAR
+      cb : Struct
+         ligar : Array[1..16] of Bool;
+      END_STRUCT;
+
+      sb : Struct
+         ligada : Array[1..16] of Bool;
+      END_STRUCT;
+
+      setup : Struct
+         habilitada   : Array[1..16] of Bool;
+         setupOk      : Array[1..16] of Bool;
+         kwReal       : Array[1..16] of Real;
+         rMedidoOhm   : Array[1..16] of Real;
+         rTeoricoOhm  : Array[1..16] of Real;
+         setupData    : Array[1..16] of DTL;
+         nominal      : Array[1..16] of Real;
+         chaveSel     : UInt;
+         salvar       : Bool;
+         usarKwReal   : Bool;
+      END_STRUCT;
+
+      cbBanco : Struct   // DBX460.0
+         ligar : Bool;   // comando Ligar banco - Node-RED escreve, FB101 zera (seguranca)
+      END_STRUCT;
+
+      sbBanco : Struct   // DBX462.0
+         seletoraAuto : Bool;   // 462.0 seletora do banco em Auto e ComOk - escrito pelo FB101
+         comEt200Ok : Bool;   // 462.1 comunicacao 1515-ET200 viva - escrito pelo FB101 (ComOk)
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+   // kW nominal confirmado em medidor_gerador_v1.9.37.html, const BANCOS (linha ~1618)
+   setup.nominal[1]  := 50.0;
+   setup.nominal[2]  := 50.0;
+   setup.nominal[3]  := 50.0;
+   setup.nominal[4]  := 50.0;
+   setup.nominal[5]  := 50.0;
+   setup.nominal[6]  := 50.0;
+   setup.nominal[7]  := 50.0;
+   setup.nominal[8]  := 10.0;
+   setup.nominal[9]  := 10.0;
+   setup.nominal[10] := 10.0;
+   setup.nominal[11] := 10.0;
+   setup.nominal[12] := 5.0;
+   setup.nominal[13] := 5.0;
+   // 14..16: reservado, 0.0 (default)
+
+END_DATA_BLOCK

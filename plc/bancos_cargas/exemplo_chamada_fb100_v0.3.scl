@@ -1,0 +1,74 @@
+// ============================================================================
+// v0.3 (25/10/2026): + TensaoSel e 6 VAR_IN_OUT 2D dos DB152 (BC56) / DB160 (BC400). Ver fb100_setupChaves_v0.3.scl.
+// ============================================================================
+// EXEMPLO de chamada do FB100 (2x, uma por banco) - para colar num FC/OB chamador
+// Mostra como DB154/DB162 (instancia) e db150/db158 (dados do banco) se relacionam:
+// os VAR_IN_OUT apontam direto para os arrays do DB do banco - sem copia.
+//
+// Renomeado de exemplo_chamada_fb200.scl (FB200/DB200/DB201 -> FB100/DB154/DB162)
+// conforme claude/PLANO_NUMERACAO_BLOCOS_PLC.md v2 (20/10/2026). Ainda NAO migrado
+// no PLC real - congelado ate apos a janela de teste de quinta/sexta.
+//
+// CONFIRMADO pelo operador (19/10/2026):
+//   - driver Node-RED: node-red-contrib-s7 -> por isso db150/db158 sao S7_Optimized_Access FALSE.
+//   - "GeradorOperando" = db52_BancoTeste2_DSE.ledManual (TRUE = gerador em START/operando).
+//
+// PENDENTE: "EnsaioAtivo" so vai existir quando o card/DB "Dados do ensaio" for criado
+// (dito pelo operador). Por enquanto fixo em FALSE - trocar pela tag real assim que existir.
+// ============================================================================
+
+// --- Banco BC56 (56 kW) -----------------------------------------------------
+"fb100_setupChaves"_DB154(
+    NumChaves        := 13,
+    GeradorOperando  := "db52_BancoTeste2_DSE".ledManual,
+    EnsaioAtivo      := FALSE,   // TODO: trocar pela tag real do DB "Dados do ensaio" quando existir
+    kWMedido         := "db52_BancoTeste2_DSE".potenciaKw,
+    VaMedido         := "db52_BancoTeste2_DSE".tensaoL1L2,
+    VbMedido         := "db52_BancoTeste2_DSE".tensaoL2L3,
+    VcMedido         := "db52_BancoTeste2_DSE".tensaoL3L1,
+    TensaoSel        := "db152_BC56_SetupPorTensao".selV.tensaoSel,
+    ChaveSelecionada := "db150_BC56_Chaves".setup.chaveSel,
+    ComandoSalvar    := "db150_BC56_Chaves".setup.salvar,
+    kWNominal        := "db150_BC56_Chaves".setup.nominal,
+    CbLigar          := "db150_BC56_Chaves".cb.ligar,
+    SbLigada         := "db150_BC56_Chaves".sb.ligada,
+    Habilitada       := "db150_BC56_Chaves".setup.habilitada,
+    SetupOk          := "db150_BC56_Chaves".setup.setupOk,
+    KwReal           := "db150_BC56_Chaves".setup.kwReal,
+    RmedidoOhm       := "db150_BC56_Chaves".setup.rMedidoOhm,
+    RteoricoOhm      := "db150_BC56_Chaves".setup.rTeoricoOhm,
+    SetupData        := "db150_BC56_Chaves".setup.setupData,
+    KwRealV          := "db152_BC56_SetupPorTensao".setupV.kwReal,
+    RmedidoV         := "db152_BC56_SetupPorTensao".setupV.rMedidoOhm,
+    VmedidaV         := "db152_BC56_SetupPorTensao".setupV.vMedidaV,
+    BaseKwV          := "db152_BC56_SetupPorTensao".setupV.baseKw,
+    SetupDataV       := "db152_BC56_SetupPorTensao".setupV.setupData,
+    SetupOkV         := "db152_BC56_SetupPorTensao".setupV.setupOk);
+
+// --- Banco BC400 (400 kW) ----------------------------------------------------
+"fb100_setupChaves"_DB162(
+    NumChaves        := 13,
+    GeradorOperando  := "db52_BancoTeste2_DSE".ledManual,
+    EnsaioAtivo      := FALSE,   // TODO: idem
+    kWMedido         := "db52_BancoTeste2_DSE".potenciaKw,
+    VaMedido         := "db52_BancoTeste2_DSE".tensaoL1L2,
+    VbMedido         := "db52_BancoTeste2_DSE".tensaoL2L3,
+    VcMedido         := "db52_BancoTeste2_DSE".tensaoL3L1,
+    TensaoSel        := "db160_BC400_SetupPorTensao".selV.tensaoSel,
+    ChaveSelecionada := "db158_BC400_Chaves".setup.chaveSel,
+    ComandoSalvar    := "db158_BC400_Chaves".setup.salvar,
+    kWNominal        := "db158_BC400_Chaves".setup.nominal,
+    CbLigar          := "db158_BC400_Chaves".cb.ligar,
+    SbLigada         := "db158_BC400_Chaves".sb.ligada,
+    Habilitada       := "db158_BC400_Chaves".setup.habilitada,
+    SetupOk          := "db158_BC400_Chaves".setup.setupOk,
+    KwReal           := "db158_BC400_Chaves".setup.kwReal,
+    RmedidoOhm       := "db158_BC400_Chaves".setup.rMedidoOhm,
+    RteoricoOhm      := "db158_BC400_Chaves".setup.rTeoricoOhm,
+    SetupData        := "db158_BC400_Chaves".setup.setupData,
+    KwRealV          := "db160_BC400_SetupPorTensao".setupV.kwReal,
+    RmedidoV         := "db160_BC400_SetupPorTensao".setupV.rMedidoOhm,
+    VmedidaV         := "db160_BC400_SetupPorTensao".setupV.vMedidaV,
+    BaseKwV          := "db160_BC400_SetupPorTensao".setupV.baseKw,
+    SetupDataV       := "db160_BC400_SetupPorTensao".setupV.setupData,
+    SetupOkV         := "db160_BC400_SetupPorTensao".setupV.setupOk);

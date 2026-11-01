@@ -1,0 +1,4 @@
+# Medidor 1.10.124 — ajustes de UI, catálogo automático e FB Tempos (31/10/2026)
+- (a) Feito/testado (Playwright, 0 erros): triângulo amarelo + vermelho em "Alertas ▲ Falhas"; chip Dados removido do card Modo; janelas v0.5 com botão Salvar (localStorage `bt2.jan.<app>.<id>`: w, h, x, y, z); Troca de resistência com sub cards por banco (fechados ao abrir, acordeão); FBs virtuais v0.11 (filho 7 Tempos sinaliza com o ensaio iniciado mesmo com a mãe desarmada; "tempo neste estado" mostra "—" quando não há estado).
+- (b) Assumido: nome do catálogo `catalogo_modelos_v0.1.csv` na mesma pasta do HTML (ou em `CATALOGO_GERADORES_v0.1/`). Só funciona servido por http(s) (Node-RED); em file:// o navegador bloqueia a leitura — vale o "Escolher arquivo".
+- (c) Pendente: aplicar o carregamento automático aos outros seletores de .csv (outros HTML), junto com a regra dos botões sem borda; testar o filho 7 com ensaio real iniciado.

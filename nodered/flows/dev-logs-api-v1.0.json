@@ -1,0 +1,178 @@
+[
+  {
+    "id": "devlog_tab",
+    "type": "tab",
+    "label": "Dev · Logs (API) v1.0",
+    "disabled": false,
+    "info": "dev-logs-v1.0 (23/10/2026). Observabilidade do desenvolvedor (DEV.OBS): guarda em MEMÓRIA os eventos que o HTML (medidor_gerador >= v1.9.73) envia e os devolve ao Gerenciador de logs (gerenciador_logs_v1.html).\nNÃO escreve no PLC, NÃO usa DB53/DB150/DB158, NÃO tem nós s7/modbus. Só flow context.\nRotas: POST /api/dev/log-evento · GET /api/dev/logs · POST /api/dev/logs/limpar.\nBuffer: 5000 eventos (os mais antigos saem); reiniciar o Node-RED ZERA o buffer (o HTML e o Gerenciador guardam cópia). Pode ser importado em paralelo às abas de chaves/registro; não usa nenhuma URL delas."
+  },
+  {
+    "id": "devlog_cm",
+    "type": "comment",
+    "z": "devlog_tab",
+    "name": "DEV.OBS · só observa (memória) · não toca PLC",
+    "info": "dev-logs-v1.0 (23/10/2026). Observabilidade do desenvolvedor (DEV.OBS): guarda em MEMÓRIA os eventos que o HTML (medidor_gerador >= v1.9.73) envia e os devolve ao Gerenciador de logs (gerenciador_logs_v1.html).\nNÃO escreve no PLC, NÃO usa DB53/DB150/DB158, NÃO tem nós s7/modbus. Só flow context.\nRotas: POST /api/dev/log-evento · GET /api/dev/logs · POST /api/dev/logs/limpar.\nBuffer: 5000 eventos (os mais antigos saem); reiniciar o Node-RED ZERA o buffer (o HTML e o Gerenciador guardam cópia). Pode ser importado em paralelo às abas de chaves/registro; não usa nenhuma URL delas.",
+    "x": 250,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "devlog_in_post",
+    "type": "http in",
+    "z": "devlog_tab",
+    "name": "POST /api/dev/log-evento",
+    "url": "/api/dev/log-evento",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 100,
+    "wires": [
+      [
+        "devlog_fn_post"
+      ]
+    ]
+  },
+  {
+    "id": "devlog_fn_post",
+    "type": "function",
+    "z": "devlog_tab",
+    "name": "grava lote (dedup sessao+n)",
+    "func": "// dev-logs-v1.0 · POST /api/dev/log-evento\n// Recebe um LOTE de eventos do HTML e guarda num buffer circular em memória (flow context). Não toca PLC/DB53.\nconst FLOW = 'dev-logs-v1.0';\nconst MAX = 5000;        // eventos guardados (os mais antigos saem e entram em 'descartados')\nconst MAX_LOTE = 200;    // eventos por POST\nconst MAX_STR = 400;     // tamanho máximo de cada texto\nconst MAX_OBJ = 1500;    // tamanho máximo (JSON) de det / est\nconst H = { 'Content-Type': 'application/json' };\n\nconst erro = (st, txt) => { msg.statusCode = st; msg.headers = H; msg.payload = { ok: false, flow: FLOW, erro: txt }; return msg; };\nconst b = msg.payload;\nif (!b || typeof b !== 'object' || !Array.isArray(b.eventos)) return erro(400, 'corpo invalido: esperado {\"eventos\":[...]}');\nif (b.eventos.length > MAX_LOTE) return erro(400, 'lote grande demais (max ' + MAX_LOTE + ' eventos)');\n\nconst str = (v, n) => { v = (v === null || v === undefined) ? '' : String(v); return v.length > n ? v.slice(0, n - 1) + '…' : v; };\nconst obj = (o) => {\n  if (o === null || o === undefined) return null;\n  if (typeof o !== 'object') return str(o, MAX_STR);\n  let s; try { s = JSON.stringify(o); } catch (e) { return null; }\n  if (s.length <= MAX_OBJ) return JSON.parse(s);\n  return { _truncado: s.slice(0, MAX_OBJ - 1) + '…' };\n};\n\nlet boot = flow.get('devlog_boot');\nif (!boot) { boot = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); flow.set('devlog_boot', boot); }\nconst ev = flow.get('devlog_ev') || [];\nconst ult = flow.get('devlog_ult') || {};      // sessao -> maior n já aceito (evita duplicar em reenvio)\nlet seq = flow.get('devlog_seq') || 0;\nlet drop = flow.get('devlog_drop') || 0;\nlet aceitos = 0, dup = 0, inval = 0;\nconst rx = new Date().toISOString();\n\nfor (const e of b.eventos) {\n  if (!e || typeof e !== 'object' || typeof e.sessao !== 'string' || typeof e.n !== 'number' || !isFinite(e.n)) { inval++; continue; }\n  if ((ult[e.sessao] || 0) >= e.n) { dup++; continue; }\n  ult[e.sessao] = e.n;\n  seq++;\n  ev.push({\n    seq: seq, rx: rx,\n    sessao: str(e.sessao, 40), n: e.n, t: str(e.t, 30), ms: (typeof e.ms === 'number' ? e.ms : null), v: str(e.v, 20),\n    modo: str(e.modo, 20), card: str(e.card, 20), tipo: str(e.tipo, 20), acao: str(e.acao, MAX_STR), res: str(e.res, 12),\n    det: obj(e.det), est: obj(e.est)\n  });\n  aceitos++;\n}\nif (ev.length > MAX) { const extra = ev.length - MAX; ev.splice(0, extra); drop += extra; }\nconst ks = Object.keys(ult);\nif (ks.length > 50) delete ult[ks[0]];           // no máximo 50 sessões lembradas\n\nflow.set('devlog_ev', ev); flow.set('devlog_ult', ult); flow.set('devlog_seq', seq); flow.set('devlog_drop', drop);\nmsg.statusCode = 200; msg.headers = H;\nmsg.payload = { ok: true, flow: FLOW, boot: boot, recebidos: b.eventos.length, aceitos: aceitos, duplicados: dup, invalidos: inval, ultimoSeq: seq, guardados: ev.length };\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 100,
+    "wires": [
+      [
+        "devlog_out"
+      ]
+    ]
+  },
+  {
+    "id": "devlog_in_get",
+    "type": "http in",
+    "z": "devlog_tab",
+    "name": "GET /api/dev/logs",
+    "url": "/api/dev/logs",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 180,
+    "wires": [
+      [
+        "devlog_fn_get"
+      ]
+    ]
+  },
+  {
+    "id": "devlog_fn_get",
+    "type": "function",
+    "z": "devlog_tab",
+    "name": "devolve eventos (seq > desde)",
+    "func": "// dev-logs-v1.0 · GET /api/dev/logs?desde=<seq>&limit=<n>\n// Devolve os eventos com seq > desde em ORDEM CRESCENTE (o cliente avança o cursor sem buracos); sem 'desde' = os 'limit' últimos.\nconst FLOW = 'dev-logs-v1.0';\nconst q = (msg.req && msg.req.query) || {};\nconst limit = Math.min(Math.max(parseInt(q.limit, 10) || 500, 1), 2000);\nconst desde = parseInt(q.desde, 10);\nlet boot = flow.get('devlog_boot');\nif (!boot) { boot = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); flow.set('devlog_boot', boot); }\nconst ev = flow.get('devlog_ev') || [];\nconst seq = flow.get('devlog_seq') || 0;\nconst drop = flow.get('devlog_drop') || 0;\nlet out, truncado = false, perdidos = 0;\nif (!isNaN(desde)) {\n  const prim = ev.length ? ev[0].seq : seq + 1;\n  if (desde < prim - 1) perdidos = prim - 1 - desde;          // o buffer já descartou eventos que o cliente não leu\n  const todos = ev.filter(e => e.seq > desde);\n  truncado = todos.length > limit;\n  out = todos.slice(0, limit);\n} else {\n  out = ev.slice(-limit);\n}\nmsg.statusCode = 200;\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.payload = { ok: true, flow: FLOW, boot: boot, total: ev.length, ultimo: seq, descartados: drop, perdidos: perdidos, truncado: truncado, lidoEm: new Date().toISOString(), eventos: out };\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 180,
+    "wires": [
+      [
+        "devlog_out"
+      ]
+    ]
+  },
+  {
+    "id": "devlog_in_limpar",
+    "type": "http in",
+    "z": "devlog_tab",
+    "name": "POST /api/dev/logs/limpar",
+    "url": "/api/dev/logs/limpar",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 260,
+    "wires": [
+      [
+        "devlog_fn_limpar"
+      ]
+    ]
+  },
+  {
+    "id": "devlog_fn_limpar",
+    "type": "function",
+    "z": "devlog_tab",
+    "name": "esvazia o buffer",
+    "func": "// dev-logs-v1.0 · POST /api/dev/logs/limpar\n// Esvazia o buffer. 'seq' e 'ult' (sessao->n) continuam: o HTML não consegue reenviar o backlog antigo e ressuscitar o que foi limpo.\nconst ev = flow.get('devlog_ev') || [];\nconst n = ev.length;\nflow.set('devlog_ev', []);\nflow.set('devlog_drop', 0);\nmsg.statusCode = 200;\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.payload = { ok: true, flow: 'dev-logs-v1.0', limpos: n, ultimoSeq: flow.get('devlog_seq') || 0 };\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 260,
+    "wires": [
+      [
+        "devlog_out"
+      ]
+    ]
+  },
+  {
+    "id": "devlog_catch",
+    "type": "catch",
+    "z": "devlog_tab",
+    "name": "erro nesta aba",
+    "scope": null,
+    "uncaught": true,
+    "x": 190,
+    "y": 340,
+    "wires": [
+      [
+        "devlog_fn_erro"
+      ]
+    ]
+  },
+  {
+    "id": "devlog_fn_erro",
+    "type": "function",
+    "z": "devlog_tab",
+    "name": "responde 500",
+    "func": "// dev-logs-v1.0 · captura qualquer exceção dos nós desta aba e responde 500 (a requisição não fica pendurada)\nmsg.statusCode = 500;\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.payload = { ok: false, flow: 'dev-logs-v1.0', erro: (msg.error && msg.error.message) || 'erro interno' };\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 340,
+    "wires": [
+      [
+        "devlog_out"
+      ]
+    ]
+  },
+  {
+    "id": "devlog_out",
+    "type": "http response",
+    "z": "devlog_tab",
+    "name": "HTTP response",
+    "statusCode": "",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "x": 760,
+    "y": 200,
+    "wires": []
+  }
+]

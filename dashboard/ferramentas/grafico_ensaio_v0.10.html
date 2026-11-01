@@ -1,0 +1,1976 @@
+<!doctype html>
+<html lang="pt-BR">
+<!-- grafico_ensaio_v0.10 · 30/10/2026 — LAYOUT: topo compacto (barra, leituras e condições menores) para o gráfico ocupar o máximo da tela; olhos "observador"; JANELAS v0.3. Resto igual à v0.9.
+<!-- (v0.9) 29/10/2026 — DICA DE INTERFACE (dica_ui_v0.1.js): Alt+I liga/desliga a etiqueta com tipo, id e coordenadas do elemento; Alt+clique fixa. JANELAS v0.2 (aviso fica aberto). Resto igual à v0.8. -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.10">
+<title>Gráfico do ensaio · BT2</title>
+<!--
+  grafico_ensaio_v0.9.html · 29/10/2026 — v0.8: usa a API INTERNA DOS CARDS do medidor (canal bt2-api, somente leitura): na fonte "Medidor" mostra ao vivo kW, correntes, rotação, água e bateria (os mesmos cards da tela do medidor), sem ligar de novo no PLC/Node-RED. Nada mais mudou.
+  grafico_ensaio_v0.6.html · 29/10/2026 — v0.6: (1) CONDIÇÕES DE APROVAÇÃO em cartões (tempo a 100 %, tensão máx/mín, frequência máx/mín, stand-by, etapas concluídas, resultado) com INTERAÇÃO NO GRÁFICO:
+  passar o mouse/tocar no cartão destaca no gráfico a etapa e a linha do valor medido (fixar = clicar). Reproduz a regra do medidor (avaliaEnsaio 1.10.109) — conferência; o resultado oficial é o do medidor.
+  (2) FONTE "API direto": lê /api/gerador sem o medidor (notebook do observador), SOMENTE LEITURA. Etapas deduzidas pela carga; resultado marcado INFORMATIVO (critérios provisórios). (3) leituras ao vivo (kW, correntes, rpm, água, bateria) nesse modo.
+  grafico_ensaio_v0.5.html · 29/10/2026 — v0.5: MENU ÚNICO "Exportar ▾" (PDF, PNG, CSV e JSON reabrível) no lugar de "Salvar este ensaio" + botão PNG solto da barra.
+  O menu abre por cima de qualquer janela (popover). PDF = 1 página A4 paisagem com a imagem do gráfico e o resumo (gerado aqui, sem biblioteca). Nada mais mudou.
+  grafico_ensaio_v0.4.html · 29/10/2026 — v0.4: REGISTRADOR DE LOG [DEV.OBS]. A página anota o que acontece nela (abriu, primeiro lote, lote com buraco, sem dados do medidor, dados voltaram, marco, ensaio salvo aberto, erro JavaScript)
+  e entrega ao Gerenciador de logs v1.3 (aba "Gráfico"). Só observa; nada do gráfico mudou. (Leigo: é uma "caixa-preta" para conferirmos o que a página fez.)
+  grafico_ensaio_v0.3.html — Gráfico do ensaio em JANELA PRÓPRIA (para a segunda tela). Versão 0.3 · 28/10/2026 (v0.2: marcas repetidas são ignoradas; v0.3: no celular o gráfico sobe para logo abaixo da leitura e os botões vão para baixo dele).
+
+  PARA QUE SERVE (linguagem para equipes não técnicas)
+    Mostra o ensaio ao vivo, em tela cheia, com as tolerâncias e o desvio. O operador abre esta página a partir do
+    botão "📈 Analisar" do medidor, arrasta a janela para o outro monitor e acompanha o ensaio sem ocupar a tela principal.
+    Também serve para abrir um ensaio JÁ SALVO (arquivo .json) e analisar depois.
+
+  DE ONDE VÊM OS DADOS (nada é lido do PLC, do DSE ou do Node-RED por aqui)
+    O medidor (v1.9.80 ou maior) ENVIA os pontos que já registra, por dois caminhos ao mesmo tempo:
+      (1) a janela que abriu esta página (window.opener.postMessage);
+      (2) o canal do navegador "bt2-grafico" (BroadcastChannel) — funciona se esta página for aberta à mão no mesmo navegador.
+    Este arquivo NÃO comanda nada: só recebe e desenha. Se o medidor fechar, o gráfico fica parado com o último dado e avisa.
+
+  MENSAGENS (contrato — ver modulos/GRAFICO_ENSAIO_v0.1.md)
+    medidor → página: {k:'lote', de:N, pts:[...], estado:{...}} · {k:'reset'} · {k:'marco', t, rotulo}
+    página → medidor: {k:'pede'} (pede tudo de novo) · {k:'oi'} (batimento a cada 3 s: "tem alguém vendo")
+    Idempotente: cada lote traz o índice do 1º ponto ("de"); pontos repetidos são ignorados, e se faltar um pedaço a página pede tudo.
+
+  PREPARADO PARA O MANUAL GUIADO: a mensagem {k:'marco'} desenha riscos verticais (ex.: "Confirmou 50 %"), sem mudar este arquivo.
+-->
+<style>
+  :root{color-scheme:light;
+    --plane:#f4f3f0;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#6f6e69;--line:#dedcd5;--axis:#c3c2b7;
+    --blue:#2a78d6;--good:#006300;--crit:#d03b3b;--warn-ink:#8a5a00;--chip:#ecebe6}
+  @media (prefers-color-scheme:dark){:root:where(:not([data-theme=light])){color-scheme:dark;
+    --plane:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#a09f98;--line:#2c2c2a;--axis:#383835;
+    --blue:#3987e5;--good:#0ca30c;--crit:#ec5f5f;--warn-ink:#fab219;--chip:#252523}}
+  :root[data-theme=dark]{color-scheme:dark;
+    --plane:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#a09f98;--line:#2c2c2a;--axis:#383835;
+    --blue:#3987e5;--good:#0ca30c;--crit:#ec5f5f;--warn-ink:#fab219;--chip:#252523}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--plane);color:var(--ink);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;gap:10px;padding:10px 14px 12px}
+  button{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 12px;min-height:34px;cursor:pointer}
+  button:hover{border-color:var(--muted)}
+  button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+  /* ---- barra do topo ---- */
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+  header h1{margin:0;font-size:18px;font-weight:650;letter-spacing:-.01em}
+  header h1 span{font-weight:400;color:var(--muted);margin-left:8px;font-size:14px}
+  .sinal{display:inline-flex;align-items:center;gap:7px;background:var(--chip);border-radius:999px;padding:4px 12px;font-size:13px}
+  .sinal i{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  .sinal[data-s=vivo] i{background:var(--good)}
+  .sinal[data-s=parado] i{background:var(--crit)}
+  .sinal[data-s=arquivo] i{background:var(--blue)}
+  .acoes{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px}
+
+  /* ---- faixa de leitura: o que o operador precisa ver de longe ---- */
+  .leitura{display:grid;grid-template-columns:repeat(auto-fit,minmax(176px,1fr));background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .cel{padding:10px 16px 11px;border-left:1px solid var(--line);min-width:0}
+  .cel:first-child{border-left:0}
+  .cel .r{color:var(--ink2);font-size:13px}
+  .cel .v{font-size:30px;font-weight:620;letter-spacing:-.02em;line-height:1.15;white-space:nowrap}
+  .cel .v small{font-size:14px;font-weight:450;color:var(--muted);margin-left:4px;letter-spacing:0}
+  .cel .s{font-size:12.5px;color:var(--ink2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .st{display:inline-flex;gap:4px;align-items:center;font-weight:650}
+  .st.ok{color:var(--good)}.st.fora{color:var(--crit)}.st.nd{color:var(--muted);font-weight:450}
+
+  /* ---- área do gráfico ---- */
+  main{flex:1 1 auto;min-height:0;position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  #ag{position:absolute;inset:0}
+  #ag .ag,#ag .ag[data-tema]{--ag-bg:var(--surface);--ag-txt:var(--ink);--ag-mut:var(--muted);--ag-lin:var(--line);--ag-bar:var(--chip);--ag-pri:var(--blue);padding:8px 10px}
+  #ag .ag-cv{border-color:var(--line)}
+  .vazio{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;max-width:460px;color:var(--ink2);pointer-events:none;z-index:3;background:var(--surface);padding:14px 18px;border-radius:10px;border:1px dashed var(--axis)}
+  .vazio b{display:block;font-size:16px;color:var(--ink);margin-bottom:4px}
+  .vazio[hidden]{display:none}
+
+  dialog{border:1px solid var(--axis);border-radius:12px;background:var(--surface);color:var(--ink);max-width:min(640px,92vw);padding:18px 22px}
+  dialog::backdrop{background:rgba(0,0,0,.45)}
+  dialog h2{margin:0 0 8px;font-size:17px}
+  dialog table{border-collapse:collapse;width:100%;font-size:13px}
+  dialog td{padding:4px 8px 4px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  dialog td:first-child{color:var(--ink2);white-space:nowrap}
+  @media (max-width:700px){.cel .v{font-size:24px}.acoes{margin-left:0}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ---- v0.6: fonte dos dados, condições de aprovação (chips) e extras do modo direto ---- */
+  .fonte{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2)}
+  .seg{display:inline-flex;border:1px solid var(--line,#8a96a3);border-radius:7px;overflow:hidden}
+  .seg button{border:0;border-radius:0;margin:0;background:transparent;color:inherit;padding:5px 10px;font:inherit;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:#1d5fa8;color:#fff;font-weight:600}
+  .vazio #vazioBtn{pointer-events:auto;margin-top:8px;padding:6px 12px;font:inherit;cursor:pointer}
+  select,input[type=text],input[type=number]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:5px 8px;min-height:34px}
+  .dirbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+  .dirbar[hidden],.aviso[hidden],.extras[hidden],.cond[hidden]{display:none}
+  .dirbar label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--ink2)}
+  .dirbar input[type=text]{width:min(330px,80vw)}.dirbar input[type=number]{width:96px}
+  .aviso{border:1px solid var(--warn-ink);color:var(--ink);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:12.5px}
+  .aviso b{color:var(--warn-ink)}
+  .extras{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:13px;color:var(--ink2);padding:0 4px}
+  .extras b{color:var(--ink);font-weight:620;margin-left:4px}
+  .cond{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px}
+  .cond .tit{grid-column:1/-1;font-size:12.5px;color:var(--ink2);display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}
+  .cond .tit b{color:var(--ink);font-size:13.5px}
+  .chip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;padding:6px 10px 7px;min-height:64px;border-radius:9px;border-width:1px 1px 1px 5px;border-left-color:var(--muted)}
+  .chip .r{font-size:12px;color:var(--ink2)}
+  .chip .v{font-size:19px;font-weight:620;letter-spacing:-.01em;line-height:1.2;white-space:nowrap}
+  .chip .v small{font-size:12px;font-weight:450;color:var(--muted);margin-left:3px;letter-spacing:0}
+  .chip.ok{border-left-color:var(--good)}.chip.fora{border-left-color:var(--crit)}.chip.pend{border-left-color:var(--warn-ink)}
+  .chip[aria-pressed=true]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
+  .chip.final{cursor:default}
+  .st.pend{color:var(--warn-ink)}
+  .cond .nota{grid-column:1/-1;font-size:12px;color:var(--muted)}
+  .leitura,.cond,.dirbar,.aviso,.extras,header{flex-shrink:0}
+  @media (max-width:700px){.chip .v{font-size:17px}html,body{height:auto;min-height:100%}main{flex:none;height:78vh;min-height:520px}}
+
+  /* ===== v0.10 (30/10/2026): TOPO COMPACTO — o gráfico é o protagonista. POR QUÊ: barra, leituras e condições ocupavam ~1/3 da altura e o gráfico ficava pequeno.
+     Só tamanhos (fonte, preenchimento, altura mínima): nenhuma informação foi retirada e nada muda de lugar. (REGRA_LAYOUT_ESTAVEL) ===== */
+  body{gap:5px;padding:6px 10px 8px}
+  button{padding:3px 9px;min-height:27px;font-size:13px;border-radius:6px}
+  header{gap:4px 10px}
+  header h1{font-size:15px}header h1 span{font-size:12px;margin-left:5px}
+  .sinal{padding:2px 10px;font-size:12px}
+  .acoes{gap:4px}
+  .seg button{padding:3px 8px}
+  select,input[type=text],input[type=number]{min-height:27px;padding:2px 6px;font-size:13px}
+  .leitura{grid-template-columns:repeat(auto-fit,minmax(136px,1fr));border-radius:8px}
+  .cel{padding:4px 10px 5px}
+  .cel .r{font-size:11.5px}
+  .cel .v{font-size:21px;line-height:1.1}.cel .v small{font-size:12px}
+  .cel .s{font-size:11.5px}
+  .cond{gap:4px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}
+  .cond .tit{font-size:11.5px}.cond .tit b{font-size:12.5px}
+  .chip{min-height:0;padding:3px 8px 4px;border-radius:7px;border-left-width:4px}
+  .chip .r{font-size:11px}.chip .v{font-size:15px}.chip .v small{font-size:11px}
+  .dirbar{padding:5px 10px;gap:6px 10px}.dirbar label{font-size:11.5px}
+  .aviso{padding:3px 10px;font-size:11.5px}.extras{font-size:12px}
+  main{min-height:56vh}
+  /* analisador (barra de zoom, legenda, tabela): menores para o desenho ganhar altura; a tabela de estatísticas rola dentro de uma caixa baixa */
+  #ag .ag{gap:4px;padding:5px 8px}
+  #ag .ag-bar{gap:4px}
+  #ag .ag-bar button,#ag .ag-bar select{padding:2px 9px;min-height:27px;font-size:13px}
+  #ag .ag-leg{gap:3px 6px}#ag .ag-leg button{padding:1px 7px;font-size:12px}
+  #ag .ag-est{max-height:13vh}
+  /* olhos do observador (par dos olhos do Gerenciador de logs): só enfeite de estado, nunca comanda nada */
+  .olhos{display:inline-block;width:40px;height:19px;flex:none}.olhos svg{display:block;width:100%;height:100%;overflow:visible}
+  .olhos .esc{fill:var(--surface);stroke:var(--axis);stroke-width:1.2}.olhos .pp{fill:var(--ink)}.olhos .br{fill:var(--surface)}
+  .olhos .pup{transition:transform .26s cubic-bezier(.25,.8,.3,1)}.olhos .olho{transition:transform .09s ease-in}
+  .olhos.pisca .olho,.olhos.dorme .olho{transform:scaleY(.08)}
+</style>
+</head>
+<body>
+<header>
+  <span class="olhos" id="olhos" role="img" aria-label="Em observação" title="Em observação: esta página só mostra o que o medidor publica — nunca comanda chave, gerador nem PLC. Olhos fechados = sem dados chegando.">
+    <svg viewBox="0 0 64 30" aria-hidden="true" focusable="false">
+      <g class="olho" style="transform-origin:17px 15px"><ellipse class="esc" cx="17" cy="15" rx="13" ry="11"/><g class="pup"><circle class="pp" cx="17" cy="15" r="5.2"/><circle class="br" cx="15.2" cy="13" r="1.5"/></g></g>
+      <g class="olho" style="transform-origin:47px 15px"><ellipse class="esc" cx="47" cy="15" rx="13" ry="11"/><g class="pup"><circle class="pp" cx="47" cy="15" r="5.2"/><circle class="br" cx="45.2" cy="13" r="1.5"/></g></g>
+    </svg></span>
+  <h1>Gráfico do ensaio<span>BT2</span></h1>
+  <span class="sinal" id="sinal" data-s="espera" role="status" aria-live="polite"><i></i><span id="sinalTxt">Aguardando o medidor</span></span>
+  <div class="acoes">
+    <span class="fonte" role="group" aria-label="De onde vêm os dados"><span class="seg"><button type="button" id="fMed" title="Recebe os dados da janela do medidor (abra este gráfico pelo botão Analisar do medidor)">Do medidor</button><button type="button" id="fDse" title="Lê direto o endereço /api/gerador do Node-RED, sem precisar do medidor. Lê o DSE real, mesmo que o medidor esteja em DEMO">Direto do gerador</button></span><select id="selFonte" hidden><option value="medidor">m</option><option value="dse">d</option></select></span>
+    <button type="button" id="bVoltar" hidden>↩ Voltar ao vivo</button>
+    <button type="button" id="bAbrir" title="Abre um ensaio salvo antes (.json)">Abrir ensaio salvo</button>
+    <button type="button" id="bExp" aria-haspopup="menu" title="PDF, imagem (PNG), planilha (CSV) ou o ensaio para reabrir depois (JSON)">Exportar ▾</button>
+    <button type="button" id="bTema" title="Alterna tema claro/escuro">Tema</button>
+    <button type="button" id="bTela" title="Tela cheia (F11 também funciona)">Tela cheia</button>
+    <button type="button" id="bAjuda" aria-haspopup="dialog">Ajuda</button>
+    <input type="file" id="fArq" accept=".json,application/json" hidden>
+  </div>
+</header>
+
+<section class="dirbar" id="dirBar" hidden aria-label="Leitura direta da API do DSE">
+  <label>Endereço da API <input type="text" id="dirUrl" inputmode="url" spellcheck="false" autocomplete="off"></label>
+  <label>Tensão nominal (V) <input type="number" id="dirV" min="0" step="any" placeholder="informe"></label>
+  <label>Frequência nominal (Hz) <input type="number" id="dirF" min="0" step="any" placeholder="informe"></label>
+  <button type="button" id="dirIni">▶ Iniciar acompanhamento</button>
+  <button type="button" id="dirRei" hidden>↺ Reiniciar</button>
+</section>
+<div class="aviso" id="aviso" hidden role="note"><b>INFORMATIVO.</b> As etapas são deduzidas pela carga lida na API (não pelo cronômetro do medidor) e os critérios abaixo são provisórios. Não substitui o ensaio registrado no medidor.</div>
+<section class="extras" id="extras" hidden aria-label="Leituras ao vivo da API"></section>
+<section class="leitura" id="leitura" aria-label="Leitura atual do ensaio"></section>
+
+<section class="cond" id="cond" hidden aria-label="Condições de aprovação do ensaio"></section>
+
+<main>
+  <div id="ag"></div>
+  <div class="vazio" id="vazio"><b id="vazioT">Aguardando o medidor</b><span id="vazioX">Abra este gráfico pelo botão “📈 Analisar” do medidor, ou use “Abrir ensaio salvo” para analisar um ensaio que já terminou. Sem o medidor? Troque a “Fonte” para “API direto”.</span><button type="button" id="vazioBtn" hidden>Usar “Direto do gerador”</button></div>
+</main>
+
+<dialog id="dlgAjuda">
+  <h2>Como usar</h2>
+  <table>
+    <tr><td>Segunda tela</td><td>Arraste esta janela para o outro monitor e use “Tela cheia” (ou F11). Ela continua recebendo os dados do medidor.</td></tr>
+    <tr><td>Aproximar</td><td>Roda do mouse, botões ＋ −, teclas + e −, pinça no toque.</td></tr>
+    <tr><td>Zoom vertical</td><td>Shift + roda sobre a faixa. Clique no título da faixa para dar “foco nos dados”.</td></tr>
+    <tr><td>Mover</td><td>Arrastar, ou setas ← →. Home ajusta tudo; duplo clique também.</td></tr>
+    <tr><td>Medir</td><td>Um clique marca A, o seguinte marca B. A tabela mostra a diferença.</td></tr>
+    <tr><td>Ao vivo</td><td>“Últimos 2 min” etc. mantém o gráfico acompanhando o presente.</td></tr>
+    <tr><td>Exportar</td><td>Um botão só: PDF (1 página com o gráfico), imagem PNG, planilha CSV e “Ensaio para reabrir (.json)”, que pode ser aberto aqui depois com “Abrir ensaio salvo”.</td></tr>
+  </table>
+  <p style="color:var(--muted);font-size:12.5px;margin:10px 0 0">Esta página só mostra dados: não comanda chave e não escreve no PLC/DSE. Os cartões de “Condições de aprovação” são conferência (o resultado oficial é o do medidor); passe o mouse ou toque num cartão para ver no gráfico de onde sai o valor. Na fonte “API direto” o resultado é só INFORMATIVO.</p>
+  <form method="dialog" style="margin-top:10px;text-align:right"><button>Fechar</button></form>
+</dialog>
+
+<script>
+/* v0.10: animação dos olhos do observador. Pupilas passeiam e piscam; ficam fechados quando o selo de sinal não está "vivo" (sem dados). Só enfeite. */
+(function(){const o=document.getElementById('olhos'),sn=document.getElementById('sinal');if(!o)return;const pups=[...o.querySelectorAll('.pup')];
+  const dorme=()=>!!sn&&(sn.dataset.s==='espera'||sn.dataset.s==='parado');
+  setInterval(()=>{if(document.hidden)return;o.classList.toggle('dorme',dorme());if(dorme())return;const dx=(Math.random()*8-4).toFixed(1),dy=(Math.random()*4-2).toFixed(1);pups.forEach(p=>p.style.transform='translate('+dx+'px,'+dy+'px)')},1500);
+  setInterval(()=>{if(document.hidden||dorme())return;o.classList.add('pisca');setTimeout(()=>o.classList.remove('pisca'),140)},4200);
+})();
+</script>
+<script>
+/* [DEV.OBS] Registrador de log desta página (grafico v0.4) — par do gerenciador_logs_v1.3.html.
+   PARA QUE SERVE (leigo): esta página anota o que acontece nela (abriu, recebeu dados, perdeu sinal, deu erro) e entrega essas anotações ao
+   Gerenciador de logs, que mostra tudo em ABAS separadas (Medidor | Gráfico | Mapa dos FBs). Serve para validar as páginas com o log que você nos manda.
+   POR QUÊ (técnico): mesmo canal do medidor (BroadcastChannel 'bt2-dev-obs'), evento no mesmo formato {sessao,n,t,ms,v,modo,card,tipo,acao,res,det,est}
+   mais o campo app. Guarda até 1000 eventos na memória; só PUBLICA depois que o gerenciador manda {k:'pede'} (aí envia o backlog e passa a enviar ao vivo).
+   NÃO FAZ: não comanda nada, não lê PLC/DSE, não guarda nada em disco, qualquer falha aqui dentro é engolida (o log nunca atrapalha a tela). */
+(function () {
+  'use strict';
+  const APP = 'grafico', CARD = 'gra.jan', VERP = '0.6', MAX = 1000;
+  const SESSAO = 'p' + APP + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), T0 = performance.now();
+  const BUF = []; let N = 0, observando = false, CAN = null;
+  try { if ('BroadcastChannel' in window) CAN = new BroadcastChannel('bt2-dev-obs'); } catch (e) { /* sem canal: o log fica só na memória */ }
+  const trunc = (s, n) => { s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+  const limpa = o => { if (o == null) return null; try { const x = JSON.stringify(o); return x.length <= 800 ? JSON.parse(x) : { _truncado: x.slice(0, 799) + '…' }; } catch (e) { return null; } };
+  function log(tipo, acao, res, det) {
+    try {
+      const e = { sessao: SESSAO, n: ++N, t: new Date().toISOString(), ms: Math.round(performance.now() - T0), v: VERP, app: APP, modo: null, card: CARD,
+        tipo: tipo || 'sistema', acao: trunc(acao, 300), res: res || 'info', det: limpa(det), est: null };
+      BUF.push(e); if (BUF.length > MAX) BUF.shift();
+      if (observando && CAN) CAN.postMessage({ k: 'ev', e });
+      return e;
+    } catch (err) { return null; }
+  }
+  if (CAN) CAN.onmessage = m => {
+    const d = m && m.data;
+    if (d && d.k === 'pede') { observando = true; try { CAN.postMessage({ k: 'backlog', sessao: SESSAO, app: APP, eventos: BUF.slice() }); } catch (x) {} }
+  };
+  window.addEventListener('error', ev => { log('erro', 'erro JavaScript: ' + (ev.message || '?'), 'falha', { arquivo: trunc(ev.filename, 80), linha: ev.lineno, coluna: ev.colno }); });
+  window.addEventListener('unhandledrejection', ev => { log('erro', 'promessa rejeitada: ' + trunc(ev.reason && ev.reason.message || ev.reason, 200), 'falha'); });
+  window.addEventListener('pagehide', () => { log('sistema', 'página fechada', 'info'); });
+  /* ---- específico desta página ---- */
+  const tickMapa = () => {};   // (só o mapa usa)
+  window.__obs = { log, app: APP, versao: VERP, buf: () => BUF.slice(), observando: () => observando, tickMapa };
+  log('sistema', 'página aberta (' + APP + ' v' + VERP + ')', 'info', { janelaMae: !!window.opener, canal: !!CAN, emIframe: window.self !== window.top });
+})();
+</script>
+<script>
+/* ============================================================================
+   analisador_grafico_v0.2.js  —  Analisador de gráficos do ensaio (zoom, desvio, tolerâncias)
+   v0.2 (27/10/2026): NOVO seletor "Ensaio inteiro / Últimos 1, 2, 5, 10 min" para acompanhar ao vivo em outra tela (janela móvel). Fora isso igual à v0.1.
+   ----------------------------------------------------------------------------
+   PARA QUE SERVE (linguagem para equipes não técnicas)
+     Mostra o ensaio "ao longo do tempo" em faixas empilhadas (carga, desvio da carga,
+     tensão, frequência...), todas com o MESMO eixo de tempo. O operador pode:
+       • aproximar/afastar (roda do mouse, botões + e −, ou gesto de pinça no celular);
+       • andar pelo tempo (arrastar, setas do teclado);
+       • selecionar uma região para aproximar ("Zoom de área");
+       • passar o cursor e ler TODOS os valores daquele instante;
+       • marcar dois instantes (A e B) e ver a diferença entre eles;
+       • ver, numa tabela, mínimo / média / máximo e o % do tempo dentro da tolerância
+         na janela visível — é assim que se enxerga o DESVIO sem abrir planilha.
+     Este módulo NÃO decide aprovação nem reprovação: só mostra dados e tolerâncias que
+     o programa hospedeiro entrega. Os limites (±%) vêm dos parâmetros já existentes.
+
+   BOAS PRÁTICAS DE GRÁFICO APLICADAS (e o porquê)
+     1. Eixo X compartilhado e faixas empilhadas  → comparar causa e efeito no mesmo instante
+        sem misturar unidades (%, V, Hz) no mesmo eixo.
+     2. Cada faixa ajusta o eixo Y sozinha à janela visível → um desvio pequeno de tensão não
+        some ao lado de uma carga de 0–120 %. Shift + roda trava/ajusta o Y manualmente.
+     3. Tolerância desenhada como FAIXA sombreada, não só linha → fora da faixa é visível de longe.
+     4. Decimação min/máx por coluna de pixel → milhares de pontos continuam rápidos E nenhum
+        pico (que pode ser a falha!) desaparece ao afastar o zoom.
+     5. Cursor com leitura de todos os valores + marcadores A/B → medir sem adivinhar no olho.
+     6. Não depende só de cor: série tem nome na legenda e na tabela; estados têm texto.
+     7. Funciona offline (sem biblioteca externa), em tela de toque e com teclado.
+     8. Atualização "ao vivo" sem tirar o operador do zoom que ele escolheu.
+
+   INTEGRAÇÃO (o hospedeiro entrega os dados; o módulo desenha)
+     const g = AnaliseGrafico.criar({
+        montar: elementoHtml,                 // onde o módulo constrói a interface
+        titulo: 'Ensaio',                     // usado no PNG exportado
+        rotuloX: 'Tempo (mm:ss)',
+        fmtX: t => '01:23',                   // opcional: formata o tempo
+        tema: () => 'claro' | 'escuro',       // opcional
+        dados: () => ({ ...ver "FORMATO DE DADOS" abaixo... }),
+     });
+     g.atualiza();   // chame quando houver dado novo (pode chamar à vontade: ele limita a taxa)
+
+   FORMATO DE DADOS devolvido por dados():
+     {
+       tMax: número,                          // maior tempo conhecido (fim do eixo "tudo")
+       etapas:  [{t0,t1,rotulo}],             // degraus do roteiro (botões "Etapa ◀ ▶" e linhas)
+       faixasX: [{t0,t1,cor,rotulo}],         // sombreado vertical global (ajuste, pausa...)
+       marcos:  [{t,rotulo}],                 // riscos verticais (ex.: manobra de chave)
+       infoExtra: t => 'texto',               // opcional: linha extra no cursor (etapa, estado...)
+       tracks: [{
+          id, titulo, unidade, dec, peso,     // peso = altura relativa da faixa
+          y: {fixo:[min,max]} | {},           // fixo = faixa padrão; senão ajusta aos dados
+          bandas:  [{x0,x1,y0,y1,cor,rotulo}],// tolerância sombreada (em unidades do eixo)
+          linhasH: [{y,cor,rotulo}],          // limites tracejados
+          series: [{ id, nome, cor, tipo:'linha'|'pontos'|'degrau', largura,
+                     dados:[[t,valor|null],...],   // ordenado por t; null = quebra de linha
+                     faixa:{lo,hi} }]          // opcional: habilita "% dentro da faixa"
+       }]
+     }
+   ============================================================================ */
+(function (global) {
+  'use strict';
+
+  /* -------------------------------------------------------------------------
+     1) UTILITÁRIOS PUROS (sem tela) — fáceis de testar e de portar
+     ------------------------------------------------------------------------- */
+
+  /** Formata segundos como mm:ss (ou h:mm:ss). Por quê: operador pensa em minutos. */
+  function fmtTempoPadrao(t) {
+    const s = Math.max(0, Math.round(t));
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+    const p2 = n => (n < 10 ? '0' : '') + n;
+    return (h ? h + ':' + p2(m) : p2(m)) + ':' + p2(r);
+  }
+
+  /** Número com vírgula decimal (padrão brasileiro). */
+  function nb(v, dec) {
+    if (v == null || !isFinite(v)) return '—';
+    return Number(v).toFixed(dec == null ? 1 : dec).replace('.', ',');
+  }
+
+  /**
+   * Passo "bonito" para uma grade (1, 2, 5 × 10^n). Por quê: rótulos como 0, 20, 40
+   * são lidos de relance; 0, 17, 34 não.
+   */
+  function passoBonito(faixa, alvoDivisoes) {
+    const bruto = faixa / Math.max(1, alvoDivisoes);
+    const pot = Math.pow(10, Math.floor(Math.log10(bruto || 1)));
+    const f = bruto / pot;
+    return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * pot;
+  }
+
+  /** Passo de grade para o eixo de TEMPO (segundos): 1, 2, 5, 10, 15, 30 s, 1, 2, 5, 10, 15, 30 min, 1 h... */
+  function passoTempo(faixa, alvoDivisoes) {
+    const opcoes = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400];
+    const bruto = faixa / Math.max(1, alvoDivisoes);
+    for (const o of opcoes) if (o >= bruto) return o;
+    return opcoes[opcoes.length - 1];
+  }
+
+  /** Busca binária: primeiro índice com t >= alvo (dados ordenados por t). */
+  function primeiroIdx(d, alvo) {
+    let a = 0, b = d.length;
+    while (a < b) { const m = (a + b) >> 1; if (d[m][0] < alvo) a = m + 1; else b = m; }
+    return a;
+  }
+
+  /** Índice do ponto mais próximo de t (para o cursor). -1 se vazio. */
+  function maisProximo(d, t) {
+    if (!d.length) return -1;
+    const i = primeiroIdx(d, t);
+    if (i <= 0) return 0;
+    if (i >= d.length) return d.length - 1;
+    return (t - d[i - 1][0] <= d[i][0] - t) ? i - 1 : i;
+  }
+
+  /**
+   * Estatística de uma série numa janela [t0,t1].
+   * Devolve {n, min, max, media, dp, dentro}. 'dentro' = % de amostras dentro de faixa{lo,hi}.
+   * Por quê por amostra e não por tempo: as amostras vêm em ritmo quase constante (≈0,4 s a 1 s),
+   * então a diferença é desprezível e a conta fica explicável a quem não é técnico.
+   */
+  function estatistica(serie, t0, t1) {
+    const d = serie.dados;
+    let n = 0, soma = 0, min = Infinity, max = -Infinity, dentro = 0;
+    for (let i = primeiroIdx(d, t0); i < d.length && d[i][0] <= t1; i++) {
+      const v = d[i][1];
+      if (v == null || !isFinite(v)) continue;
+      n++; soma += v; if (v < min) min = v; if (v > max) max = v;
+      if (serie.faixa && v >= serie.faixa.lo && v <= serie.faixa.hi) dentro++;
+    }
+    if (!n) return { n: 0 };
+    const media = soma / n;
+    let q = 0;
+    for (let i = primeiroIdx(d, t0); i < d.length && d[i][0] <= t1; i++) {
+      const v = d[i][1]; if (v == null || !isFinite(v)) continue; q += (v - media) * (v - media);
+    }
+    return { n, min, max, media, dp: Math.sqrt(q / n), dentro: serie.faixa ? 100 * dentro / n : null };
+  }
+
+  /**
+   * Decimação min/máx: reduz a série a no máximo ~4 pontos por coluna de pixel,
+   * preservando primeiro, mínimo, máximo e último de cada coluna na ORDEM do tempo.
+   * Por quê: amostrar "1 a cada N" apagaria picos; aqui o pico sempre aparece.
+   * Quebras (null) são preservadas.
+   */
+  function decimar(d, t0, t1, px, colunas) {
+    let i0 = Math.max(0, primeiroIdx(d, t0) - 1), i1 = Math.min(d.length, primeiroIdx(d, t1) + 1);
+    const n = i1 - i0;
+    if (n <= colunas * 2) return d.slice(i0, i1);
+    const saida = [];
+    let col = null, bucket = null;
+    const fecha = () => {
+      if (!bucket) return;
+      const lista = [bucket.f, bucket.mi, bucket.ma, bucket.l].filter(Boolean);
+      lista.sort((a, b) => a[0] - b[0]);
+      let ant = null;
+      for (const p of lista) { if (p !== ant) saida.push(p); ant = p; }
+      bucket = null;
+    };
+    for (let i = i0; i < i1; i++) {
+      const p = d[i];
+      if (p[1] == null) { fecha(); saida.push(p); col = null; continue; }
+      const c = Math.floor(px(p[0]));
+      if (c !== col) { fecha(); col = c; bucket = { f: p, mi: p, ma: p, l: p }; }
+      else { if (p[1] < bucket.mi[1]) bucket.mi = p; if (p[1] > bucket.ma[1]) bucket.ma = p; bucket.l = p; }
+    }
+    fecha();
+    return saida;
+  }
+
+  /* -------------------------------------------------------------------------
+     2) ESTILO (injetado uma única vez). Prefixo .ag- evita conflito com a página.
+     ------------------------------------------------------------------------- */
+  const CSS = `
+  .ag{--ag-bg:#fff;--ag-txt:#222;--ag-mut:#666;--ag-lin:#d8d8d3;--ag-bar:#f1f2f4;--ag-pri:#1d5fa8;background:var(--ag-bg);padding:6px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;min-height:0;height:100%;font:12.5px/1.35 system-ui,Segoe UI,Arial,sans-serif;color:var(--ag-txt)}
+  .ag[data-tema=escuro]{--ag-bg:#1b1c1f;--ag-txt:#e6e6e2;--ag-mut:#a4a59f;--ag-lin:#3b3d43;--ag-bar:#26282c;--ag-pri:#5aa2f0}
+  .ag-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .ag-bar select{width:auto!important;max-width:210px;flex:0 0 auto}
+  .ag-bar button,.ag-bar select{font:inherit;padding:5px 10px;border:1px solid var(--ag-lin);border-radius:6px;background:var(--ag-bar);color:var(--ag-txt);cursor:pointer;min-height:32px}
+  .ag-bar button[aria-pressed=true]{background:var(--ag-pri);border-color:var(--ag-pri);color:#fff}
+  .ag-bar button:focus-visible,.ag canvas:focus-visible{outline:2px solid var(--ag-pri);outline-offset:1px}
+  .ag-bar .ag-sep{width:1px;align-self:stretch;background:var(--ag-lin)}
+  .ag-leg{display:flex;flex-wrap:wrap;gap:4px 8px}
+  .ag-leg button{display:inline-flex;gap:6px;align-items:center;font:inherit;padding:2px 8px;border:1px solid var(--ag-lin);border-radius:12px;background:transparent;color:var(--ag-txt);cursor:pointer}
+  .ag-leg button[aria-pressed=false]{opacity:.4;text-decoration:line-through}
+  .ag-leg i{display:inline-block;width:14px;height:0;border-top:3px solid}
+  .ag-leg i.p{height:8px;border:0;background:currentColor;width:8px}
+  .ag-cv{position:relative;flex:1 1 auto;min-height:260px;border:1px solid var(--ag-lin);border-radius:6px;background:var(--ag-bg);overflow:hidden;touch-action:none}
+  .ag-cv canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  .ag-cv.mover canvas{cursor:grab}.ag-cv.arrastando canvas{cursor:grabbing}
+  .ag-tip{position:absolute;pointer-events:none;background:var(--ag-bg);color:var(--ag-txt);border:1px solid var(--ag-mut);border-radius:6px;padding:5px 8px;font-size:12px;box-shadow:0 3px 12px rgba(0,0,0,.25);white-space:nowrap;display:none;z-index:2;font-variant-numeric:tabular-nums}
+  .ag-tip b{font-weight:700}
+  .ag-est{overflow:auto;max-height:26vh;border:1px solid var(--ag-lin);border-radius:6px}
+  .ag-est table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+  .ag-est th{position:sticky;top:0;background:var(--ag-bar);text-align:right;padding:3px 8px;border-bottom:1px solid var(--ag-lin);white-space:nowrap}
+  .ag-est th:first-child,.ag-est td:first-child{text-align:left}
+  .ag-est td{padding:3px 8px;text-align:right;border-bottom:1px solid var(--ag-lin)}
+  .ag-est .ag-cap{padding:4px 8px;color:var(--ag-mut);text-align:left}
+  .ag-ok{color:#2e9a5f}.ag-ruim{color:#d64545;font-weight:700}
+  .ag-dica{color:var(--ag-mut);font-size:11.5px}
+  @media (max-width:760px){.ag-bar button,.ag-bar select{min-height:40px}
+    /* v0.3: celular — o desenho vem PRIMEIRO (antes dos botões e da legenda); a leitura fica mais compacta */
+    .ag-cv{order:-1}.ag-cv canvas{min-height:340px}.leitura{grid-template-columns:repeat(2,1fr)}.cel .v{font-size:20px}}
+  `;
+  function injetaCss() {
+    if (document.getElementById('ag-css')) return;
+    const s = document.createElement('style'); s.id = 'ag-css'; s.textContent = CSS; document.head.appendChild(s);
+  }
+
+  /* -------------------------------------------------------------------------
+     3) FÁBRICA DO ANALISADOR
+     ------------------------------------------------------------------------- */
+  function criar(op) {
+    injetaCss();
+    const fmtX = op.fmtX || fmtTempoPadrao;
+    const raiz = op.montar;
+    raiz.innerHTML = '';
+    const el = document.createElement('div'); el.className = 'ag'; raiz.appendChild(el);
+    el.innerHTML =
+      '<div class="ag-bar" role="toolbar" aria-label="Controles do gráfico">' +
+      '<button type="button" data-a="mover" aria-pressed="true" title="Arrastar move o gráfico no tempo">✋ Mover</button>' +
+      '<button type="button" data-a="area" aria-pressed="false" title="Arrastar desenha um retângulo e aproxima nele">▭ Zoom de área</button>' +
+      '<button type="button" data-a="mais" title="Aproximar (tecla +)">＋</button>' +
+      '<button type="button" data-a="menos" title="Afastar (tecla −)">－</button>' +
+      '<button type="button" data-a="tudo" title="Mostra o ensaio inteiro e solta o zoom vertical (duplo clique)">⤢ Ajustar tudo</button>' +
+      '<span class="ag-sep"></span>' +
+      '<button type="button" data-a="ant" title="Etapa anterior">◀ Etapa</button>' +
+      '<select data-a="etapa" aria-label="Ir para a etapa"></select>' +
+      '<button type="button" data-a="prox" title="Próxima etapa">Etapa ▶</button>' +
+      '<span class="ag-sep"></span>' +
+      '<button type="button" data-a="vivo" aria-pressed="true" title="Acompanha o fim do ensaio enquanto ele corre">● Ao vivo</button>' +
+      '<select data-a="jan" aria-label="Largura da janela ao vivo" title="Quanto tempo mostrar enquanto acompanha ao vivo"><option value="0">Ensaio inteiro</option><option value="60">Últimos 1 min</option><option value="120">Últimos 2 min</option><option value="300">Últimos 5 min</option><option value="600">Últimos 10 min</option></select>' +
+      '<button type="button" data-a="limpaAB" title="Remove os marcadores A e B">✕ A/B</button>' +
+      '</div>' +
+      '<div class="ag-leg" aria-label="Legenda (clique para ocultar/mostrar)"></div>' +
+      '<div class="ag-cv mover"><canvas tabindex="0" role="img" aria-label="Gráfico do ensaio. Setas movem, mais e menos aproximam, Home ajusta tudo."></canvas><div class="ag-tip" role="status"></div></div>' +
+      '<div class="ag-est" aria-live="off"></div>' +
+      '<div class="ag-dica">Roda do mouse = zoom no tempo · Shift + roda = zoom vertical da faixa · arrastar = mover · clique = marcador A, depois B · clique no título da faixa = foco nos dados · duplo clique = ajustar tudo</div>';
+
+    const $ = s => el.querySelector(s);
+    const cvBox = $('.ag-cv'), cv = cvBox.querySelector('canvas'), tip = $('.ag-tip'), estBox = $('.ag-est'), leg = $('.ag-leg'), selEt = $('[data-a=etapa]');
+
+    /* ---- ESTADO ---- */
+    const E = {
+      D: null,                 // últimos dados entregues pelo hospedeiro
+      x0: 0, x1: 60,           // janela visível (s)
+      auto: true,              // true = mostra o ensaio inteiro; false = o operador escolheu a janela
+      vivo: true,              // true = se a janela termina no fim dos dados, acompanha o fim
+      modo: 'mover',           // 'mover' | 'area'
+      yMan: {},                // trackId -> [min,max] escolhido à mão
+      foco: new Set(),         // faixas em 'foco nos dados': o eixo Y ignora os limites de tolerância
+      oculta: new Set(),       // séries ocultas pela legenda
+      cursorT: null, cursorY: null, cursorTrack: null,
+      A: null, B: null,        // marcadores (s)
+      arraste: null, ponteiros: new Map(), pinca: null,
+      janVivaL: 0,             // largura (s) da janela móvel 'últimos N min' (0 = ensaio inteiro)
+      jaVista: new Set(),      // séries que já apareceram (para aplicar 'ocultaInicial' uma única vez)
+      layout: [], dirty: true, ultimaAtual: 0, tMaxAnt: 0, assinatura: ''
+    };
+
+    const tema = () => (op.tema ? op.tema() : (document.documentElement.dataset.tema === 'escuro' ? 'escuro' : 'claro'));
+
+    /* ---- PALETA POR TEMA (cores de texto/grade; as cores das SÉRIES vêm do hospedeiro) ---- */
+    function paleta(t) {
+      return t === 'escuro'
+        ? { bg: '#1b1c1f', txt: '#c9cac5', mut: '#8e8f8a', g1: '#34363b', g2: '#2a2c30', moldura: '#6a6c72', cursor: '#e6e6e2', A: '#f1b81c', B: '#e0709a' }
+        : { bg: '#ffffff', txt: '#444', mut: '#777', g1: '#e1e1dc', g2: '#eeeeea', moldura: '#999', cursor: '#222', A: '#b57a00', B: '#b0306a' };
+    }
+    const corSerie = (s, t) => (typeof s.cor === 'object' && s.cor ? (s.cor[t] || s.cor.claro) : s.cor);
+
+    /* ---- DADOS ---- */
+    function leDados() {
+      E.D = op.dados() || { tracks: [] };
+      const D = E.D;
+      D.tMax = Math.max(10, D.tMax || 0);
+      // Se a lista de séries/etapas mudou, refaz legenda e seletor de etapas.
+      const ass = D.tracks.map(t => t.id + ':' + t.series.map(s => s.id).join(',')).join('|') + '#' + (D.etapas || []).length;
+      if (ass !== E.assinatura) {
+        E.assinatura = ass;
+        // Séries marcadas 'ocultaInicial' (ex.: as 3 fases, para não poluir) começam ocultas SÓ na primeira vez;
+        // depois vale sempre a escolha do operador na legenda.
+        D.tracks.forEach(tr => tr.series.forEach(s => { if (s.ocultaInicial && !E.jaVista.has(s.id)) E.oculta.add(s.id); E.jaVista.add(s.id); }));
+        montaLegenda(); montaEtapas();
+      }
+    }
+
+    function montaLegenda() {
+      leg.innerHTML = '';
+      (E.D.tracks || []).forEach(tr => tr.series.forEach(s => {
+        const b = document.createElement('button'); b.type = 'button';
+        b.setAttribute('aria-pressed', E.oculta.has(s.id) ? 'false' : 'true');
+        const t = tema(), cor = corSerie(s, t);
+        b.innerHTML = '<i class="' + (s.tipo === 'pontos' ? 'p' : '') + '" style="border-color:' + cor + ';color:' + cor + '"></i>' + s.nome;
+        b.onclick = () => { if (E.oculta.has(s.id)) E.oculta.delete(s.id); else E.oculta.add(s.id); b.setAttribute('aria-pressed', E.oculta.has(s.id) ? 'false' : 'true'); marca(); };
+        leg.appendChild(b);
+      }));
+    }
+    function montaEtapas() {
+      selEt.innerHTML = '<option value="">Ir para a etapa…</option>';
+      (E.D.etapas || []).forEach((e, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (i + 1) + ' · ' + e.rotulo; selEt.appendChild(o); });
+      selEt.style.display = (E.D.etapas || []).length ? '' : 'none';
+    }
+
+    /* ---- JANELA (zoom/pan) ---- */
+    const larguraMin = () => Math.max(2, (E.D.tMax || 60) / 2000); // não deixa aproximar além do razoável
+    function aplicaJanela(x0, x1, manterJan) {
+      if (!manterJan) E.janVivaL = 0;      // o operador mexeu na janela à mão: sai do modo 'últimos N min'
+      const T = E.D.tMax || 60, minL = larguraMin();
+      let L = Math.max(minL, x1 - x0);
+      L = Math.min(L, T * 1.2);
+      if (x0 < -0.02 * T) { x0 = -0.02 * T; }
+      x1 = x0 + L;
+      if (x1 > T * 1.02 && x0 > 0) { x1 = T * 1.02; x0 = x1 - L; if (x0 < 0) x0 = 0; }
+      E.x0 = x0; E.x1 = x1; E.auto = false;
+      E.vivo = (E.x1 >= T - L * 0.02);     // se o operador deixou o fim visível, continua acompanhando
+      sincBotoes(); marca();
+    }
+    function ajustaTudo() { E.auto = true; E.vivo = true; E.yMan = {}; E.foco.clear(); sincBotoes(); marca(); }
+    function zoomX(fator, centroT) {
+      if (E.auto) { E.x0 = 0; E.x1 = E.D.tMax; }
+      const c = centroT != null ? centroT : (E.x0 + E.x1) / 2;
+      aplicaJanela(c - (c - E.x0) * fator, c + (E.x1 - c) * fator);
+    }
+    function irParaEtapa(i) {
+      const e = (E.D.etapas || [])[i]; if (!e) return;
+      const m = Math.max(2, (e.t1 - e.t0) * 0.06);
+      aplicaJanela(e.t0 - m, e.t1 + m);
+    }
+    function etapaAtualIdx() {
+      const c = (E.x0 + E.x1) / 2, et = E.D.etapas || [];
+      for (let i = 0; i < et.length; i++) if (c >= et[i].t0 && c <= et[i].t1) return i;
+      return -1;
+    }
+    function sincBotoes() {
+      $('[data-a=mover]').setAttribute('aria-pressed', E.modo === 'mover');
+      $('[data-a=area]').setAttribute('aria-pressed', E.modo === 'area');
+      $('[data-a=vivo]').setAttribute('aria-pressed', E.vivo);
+      cvBox.classList.toggle('mover', E.modo === 'mover');
+    }
+
+    /* ---- MARGENS (px CSS). O retângulo de cada faixa é calculado dentro de desenha(). ---- */
+    const ML = 58, MR = 14, MT = 8, MB = 30, GAP = 8;
+
+    /** Janela X efetiva (modo 'tudo' ou escolhida). */
+    function janela() {
+      if (E.auto) return [0, Math.max(10, E.D.tMax)];
+      return [E.x0, E.x1];
+    }
+
+    /** Escala Y da faixa: manual > fixa > automática sobre os dados visíveis. */
+    function escalaY(tr, t0, t1) {
+      if (E.yMan[tr.id]) return E.yMan[tr.id];
+      let lo = Infinity, hi = -Infinity;
+      const inclui = v => { if (v != null && isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } };
+      if (tr.y && tr.y.fixo && E.auto && !E.foco.has(tr.id)) return tr.y.fixo.slice();
+      tr.series.forEach(s => {
+        if (E.oculta.has(s.id)) return;
+        const d = s.dados;
+        for (let i = Math.max(0, primeiroIdx(d, t0) - 1); i < d.length && d[i][0] <= t1 + 1e-9; i++) inclui(d[i][1]);
+      });
+      // Faixas de tolerância entram na escala: o operador precisa ver o LIMITE junto com o dado.
+      // Exceção: 'foco nos dados' (clique no título da faixa) — útil quando a tolerância é bem maior que a oscilação real.
+      if (!E.foco.has(tr.id)) {
+        (tr.bandas || []).forEach(b => { if (b.x1 >= t0 && b.x0 <= t1) { inclui(b.y0); inclui(b.y1); } });
+        (tr.linhasH || []).forEach(l => inclui(l.y));
+      }
+      if (!isFinite(lo)) return (tr.y && tr.y.fixo) ? tr.y.fixo.slice() : [0, 1];
+      const minSpan = (tr.y && tr.y.spanMin) || 1e-6;
+      let span = Math.max(hi - lo, minSpan);
+      const pad = span * 0.08;
+      const mid = (hi + lo) / 2;
+      span = Math.max(span + 2 * pad, minSpan);
+      return [mid - span / 2, mid + span / 2];
+    }
+
+    /* ---------------------------------------------------------------------
+       DESENHO — função única usada na tela e na exportação PNG
+       --------------------------------------------------------------------- */
+    function desenha(ctx, W, H, t, opts) {
+      opts = opts || {};
+      const P = paleta(t), D = E.D;
+      // Na tela, o hospedeiro pode definir as cores da página (--ag-bg, --ag-txt, --ag-mut, --ag-lin): o canvas segue a página.
+      // Por quê: assim o gráfico não "destoa" do resto da janela em tema claro/escuro. A exportação PNG ignora isso (sempre claro).
+      if (!opts.png) {
+        const cs = getComputedStyle(el), v = n => cs.getPropertyValue(n).trim();
+        if (v('--ag-bg')) P.bg = v('--ag-bg'); if (v('--ag-txt')) P.txt = v('--ag-txt'); if (v('--ag-mut')) P.mut = v('--ag-mut');
+        if (v('--ag-lin')) { P.g1 = v('--ag-lin'); P.g2 = v('--ag-lin'); P.moldura = v('--ag-lin'); }
+      }
+      ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H);
+      const [t0, t1] = janela();
+      const topo = opts.titulo ? 54 : 0;
+      if (topo) { ctx.fillStyle = P.txt; ctx.font = 'bold 18px system-ui,Arial'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(opts.titulo, ML, 20); ctx.font = '12px system-ui,Arial'; ctx.fillStyle = P.mut; ctx.fillText(new Date().toLocaleString('pt-BR') + ' · janela ' + fmtX(t0) + ' → ' + fmtX(t1), ML, 40); }
+      // Layout dentro da área abaixo do título
+      const salvo = E.layout;
+      const trs = D.tracks || [];
+      const soma = trs.reduce((a, q) => a + (q.peso || 1), 0) || 1;
+      const alt = H - topo - MT - MB - GAP * Math.max(0, trs.length - 1);
+      let yy = topo + MT;
+      const lay = trs.map(q => { const h = Math.max(40, alt * (q.peso || 1) / soma); const r = { tr: q, x: ML, y: yy, w: W - ML - MR, h }; yy += h + GAP; return r; });
+      if (!opts.png) E.layout = lay;
+      const X = tt => ML + (tt - t0) / (t1 - t0) * (W - ML - MR);
+      const px = tt => X(tt) - ML;
+      ctx.textBaseline = 'middle';
+
+      lay.forEach((r, k) => {
+        const tr = r.tr, [y0, y1] = escalaY(tr, t0, t1);
+        const Y = v => r.y + r.h - (v - y0) / (y1 - y0 || 1) * r.h;
+        r.y0 = y0; r.y1 = y1;
+        ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
+        // faixas verticais globais (ajuste/estabilização/pausa)
+        (D.faixasX || []).forEach(f => { ctx.fillStyle = f.cor; ctx.fillRect(X(f.t0), r.y, Math.max(1, X(f.t1) - X(f.t0)), r.h); });
+        // etapas: fundo alternado leve para localizar o degrau
+        (D.etapas || []).forEach((e, i) => { if (i % 2) { ctx.fillStyle = t === 'escuro' ? 'rgba(255,255,255,.035)' : 'rgba(0,0,0,.03)'; ctx.fillRect(X(e.t0), r.y, X(e.t1) - X(e.t0), r.h); } });
+        // grade horizontal
+        const pas = passoBonito(y1 - y0, Math.max(2, Math.floor(r.h / 34)));
+        ctx.lineWidth = 1; ctx.strokeStyle = P.g1;
+        for (let v = Math.ceil(y0 / pas) * pas; v <= y1 + 1e-9; v += pas) { ctx.beginPath(); ctx.moveTo(r.x, Math.round(Y(v)) + .5); ctx.lineTo(r.x + r.w, Math.round(Y(v)) + .5); ctx.stroke(); }
+        // grade vertical (tempo)
+        const pt = passoTempo(t1 - t0, Math.max(3, Math.floor(r.w / 90)));
+        ctx.strokeStyle = P.g2;
+        for (let tt = Math.ceil(t0 / pt) * pt; tt <= t1; tt += pt) { ctx.beginPath(); ctx.moveTo(Math.round(X(tt)) + .5, r.y); ctx.lineTo(Math.round(X(tt)) + .5, r.y + r.h); ctx.stroke(); }
+        // bandas de tolerância
+        (tr.bandas || []).forEach(b => { ctx.fillStyle = b.cor; ctx.fillRect(X(b.x0), Y(b.y1), Math.max(1, X(b.x1) - X(b.x0)), Math.max(1, Y(b.y0) - Y(b.y1))); });
+        // limites tracejados
+        (tr.linhasH || []).forEach(l => { ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = l.cor; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(r.x, Y(l.y)); ctx.lineTo(r.x + r.w, Y(l.y)); ctx.stroke(); ctx.restore(); });
+        // marcos (manobras etc.)
+        (D.marcos || []).forEach(m => { if (m.t < t0 || m.t > t1) return; ctx.strokeStyle = 'rgba(217,119,6,.6)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(m.t), r.y); ctx.lineTo(X(m.t), r.y + r.h); ctx.stroke(); });
+        // séries
+        tr.series.forEach(s => {
+          if (E.oculta.has(s.id)) return;
+          const dd = decimar(s.dados, t0, t1, px, Math.max(1, Math.floor(r.w)));
+          ctx.strokeStyle = ctx.fillStyle = corSerie(s, t);
+          ctx.lineWidth = s.largura || 1.8; ctx.lineJoin = 'round';
+          if (s.tipo === 'pontos') {
+            dd.forEach(p => { if (p[1] != null) ctx.fillRect(X(p[0]) - 1.5, Y(p[1]) - 1.5, 3, 3); });
+          } else {
+            ctx.beginPath(); let on = false, ult = null;
+            dd.forEach(p => {
+              if (p[1] == null) { on = false; ult = null; return; }
+              const x = X(p[0]), y = Y(p[1]);
+              if (!on) { ctx.moveTo(x, y); on = true; }
+              else if (s.tipo === 'degrau') { ctx.lineTo(x, ult); ctx.lineTo(x, y); }
+              else ctx.lineTo(x, y);
+              ult = y;
+            });
+            ctx.stroke();
+          }
+        });
+        ctx.restore();
+        // moldura, rótulos de Y e título da faixa
+        ctx.strokeStyle = P.moldura; ctx.lineWidth = 1; ctx.strokeRect(r.x + .5, r.y + .5, r.w - 1, r.h - 1);
+        ctx.fillStyle = P.txt; ctx.font = '11px system-ui,Arial'; ctx.textAlign = 'right';
+        const dec = tr.dec == null ? (pas < 1 ? 2 : pas < 10 ? 1 : 0) : tr.dec;
+        for (let v = Math.ceil(y0 / pas) * pas; v <= y1 + 1e-9; v += pas) ctx.fillText(nb(v, Math.max(dec, pas < 1 ? 2 : 0)), r.x - 6, Y(v));
+        ctx.textAlign = 'left'; ctx.font = 'bold 11px system-ui,Arial'; ctx.fillStyle = P.txt;
+        ctx.fillText(tr.titulo + (tr.unidade ? ' (' + tr.unidade + ')' : '') + (E.yMan[tr.id] ? '  · Y manual' : '') + (E.foco.has(tr.id) ? '  · foco nos dados' : ''), r.x + 6, r.y + 11);
+        // rótulos das bandas/linhas (uma vez, à direita, só se couber)
+        ctx.font = '10.5px system-ui,Arial'; ctx.textAlign = 'right'; ctx.fillStyle = P.mut;
+        (tr.linhasH || []).forEach(l => { if (l.rotulo && Y(l.y) > r.y + 10 && Y(l.y) < r.y + r.h - 4) ctx.fillText(l.rotulo, r.x + r.w - 5, Y(l.y) - 5); });
+      });
+
+      // eixo X (rótulos no rodapé, uma vez)
+      if (lay.length) {
+        const ult = lay[lay.length - 1], base = ult.y + ult.h;
+        ctx.fillStyle = P.txt; ctx.font = '11px system-ui,Arial'; ctx.textAlign = 'center';
+        const pt = passoTempo(t1 - t0, Math.max(3, Math.floor((W - ML - MR) / 90)));
+        for (let tt = Math.ceil(t0 / pt) * pt; tt <= t1; tt += pt) ctx.fillText(fmtX(tt), X(tt), base + 12);
+        ctx.fillStyle = P.mut; ctx.fillText(op.rotuloX || 'Tempo (mm:ss)', ML + (W - ML - MR) / 2, base + 25);
+        // rótulos das etapas no topo da primeira faixa
+        const r0 = lay[0]; ctx.font = '10.5px system-ui,Arial'; ctx.textAlign = 'center'; ctx.fillStyle = P.mut;
+        (D.etapas || []).forEach((e, i) => { const xa = Math.max(X(e.t0), r0.x), xb = Math.min(X(e.t1), r0.x + r0.w); if (xb - xa > 34) ctx.fillText(e.rotulo, (xa + xb) / 2, r0.y + 22); });
+      }
+
+      // marcadores A/B e cursor
+      const risco = (tt, cor, rot) => {
+        if (tt == null || tt < t0 || tt > t1) return;
+        lay.forEach(r => { ctx.strokeStyle = cor; ctx.lineWidth = 1.4; ctx.setLineDash(rot ? [] : [3, 3]); ctx.beginPath(); ctx.moveTo(X(tt), r.y); ctx.lineTo(X(tt), r.y + r.h); ctx.stroke(); ctx.setLineDash([]); });
+        if (rot && lay.length) { ctx.fillStyle = cor; ctx.font = 'bold 12px system-ui,Arial'; ctx.textAlign = 'center'; ctx.fillText(rot, X(tt), lay[0].y + lay[0].h - 8); }
+      };
+      risco(E.A, P.A, 'A'); risco(E.B, P.B, 'B');
+      if (!opts.png) {
+        risco(E.cursorT, P.cursor, null);
+        if (E.arraste && E.arraste.tipo === 'area') {
+          const a = E.arraste; ctx.fillStyle = 'rgba(47,127,216,.18)'; ctx.strokeStyle = '#2f7fd8';
+          ctx.fillRect(Math.min(a.px0, a.px1), lay.length ? lay[0].y : 0, Math.abs(a.px1 - a.px0), (lay.length ? lay[lay.length - 1].y + lay[lay.length - 1].h - lay[0].y : H));
+          ctx.strokeRect(Math.min(a.px0, a.px1) + .5, lay.length ? lay[0].y : 0, Math.abs(a.px1 - a.px0), (lay.length ? lay[lay.length - 1].y + lay[lay.length - 1].h - lay[0].y : H));
+        }
+      }
+    }
+
+    /* ---------------------------------------------------------------------
+       REDESENHO COM LIMITE DE TAXA
+       --------------------------------------------------------------------- */
+    function marca() { E.dirty = true; if (!E.rafId) E.rafId = requestAnimationFrame(quadro); }
+    function quadro() {
+      E.rafId = 0; if (!E.dirty) return; E.dirty = false;
+      if (!E.D) return;
+      const W = cv.clientWidth || 600, H = cv.clientHeight || 300, dpr = window.devicePixelRatio || 1;
+      if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+      const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      el.dataset.tema = tema();
+      desenha(ctx, W, H, tema());
+      tabela();
+    }
+
+    /* ---------------------------------------------------------------------
+       TABELA DE ESTATÍSTICAS (janela visível ou intervalo A–B)
+       --------------------------------------------------------------------- */
+    function tabela() {
+      const D = E.D; if (!D) return;
+      let [t0, t1] = janela(), rotulo = 'Janela visível ' + fmtX(t0) + ' → ' + fmtX(t1);
+      const temAB = E.A != null && E.B != null;
+      if (temAB) { t0 = Math.min(E.A, E.B); t1 = Math.max(E.A, E.B); rotulo = 'Entre A e B: ' + fmtX(t0) + ' → ' + fmtX(t1) + ' (Δt ' + fmtX(t1 - t0) + ')'; }
+      let h = '<table><thead><tr><th>Série</th><th>mín</th><th>média</th><th>máx</th><th>desvio-padrão</th><th>dentro da faixa</th>' + (E.A != null ? '<th>em A</th>' : '') + (E.B != null ? '<th>em B</th>' : '') + (temAB ? '<th>B − A</th>' : '') + '</tr></thead><tbody>';
+      h += '<tr><td class="ag-cap" colspan="9">' + rotulo + '</td></tr>';
+      (D.tracks || []).forEach(tr => tr.series.forEach(s => {
+        if (E.oculta.has(s.id)) return;
+        const st = estatistica(s, t0, t1), dec = tr.dec == null ? 1 : tr.dec;
+        const vA = E.A != null ? valorEm(s, E.A) : null, vB = E.B != null ? valorEm(s, E.B) : null;
+        const cls = st.dentro == null ? '' : (st.dentro >= 99.5 ? 'ag-ok' : 'ag-ruim');
+        h += '<tr><td>' + s.nome + (tr.unidade ? ' (' + tr.unidade + ')' : '') + '</td>' +
+          (st.n ? '<td>' + nb(st.min, dec) + '</td><td>' + nb(st.media, dec) + '</td><td>' + nb(st.max, dec) + '</td><td>' + nb(st.dp, Math.max(dec, 2)) + '</td><td class="' + cls + '">' + (st.dentro == null ? '—' : nb(st.dentro, 1) + ' %') + '</td>' : '<td colspan="5">sem dados na janela</td>') +
+          (E.A != null ? '<td>' + nb(vA, dec) + '</td>' : '') + (E.B != null ? '<td>' + nb(vB, dec) + '</td>' : '') +
+          (temAB ? '<td>' + (vA != null && vB != null ? nb(vB - vA, dec) : '—') + '</td>' : '') + '</tr>';
+      }));
+      h += '</tbody></table>';
+      if (estBox._h !== h) { estBox.innerHTML = h; estBox._h = h; }
+    }
+    function valorEm(s, t) { const i = maisProximo(s.dados, t); return i < 0 ? null : s.dados[i][1]; }
+
+    /* ---------------------------------------------------------------------
+       CURSOR E LEITURA (tooltip)
+       --------------------------------------------------------------------- */
+    function atualizaCursor(x, y) {
+      const [t0, t1] = janela(), W = cv.clientWidth;
+      const inside = x >= ML && x <= W - MR;
+      if (!inside) { E.cursorT = null; tip.style.display = 'none'; marca(); return; }
+      E.cursorT = t0 + (x - ML) / (W - ML - MR) * (t1 - t0);
+      E.cursorTrack = (E.layout.find(r => y >= r.y && y <= r.y + r.h) || {}).tr || null;
+      let h = '<b>' + fmtX(E.cursorT) + '</b>';
+      if (op.dados && E.D.infoExtra) { const ex = E.D.infoExtra(E.cursorT); if (ex) h += ' · ' + ex; }
+      (E.D.tracks || []).forEach(tr => tr.series.forEach(s => {
+        if (E.oculta.has(s.id)) return;
+        const i = maisProximo(s.dados, E.cursorT);
+        if (i < 0 || s.dados[i][1] == null) return;
+        // Não mostra valor de um ponto muito distante do cursor (série sem dado nesse trecho)
+        if (Math.abs(s.dados[i][0] - E.cursorT) > Math.max(5, (t1 - t0) / 40)) return;
+        h += '<br><span style="color:' + corSerie(s, tema()) + '">■</span> ' + s.nome + ': <b>' + nb(s.dados[i][1], tr.dec == null ? 1 : tr.dec) + '</b>' + (tr.unidade ? ' ' + tr.unidade : '');
+      }));
+      tip.innerHTML = h; tip.style.display = 'block';
+      const bw = cvBox.clientWidth, tw = tip.offsetWidth;
+      tip.style.left = Math.min(Math.max(4, x + 14), bw - tw - 4) + 'px';
+      tip.style.top = Math.max(4, Math.min(y + 10, cvBox.clientHeight - tip.offsetHeight - 4)) + 'px';
+      marca();
+    }
+
+    /* ---------------------------------------------------------------------
+       ENTRADA: mouse, toque (pinça), teclado
+       --------------------------------------------------------------------- */
+    const posicao = ev => { const b = cv.getBoundingClientRect(); return [ev.clientX - b.left, ev.clientY - b.top]; };
+    const tDoX = x => { const [t0, t1] = janela(); return t0 + (x - ML) / (cv.clientWidth - ML - MR) * (t1 - t0); };
+
+    cv.addEventListener('pointerdown', ev => {
+      cv.setPointerCapture(ev.pointerId);
+      const [x, y] = posicao(ev);
+      E.ponteiros.set(ev.pointerId, [x, y]);
+      if (E.ponteiros.size === 2) { // gesto de pinça: guarda distância inicial
+        const [a, b] = [...E.ponteiros.values()];
+        E.pinca = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), x0: janela()[0], x1: janela()[1], c: tDoX((a[0] + b[0]) / 2) };
+        E.arraste = null; return;
+      }
+      const [t0, t1] = janela();
+      const modoArea = E.modo === 'area' || ev.shiftKey;
+      E.arraste = { tipo: modoArea ? 'area' : 'mover', px0: x, px1: x, py0: y, xi: x, x0: t0, x1: t1, moveu: false };
+      if (!modoArea) cvBox.classList.add('arrastando');
+    });
+    cv.addEventListener('pointermove', ev => {
+      const [x, y] = posicao(ev);
+      if (E.ponteiros.has(ev.pointerId)) E.ponteiros.set(ev.pointerId, [x, y]);
+      if (E.pinca && E.ponteiros.size === 2) {
+        const [a, b] = [...E.ponteiros.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+        const f = E.pinca.d / Math.max(10, d), c = E.pinca.c;
+        aplicaJanela(c - (c - E.pinca.x0) * f, c + (E.pinca.x1 - c) * f); return;
+      }
+      const a = E.arraste;
+      if (a) {
+        if (Math.abs(x - a.xi) > 3) a.moveu = true;
+        if (a.tipo === 'mover') {
+          const dt = (x - a.xi) / (cv.clientWidth - ML - MR) * (a.x1 - a.x0);
+          aplicaJanela(a.x0 - dt, a.x1 - dt);
+        } else { a.px1 = x; marca(); }
+      }
+      atualizaCursor(x, y);
+    });
+    const fim = ev => {
+      E.ponteiros.delete(ev.pointerId);
+      if (E.ponteiros.size < 2) E.pinca = null;
+      const a = E.arraste; E.arraste = null; cvBox.classList.remove('arrastando');
+      if (!a) return;
+      if (a.tipo === 'area' && Math.abs(a.px1 - a.px0) > 8) {
+        const ta = tDoX(a.px0), tb = tDoX(a.px1); aplicaJanela(Math.min(ta, tb), Math.max(ta, tb));
+      } else if (!a.moveu) { // clique simples
+        // Clique no TÍTULO da faixa = alterna 'foco nos dados' (ignora/inclui os limites no eixo Y)
+        const rt = E.layout.find(q => a.py0 >= q.y && a.py0 <= q.y + 16 && a.xi >= q.x && a.xi <= q.x + 280);
+        if (rt) { if (E.foco.has(rt.tr.id)) E.foco.delete(rt.tr.id); else E.foco.add(rt.tr.id); marca(); return; }
+        // senão: marcador A, depois B, depois recomeça
+        const t = tDoX(a.xi);
+        // Espera 260 ms: se vier um 2º clique (duplo clique = "ajustar tudo") NÃO deve deixar marcadores A/B para trás.
+        clearTimeout(E.timerClique);
+        E.timerClique = setTimeout(() => {
+          if (E.A == null || (E.A != null && E.B != null)) { E.A = t; E.B = null; } else { E.B = t; }
+          marca();
+        }, 260);
+      }
+      marca();
+    };
+    cv.addEventListener('pointerup', fim);
+    cv.addEventListener('pointercancel', fim);
+    cv.addEventListener('pointerleave', () => { if (!E.arraste) { E.cursorT = null; tip.style.display = 'none'; marca(); } });
+    cv.addEventListener('dblclick', () => { clearTimeout(E.timerClique); ajustaTudo(); });
+    cv.addEventListener('wheel', ev => {
+      ev.preventDefault(); // por quê: a roda deve aproximar o gráfico, não rolar a página/diálogo
+      const [x, y] = posicao(ev), f = ev.deltaY < 0 ? 1 / 1.18 : 1.18;
+      if (ev.shiftKey) { // zoom vertical só da faixa sob o cursor
+        const r = E.layout.find(q => y >= q.y && y <= q.y + q.h); if (!r) return;
+        const [a, b] = E.yMan[r.tr.id] || [r.y0, r.y1];
+        const v = r.y1 - (y - r.y) / r.h * (r.y1 - r.y0);   // valor sob o cursor
+        E.yMan[r.tr.id] = [v - (v - a) * f, v + (b - v) * f]; marca();
+      } else zoomX(f, tDoX(x));
+    }, { passive: false });
+    cv.addEventListener('keydown', ev => {
+      const [t0, t1] = janela(), L = t1 - t0;
+      if (ev.key === 'ArrowLeft') { aplicaJanela(t0 - L * .2, t1 - L * .2); ev.preventDefault(); }
+      else if (ev.key === 'ArrowRight') { aplicaJanela(t0 + L * .2, t1 + L * .2); ev.preventDefault(); }
+      else if (ev.key === '+' || ev.key === '=') { zoomX(1 / 1.4); ev.preventDefault(); }
+      else if (ev.key === '-') { zoomX(1.4); ev.preventDefault(); }
+      else if (ev.key === 'Home') { ajustaTudo(); ev.preventDefault(); }
+      else if (ev.key === 'End') { aplicaJanela((E.D.tMax) - L, E.D.tMax); ev.preventDefault(); }
+    });
+
+    /* ---- barra de botões ---- */
+    el.querySelector('.ag-bar').addEventListener('click', ev => {
+      const b = ev.target.closest('button'); if (!b) return;
+      const a = b.dataset.a;
+      if (a === 'mover' || a === 'area') { E.modo = a; sincBotoes(); }
+      else if (a === 'mais') zoomX(1 / 1.5);
+      else if (a === 'menos') zoomX(1.5);
+      else if (a === 'tudo') ajustaTudo();
+      else if (a === 'ant') { const i = etapaAtualIdx(); irParaEtapa(Math.max(0, (i < 0 ? 1 : i) - 1)); }
+      else if (a === 'prox') { const i = etapaAtualIdx(); irParaEtapa(Math.min((E.D.etapas || []).length - 1, i + 1)); }
+      else if (a === 'vivo') { E.vivo = !E.vivo; if (E.vivo && !E.auto) { const L = E.x1 - E.x0; aplicaJanela(E.D.tMax - L, E.D.tMax); E.vivo = true; } sincBotoes(); marca(); }
+      else if (a === 'limpaAB') { E.A = E.B = null; marca(); }
+      else if (a === 'png') exportaPng();
+    });
+    el.querySelector('[data-a=jan]').addEventListener('change', ev => {
+      const L = +ev.target.value;
+      if (!L) { E.janVivaL = 0; ajustaTudo(); return; }
+      E.janVivaL = L; E.vivo = true; E.auto = false;
+      const T = Math.max(E.D.tMax, L); E.x1 = T; E.x0 = T - L; sincBotoes(); marca();
+    });
+    selEt.addEventListener('change', () => { if (selEt.value !== '') irParaEtapa(+selEt.value); selEt.value = ''; });
+
+    /* ---- exportação PNG: mesma função de desenho, sempre em tema claro (impressão) ---- */
+    function geraCanvas() {   // v0.5: o PDF e o PNG usam o mesmo desenho (tema claro, 1600×900)
+      const c = document.createElement('canvas'); c.width = 1600; c.height = 900;
+      desenha(c.getContext('2d'), 1600, 900, 'claro', { png: true, titulo: op.titulo || 'Gráfico do ensaio' });
+      return c;
+    }
+    function exportaPng() {
+      const c = geraCanvas();
+      c.toBlob(b => {
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+        a.download = (op.nomeArquivo || 'grafico_ensaio') + '_' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.png';
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      }, 'image/png');
+    }
+
+    /* ---- redimensionamento ---- */
+    const ro = new ResizeObserver(() => marca()); ro.observe(cvBox);
+
+    /* ---- API pública ---- */
+    function atualiza(forca) {
+      const agora = performance.now();
+      if (!forca && agora - E.ultimaAtual < 250) return;       // limite de taxa: 4 quadros/s bastam para dado de 0,4 s
+      E.ultimaAtual = agora;
+      leDados();
+      const T = E.D.tMax;
+      // "Ao vivo": se o operador aproximou mas deixou o fim visível, a janela anda junto com o fim.
+      if (E.janVivaL > 0 && E.vivo) { E.auto = false; E.x1 = Math.max(T, E.janVivaL); E.x0 = E.x1 - E.janVivaL; }
+      else if (!E.auto && E.vivo && T > E.tMaxAnt) { const L = E.x1 - E.x0; E.x1 = T; E.x0 = T - L; }
+      E.tMaxAnt = T;
+      marca();
+    }
+    function reseta() { E.janVivaL = 0; E.A = E.B = null; E.yMan = {}; E.foco.clear(); E.oculta.clear(); E.auto = true; E.vivo = true; E.assinatura = ''; E.tMaxAnt = 0; atualiza(true); }
+    function destruir() { ro.disconnect(); if (E.rafId) cancelAnimationFrame(E.rafId); raiz.innerHTML = ''; }
+    sincBotoes(); atualiza(true);
+    // Expõe funções puras para teste automatizado (não usadas em produção).
+    return { atualiza, reseta, destruir, png: exportaPng, canvas: geraCanvas, _estado: E, _irParaEtapa: irParaEtapa, _zoomX: zoomX, _ajustaTudo: ajustaTudo };
+  }
+
+  global.AnaliseGrafico = { criar, _util: { primeiroIdx, maisProximo, estatistica, decimar, passoBonito, passoTempo, fmtTempoPadrao } };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* =====================================================================================================================
+   api_cards_v0.1.js — API INTERNA DOS CARDS (dentro do navegador) · projeto bancos de teste · 29/10/2026
+   Fonte dos trechos colados (inline) em: medidor_gerador_v1.10.112 (publicador) e grafico_ensaio_v0.8 / api_cards_visor_v0.1 (clientes).
+
+   PARA QUE SERVE (leigo): cada "card" da tela do medidor (tensões, correntes, potência, água, rotação, bateria, banco de cargas, modo, etapas...)
+   passa a ser também uma "tomada" que os outros HTML (gráfico, mapa dos FBs, visor) podem ler, em tempo real, SEM ligar no PLC/Node-RED de novo.
+   É SOMENTE LEITURA: nenhum HTML consegue comandar chave, gerador ou PLC por aqui.
+
+   POR QUÊ (técnico): não cria rota nova no Node-RED (nenhum endereço inventado). O medidor já lê tudo; este módulo só RE-PUBLICA o que a tela já tem:
+     (1) cards lidos do próprio DOM: cada <div class="card"> com um <div class="v" id="..."> vira {id, painel, rotulo, texto, valor, unidade, classes};
+     (2) blocos estruturados fornecidos pelo medidor (usaFonte): ensaio, etapas, gerador, links (PLC/Node-RED/HTML) e operador.
+   Canal: BroadcastChannel 'bt2-api' (mesmo navegador) — mesmo padrão do gráfico ('bt2-grafico'). O medidor só publica enquanto alguém "escuta":
+     cliente → medidor: {k:'oi'} (batimento a cada 3 s) · {k:'pede'} (quer o estado já)
+     medidor → cliente: {k:'snap', v:1, t, cards:{id:{...}}, links:{...}, ensaio:{...}, etapas:[...], gerador:{...}, operador:{...}}   (1 por segundo)
+   Cada snapshot é COMPLETO (não incremental): perder um não corrompe nada (prevenção de registros perdidos/duplicados = o cliente sempre sobrescreve).
+   Dado velho: o cliente marca "sem dados" se passar de 4 s sem snapshot (mesma regra do sinal do gráfico).
+   LIMITES: só funciona entre páginas do MESMO navegador/origem (BroadcastChannel). Notebook em outro aparelho continua usando a leitura direta /api/gerador.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  const CANAL = 'bt2-api', VERSAO_API = 1, PERIODO_MS = 1000, OUVINTE_MS = 6000, VELHO_MS = 4000;
+
+  /* ---------- números: "1.234,5" / "98,2" / "—" → número ou null ---------- */
+  function paraNumero(t) {
+    if (t == null) return null;
+    const m = String(t).replace(/\s/g, '').match(/-?\d+(?:[.,]\d+)*/);
+    if (!m) return null;
+    let s = m[0];
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.'); else if ((s.match(/\./g) || []).length > 1) s = s.replace(/\./g, '');
+    const n = parseFloat(s); return isFinite(n) ? n : null;
+  }
+
+  /* =======================  LADO DO MEDIDOR (publicador)  ======================= */
+  let fonte = null, canal = null, ultOi = 0, timer = null, ultSnap = null;
+  const assinantes = [];
+
+  /** Lê os cards direto da tela. Só leitura do DOM; nada é escrito nela. */
+  function leCards() {
+    const out = {};
+    document.querySelectorAll('section.panel .card').forEach(c => {
+      const v = c.querySelector('.v[id]'); if (!v) return;
+      const l = c.querySelector('.l'), u = v.querySelector('.u'), p = c.closest('section.panel');
+      const tx = Array.from(v.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();   // só o texto do valor (sem a unidade)
+      out[v.id] = { id: v.id, painel: p ? p.id : null, rotulo: l ? l.textContent.trim() : v.id, texto: tx || v.textContent.trim(), valor: paraNumero(tx), unidade: u ? u.textContent.trim() : '', classes: v.className || '' };
+    });
+    return out;
+  }
+  function leLinks() {
+    const o = {};
+    document.querySelectorAll('.lnk .lk[id]').forEach(e => { const s = e.querySelector('small'); o[e.id] = { estado: e.dataset.s || '', texto: s ? s.textContent.trim() : '' }; });
+    return o;
+  }
+  /** Monta o snapshot completo. Qualquer erro na fonte do medidor é engolido: a API nunca derruba a tela. */
+  function snapshot() {
+    let extra = {};
+    try { extra = fonte ? (fonte() || {}) : {}; } catch (e) { extra = { erroFonte: String(e && e.message || e) }; }
+    return Object.assign({ k: 'snap', v: VERSAO_API, t: Date.now(), cards: leCards(), links: leLinks() }, extra);
+  }
+  function publica() {
+    if (!canal) return;
+    ultSnap = snapshot();
+    try { canal.postMessage(ultSnap); } catch (e) { /* mensagem não clonável: ignora, o próximo ciclo reenvia */ }
+    assinantes.forEach(fn => { try { fn(ultSnap); } catch (e) {} });
+  }
+  /** Liga o publicador. fonteFn() devolve os blocos estruturados do medidor (ensaio, etapas, gerador, operador). */
+  function inicia(fonteFn) {
+    fonte = fonteFn;
+    try { if ('BroadcastChannel' in global) canal = new BroadcastChannel(CANAL); } catch (e) { canal = null; }
+    if (canal) canal.onmessage = ev => {
+      const m = ev.data; if (!m || typeof m !== 'object') return;
+      if (m.k === 'oi') { ultOi = Date.now(); if (!timer) timer = setInterval(ciclo, PERIODO_MS); }
+      else if (m.k === 'pede') { ultOi = Date.now(); publica(); }
+      // QUALQUER outra mensagem (inclusive comandos) é ignorada de propósito: esta API é somente leitura.
+    };
+    return true;
+  }
+  function ciclo() {
+    if (Date.now() - ultOi > OUVINTE_MS) { clearInterval(timer); timer = null; return; }   // ninguém escutando: não gasta nada
+    publica();
+  }
+
+  /* =======================  LADO DO CLIENTE (outros HTML)  ======================= */
+  /** cliente(fn, opc): chama fn(snapshot|null, info) a cada snapshot; fn(null,{semDados:true}) se passar de 4 s sem receber. */
+  function cliente(fn, opc) {
+    opc = opc || {}; let ch = null, ult = 0, ultS = null, velho = true;
+    try { if ('BroadcastChannel' in global) ch = new BroadcastChannel(CANAL); } catch (e) {}
+    if (!ch) { fn(null, { semCanal: true }); return { fecha() {}, ultimo: () => null }; }
+    ch.onmessage = ev => { const m = ev.data; if (m && m.k === 'snap' && m.v === VERSAO_API) { ult = Date.now(); ultS = m; velho = false; fn(m, {}); } };
+    const oi = () => { try { ch.postMessage({ k: 'oi' }); } catch (e) {} };
+    oi(); try { ch.postMessage({ k: 'pede' }); } catch (e) {}
+    const t1 = setInterval(oi, 3000), t2 = setInterval(() => { if (!velho && Date.now() - ult > VELHO_MS) { velho = true; fn(null, { semDados: true, ultimo: ultS }); } }, 1000);
+    return { fecha() { clearInterval(t1); clearInterval(t2); try { ch.close(); } catch (e) {} }, ultimo: () => ultS };
+  }
+
+  global.BT2_API = { versao: VERSAO_API, inicia, snapshot, card: id => leCards()[id] || null, assina: fn => { assinantes.push(fn); }, cliente, paraNumero };
+})(window);
+
+</script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+/* =========================================================================
+   1) ESTADO RECEBIDO DO MEDIDOR
+   ========================================================================= */
+const S = {
+  estado: null,       // parâmetros e posição do ensaio (ver contrato)
+  pts: [],            // pontos: {t,c,s,e,n,va,vb,vc,hz,kw}
+  marcos: [],         // riscos verticais enviados pelo medidor (ex.: confirmações do manual guiado)
+  ultimo: 0,          // quando chegou o último lote (ms)
+  origem: 'espera',   // 'espera' | 'vivo' | 'arquivo'
+  nomeArq: '',
+  fonte: 'medidor',   // v0.6: 'medidor' | 'dse' (API direto)
+  informativo: false, // v0.6: resultado só informativo (etapas deduzidas)
+  sel: null, hov: null, av: null   // v0.6: cartão de condição fixado / sob o mouse; última avaliação
+};
+
+const OBS = (t, a, r, d) => { try { window.__obs && window.__obs.log(t, a, r, d); } catch (e) {} };   // v0.4: atalho do registrador de log (nunca atrapalha)
+/* ---- canais: janela que abriu esta página + canal do navegador ---- */
+let CAN = null;
+try { if ('BroadcastChannel' in window) CAN = new BroadcastChannel('bt2-grafico'); } catch (e) { /* sem canal: só a janela-mãe funciona */ }
+function falaComMedidor(m) {
+  try { if (CAN) CAN.postMessage(m); } catch (e) {}
+  try { if (window.opener && !window.opener.closed) window.opener.postMessage(m, '*'); } catch (e) {}
+}
+if (CAN) CAN.onmessage = ev => recebe(ev.data);
+window.addEventListener('message', ev => { if (window.opener && ev.source === window.opener) recebe(ev.data); });
+
+/** Aplica uma mensagem do medidor. Por quê tanta checagem: o canal é aberto — nunca confiar no formato. */
+function recebe(m) {
+  if (!m || typeof m !== 'object' || S.origem === 'arquivo' || S.fonte === 'dse') return;   // v0.6: na fonte "API direto" ignora o medidor
+  if (m.k === 'reset') { OBS('sistema', 'ensaio reiniciado no medidor (reset)', 'info'); S.pts = []; S.marcos = []; S.estado = null; S.origem = 'vivo'; S.ultimo = Date.now(); G.reseta(); return renderTudo(); }
+  if (m.k === 'marco' && isFinite(m.t)) {
+    // v0.2: o medidor manda por 2 caminhos (opener + canal) -> a mesma marca chega 2x. Ignora repetida (mesmo t e mesmo rótulo).
+    const rot = String(m.rotulo || '').slice(0, 60);
+    if (S.marcos.some(x => x.t === +m.t && x.rotulo === rot)) return;
+    S.marcos.push({ t: +m.t, rotulo: rot }); OBS('sistema', 'marco no gráfico: ' + rot, 'info', { t: +m.t }); return renderTudo();
+  }
+  if (m.k !== 'lote' || !Array.isArray(m.pts) || !isFinite(m.de)) return;
+  if (m.de > S.pts.length) { OBS('sistema', 'faltou um pedaço (lote começa em ' + m.de + ', a página tem ' + S.pts.length + '): pediu tudo de novo', 'aviso'); falaComMedidor({ k: 'pede' }); return; }          // faltou um pedaço: pede tudo de novo
+  m.pts.forEach((p, i) => { if (m.de + i >= S.pts.length) S.pts.push(p); });       // ignora o que já temos (idempotente)
+  if (m.estado) S.estado = m.estado;
+  S.origem = 'vivo'; S.ultimo = Date.now();
+  if (!S.logVivo) { S.logVivo = 1; OBS('sistema', 'recebendo dados do medidor', 'ok', { pontos: S.pts.length }); }
+  renderTudo();
+}
+setInterval(() => falaComMedidor({ k: 'oi' }), 3000); // "tem alguém vendo": o medidor só envia enquanto ouve isto
+falaComMedidor({ k: 'pede' });
+
+/* =========================================================================
+   2) ADAPTADOR: estado recebido → formato do módulo analisador_grafico
+   ========================================================================= */
+const nb = (v, d) => (v == null || !isFinite(v)) ? '—' : Number(v).toFixed(d == null ? 1 : d).replace('.', ',');
+const mmss = s => { s = Math.max(0, Math.round(s)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const media = a => { const v = a.filter(x => x != null && isFinite(x)); return v.length ? v.reduce((p, q) => p + q, 0) / v.length : null; };
+
+function dadosParaModulo() {
+  const E = S.estado, P = S.pts;
+  if (!E || !P.length) return { tMax: 60, tracks: [], etapas: [], faixasX: [], marcos: S.marcos };
+  const par = E.par, nom = E.nominal || {};
+  const plano = E.plano || [];
+  const tMax = Math.max(60, plano.length ? plano[plano.length - 1].e : 0, E.t || 0);
+  const planejar = par.modo !== 'carga';
+  const lin = [], bandaC = [];
+  plano.forEach(g => { lin.push([g.s, g.a], [g.e, g.a], [g.e, null]); bandaC.push({ x0: g.s, x1: g.e, y0: Math.max(g.a - par.tol, 0), y1: g.a + par.tol, cor: 'rgba(120,130,140,.20)' }); });
+  const carga = [], dAll = [], dCont = [], vm = [], va = [], vb = [], vc = [], hz = [], kw = [];
+  P.forEach(p => {
+    carga.push([p.t, p.c]);
+    const alvo = E.etapas[p.e] ? E.etapas[p.e].alvo : null;
+    if (alvo != null && p.s !== 2) { dAll.push([p.t, p.c - alvo]); if (p.n) dCont.push([p.t, p.c - alvo]); }
+    vm.push([p.t, media([p.va, p.vb, p.vc])]); va.push([p.t, p.va == null ? null : p.va]); vb.push([p.t, p.vb == null ? null : p.vb]); vc.push([p.t, p.vc == null ? null : p.vc]);
+    hz.push([p.t, p.hz == null ? null : p.hz]); kw.push([p.t, p.kw == null ? null : p.kw]);
+  });
+  // faixas verticais: amarelo = ajuste/estabilização, cinza = pausa
+  const faixasX = []; let run = null, prevT = 0;
+  const cor = s => s === 1 ? 'rgba(250,178,25,.22)' : 'rgba(140,140,140,.18)';
+  P.forEach(p => {
+    if (!run || run.s !== p.s || p.s === 0) { if (run) faixasX.push({ t0: run.t0, t1: prevT, cor: cor(run.s) }); run = p.s !== 0 ? { s: p.s, t0: prevT } : null; }
+    prevT = p.t;
+  });
+  if (run) faixasX.push({ t0: run.t0, t1: prevT, cor: cor(run.s) });
+  const etapas = plano.map((g, i) => ({ t0: g.s, t1: g.e, rotulo: (E.etapas[i] ? E.etapas[i].alvo : '?') + ' %' }));
+  // tolerâncias de tensão/frequência só se o nominal foi informado (nada presumido)
+  const temV = isFinite(nom.tensao) && nom.tensao > 0, temF = isFinite(nom.freq) && nom.freq > 0;
+  const vHi = temV ? nom.tensao * (1 + par.tensTol / 100) : null, vLo = temV ? nom.tensao * (1 - par.tensTol / 100) : null;
+  const fHi = temF ? nom.freq * (1 + par.freqTol / 100) : null, fLo = temF ? nom.freq * (1 - par.freqTol / 100) : null;
+  const BAND = 'rgba(120,130,140,.20)', LIM = '#d03b3b';
+  const C = { carga: { claro: '#2a78d6', escuro: '#3987e5' }, ink: { claro: '#0b0b0b', escuro: '#f0efec' }, v: { claro: '#eb6834', escuro: '#d95926' }, f: { claro: '#1baf7a', escuro: '#199e70' }, k: { claro: '#6250d6', escuro: '#9085e9' } };
+  const tracks = [
+    { id: 'carga', titulo: 'Carga', unidade: '%', dec: 1, peso: 1.8, y: { fixo: [0, 120] }, bandas: planejar ? bandaC : [],
+      series: [{ id: 'c', nome: 'Carga medida', cor: C.carga, largura: 2.2, dados: carga }].concat(planejar ? [{ id: 'pl', nome: 'Perfil planejado', cor: C.ink, largura: 1.3, dados: lin }] : []) },
+    { id: 'desv', titulo: 'Desvio da carga (medida − alvo)', unidade: 'pontos %', dec: 1, peso: 1.1, y: { spanMin: par.tol },
+      bandas: [{ x0: 0, x1: tMax, y0: -par.tol, y1: par.tol, cor: BAND }], linhasH: [{ y: par.tol, cor: LIM, rotulo: '+' + nb(par.tol, 0) + ' pts' }, { y: -par.tol, cor: LIM, rotulo: '−' + nb(par.tol, 0) + ' pts' }],
+      series: [{ id: 'dA', nome: 'Desvio (todas as leituras)', cor: { claro: '#898781', escuro: '#898781' }, largura: 1.1, dados: dAll, faixa: { lo: -par.tol, hi: par.tol } },
+               { id: 'dC', nome: 'Desvio (cronômetro contando)', cor: C.carga, largura: 2, dados: dCont, faixa: { lo: -par.tol, hi: par.tol } }] },
+    { id: 'tens', titulo: 'Tensão média', unidade: 'V', dec: 0, peso: 1.1, y: { spanMin: 20 },
+      bandas: temV ? [{ x0: 0, x1: tMax, y0: vLo, y1: vHi, cor: BAND }] : [], linhasH: temV ? [{ y: vHi, cor: LIM, rotulo: '+' + nb(par.tensTol, 1) + ' %' }, { y: vLo, cor: LIM, rotulo: '−' + nb(par.tensTol, 1) + ' %' }] : [],
+      series: [{ id: 'v', nome: 'Tensão média (L1-L2, L2-L3, L3-L1)', cor: C.v, largura: 2, dados: vm, faixa: temV ? { lo: vLo, hi: vHi } : null },
+               { id: 'va', nome: 'L1-L2', cor: { claro: '#e87ba4', escuro: '#d55181' }, largura: 1, dados: va, ocultaInicial: true },
+               { id: 'vb', nome: 'L2-L3', cor: { claro: '#eda100', escuro: '#c98500' }, largura: 1, dados: vb, ocultaInicial: true },
+               { id: 'vc', nome: 'L3-L1', cor: { claro: '#008300', escuro: '#008300' }, largura: 1, dados: vc, ocultaInicial: true }] },
+    { id: 'freq', titulo: 'Frequência', unidade: 'Hz', dec: 2, peso: 1, y: { spanMin: 1 },
+      bandas: temF ? [{ x0: 0, x1: tMax, y0: fLo, y1: fHi, cor: BAND }] : [], linhasH: temF ? [{ y: fHi, cor: LIM, rotulo: '+' + nb(par.freqTol, 1) + ' %' }, { y: fLo, cor: LIM, rotulo: '−' + nb(par.freqTol, 1) + ' %' }] : [],
+      series: [{ id: 'f', nome: 'Frequência', cor: C.f, largura: 2, dados: hz, faixa: temF ? { lo: fLo, hi: fHi } : null }] },
+    { id: 'kw', titulo: 'Potência ativa (DSE)', unidade: 'kW', dec: 1, peso: .8, y: { spanMin: 5 }, series: [{ id: 'k', nome: 'kW medido', cor: C.k, largura: 1.8, dados: kw }] }
+  ];
+  const txtEstado = ['contando', 'ajuste/estabilização', 'pausa'];
+  realce({ tracks, faixasX });   // v0.6: destaque da condição escolhida (só acrescenta linhas/faixas)
+  return { tMax, etapas, faixasX, tracks, marcos: S.marcos,
+    infoExtra: t => {
+      const i = plano.findIndex(g => t >= g.s && t <= g.e);
+      let r = i >= 0 ? 'etapa ' + (i + 1) + ' (' + E.etapas[i].alvo + ' %)' : '';
+      let a = 0, b = P.length - 1; while (a < b) { const m = (a + b) >> 1; if (P[m].t < t) a = m + 1; else b = m; }
+      const k = P[Math.max(0, Math.min(P.length - 1, a))];
+      if (k && Math.abs(k.t - t) < 5) r += (r ? ' · ' : '') + txtEstado[k.s];
+      return r;
+    } };
+}
+
+/* =========================================================================
+   3) FAIXA DE LEITURA (valores atuais + dentro/fora da tolerância)
+   ========================================================================= */
+/** Estado dentro/fora sempre com ícone + texto — a cor sozinha nunca carrega o significado. */
+function selo(desv, tol, unidade) {
+  if (desv == null || !isFinite(desv)) return '<span class="st nd">sem leitura</span>';
+  if (Math.abs(desv) <= tol) return '<span class="st ok">✓ dentro</span>';
+  return '<span class="st fora">' + (desv > 0 ? '▲ acima' : '▼ abaixo') + ' do limite</span>';
+}
+function leitura() {
+  const E = S.estado, P = S.pts, u = P.length ? P[P.length - 1] : null;
+  const box = $('leitura');
+  if (!E || !u) { box.innerHTML = ''; box.style.display = 'none'; return; }
+  box.style.display = '';
+  const par = E.par, nom = E.nominal || {}, et = E.etapas[E.et] || { alvo: null, min: 0, nome: '' };
+  const alvo = et.alvo, dv = alvo == null ? null : u.c - alvo;
+  const vmed = media([u.va, u.vb, u.vc]);
+  const dvV = (vmed != null && nom.tensao > 0) ? (vmed - nom.tensao) / nom.tensao * 100 : null;
+  const dvF = (u.hz != null && nom.freq > 0) ? (u.hz - nom.freq) / nom.freq * 100 : null;
+  const est = E.fim ? 'ensaio finalizado' : !E.iniciado ? 'ainda não iniciado' : !E.run ? 'pausado' : ['contando', 'ajustando / estabilizando', 'pausa'][u.s] || '';
+  const cel = (r, v, un, s) => '<div class="cel"><div class="r">' + r + '</div><div class="v">' + v + (un ? '<small>' + un + '</small>' : '') + '</div><div class="s">' + s + '</div></div>';
+  box.innerHTML =
+    cel('Etapa', (E.et + 1) + ' de ' + E.etapas.length, '', (alvo != null ? alvo + ' % · ' : '') + est) +
+    cel('Cronômetro da etapa', mmss(E.el || 0), '', 'meta ' + mmss((et.min || 0) * 60) + ' · total ' + mmss(E.cron || 0)) +
+    cel('Carga', nb(u.c, 1), '%', alvo != null ? 'alvo ' + nb(alvo, 0) + ' % · faixa ±' + nb(par.tol, 0) + ' pts' : '') +
+    cel('Desvio da carga', (dv != null && dv > 0 ? '+' : '') + nb(dv, 1), 'pts', selo(dv, par.tol)) +
+    cel('Tensão média', nb(vmed, 0), 'V', nom.tensao > 0 ? (dvV != null ? (dvV > 0 ? '+' : '') + nb(dvV, 1) + ' % do nominal ' : '') + selo(dvV, par.tensTol) : '<span class="st nd">nominal não informado</span>') +
+    cel('Frequência', nb(u.hz, 2), 'Hz', nom.freq > 0 ? (dvF != null ? (dvF > 0 ? '+' : '') + nb(dvF, 1) + ' % do nominal ' : '') + selo(dvF, par.freqTol) : '<span class="st nd">nominal não informado</span>');
+}
+
+/* =========================================================================
+   4) INTERFACE: sinal de conexão, tema, tela cheia, arquivos
+   ========================================================================= */
+const G = AnaliseGrafico.criar({
+  montar: $('ag'), titulo: 'Ensaio do gerador · BT2', rotuloX: 'Tempo de relógio do ensaio (mm:ss)', nomeArquivo: 'grafico_ensaio',
+  tema: () => (document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches)) ? 'escuro' : 'claro',
+  dados: dadosParaModulo
+});
+function renderTudo() {
+  leitura(); condicoes(); extras(); G.atualiza(true); $('vazio').hidden = S.pts.length > 0;
+  const d = S.fonte === 'dse'; $('vazioT').textContent = d ? 'Aguardando o início' : 'Aguardando o medidor';
+  $('vazioX').textContent = d ? 'Confira o endereço da API, informe tensão e frequência nominais e aperte “▶ Iniciar acompanhamento” quando o ensaio começar.' : 'Abra este gráfico pelo botão “📈 Analisar” do medidor, ou use “Abrir ensaio salvo” para analisar um ensaio que já terminou. Sem o medidor? Troque a “Fonte” para “API direto”.';
+  sinal();
+}
+function sinal() {
+  const el = $('sinal'), tx = $('sinalTxt');
+  if (S.origem === 'arquivo') { el.dataset.s = 'arquivo'; tx.textContent = 'Ensaio salvo: ' + S.nomeArq; return; }
+  if (S.fonte === 'dse') {   // v0.6: texto próprio da fonte API direto
+    const seg = Math.round((Date.now() - S.ultimo) / 1000);
+    if (!S.ultimo) { el.dataset.s = OB.falhas ? 'parado' : 'espera'; tx.textContent = OB.falhas ? 'API sem leitura válida: ' + (S.erroDir || '') : 'Conectando à API…'; }
+    else if (seg > 4) { el.dataset.s = 'parado'; tx.textContent = 'API sem leitura válida há ' + seg + ' s (' + (S.erroDir || 'aguardando') + ') — o tempo não está contando'; }
+    else { el.dataset.s = 'vivo'; tx.textContent = OB.on ? 'API direto · ' + S.pts.length + ' pontos' : 'API conectada · aguardando início'; }
+    return;
+  }
+  if (!S.ultimo) { el.dataset.s = 'espera'; tx.textContent = 'Aguardando o medidor'; return; }
+  const seg = Math.round((Date.now() - S.ultimo) / 1000);
+  if (seg > 4) { el.dataset.s = 'parado'; tx.textContent = 'Sem dados do medidor há ' + seg + ' s (mostrando o último valor)'; if (S._sin !== 'parado') { S._sin = 'parado'; OBS('sistema', 'sem dados do medidor há ' + seg + ' s', 'aviso'); } }
+  else { el.dataset.s = 'vivo'; tx.textContent = 'Ao vivo · ' + S.pts.length + ' pontos'; if (S._sin === 'parado') OBS('sistema', 'dados do medidor voltaram', 'ok'); S._sin = 'vivo'; }
+}
+setInterval(sinal, 1000);
+
+// tema: segue o sistema; o botão alterna e guarda (sem depender do armazenamento: se falhar, funciona igual)
+function aplicaTema(t) { if (t) document.documentElement.dataset.theme = t; G.atualiza(true); }
+try { aplicaTema(localStorage.getItem('bt2.grafico.tema')); } catch (e) {}
+$('bTema').onclick = () => {
+  const atual = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const novo = atual === 'dark' ? 'light' : 'dark';
+  aplicaTema(novo); try { localStorage.setItem('bt2.grafico.tema', novo); } catch (e) {}
+};
+$('bTela').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); };
+$('bAjuda').onclick = () => $('dlgAjuda').showModal();
+
+/* ---- salvar / abrir ensaio ---- */
+function baixa(blob, nome) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+/* v0.5: EXPORTAR ▾ — tudo num menu só (PDF, PNG, CSV, JSON reabrível). O menu usa popover: aparece por cima das janelas. */
+const nomeBase = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return 'ensaio_grafico_' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()); };
+function exportaCsv() {
+  const est = ['contando', 'estabilizando', 'pausa'], f = v => v == null || !isFinite(v) ? '' : String(v).replace('.', ',');
+  const lin = ['tempo_s;carga_pct;estado;etapa;va_V;vb_V;vc_V;freq_Hz;kw'].concat(S.pts.map(p => [f(p.t), f(p.c), est[p.s] || p.s, p.e + 1, f(p.va), f(p.vb), f(p.vc), f(p.hz), f(p.kw)].join(';')));
+  EXPMENU.baixa(new Blob(['﻿' + lin.join('\r\n')], { type: 'text/csv;charset=utf-8' }), nomeBase() + '.csv');
+}
+function exportaJson() {
+  const doc = { formato: 'bt2-grafico/1', salvoEm: new Date().toISOString(), estado: S.estado, pts: S.pts, marcos: S.marcos, informativo: !!(S.informativo || S.fonte === 'dse') };
+  EXPMENU.baixa(new Blob([JSON.stringify(doc)], { type: 'application/json' }), nomeBase() + '.json');
+}
+function exportaPdf() {
+  const P = S.pts, ult = P[P.length - 1], cmax = Math.max.apply(null, P.map(p => p.c || 0));
+  const lin = ['Origem: ' + (S.origem === 'arquivo' ? 'arquivo salvo (' + S.nomeArq + ')' : 'ao vivo, recebido do medidor'),
+    'Pontos: ' + P.length + ' · duração ' + mmss(ult.t) + ' · carga máxima ' + nb(cmax, 1) + ' %'];
+  const R = S.av;   // v0.6: condições de aprovação no resumo (conferência; oficial = medidor)
+  if (R) { const t = { ok: 'APROVADO', fora: 'REPROVADO', pend: 'PENDENTE', na: 'N/A' };
+    lin.push('Condições (' + ((S.informativo || S.fonte === 'dse') ? 'INFORMATIVO, criterios provisorios' : 'conferencia; oficial = medidor') + '): ' + ['r1', 'r2', 'r3', 'r4', 'r5', 'r6'].map(k => ROT_COND[k] + ' ' + R[k].v + ' ' + t[R[k].st]).join(' | '));
+    lin.push('Resultado: ' + t[R.fim]); }
+  EXPMENU.baixa(PDFMIN.imagem(G.canvas(), 'GRÁFICO DO ENSAIO - CARGA × TEMPO', lin), nomeBase() + '.pdf');
+}
+$('bExp').onclick = e => {
+  if (!S.pts.length) { EXPMENU.menu(e.currentTarget, [{ rot: 'Ainda não há dados', dica: 'Ligue o ensaio no medidor ou abra um ensaio salvo.', fn: () => {} }]); return; }
+  EXPMENU.menu(e.currentTarget, [
+    { rot: 'PDF (.pdf)', dica: '1 página com o gráfico e o resumo — para imprimir ou arquivar', fn: exportaPdf },
+    { rot: 'Imagem (.png)', dica: 'o gráfico como figura (tema claro)', fn: () => G.png() },
+    { rot: 'Planilha (.csv)', dica: 'tempo × carga × tensões × frequência', fn: exportaCsv },
+    '-',
+    { rot: 'Ensaio para reabrir (.json)', dica: 'formato desta página; reabra com “Abrir ensaio salvo”', fn: exportaJson }]);
+};
+$('bAbrir').onclick = () => $('fArq').click();
+$('fArq').onchange = ev => {
+  const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const j = JSON.parse(r.result);
+      if (j.formato !== 'bt2-grafico/1' || !Array.isArray(j.pts) || !j.estado) throw new Error('não é um ensaio salvo por esta página');
+      S.estado = j.estado; S.pts = j.pts; S.marcos = j.marcos || []; S.informativo = !!j.informativo; S._condHtml = ''; S.origem = 'arquivo'; S.nomeArq = f.name; OBS('sistema', 'ensaio salvo aberto: ' + f.name, 'info', { pontos: j.pts.length }); $('bVoltar').hidden = false;
+      G.reseta(); renderTudo();
+    } catch (e) { alert('Não consegui abrir "' + f.name + '": ' + e.message); }
+  };
+  r.readAsText(f);
+};
+$('bVoltar').onclick = () => { S.informativo = false; S._condHtml = ''; S.origem = 'espera'; S.pts = []; S.marcos = []; S.estado = null; S.ultimo = 0; $('bVoltar').hidden = true; G.reseta(); renderTudo(); falaComMedidor({ k: 'pede' }); };
+
+/* =========================================================================
+   5) v0.6 — CONDIÇÕES DE APROVAÇÃO (conferência visual, ligada ao gráfico)
+   PARA QUE SERVE (leigo): mostra, em "cartões", cada condição que o ensaio precisa cumprir (tempo a 100 %, tensão, frequência, stand-by)
+   com o valor medido e se está APROVADO / REPROVADO / PENDENTE. Passe o mouse (ou toque) num cartão: o gráfico destaca de onde saiu o número.
+   POR QUÊ (técnico): reproduz a regra do medidor (avaliaEnsaio, medidor 1.10.109) a partir dos pontos recebidos. O RESULTADO OFICIAL continua sendo o do medidor;
+   aqui é conferência. Valor da etapa = média dos últimos JANELA_S s da etapa (mesma ideia do medidor). Critérios (100 % ≥ 5 min; stand-by ≥ 107 %) vêm do medidor em estado.crit;
+   sem isso usa os valores padrão abaixo (ASSUMIDO — origem do critério ainda a confirmar com a engenharia).
+   ========================================================================= */
+const CRIT_PADRAO = { t100: 300, stby: 107 }, JANELA_S = 2;
+const TXT_ST = { ok: '✓ aprovado', fora: '✕ reprovado', pend: '… pendente', na: 'não se aplica' };
+
+/** Média dos últimos JANELA_S s (pontos contando) da etapa i. Sem pontos contando, usa os que não são pausa. */
+function valorEtapa(i) {
+  let q = S.pts.filter(p => p.e === i && p.n);
+  if (!q.length) q = S.pts.filter(p => p.e === i && p.s !== 2);
+  if (!q.length) return null;
+  const tf = q[q.length - 1].t, j = q.filter(p => p.t >= tf - JANELA_S);
+  return { c: media(j.map(p => p.c)), va: media(j.map(p => p.va)), vb: media(j.map(p => p.vb)), vc: media(j.map(p => p.vc)), hz: media(j.map(p => p.hz)) };
+}
+function avalia() {
+  const E = S.estado, P = S.pts;
+  if (!E || !P.length) return null;
+  const crit = Object.assign({}, CRIT_PADRAO, E.crit || {}), nom = E.nominal || {}, par = E.par, ets = E.etapas, N = ets.length;
+  const salva = i => i < E.et || (E.fim && i <= E.et);
+  const completo = !!E.fim && E.et >= N - 1 && (E.et > N - 1 || (E.el || 0) >= ets[N - 1].min * 60 - 1);
+  const R = {}; let nSalvas = 0;
+  const vals = ets.map((x, i) => { if (!salva(i)) return null; nSalvas++; return valorEtapa(i); });
+  // 1) tempo a 100 %
+  const i100 = ets.findIndex(x => x.alvo === 100);
+  let t100 = null;
+  if (i100 >= 0) t100 = salva(i100) ? ets[i100].min * 60 : (E.et === i100 ? (E.el || 0) : 0);
+  R.r1 = i100 < 0 ? { st: 'na', v: '—', un: '', i: -1 } : { st: t100 >= crit.t100 ? 'ok' : (completo ? 'fora' : 'pend'), v: mmss(t100), un: '/ ' + mmss(crit.t100), i: i100 };
+  // 2-5) extremos de tensão e frequência entre as etapas já salvas
+  const ext = (campos, cmp) => { let m = null; vals.forEach((v, i) => { if (!v) return; campos.forEach(k => { const x = v[k]; if (x != null && isFinite(x) && (m === null || cmp(x, m.v))) m = { v: x, i }; }); }); return m; };
+  const vmax = ext(['va', 'vb', 'vc'], (a, b) => a > b), vmin = ext(['va', 'vb', 'vc'], (a, b) => a < b);
+  const fmax = ext(['hz'], (a, b) => a > b), fmin = ext(['hz'], (a, b) => a < b);
+  const temV = nom.tensao > 0, temF = nom.freq > 0;
+  const vHi = temV ? nom.tensao * (1 + par.tensTol / 100) : null, vLo = temV ? nom.tensao * (1 - par.tensTol / 100) : null;
+  const fHi = temF ? nom.freq * (1 + par.freqTol / 100) : null, fLo = temF ? nom.freq * (1 - par.freqTol / 100) : null;
+  const lim = (m, ok, tem, d, un) => !tem ? { st: 'pend', v: '—', un: 'nominal?', i: -1 } : !m ? { st: 'pend', v: '—', un, i: -1 } : { st: ok(m.v) ? (completo ? 'ok' : 'pend') : 'fora', v: nb(m.v, d), un, i: m.i, x: m.v };
+  R.r2 = lim(vmax, x => x <= vHi, temV, 1, 'V · máx'); R.r3 = lim(vmin, x => x >= vLo, temV, 1, 'V · mín');
+  R.r4 = lim(fmax, x => x <= fHi, temF, 2, 'Hz · máx'); R.r5 = lim(fmin, x => x >= fLo, temF, 2, 'Hz · mín');
+  // 6) stand-by = etapa de maior alvo acima de 100 %
+  let iS = -1; ets.forEach((x, i) => { if (x.alvo > 100 && (iS < 0 || x.alvo > ets[iS].alvo)) iS = i; });
+  const pcSb = iS >= 0 && vals[iS] ? vals[iS].c : null;
+  R.r6 = iS < 0 ? { st: 'na', v: '—', un: '', i: -1 } : pcSb != null ? { st: pcSb >= crit.stby ? 'ok' : 'fora', v: nb(pcSb, 2), un: '% / mín ' + nb(crit.stby, 0), i: iS, x: pcSb } : { st: completo ? 'fora' : 'pend', v: '—', un: '% / mín ' + nb(crit.stby, 0), i: iS };
+  R.r0 = { st: completo ? 'ok' : 'pend', v: Math.min(nSalvas + (completo && !salva(N - 1) ? 1 : 0), N) + ' de ' + N, un: 'etapas', i: -1 };
+  const lista = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6'].map(k => R[k].st).concat(R.r0.st);
+  R.fim = lista.includes('fora') ? 'fora' : (lista.every(s => s === 'ok' || s === 'na') ? 'ok' : 'pend');
+  R.lim = { vHi, vLo, fHi, fLo, stby: crit.stby }; R.crit = crit; R.completo = completo;
+  return R;
+}
+const ROT_COND = { r1: 'Tempo a 100 %', r2: 'Tensão máxima', r3: 'Tensão mínima', r4: 'Frequência máxima', r5: 'Frequência mínima', r6: 'Stand-by', r0: 'Ensaio concluído' };
+function condicoes() {
+  const box = $('cond'), R = S.av = avalia();
+  if (!R) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  const info = S.informativo || S.fonte === 'dse';
+  const foco = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.r : null;
+  const chip = k => '<button type="button" class="chip ' + R[k].st + '" data-r="' + k + '" aria-pressed="' + (S.sel === k) + '" title="Mostrar no gráfico de onde sai este valor"><span class="r">' + ROT_COND[k] + '</span><span class="v">' + R[k].v + (R[k].un ? '<small>' + R[k].un + '</small>' : '') + '</span><span class="st ' + R[k].st + '">' + TXT_ST[R[k].st] + '</span></button>';
+  const html = '<div class="tit"><b>Condições de aprovação</b><span>' + (info ? 'INFORMATIVO · critérios provisórios' : 'conferência — o resultado oficial é o do medidor') + '</span></div>' +
+    ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r0'].map(chip).join('') +
+    '<div class="chip final ' + R.fim + '" role="status"><span class="r">Resultado do ensaio' + (info ? ' (informativo)' : '') + '</span><span class="v">' + { ok: 'APROVADO', fora: 'REPROVADO', pend: 'PENDENTE' }[R.fim] + '</span><span class="st ' + R.fim + '">' + TXT_ST[R.fim] + '</span></div>';
+  if (html !== S._condHtml) { S._condHtml = html; box.innerHTML = html; if (foco) { const b = box.querySelector('[data-r="' + foco + '"]'); if (b) b.focus(); } }
+}
+/** Realce do gráfico para a condição escolhida (passar o mouse = provisório; clicar = fixa; clicar de novo solta). */
+function realce(D) {
+  const k = S.hov || S.sel, R = S.av, E = S.estado;
+  if (!k || !R || !R[k] || !D.tracks.length) return;
+  const AZ = '#2a78d6', LIM = '#d03b3b', plano = E.plano || [], faixa = i => { const g = plano[i]; if (g) D.faixasX.push({ t0: g.s, t1: g.e, cor: 'rgba(42,120,214,.18)' }); };
+  const trk = id => D.tracks.find(t => t.id === id), r = R[k], L = R.lim;
+  const medida = (tr, y, rot) => { if (tr && y != null && isFinite(y)) (tr.linhasH = tr.linhasH || []).push({ y, cor: AZ, rotulo: rot }); };
+  if (r.i >= 0) faixa(r.i);
+  if (k === 'r2') medida(trk('tens'), r.x, 'máx ' + nb(r.x, 1) + ' V');
+  if (k === 'r3') medida(trk('tens'), r.x, 'mín ' + nb(r.x, 1) + ' V');
+  if (k === 'r4') medida(trk('freq'), r.x, 'máx ' + nb(r.x, 2) + ' Hz');
+  if (k === 'r5') medida(trk('freq'), r.x, 'mín ' + nb(r.x, 2) + ' Hz');
+  if (k === 'r6') { medida(trk('carga'), r.x, 'stand-by ' + nb(r.x, 1) + ' %'); const c = trk('carga'); if (c) (c.linhasH = c.linhasH || []).push({ y: L.stby, cor: LIM, rotulo: 'mín ' + nb(L.stby, 0) + ' %' }); }
+}
+function aplicaSel() {
+  document.querySelectorAll('#cond .chip[data-r]').forEach(b => b.setAttribute('aria-pressed', String(S.sel === b.dataset.r)));
+  G.atualiza(true);
+}
+$('cond').addEventListener('mouseover', e => { const b = e.target.closest('.chip[data-r]'); if (b && S.hov !== b.dataset.r) { S.hov = b.dataset.r; aplicaSel(); } });
+$('cond').addEventListener('mouseleave', () => { if (S.hov) { S.hov = null; aplicaSel(); } });
+$('cond').addEventListener('focusin', e => { const b = e.target.closest('.chip[data-r]'); if (b && S.hov !== b.dataset.r) { S.hov = b.dataset.r; aplicaSel(); } });
+$('cond').addEventListener('focusout', () => { if (S.hov) { S.hov = null; aplicaSel(); } });
+$('cond').addEventListener('click', e => { const b = e.target.closest('.chip[data-r]'); if (!b) return; S.sel = S.sel === b.dataset.r ? null : b.dataset.r; S.hov = null; aplicaSel(); });
+
+/* =========================================================================
+   6) v0.6 — FONTE "API DIRETO": lê /api/gerador sem o medidor (somente leitura)
+   PARA QUE SERVE (leigo): permite acompanhar o ensaio em OUTRO aparelho (ex.: notebook do observador) sem abrir o medidor. O operador comanda tudo no medidor; aqui só se olha.
+   POR QUÊ (técnico): sem o medidor não há cronômetro nem etapa. As etapas são DEDUZIDAS pela carga (percCarga): a etapa conta tempo só enquanto |carga − alvo| ≤ TOL
+   por ESTAB_OBS s seguidos; ao completar os minutos da etapa passa para a próxima. Resultado = INFORMATIVO.
+   ASSUMIDO (confirmar): lista de etapas e tolerâncias = as do medidor 1.10.109 (ETAPAS, TOL 10, TENS_TOL 2,5, FREQ_TOL 5); estabilização fixa de 3 s (o medidor sorteia 1,5–4,5 s);
+   base de percCarga (kW nominal) é a do DSE. LIMITE CONHECIDO: 100 % e 107 % ficam a 7 pts (< TOL 10): a passagem de etapa é só pelo TEMPO; o valor medido é que decide aprovação.
+   Dados inválidos (ok≠true ou idadeSegundos > 10 s) NÃO viram ponto e NÃO contam tempo (conservador). Nada é escrito no PLC/DSE.
+   ========================================================================= */
+const OBS_ETAPAS = [{ alvo: 0, min: 2, nome: 'aquecimento sem carga' }, { alvo: 30, min: 1, nome: '30% da carga' }, { alvo: 50, min: 1, nome: '50% da carga' },
+  { alvo: 100, min: 5, nome: '100% da carga' }, { alvo: 107, min: 2, nome: '107% da carga' }, { alvo: 0, min: 1, nome: '0% final' }];
+const OB = { TOL: 10, TENS_TOL: 2.5, FREQ_TOL: 5, ESTAB: 3, MAX_IDADE: 10, on: false, et: 0, el: 0, est: 0, ini: [], fim: false, t0: 0, tAnt: 0, live: null, busy: false, falhas: 0, timer: null };
+const find = (o, k) => { if (o == null || typeof o !== 'object') return undefined; if (k in o && typeof o[k] !== 'object') return o[k]; for (const x of Object.values(o)) { const r = find(x, k); if (r !== undefined) return r; } };
+const nn = (d, k) => { const v = find(d, k); if (v == null || v === '') return null; const n = Number(v); return isFinite(n) ? n : null; };
+
+function obEstado() {
+  const plano = []; let ini = 0;
+  OBS_ETAPAS.forEach((e, i) => { const s = i < OB.ini.length ? OB.ini[i] : ini; plano.push({ s, e: s + e.min * 60, a: e.alvo }); ini = s + e.min * 60; });
+  const v = parseFloat($('dirV').value), f = parseFloat($('dirF').value);
+  return { par: { modo: 'iso', tol: OB.TOL, tensTol: OB.TENS_TOL, freqTol: OB.FREQ_TOL }, nominal: { tensao: v > 0 ? v : null, freq: f > 0 ? f : null },
+    etapas: OBS_ETAPAS.map(e => ({ alvo: e.alvo, min: e.min, nome: e.nome })), plano, et: Math.min(OB.et, OBS_ETAPAS.length - 1), el: OB.el, cron: OB.tAnt, iniciado: OB.on, run: OB.on && !OB.fim, fim: OB.fim, t: OB.tAnt, crit: CRIT_PADRAO };
+}
+function obLimpa() { Object.assign(OB, { on: false, et: 0, el: 0, est: 0, ini: [], fim: false, t0: 0, tAnt: 0 }); S.pts = []; S.marcos = []; S.estado = null; S._condHtml = ''; G.reseta(); }
+function obInicia() {
+  obLimpa(); OB.on = true; OB.t0 = Date.now(); OB.ini = [0]; S.origem = 'vivo'; S.informativo = true; S.estado = obEstado();
+  OBS('sistema', 'acompanhamento direto iniciado', 'info'); $('dirIni').hidden = true; $('dirRei').hidden = false; renderTudo();
+}
+/** Uma leitura válida da API → um ponto do gráfico (mesmo formato do medidor) e avanço da dedução de etapas. */
+function obAmostra(d) {
+  const L = OB.live = { c: nn(d, 'percCarga'), va: nn(d, 'tensaoL1L2'), vb: nn(d, 'tensaoL2L3'), vc: nn(d, 'tensaoL3L1'), hz: nn(d, 'frequencia'), kw: nn(d, 'kw'),
+    ia: nn(d, 'correnteL1'), ib: nn(d, 'correnteL2'), ic: nn(d, 'correnteL3'), rpm: nn(d, 'rpm'), agua: nn(d, 'tempAguaC'), bat: nn(d, 'bateria') };
+  if (!OB.on || OB.fim || L.c == null) return;
+  const t = (Date.now() - OB.t0) / 1000, dt = Math.min(Math.max(t - OB.tAnt, 0), 3);   // lacuna > 3 s não conta tempo (conservador)
+  OB.tAnt = t;
+  const et = OB.et, alvo = OBS_ETAPAS[et].alvo, dentro = Math.abs(L.c - alvo) <= OB.TOL;
+  let s = 1;
+  if (dentro) { OB.est += dt; if (OB.est >= OB.ESTAB) s = 0; } else OB.est = 0;
+  if (s === 0) OB.el += dt;
+  S.pts.push({ t, c: L.c, s, e: et, n: s === 0 ? 1 : 0, va: L.va, vb: L.vb, vc: L.vc, hz: L.hz, kw: L.kw });
+  if (OB.el >= OBS_ETAPAS[et].min * 60) {
+    if (et + 1 >= OBS_ETAPAS.length) { OB.fim = true; S.marcos.push({ t, rotulo: 'Fim das etapas' }); }
+    else { OB.et = et + 1; OB.el = 0; OB.est = 0; OB.ini[OB.et] = t; S.marcos.push({ t, rotulo: 'Etapa ' + (OB.et + 1) + ' (' + OBS_ETAPAS[OB.et].alvo + ' %)' }); }
+  }
+  S.estado = obEstado();
+}
+function extras() {
+  const b = $('extras'), L = OB.live;
+  if (!L) { b.hidden = true; return; }   // v0.8: também na fonte Medidor (vem da API dos cards)
+  b.hidden = false;
+  const c = (r, txt) => '<span>' + r + '<b>' + txt + '</b></span>', u = (v, d, un) => v == null ? '—' : nb(v, d) + ' ' + un;
+  b.innerHTML = c('Potência', u(L.kw, 1, 'kW')) + c('Corrente L1/L2/L3', [L.ia, L.ib, L.ic].map(x => nb(x, 0)).join(' / ') + ' A') + c('Rotação', u(L.rpm, 0, 'rpm')) + c('Água', u(L.agua, 1, '°C')) + c('Bateria', u(L.bat, 2, 'V'));
+}
+async function obPoll() {
+  if (S.fonte !== 'dse' || OB.busy || S.origem === 'arquivo') return;
+  OB.busy = true; const ac = new AbortController(), to = setTimeout(() => ac.abort(), 4000);
+  try {
+    const r = await fetch($('dirUrl').value.trim(), { cache: 'no-store', signal: ac.signal });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json(), idade = Number(find(d, 'idadeSegundos'));
+    if (find(d, 'ok') !== true) throw new Error('resposta com ok≠true');
+    if (!isFinite(idade) || find(d, 'idadeSegundos') == null) throw new Error('sem idadeSegundos válido');
+    if (idade > OB.MAX_IDADE) throw new Error('dado antigo (' + Math.round(idade) + ' s)');
+    if (OB.falhas) OBS('sistema', 'API direta voltou', 'ok'); OB.falhas = 0; S.ultimo = Date.now(); S.erroDir = '';
+    obAmostra(d); renderTudo();
+  } catch (e) {
+    if (!OB.falhas) OBS('sistema', 'API direta falhou: ' + e.message, 'aviso');
+    OB.falhas++;
+    S.erroDir = e.name === 'AbortError' ? 'sem resposta em 4 s'
+      : e.message === 'HTTP 404' ? 'HTTP 404: este endereço não tem a rota /api/gerador — copie o endereço do campo API do medidor'
+      : e instanceof TypeError ? 'sem acesso ao endereço (rede, firewall ou CORS: o fluxo DSE v3.4 não envia CORS — abra este gráfico pelo servidor do Node-RED ou pelo medidor)'
+      : e.message;
+    sinal();
+  } finally { clearTimeout(to); OB.busy = false; }
+}
+function aplicaFonte(f, salva) {
+  S.fonte = f === 'dse' ? 'dse' : 'medidor'; $('selFonte').value = S.fonte; $('fMed').setAttribute('aria-pressed', S.fonte === 'medidor'); $('fDse').setAttribute('aria-pressed', S.fonte === 'dse'); S.t0Fonte = Date.now();
+  $('dirBar').hidden = S.fonte !== 'dse'; $('aviso').hidden = S.fonte !== 'dse';
+  if (S.fonte === 'dse') { if (S.origem === 'vivo' && !OB.on) { S.pts = []; S.marcos = []; S.estado = null; G.reseta(); } S.ultimo = 0; if (!OB.timer) OB.timer = setInterval(obPoll, 1000); obPoll(); }
+  else { if (OB.timer) { clearInterval(OB.timer); OB.timer = null; } OB.live = null; if (OB.on) { obLimpa(); OB.on = false; $('dirIni').hidden = false; $('dirRei').hidden = true; } S.informativo = false; S.origem = 'espera'; S.ultimo = 0; falaComMedidor({ k: 'pede' }); }
+  renderTudo();
+}
+$('fMed').onclick = () => { aplicaFonte('medidor'); guardaDir(); };
+$('fDse').onclick = () => { aplicaFonte('dse'); guardaDir(); };
+$('vazioBtn').onclick = () => { aplicaFonte('dse'); guardaDir(); };
+/* v0.8: sem medidor há 6 s → mostra um atalho claro (em vez de o operador procurar o seletor) */
+setInterval(() => { const b = $('vazioBtn'); if (!b) return; b.hidden = !(S.fonte === 'medidor' && !S.ultimo && S.pts.length === 0 && S.origem !== 'arquivo' && Date.now() - (S.t0Fonte || Date.now()) > 6000); }, 1000);
+$('dirIni').onclick = () => { if (!($('dirUrl').value || '').trim()) return; guardaDir(); obInicia(); };
+$('dirRei').onclick = e => {                       // duas toques: evita zerar o acompanhamento sem querer
+  const b = e.currentTarget;
+  if (!b.dataset.c) { b.dataset.c = '1'; b.textContent = 'Confirmar reinício?'; setTimeout(() => { delete b.dataset.c; b.textContent = '↺ Reiniciar'; }, 3000); return; }
+  delete b.dataset.c; b.textContent = '↺ Reiniciar'; obInicia();
+};
+['dirUrl', 'dirV', 'dirF'].forEach(id => $(id).addEventListener('change', () => { guardaDir(); if (OB.on) { S.estado = obEstado(); renderTudo(); } }));
+function guardaDir() { try { localStorage.setItem('bt2.grafico.dir', JSON.stringify({ url: $('dirUrl').value, v: $('dirV').value, f: $('dirF').value, fonte: S.fonte })); } catch (e) {} }
+(function iniciaFonte() {
+  const q = new URLSearchParams(location.search); let sv = {};
+  try { sv = JSON.parse(localStorage.getItem('bt2.grafico.dir') || '{}') || {}; } catch (e) {}
+  // padrão de endereço: mesma origem quando servido por http(s); em arquivo local usa o endereço que o medidor 1.10.109 traz no campo "url"
+  $('dirUrl').value = q.get('url') || sv.url || (/^https?:/.test(location.protocol) ? location.origin + '/api/gerador' : 'http://172.17.210.156:1880/api/gerador');
+  $('dirV').value = q.get('v') || sv.v || ''; $('dirF').value = q.get('f') || sv.f || '';
+  aplicaFonte(q.get('fonte') === 'dse' ? 'dse' : 'medidor');
+})();
+
+/* ---- v0.8: API dos cards do medidor (somente leitura): leituras ao vivo na fonte "Medidor" ---- */
+BT2_API.cliente((snap, info) => {
+  if (S.fonte !== 'medidor') return;               // na fonte "API direto" quem alimenta é a leitura direta
+  if (!snap) { OB.live = null; extras(); return; }  // sem dados do medidor há > 4 s: some a faixa (nada de número velho)
+  const v = id => (snap.cards && snap.cards[id]) ? snap.cards[id].valor : null;
+  OB.live = { kw: v('kw'), ia: v('correnteL1'), ib: v('correnteL2'), ic: v('correnteL3'), rpm: v('rpm'), agua: v('tempAguaC'), bat: v('bateria'), c: snap.gerador ? snap.gerador.cargaPct : null };
+  extras();
+});
+renderTudo();
+</script>
+<script>
+/* =====================================================================================================================
+   janelas_v0.3.js — JANELAS (<dialog>) FLUTUANTES + CONTROLE DE TAMANHO COMPACTO, iguais em todos os HTML · 30/10/2026
+   v0.3 (pedido do operador, 30/10): (1) o balãozinho do ⤢ FICA ABERTO enquanto você arrasta/redimensiona a janela (só fecha no ✕, Esc ou ⤢) e se atualiza
+   AO VIVO (largura, altura e posição esquerda/topo); (2) mostra e permite digitar a POSIÇÃO (esquerda/topo, em px de tela); (3) a posição é SALVA SOZINHA
+   ao soltar o mouse depois de mover a janela (localStorage {x,y}) e a janela já NASCE ali nas próximas vezes; "Restaurar" apaga tamanho, zoom e posição.
+   v0.2: o aviso de risco fica aberto até fechar (✕/Esc/clique fora) e mostra "Janela (dialog) #id". v0.1: criação.
+   Colado (inline) em: medidor_gerador_v1.10.113, grafico_ensaio_v0.8, mapa_fbs_v0.9, gerenciador_logs, amostras_simulador (cada um chama JANELAS.config).
+
+   PARA QUE SERVE (leigo): toda janela do sistema passa a ter (1) um botão pequeno "⤢" na barra de título que abre um mini-painel de tamanho
+   (zoom − / + , largura e altura em pixels, caber na tela, restaurar, copiar medidas); (2) o canto inferior direito arrastável para
+   redimensionar à mão; (3) o tamanho e o zoom que você deixar ficam LEMBRADOS para a próxima vez; (4) janelas que não oferecem risco abrem
+   FLUTUANTES (não congelam a tela de trás) e podem ficar várias abertas; as que oferecem risco continuam travando a tela, ou nem abrem.
+   Substitui a barra grande "A− A+ 100 % … COPIAR MEDIDAS" que ocupava espaço no rodapé do Patamar guiado.
+
+   REGRA ADOTADA (pedido do operador, 29/10/2026): "janela que não oferece risco durante a operação real não precisa congelar a tela; janela
+   que oferece risco nem deve abrir — só uma mensagem pequena e discreta (tooltip)". Quem decide é cada HTML, por JANELAS.config:
+     modais : ids que continuam travando a tela (decisão/edição que não pode ser feita "de lado"); todo o resto vira flutuante.
+     risco  : {ids:[...], bloqueado:() => texto|''}  — se devolver texto, a janela NÃO abre e o texto aparece como tooltip discreto.
+     arrasta: true (padrão) = este módulo põe o arrastar pela barra de título; o medidor já tem o seu e passa false.
+
+   POR QUÊ (técnico): intercepta HTMLDialogElement.show/showModal (encadeando com quem já interceptou) — não muda o HTML das janelas.
+   Zoom = CSS zoom na própria <dialog> (a posição é corrigida pelo fator efetivo). Persistência: localStorage 'bt2.jan.<app>.<id>' {z,w,h,x,y}
+   sempre em try/catch (pode vir vazio/bloqueado). O mini-painel usa popover="manual" para aparecer acima de janelas modais.
+   NÃO FAZ: não comanda nada, não lê PLC/Node-RED, não altera o conteúdo das janelas.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.JANELAS) return;
+  const APP = (location.pathname.split('/').pop() || 'pagina').replace(/\.html?$/i, '').replace(/[_-]?v?\d+(\.\d+)*$/i, '') || 'pagina';
+  const CFG = { modais: [], risco: null, arrasta: true, livresPorPadrao: true };
+    let zTopo = 60, pop = null, popDe = null;
+
+  const lerSt = d => { try { return JSON.parse(localStorage.getItem('bt2.jan.' + APP + '.' + (d.id || '')) || '{}') || {}; } catch (e) { return {}; } };
+  const gravaSt = (d, st) => { if (!d.id) return; try { localStorage.setItem('bt2.jan.' + APP + '.' + d.id, JSON.stringify(st)); } catch (e) {} };
+
+  /* ---------- CSS comum (injetado uma vez) ---------- */
+  const css = document.createElement('style');
+  css.textContent = `
+  dialog.jwin{resize:both;overflow:auto;min-width:240px;min-height:110px}
+  dialog.jwin.jflut{box-shadow:0 10px 36px rgba(5,20,40,.45)}
+  .jwbtn{font:600 13px/1 system-ui,sans-serif;width:24px;height:24px;padding:0;margin:0 4px;border:1px solid rgba(128,128,128,.55);background:rgba(255,255,255,.12);color:inherit;border-radius:5px;cursor:pointer;flex:none}
+  .jwbtn:hover{background:rgba(128,128,128,.25)}
+  .jwbtn.jfix{position:absolute;top:4px;right:34px;z-index:3}
+  #jwPop{position:fixed;inset:auto;margin:0;border:1px solid #6b7785;border-radius:8px;background:#fff;color:#14202e;padding:8px 10px;font:12px/1.3 system-ui,sans-serif;width:232px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
+  @media (prefers-color-scheme:dark){#jwPop{background:#1f262e;color:#e8edf2;border-color:#5b6672}}
+  #jwPop .r{display:flex;align-items:center;gap:6px;margin:4px 0}
+  #jwPop .r>span{width:54px;color:#6b7785}
+  #jwPop button{font:inherit;padding:3px 8px;border:1px solid #8a95a1;border-radius:5px;background:transparent;color:inherit;cursor:pointer}
+  #jwPop button:hover{background:rgba(128,128,128,.22)}
+  #jwPop input{width:64px;font:inherit;padding:2px 4px;border:1px solid #8a95a1;border-radius:4px;background:transparent;color:inherit}
+  #jwPop .z{min-width:44px;text-align:center;font-weight:600}
+  #jwPop .t{font-size:11px;color:#6b7785;margin-top:4px;word-break:break-all}
+  .jwtip{position:fixed;margin:0;inset:auto;z-index:2147483000;max-width:280px;padding:4px 24px 4px 8px;border-radius:5px;border:0;background:rgba(30,36,44,.95);color:#fff;font:11px/1.3 system-ui,sans-serif;overflow:visible}
+  .jwtip .jwtx{position:absolute;top:1px;right:2px;width:18px;height:18px;border:0;background:transparent;color:#fff;font:700 11px/1 system-ui;cursor:pointer;border-radius:4px}
+  .jwtip .jwtx:hover{background:rgba(255,255,255,.2)}
+  .jwtip small{display:block;color:#a9b8c8;font-size:10px}`;
+  document.head.appendChild(css);
+
+  /* ---------- tooltip discreto (janela de risco não abre) ---------- */
+  /* v0.2: o aviso FICA ABERTO até o operador fechar (✕, Esc ou clique fora) — antes sumia sozinho em 2,6 s e a pessoa não conseguia ler/copiar.
+     Nome do elemento: "popover" (aviso não modal que permanece aberto); o "tooltip" comum some ao tirar o mouse. A 2ª linha traz o tipo + id
+     de programação do elemento ao qual o aviso se refere (ex.: Janela #dlgModo) para facilitar a conversa com quem programa. */
+  let tipAtivo = null;
+  function fechaDica() { if (tipAtivo) { try { tipAtivo.hidePopover(); } catch (e) {} tipAtivo.remove(); tipAtivo = null; } }
+  function dica(txt, perto, ref) {
+    fechaDica();
+    const t = document.createElement('div'); t.className = 'jwtip'; t.setAttribute('role', 'status');
+    if ('showPopover' in HTMLElement.prototype) t.setAttribute('popover', 'manual');
+    const m = document.createElement('span'); m.textContent = txt; t.appendChild(m);
+    if (ref && ref.id) { const q = document.createElement('small'); q.textContent = 'Janela (dialog) #' + ref.id; t.appendChild(q); }
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'jwtx'; x.textContent = '✕'; x.setAttribute('aria-label', 'Fechar aviso'); x.onclick = fechaDica; t.appendChild(x);
+    document.body.appendChild(t); tipAtivo = t; try { t.showPopover(); } catch (e) {}
+    const r = (perto && perto.getBoundingClientRect) ? perto.getBoundingClientRect() : { left: innerWidth / 2 - 100, bottom: 80 };
+    t.style.left = Math.max(6, Math.min(innerWidth - 290, r.left)) + 'px'; t.style.top = Math.min(innerHeight - 50, r.bottom + 6) + 'px';
+    const fora = ev => { if (tipAtivo && !tipAtivo.contains(ev.target)) { fechaDica(); document.removeEventListener('pointerdown', fora, true); } };
+    setTimeout(() => document.addEventListener('pointerdown', fora, true), 0);   // o clique que abriu o aviso não pode fechá-lo
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && tipAtivo) fechaDica(); }, true);
+
+  /* ---------- tamanho / zoom ---------- */
+  const zEf = d => { const r = d.getBoundingClientRect(); return d.offsetWidth ? (r.width / d.offsetWidth) || 1 : 1; };
+  function aplicaSt(d, st) {
+    if (st.z) d.style.zoom = st.z; else d.style.zoom = '';
+    if (st.w) { d.style.width = st.w + 'px'; d.style.maxWidth = '98vw'; }
+    if (st.h) { d.style.height = st.h + 'px'; d.style.maxHeight = '98vh'; }
+    if (st.x != null && st.y != null && d.open) {   // v0.3: posição lembrada (px de tela, limitada para a barra de título nunca sair da tela)
+      const z = st.z || 1, x = Math.min(Math.max(st.x, 120 - (st.w || 400) * z), innerWidth - 120), y = Math.min(Math.max(st.y, 0), innerHeight - 40);
+      d.style.position = 'fixed'; d.style.margin = '0'; d.style.right = 'auto'; d.style.bottom = 'auto'; d.style.left = x / z + 'px'; d.style.top = y / z + 'px'; d.dataset.jwPos = '1';
+    }
+  }
+  function medidas(d) { const r = d.getBoundingClientRect(), z = zEf(d); return (d.id || 'janela') + ': largura=' + Math.round(r.width / z) + 'px altura=' + Math.round(r.height / z) + 'px esquerda=' + Math.round(r.left) + 'px topo=' + Math.round(r.top) + 'px zoom=' + Math.round(z * 100) + '% tela=' + innerWidth + 'x' + innerHeight; }
+  function centraSePrecisa(d) {
+    if (d.style.left || d.dataset.jwPos) return;
+    const r = d.getBoundingClientRect(), z = zEf(d);
+    d.style.position = 'fixed'; d.style.margin = '0'; d.style.right = 'auto'; d.style.bottom = 'auto';
+    d.style.left = Math.max(4, (innerWidth - r.width) / 2) / z + 'px'; d.style.top = Math.max(6, (innerHeight - r.height) * 0.12) / z + 'px';
+  }
+  function trazFrente(d) { d.style.zIndex = ++zTopo; }
+
+  /* ---------- mini-painel de tamanho (um só, reaproveitado) ---------- */
+  function montaPop() {
+    pop = document.createElement('div'); pop.id = 'jwPop'; pop.setAttribute('popover', 'manual');
+    pop.innerHTML = '<div class="r"><span>Zoom</span><button data-a="z-" title="Diminui o conteúdo">−</button><b class="z" data-k="z">100%</b><button data-a="z+" title="Aumenta o conteúdo">+</button><button data-a="z0" title="Volta a 100 %">↺</button><button data-a="x" title="Fechar este painel" style="margin-left:auto">✕</button></div>' +
+      '<div class="r"><span>Posição</span>x <input type="number" data-k="x" step="10"> y <input type="number" data-k="y" step="10"></div>' +
+      '<div class="r"><span>Largura</span><input type="number" data-k="w" min="240" step="10"> px</div>' +
+      '<div class="r"><span>Altura</span><input type="number" data-k="h" min="110" step="10"> px</div>' +
+      '<div class="r"><button data-a="cabe" title="Ajusta a janela para caber na tela">Caber na tela</button><button data-a="rest" title="Volta ao tamanho original">Restaurar</button><button data-a="cp" title="Copia as medidas para você informar">Copiar</button></div><div class="t" data-k="t"></div>';
+    document.body.appendChild(pop);
+    pop.addEventListener('click', e => { const b = e.target.closest('button[data-a]'); if (b && popDe) acao(popDe, b.dataset.a); });
+    pop.addEventListener('input', e => { const i = e.target.closest('input[data-k]'); if (!i || !popDe) return; const v = parseInt(i.value, 10); const k = i.dataset.k; if (k === 'x' || k === 'y') { if (isNaN(v)) return; const st = lerSt(popDe), r = popDe.getBoundingClientRect(); if (st.x == null) st.x = Math.round(r.left); if (st.y == null) st.y = Math.round(r.top); st[k] = v; gravaSt(popDe, st); aplicaSt(popDe, st); return; } if (!(v > 0)) return; const st = lerSt(popDe); st[k] = v; gravaSt(popDe, st); aplicaSt(popDe, st); });
+    // v0.3: NÃO fecha mais ao clicar fora — o operador mexe na janela com o painel aberto. Fecha no ✕, no Esc ou no próprio ⤢.
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && pop.matches(':popover-open')) fechaPop(); });
+  }
+  const fechaPop = () => { try { pop.hidePopover(); } catch (e) {} popDe = null; };
+  function atualizaPop() {
+    if (!popDe) return; const d = popDe, z = zEf(d), r = d.getBoundingClientRect();
+    pop.querySelector('[data-k=z]').textContent = Math.round(z * 100) + '%';
+    const w = pop.querySelector('input[data-k=w]'), h = pop.querySelector('input[data-k=h]');
+    if (document.activeElement !== w) w.value = Math.round(r.width / z); if (document.activeElement !== h) h.value = Math.round(r.height / z);
+    const ix = pop.querySelector('input[data-k=x]'), iy = pop.querySelector('input[data-k=y]');
+    if (document.activeElement !== ix) ix.value = Math.round(r.left); if (document.activeElement !== iy) iy.value = Math.round(r.top);
+    pop.querySelector('[data-k=t]').textContent = medidas(d);
+  }
+  setInterval(() => { if (popDe && pop && pop.matches(':popover-open')) atualizaPop(); }, 200);   // v0.3: acompanha o arrastar/redimensionar ao vivo
+  function acao(d, a) {
+    const st = lerSt(d);
+    if (a === 'z-' || a === 'z+') { const z0 = st.z || 1; st.z = Math.min(1.8, Math.max(.6, Math.round((z0 + (a === 'z+' ? .1 : -.1)) * 10) / 10)); if (st.z === 1) delete st.z; }
+    else if (a === 'z0') { delete st.z; }
+    else if (a === 'x') { fechaPop(); return; }
+    else if (a === 'rest') { ['z', 'w', 'h', 'x', 'y'].forEach(k => delete st[k]); d.style.width = d.style.height = d.style.maxWidth = d.style.maxHeight = ''; }
+    else if (a === 'cabe') { const z = st.z || 1; st.w = Math.floor((innerWidth - 16) / z); st.h = Math.floor((innerHeight - 16) / z); d.style.left = (8 / z) + 'px'; d.style.top = (8 / z) + 'px'; d.style.position = 'fixed'; d.style.margin = '0'; d.dataset.jwPos = '1'; }
+    else if (a === 'cp') { const t = medidas(d); try { navigator.clipboard.writeText(t).then(() => { pop.querySelector('[data-k=t]').textContent = 'Copiado: ' + t; }, () => {}); } catch (e) {} return; }
+    gravaSt(d, st); aplicaSt(d, st); atualizaPop();
+  }
+  function abrePop(d, btn) {
+    if (!pop) montaPop();
+    popDe = d; atualizaPop();
+    try { pop.showPopover(); } catch (e) {}
+    const r = btn.getBoundingClientRect();
+    pop.style.left = Math.max(6, Math.min(innerWidth - 244, r.right - 232)) + 'px'; pop.style.top = Math.min(innerHeight - 150, r.bottom + 6) + 'px';
+  }
+
+  /* ---------- prepara uma janela (uma vez): botão, canto redimensionável, arrastar, memória ---------- */
+  function prepara(d) {
+    if (d.dataset.jwOk) return; d.dataset.jwOk = '1'; d.classList.add('jwin');
+    const hdr = d.querySelector('.jt') || d.querySelector('.dlgtop') || d.querySelector('h1,h2,h3');
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'jwbtn'; b.textContent = '⤢'; b.title = 'Tamanho da janela: zoom, largura, altura';
+    b.setAttribute('aria-label', 'Tamanho da janela');
+    b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); if (popDe === d && pop && pop.matches(':popover-open')) fechaPop(); else abrePop(d, b); });
+    const fecha = hdr && hdr.querySelector('[data-fecha],.jx');
+    if (hdr && fecha) fecha.parentNode.insertBefore(b, fecha); else if (hdr && hdr.classList.contains('jt')) hdr.appendChild(b); else { b.classList.add('jfix'); d.appendChild(b); }
+    let p0 = null;
+    d.addEventListener('pointerdown', () => { trazFrente(d); const r = d.getBoundingClientRect(); p0 = { x: r.left, y: r.top }; });
+    d.addEventListener('pointerup', () => {   // v0.3: se a janela mudou de lugar (arrasto do módulo ou do medidor), guarda a posição para ela nascer ali
+      if (!p0 || !d.id) return; const r = d.getBoundingClientRect(); if (Math.abs(r.left - p0.x) < 3 && Math.abs(r.top - p0.y) < 3) return;
+      const st = lerSt(d); st.x = Math.round(r.left); st.y = Math.round(r.top); gravaSt(d, st); p0 = null; atualizaPop();
+    });
+    d.addEventListener('pointerup', () => { if (!d.style.width && !d.style.height) return; const st = lerSt(d); const z = zEf(d); const w = parseInt(d.style.width, 10), h = parseInt(d.style.height, 10); if (w) st.w = w; if (h) st.h = h; gravaSt(d, st); atualizaPop(); });
+    if (CFG.arrasta && hdr) arrasta(d, hdr);
+    d.addEventListener('close', () => { if (popDe === d) fechaPop(); });
+  }
+  function arrasta(d, hdr) {
+    hdr.style.cursor = 'move'; hdr.title = (hdr.title ? hdr.title + ' · ' : '') + 'Arraste para mover';
+    hdr.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || e.target.closest('button,input,select,textarea,a')) return;
+      const r = d.getBoundingClientRect(), z = zEf(d), x0 = e.clientX, y0 = e.clientY, l0 = r.left / z, t0 = r.top / z;
+      d.style.position = 'fixed'; d.style.margin = '0'; d.style.right = 'auto'; d.style.bottom = 'auto'; d.style.left = l0 + 'px'; d.style.top = t0 + 'px'; d.dataset.jwPos = '1';
+      hdr.setPointerCapture(e.pointerId);
+      const mv = ev => { d.style.left = Math.min(Math.max(l0 + (ev.clientX - x0) / z, 120 / z - d.offsetWidth), innerWidth / z - 120 / z) + 'px'; d.style.top = Math.min(Math.max(t0 + (ev.clientY - y0) / z, 0), innerHeight / z - 40 / z) + 'px'; };
+      const up = () => { hdr.removeEventListener('pointermove', mv); hdr.removeEventListener('pointerup', up); hdr.removeEventListener('pointercancel', up); };
+      hdr.addEventListener('pointermove', mv); hdr.addEventListener('pointerup', up); hdr.addEventListener('pointercancel', up);
+    });
+  }
+
+  const showAnt = HTMLDialogElement.prototype.show, modalAnt = HTMLDialogElement.prototype.showModal;   // quem já interceptou (medidor: lembra posição) continua valendo
+  /* ---------- intercepta abrir (risco → não abre; modal x flutuante) ---------- */
+  const ehModal = d => CFG.modais.includes(d.id);
+  const ehRisco = d => CFG.risco && CFG.risco.ids.includes(d.id);
+  function abre(d, comoModal, orig) {
+    if (ehRisco(d)) { let m = ''; try { m = CFG.risco.bloqueado(d) || ''; } catch (e) {} if (m) { dica(m, document.activeElement, d); return; } }
+    prepara(d); const st = lerSt(d);
+    if (comoModal && !ehModal(d) && CFG.livresPorPadrao) { showAnt.call(d); d.classList.add('jflut'); }   // vira flutuante: não trava a tela
+    else orig.call(d);
+    aplicaSt(d, st); if (d.classList.contains('jflut')) centraSePrecisa(d); trazFrente(d);
+  }
+  HTMLDialogElement.prototype.show = function () { abre(this, false, showAnt); };
+  HTMLDialogElement.prototype.showModal = function () { abre(this, true, modalAnt); };
+  document.addEventListener('keydown', e => {   // Esc fecha a janela flutuante em foco (as modais o navegador já fecha)
+    if (e.key !== 'Escape') return; const d = document.activeElement && document.activeElement.closest && document.activeElement.closest('dialog.jflut[open]'); if (d) { try { d.close(); } catch (x) {} }
+  });
+  const varre = () => document.querySelectorAll('dialog').forEach(prepara);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', varre); else varre();
+
+  global.JANELAS = { versao: '0.3',  config(o) { Object.assign(CFG, o || {}); }, prepara, dica, medidas, app: APP };
+})(window);
+
+JANELAS.config({ modais: [], arrasta: true });
+</script>
+<script>
+/* =====================================================================================================================
+   exportar_menu_v0.1.js — MENU ÚNICO "Exportar ▾" + gerador mínimo de PDF (sem biblioteca, funciona offline)
+   Projeto bancos de teste · 29/10/2026 · fonte dos trechos que vão colados (inline) em: grafico_ensaio_v0.5, mapa_fbs_v0.7, gerenciador_logs_v1.4.
+
+   PARA QUE SERVE (leigo): um botão só, "Exportar ▾", que abre uma listinha com TODOS os formatos daquela tela (PDF, imagem, planilha, texto…).
+   Antes cada tela tinha botões soltos e o menu aparecia ATRÁS das janelas; agora ele aparece sempre por cima.
+
+   POR QUE (técnico): janelas <dialog> abertas com showModal() ficam na "camada de cima" (top layer) do navegador; um <div> comum, mesmo com
+   z-index enorme, fica por baixo delas. A solução é o atributo popover (showPopover()), que também entra na camada de cima.
+   Se o navegador não tiver popover (Chrome < 114), cai no modo antigo (div fixo com z-index alto).
+
+   API:
+     EXPMENU.menu(botao, [{rot, dica, fn}, ...])   abre o menu embaixo do botão (Esc ou clique fora fecha; setas ↑ ↓ navegam)
+     EXPMENU.baixa(blob, nome)                      download de um Blob
+     PDFMIN.imagem(canvas, titulo, linhas[])        -> Blob de um PDF A4 paisagem de 1 página: título, linhas de texto e a imagem do canvas
+   NÃO FAZ: não comanda nada, não lê PLC/DSE, não grava em disco sozinho (só o navegador, no download).
+   ===================================================================================================================== */
+const EXPMENU = (function () {
+  'use strict';
+  let m = null;
+  /* estilo próprio (a página não precisa ter CSS do menu). Cores neutras, legíveis em tema claro e escuro. */
+  (function () {
+    if (document.getElementById('expmenu-css')) return;
+    const s = document.createElement('style'); s.id = 'expmenu-css';
+    s.textContent = '.expmenu{position:fixed;margin:0;inset:auto;z-index:2147483000;background:#fff;color:#1b2a3a;border:1px solid #9aa5b1;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.35);display:flex;flex-direction:column;min-width:210px;max-width:min(340px,96vw);padding:3px;overflow:visible;font:13px system-ui,Segoe UI,Arial,sans-serif}' +
+      '.expmenu button{border:0;background:none;text-align:left;padding:7px 10px;font:inherit;color:inherit;cursor:pointer;border-radius:4px}' +
+      '.expmenu button:hover,.expmenu button:focus-visible{background:#e8eef6;outline:none}' +
+      '.expmenu small{display:block;color:#51606f;font-size:11px}' +
+      '.expmenu hr{border:0;border-top:1px solid #d3d9e0;margin:3px 2px;width:auto}';
+    document.head.appendChild(s);
+  })();
+  const fecha = () => {
+    if (m) { try { if (m.hidePopover && m.matches(':popover-open')) m.hidePopover(); } catch (e) {} m.remove(); m = null; }
+    document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true);
+  };
+  const fora = e => { if (m && !m.contains(e.target)) fecha(); };
+  const tecla = e => {
+    if (e.key === 'Escape') { fecha(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      const bs = [...m.querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+      bs[(i + (e.key === 'ArrowDown' ? 1 : bs.length - 1)) % bs.length].focus(); e.preventDefault();
+    }
+  };
+  function menu(btn, itens) {
+    fecha();
+    m = document.createElement('div'); m.className = 'expmenu'; m.setAttribute('role', 'menu');
+    itens.forEach(it => {
+      if (it === '-') { m.appendChild(document.createElement('hr')); return; }
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem');
+      b.innerHTML = it.rot + (it.dica ? '<small>' + it.dica + '</small>' : '');
+      b.onclick = () => { fecha(); try { it.fn(); } catch (e) { console.error('Exportar', e); alert('Não foi possível exportar: ' + (e && e.message || e)); } };
+      m.appendChild(b);
+    });
+    m.setAttribute('popover', 'manual'); document.body.appendChild(m);
+    try { m.showPopover(); } catch (e) { /* sem popover: fica o z-index alto do CSS */ }
+    const r = btn.getBoundingClientRect();
+    m.style.left = Math.max(4, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + 'px';
+    m.style.top = Math.max(4, Math.min(r.bottom + 2, innerHeight - m.offsetHeight - 8)) + 'px';
+    setTimeout(() => { document.addEventListener('pointerdown', fora, true); document.addEventListener('keydown', tecla, true); }, 0);
+    const p = m.querySelector('button'); if (p) p.focus();
+  }
+  function baixa(blob, nome) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  return { menu, baixa, fecha };
+})();
+
+/* ---------- gerador mínimo de PDF (A4 paisagem 842×595 pt; fonte Helvetica; 1 imagem JPEG por documento) ---------- */
+const PDFMIN = (function () {
+  'use strict';
+  const esc = s => String(s).replace(/[–—]/g, '-').replace(/[^\x00-\xFF]/g, '?').replace(/[\\()]/g, '\\$&');
+  function Pg() { this.o = []; }
+  /* texto: x,y em pt a partir do canto SUPERIOR esquerdo; b = negrito */
+  Pg.prototype.t = function (x, y, s, sz, b) { this.o.push('BT /' + (b ? 'F2' : 'F1') + ' ' + sz + ' Tf ' + x.toFixed(2) + ' ' + (595 - y).toFixed(2) + ' Td (' + esc(s) + ') Tj ET'); };
+  Pg.prototype.im = function (x, y, w, h) { this.o.push('q ' + w.toFixed(2) + ' 0 0 ' + h.toFixed(2) + ' ' + x.toFixed(2) + ' ' + (595 - y - h).toFixed(2) + ' cm /Im1 Do Q'); };
+  function blob(pgs, jpg, iw, ih) {
+    const enc = s => { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+    const ch = [], off = []; let len = 0; const add = u => { ch.push(u); len += u.length; };
+    const N = 5 + 2 * pgs.length;
+    add(enc('%PDF-1.4\n'));
+    const obj = (n, body) => { off[n] = len; add(enc(n + ' 0 obj\n' + body + '\nendobj\n')); };
+    const stm = (n, dict, bytes) => { off[n] = len; add(enc(n + ' 0 obj\n<<' + dict + '/Length ' + bytes.length + '>>\nstream\n')); add(bytes); add(enc('\nendstream\nendobj\n')); };
+    obj(1, '<</Type/Catalog/Pages 2 0 R>>');
+    obj(2, '<</Type/Pages/Kids[' + pgs.map((_, i) => (7 + 2 * i) + ' 0 R').join(' ') + ']/Count ' + pgs.length + '>>');
+    obj(3, '<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>');
+    obj(4, '<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>');
+    stm(5, '/Type/XObject/Subtype/Image/Width ' + iw + '/Height ' + ih + '/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode', jpg);
+    pgs.forEach((p, i) => {
+      stm(6 + 2 * i, '', enc(p.o.join('\n')));
+      obj(7 + 2 * i, '<</Type/Page/Parent 2 0 R/MediaBox[0 0 842 595]/Contents ' + (6 + 2 * i) + ' 0 R/Resources<</Font<</F1 3 0 R/F2 4 0 R>>/XObject<</Im1 5 0 R>>>>>>');
+    });
+    const xr = len; let x = 'xref\n0 ' + (N + 1) + '\n0000000000 65535 f \n';
+    for (let n = 1; n <= N; n++) x += String(off[n]).padStart(10, '0') + ' 00000 n \n';
+    x += 'trailer\n<</Size ' + (N + 1) + '/Root 1 0 R>>\nstartxref\n' + xr + '\n%%EOF';
+    add(enc(x));
+    return new Blob(ch, { type: 'application/pdf' });
+  }
+  /** PDF de 1 página: título, linhas de texto e a imagem do canvas (proporção preservada, cabe no A4 paisagem). */
+  function imagem(cv, titulo, linhas) {
+    const pg = new Pg(); pg.t(36, 34, titulo, 14, true);
+    let y = 52; (linhas || []).forEach(l => { pg.t(36, y, l, 8.5); y += 12; });
+    const iw = cv.width, ih = cv.height, top = y + 4, maxW = 770, maxH = 595 - top - 30;
+    let w = maxW, h = w * ih / iw; if (h > maxH) { h = maxH; w = h * iw / ih; }
+    pg.im(36, top, w, h);
+    pg.t(36, 575, 'Gerado em ' + new Date().toLocaleString('pt-BR'), 7);
+    const jpg = Uint8Array.from(atob(cv.toDataURL('image/jpeg', 0.92).split(',')[1]), c => c.charCodeAt(0));
+    return blob([pg], jpg, iw, ih);
+  }
+  return { Pg, blob, imagem };
+})();
+</script>
+<script>
+/* =====================================================================================================================
+   dica_ui_v0.1.js — DICA DE INTERFACE: "que elemento é este?" (nome do tipo + id de programação + coordenadas) · 29/10/2026
+   Colado (inline) em todos os HTML do projeto (medidor, gráfico, mapa dos FBs, gerenciador de logs, amostras, simulador de rodízio,
+   visor da API, painel BT2). Documento: modulos/DICA_UI_v0.1.md.
+
+   PARA QUE SERVE (leigo): para conversar com a programação sem dizer "aquele botãozinho lá". Ligando este modo, ao passar o mouse sobre
+   qualquer coisa da tela aparece uma etiqueta com (1) o NOME DO TIPO do elemento (Botão, Chip, Card, Janela…), (2) o ID usado no código
+   (ex.: #bAnalisar, #cardBancoCargas) e (3) as COORDENADAS na tela. Alt + clique "fixa" a etiqueta: ela fica aberta até você fechar (✕ ou Esc)
+   e tem o botão "Copiar" para colar numa mensagem. Um contorno tracejado mostra exatamente qual é o elemento.
+
+   COMO LIGAR: tecla  Alt + I  (liga/desliga; lembra a escolha) · ou abrir a página com  ?ui=1  · ou  DICAUI.liga(true)  pelo console.
+   Desligado por padrão: o operador não vê nada diferente (a dica é ferramenta de quem desenvolve/valida).
+
+   NOME CORRETO DOS ELEMENTOS (pergunta do operador): a etiqueta que aparece ao passar o mouse e some ao sair = "tooltip" (dica de ferramenta).
+   A que fica aberta até ser fechada, sem travar a tela = "popover" (é o que o Alt+clique cria, e o aviso de risco do módulo JANELAS).
+   A mensagem que aparece num canto e some sozinha = "toast" (snackbar). Janela que trava a tela de trás = "diálogo modal".
+
+   POR QUE ASSIM (técnico): usa o atributo popover="manual" (camada de cima do navegador) para a etiqueta aparecer ACIMA de <dialog> abertos; se o
+   navegador não tiver popover, cai para position:fixed com z-index alto. O contorno é uma <div> fixa sobre o retângulo do elemento — NÃO mexe no
+   elemento, então não muda o layout (REGRA_LAYOUT_ESTAVEL_v0.1). Enquanto o modo está ligado, o atributo title do elemento sob o mouse é guardado
+   e o texto vai para dentro da etiqueta (evita duas dicas empilhadas); é devolvido ao sair.
+   O que ele NÃO faz: não altera nenhum dado, não lê PLC/Node-RED, não envia nada para fora. Clique normal continua funcionando; só Alt+clique é
+   capturado (para fixar). Coordenadas: "tela" = posição na janela do navegador (px); "mouse" = cursor na janela; "monitor" = cursor no monitor.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.DICAUI) return;
+  const CHAVE = 'bt2.dicaui';
+  let ligado = false, tip = null, caixa = null, fixa = null, ult = null, tmr = 0;
+  try { ligado = localStorage.getItem(CHAVE) === '1'; } catch (e) {}
+  if (/[?&]ui=1\b/.test(location.search)) ligado = true;
+  const temPop = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
+
+  /* ---------- CSS próprio (injetado uma vez; cores neutras, legíveis em tema claro e escuro) ---------- */
+  const css = document.createElement('style');
+  css.textContent = `
+  .dicaui-tip,.dicaui-fixa{position:fixed;margin:0;inset:auto;z-index:2147483200;max-width:min(360px,92vw);padding:6px 9px;border-radius:7px;border:1px solid #5d6b7a;
+    background:#10202f;color:#eaf2fa;font:12px/1.35 system-ui,Segoe UI,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;overflow:visible}
+  .dicaui-fixa{pointer-events:auto;padding-right:30px}
+  .dicaui-tip b,.dicaui-fixa b{color:#8fd0ff}.dicaui-tip i,.dicaui-fixa i{font-style:normal;color:#ffd27a}
+  .dicaui-tip small,.dicaui-fixa small{display:block;color:#aebccb;font-size:11px}
+  .dicaui-fixa .x{position:absolute;top:3px;right:4px;width:20px;height:20px;border:0;border-radius:4px;background:transparent;color:#eaf2fa;cursor:pointer;font:700 13px/1 system-ui}
+  .dicaui-fixa .x:hover{background:rgba(255,255,255,.18)}
+  .dicaui-fixa .cp{margin-top:5px;font:600 11px system-ui;padding:2px 8px;border-radius:5px;border:1px solid #8fd0ff;background:transparent;color:#8fd0ff;cursor:pointer}
+  .dicaui-caixa{position:fixed;margin:0;inset:auto;z-index:2147483100;pointer-events:none;border:2px dashed #ff9f1c;background:rgba(255,159,28,.08);box-sizing:border-box;padding:0}
+  `;
+  (document.head || document.documentElement).appendChild(css);
+
+  /* ---------- nome do tipo (PT-BR) a partir da tag, do papel (role) e das classes ---------- */
+  const cls = e => { const c = e.getAttribute && e.getAttribute('class'); return c ? String(c) : ''; };
+  function tipoDe(e) {
+    const t = (e.tagName || '').toLowerCase(), c = cls(e), role = e.getAttribute && e.getAttribute('role');
+    if (e.classList && e.classList.contains('jwbtn')) return 'Botão de tamanho da janela (⤢)';
+    if (t === 'dialog') return e.hasAttribute('open') && e.classList.contains('jflut') ? 'Janela flutuante (dialog)' : 'Janela (dialog)';
+    if (/\b(chip|enschip|gchip|gd-chip)\b/.test(c)) return 'Chip';
+    if (t === 'section' && /\bpanel\b/.test(c)) return 'Painel (seção de cards)';
+    if (/\bcard\b/.test(c)) return 'Card';
+    if (/\bbx\b/.test(c)) return 'Bloco FB (cartão do mapa)';
+    if (/\binfo\b/.test(c) && e.closest && e.closest('.bx')) return 'Ícone de informação (i)';
+    if (/\bjt\b/.test(c)) return 'Barra de título da janela';
+    if (t === 'button' || role === 'button' || (t === 'input' && /^(button|submit|reset)$/.test(e.type))) return 'Botão';
+    if (t === 'select') return 'Lista suspensa (select)';
+    if (t === 'textarea') return 'Campo de texto longo';
+    if (t === 'input') return e.type === 'checkbox' ? 'Caixa de seleção' : e.type === 'radio' ? 'Opção (radio)' : e.type === 'range' ? 'Controle deslizante' : 'Campo de entrada (' + (e.type || 'text') + ')';
+    if (role === 'tab') return 'Aba';
+    if (t === 'a') return 'Link';
+    if (t === 'canvas') return 'Gráfico (canvas)';
+    if (t === 'table') return 'Tabela';
+    if (t === 'svg') return 'Desenho (svg)';
+    if (/^h[1-6]$/.test(t)) return 'Título (' + t + ')';
+    if (t === 'label') return 'Rótulo';
+    if (t === 'iframe') return 'Quadro embutido (iframe)';
+    if (/\b(popover|jwtip|expmenu)\b/.test(c) || e.hasAttribute && e.hasAttribute('popover')) return 'Popover / menu';
+    return 'Elemento <' + t + '>';
+  }
+  const conhecido = e => { const t = (e.tagName || '').toLowerCase(); return !!(e.id || /^(button|input|select|textarea|a|dialog|table|canvas|label|iframe)$/.test(t) || /\b(chip|enschip|gchip|card|bx|jwbtn|jt|panel)\b/.test(cls(e)) || (e.getAttribute && /^(button|tab)$/.test(e.getAttribute('role') || ''))); };
+  /* sobe da folha (um <span> de texto, por exemplo) até o primeiro elemento que tenha id ou seja de um tipo conhecido */
+  function alvoDe(e) { let x = e; for (let i = 0; x && i < 8; i++, x = x.parentElement) if (conhecido(x)) return x; return e; }
+
+  function descreve(e, ev) {
+    const r = e.getBoundingClientRect(), id = e.id || '', pai = !id && e.closest ? e.closest('[id]') : null;
+    const t = e.dataset && e.dataset.dicauiT != null ? e.dataset.dicauiT : (e.getAttribute && e.getAttribute('title')) || e.getAttribute && e.getAttribute('aria-label') || '';
+    const n = v => Math.round(v);
+    return { tipo: tipoDe(e), id, pai: pai ? pai.id : '', dica: t, x: n(r.left), y: n(r.top), w: n(r.width), h: n(r.height),
+             mx: ev ? n(ev.clientX) : null, my: ev ? n(ev.clientY) : null, sx: ev ? n(ev.screenX) : null, sy: ev ? n(ev.screenY) : null };
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function html(d) {
+    return '<b>' + esc(d.tipo) + '</b> · ' + (d.id ? '<i>#' + esc(d.id) + '</i>' : '<i>(sem id)</i>' + (d.pai ? ' dentro de <i>#' + esc(d.pai) + '</i>' : '')) +
+      '<small>tela x ' + d.x + ' · y ' + d.y + ' · ' + d.w + '×' + d.h + ' px</small>' +
+      (d.mx != null ? '<small>mouse ' + d.mx + ',' + d.my + ' · monitor ' + d.sx + ',' + d.sy + '</small>' : '') +
+      (d.dica ? '<small>dica: ' + esc(d.dica) + '</small>' : '');
+  }
+  const texto = d => d.tipo + ' ' + (d.id ? '#' + d.id : '(sem id)' + (d.pai ? ' dentro de #' + d.pai : '')) + ' | tela x=' + d.x + ' y=' + d.y + ' ' + d.w + 'x' + d.h + 'px' + (d.mx != null ? ' | mouse ' + d.mx + ',' + d.my + ' monitor ' + d.sx + ',' + d.sy : '') + (d.dica ? ' | dica: ' + d.dica : '') + ' | página ' + (location.pathname.split('/').pop() || '');
+
+  /* ---------- peças visuais ---------- */
+  function cria(classe, pop) {
+    const d = document.createElement('div'); d.className = classe; if (pop && temPop) d.setAttribute('popover', 'manual'); (document.body || document.documentElement).appendChild(d); return d;
+  }
+  const abre = d => { if (temPop) { try { if (!d.matches(':popover-open')) d.showPopover(); } catch (e) {} } else d.style.display = 'block'; };
+  const fecha = d => { if (!d) return; if (temPop) { try { d.hidePopover(); } catch (e) {} } else d.style.display = 'none'; };
+  function iniPecas() {
+    if (!tip) { tip = cria('dicaui-tip', true); caixa = cria('dicaui-caixa', true); fecha(tip); fecha(caixa); }
+  }
+  function posiciona(el, x, y) {
+    const w = el.offsetWidth || 240, h = el.offsetHeight || 60;
+    el.style.left = Math.max(4, Math.min(innerWidth - w - 4, x + 14)) + 'px';
+    el.style.top = Math.max(4, Math.min(innerHeight - h - 4, y + 18)) + 'px';
+  }
+  function contorna(e) { const r = e.getBoundingClientRect(); Object.assign(caixa.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }); abre(caixa); }
+
+  /* ---------- eventos ---------- */
+  function devolveTitle() { if (ult && ult.dataset && ult.dataset.dicauiT != null) { ult.setAttribute('title', ult.dataset.dicauiT); delete ult.dataset.dicauiT; } }
+  function mover(ev) {
+    if (!ligado) return;
+    const crua = ev.target; if (!crua || (crua.closest && crua.closest('.dicaui-tip,.dicaui-fixa,.dicaui-caixa'))) return;
+    const e = alvoDe(crua);
+    if (e !== ult) {
+      devolveTitle(); ult = e;
+      if (e.getAttribute && e.hasAttribute('title') && !(e.dataset && e.dataset.dicauiT != null)) { e.dataset.dicauiT = e.getAttribute('title'); e.removeAttribute('title'); }
+      contorna(e);
+    }
+    const d = descreve(e, ev); tip.innerHTML = html(d); abre(tip); posiciona(tip, ev.clientX, ev.clientY);
+  }
+  function sair() { fecha(tip); fecha(caixa); devolveTitle(); ult = null; }
+  function fixar(ev) {
+    if (!ligado || !ev.altKey) return;
+    const e = alvoDe(ev.target); if (e.closest && e.closest('.dicaui-fixa')) return;
+    ev.preventDefault(); ev.stopPropagation();                 // Alt+clique é só para fixar: não aciona o botão por baixo
+    const d = descreve(e, ev); fechaFixa();
+    fixa = cria('dicaui-fixa', true); fixa.innerHTML = html(d) + '<button type="button" class="cp">Copiar</button><button type="button" class="x" aria-label="Fechar">✕</button>';
+    fixa.querySelector('.x').onclick = fechaFixa;
+    fixa.querySelector('.cp').onclick = ev2 => { const t = texto(d); try { navigator.clipboard.writeText(t); ev2.target.textContent = 'Copiado'; } catch (x) { ev2.target.textContent = 'Selecione e copie'; } };
+    abre(fixa); posiciona(fixa, ev.clientX, ev.clientY); contorna(e);
+  }
+  function fechaFixa() { if (fixa) { fecha(fixa); fixa.remove(); fixa = null; } fecha(caixa); }
+  document.addEventListener('mousemove', mover, true);
+  document.addEventListener('mouseleave', sair, true);
+  document.addEventListener('click', fixar, true);
+  document.addEventListener('keydown', ev => {
+    if (ev.altKey && !ev.ctrlKey && !ev.metaKey && (ev.key === 'i' || ev.key === 'I')) { ev.preventDefault(); liga(!ligado, true); }
+    else if (ev.key === 'Escape' && fixa) fechaFixa();
+  }, true);
+
+  function liga(b, avisa) {
+    ligado = !!b; try { localStorage.setItem(CHAVE, ligado ? '1' : '0'); } catch (e) {}
+    iniPecas();
+    if (!ligado) { sair(); fechaFixa(); }
+    if (avisa) { tip.innerHTML = '<b>Dica de interface ' + (ligado ? 'ligada' : 'desligada') + '</b><small>Alt+I liga/desliga · Alt+clique fixa a etiqueta</small>'; abre(tip); posiciona(tip, innerWidth / 2 - 130, 40); setTimeout(() => { if (!ult) fecha(tip); }, 1800); }
+  }
+  const inicia = () => { iniPecas(); if (ligado) liga(true, false); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inicia); else inicia();
+  global.DICAUI = { liga, alterna: () => liga(!ligado, true), ativo: () => ligado, descreve, tipoDe };
+})(window);
+</script>
+</body>
+</html>

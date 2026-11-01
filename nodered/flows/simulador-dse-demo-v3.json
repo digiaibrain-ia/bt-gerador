@@ -1,0 +1,275 @@
+[
+ {
+  "id": "sdd2_tab",
+  "type": "tab",
+  "label": "Simulador DSE (Demo)",
+  "disabled": false,
+  "info": "Simula o DSE + a realimentacao das chaves no PLC da Carga (172.17.209.135) para teste em bancada SEM DSE real. v3 (21/10/2026).\n\nPOST /api/simulador/dse {ligado:true|false}: liga/desliga o gerador simulado (DB52 ledManual, tensoes ~221 V). Com ele ligado, escreve potenciaKw (kW sem carga + soma dos kW das chaves com cb.ligar=true) e simula o feedback sb.ligada (Ligada1..16) = cb.ligar (comando). Vale para chaves acionadas pela rota /api/chaves/56/ligar e pelo Setup (FB100).\n\nUSO SOMENTE EM BANCADA. Nao deixar ligado junto com o DSE real nem com a realimentacao fisica das chaves (sobrescreve DB52 e DB150 sb.ligada). Encerrar: Desligar gerador (Demo) no HTML, ou desabilitar esta aba."
+ },
+ {
+  "id": "sdd2_ep",
+  "type": "s7 endpoint",
+  "transport": "iso-on-tcp",
+  "address": "172.17.209.135",
+  "port": "102",
+  "rack": "0",
+  "slot": "1",
+  "localtsaphi": "01",
+  "localtsaplo": "00",
+  "remotetsaphi": "01",
+  "remotetsaplo": "00",
+  "connmode": "rack-slot",
+  "adapter": "",
+  "busaddr": "2",
+  "cycletime": "200",
+  "timeout": "2000",
+  "name": "PLC da Carga (Simulador DSE)",
+  "vartable": [
+   {
+    "name": "CbLigar1",
+    "addr": "DB150,X0.0"
+   },
+   {
+    "name": "CbLigar2",
+    "addr": "DB150,X0.1"
+   },
+   {
+    "name": "CbLigar3",
+    "addr": "DB150,X0.2"
+   },
+   {
+    "name": "CbLigar4",
+    "addr": "DB150,X0.3"
+   },
+   {
+    "name": "CbLigar5",
+    "addr": "DB150,X0.4"
+   },
+   {
+    "name": "CbLigar6",
+    "addr": "DB150,X0.5"
+   },
+   {
+    "name": "CbLigar7",
+    "addr": "DB150,X0.6"
+   },
+   {
+    "name": "CbLigar8",
+    "addr": "DB150,X0.7"
+   },
+   {
+    "name": "CbLigar9",
+    "addr": "DB150,X1.0"
+   },
+   {
+    "name": "CbLigar10",
+    "addr": "DB150,X1.1"
+   },
+   {
+    "name": "CbLigar11",
+    "addr": "DB150,X1.2"
+   },
+   {
+    "name": "CbLigar12",
+    "addr": "DB150,X1.3"
+   },
+   {
+    "name": "CbLigar13",
+    "addr": "DB150,X1.4"
+   },
+   {
+    "name": "CbLigar14",
+    "addr": "DB150,X1.5"
+   },
+   {
+    "name": "CbLigar15",
+    "addr": "DB150,X1.6"
+   },
+   {
+    "name": "CbLigar16",
+    "addr": "DB150,X1.7"
+   },
+   {
+    "name": "ledManual",
+    "addr": "DB52,X2.1"
+   },
+   {
+    "name": "tensaoL1L2",
+    "addr": "DB52,REAL28"
+   },
+   {
+    "name": "tensaoL2L3",
+    "addr": "DB52,REAL32"
+   },
+   {
+    "name": "tensaoL3L1",
+    "addr": "DB52,REAL36"
+   },
+   {
+    "name": "potenciaKw",
+    "addr": "DB52,REAL84"
+   },
+   {
+    "name": "Ligada1",
+    "addr": "DB150,X2.0"
+   },
+   {
+    "name": "Ligada2",
+    "addr": "DB150,X2.1"
+   },
+   {
+    "name": "Ligada3",
+    "addr": "DB150,X2.2"
+   },
+   {
+    "name": "Ligada4",
+    "addr": "DB150,X2.3"
+   },
+   {
+    "name": "Ligada5",
+    "addr": "DB150,X2.4"
+   },
+   {
+    "name": "Ligada6",
+    "addr": "DB150,X2.5"
+   },
+   {
+    "name": "Ligada7",
+    "addr": "DB150,X2.6"
+   },
+   {
+    "name": "Ligada8",
+    "addr": "DB150,X2.7"
+   },
+   {
+    "name": "Ligada9",
+    "addr": "DB150,X3.0"
+   },
+   {
+    "name": "Ligada10",
+    "addr": "DB150,X3.1"
+   },
+   {
+    "name": "Ligada11",
+    "addr": "DB150,X3.2"
+   },
+   {
+    "name": "Ligada12",
+    "addr": "DB150,X3.3"
+   },
+   {
+    "name": "Ligada13",
+    "addr": "DB150,X3.4"
+   },
+   {
+    "name": "Ligada14",
+    "addr": "DB150,X3.5"
+   },
+   {
+    "name": "Ligada15",
+    "addr": "DB150,X3.6"
+   },
+   {
+    "name": "Ligada16",
+    "addr": "DB150,X3.7"
+   }
+  ]
+ },
+ {
+  "id": "sdd2_in",
+  "type": "http in",
+  "z": "sdd2_tab",
+  "name": "POST /api/simulador/dse",
+  "url": "/api/simulador/dse",
+  "method": "post",
+  "upload": false,
+  "wires": [
+   [
+    "sdd2_liga"
+   ]
+  ],
+  "x": 150,
+  "y": 100
+ },
+ {
+  "id": "sdd2_liga",
+  "type": "function",
+  "z": "sdd2_tab",
+  "name": "liga/desliga DSE simulado",
+  "func": "// Entrada: POST /simulador/dse  body {ligado:true|false}   (chamado pelo botao \"Ligar/Desligar gerador (Demo)\" do HTML)\n// Saida 1 -> s7 out (escritas no PLC)   Saida 2 -> HTTP response\nconst b = msg.payload || {};\nif (typeof b.ligado !== 'boolean') {\n  msg.statusCode = 400;\n  msg.payload = { ok: false, erro: 'ligado deve ser true/false' };\n  return [null, msg];\n}\nflow.set('simLigado', b.ligado);\nlet w;\nif (b.ligado) {\n  w = [\n    { variable: 'ledManual',  payload: true },   // DB52 ledManual = gerador em START/operando\n    { variable: 'tensaoL1L2', payload: 221.1 },  // mesmos valores padrao do Demo do HTML\n    { variable: 'tensaoL2L3', payload: 220.8 },\n    { variable: 'tensaoL3L1', payload: 221.3 }\n  ];\n} else {\n  w = [\n    { variable: 'ledManual',  payload: false },\n    { variable: 'tensaoL1L2', payload: 0 },\n    { variable: 'tensaoL2L3', payload: 0 },\n    { variable: 'tensaoL3L1', payload: 0 },\n    { variable: 'potenciaKw', payload: 0 }\n  ];\n  for (let i = 1; i <= 16; i++) w.push({ variable: 'Ligada' + i, payload: false }); // limpa o feedback simulado\n}\nmsg.statusCode = 200;\nmsg.payload = { ok: true, ligado: b.ligado };\nreturn [w, msg];\n",
+  "outputs": 2,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "wires": [
+   [
+    "sdd2_w"
+   ],
+   [
+    "sdd2_out"
+   ]
+  ],
+  "x": 380,
+  "y": 100
+ },
+ {
+  "id": "sdd2_out",
+  "type": "http response",
+  "z": "sdd2_tab",
+  "name": "HTTP response",
+  "statusCode": "",
+  "headers": {
+   "Content-Type": "application/json"
+  },
+  "x": 650,
+  "y": 160
+ },
+ {
+  "id": "sdd2_w",
+  "type": "s7 out",
+  "z": "sdd2_tab",
+  "endpoint": "sdd2_ep",
+  "variable": "",
+  "name": "grava DB52/DB150 (simulador)",
+  "wires": [],
+  "x": 680,
+  "y": 60
+ },
+ {
+  "id": "sdd2_r",
+  "type": "s7 in",
+  "z": "sdd2_tab",
+  "endpoint": "sdd2_ep",
+  "mode": "all",
+  "variable": "",
+  "diff": false,
+  "name": "le CbLigar/Ligadas (ciclico 200 ms)",
+  "wires": [
+   [
+    "sdd2_calc"
+   ]
+  ],
+  "x": 170,
+  "y": 240
+ },
+ {
+  "id": "sdd2_calc",
+  "type": "function",
+  "z": "sdd2_tab",
+  "name": "calcula potencia + feedback simulado",
+  "func": "// Entrada: leitura ciclica (s7 in \"all\", 200 ms). So age com o gerador SIMULADO ligado (flow 'simLigado').\n// 1) Ligada1..16 (sb.ligada) = cbLigar (comando) -> simula a realimentacao fisica; escreve so quando muda\n// 2) potenciaKw = kW sem carga + soma dos kW nominais das chaves com cb.ligar = true; escrita no maximo 1x por segundo\nif (!flow.get('simLigado')) return null;\nconst p = msg.payload;\nif (!p || typeof p !== 'object') return null;\nconst KW = [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 3, 0, 0, 0];   // kW nominais BC56 (ESPECIFICACAO_CARD_CHAVES_DB55_FB200.md, secao 2); 14-16 sem chave\nconst BASE = 0.8;                                             // kW sem carga SIMULADO (valor de simulacao, ajuste se quiser)\nconst out = [];\nlet carga = 0;\nfor (let i = 1; i <= 16; i++) {\n  const cmd = (p['CbLigar' + i] === true);\n  if (cmd) carga += KW[i - 1];\n  if (p['Ligada' + i] !== cmd) out.push({ variable: 'Ligada' + i, payload: cmd });\n}\nconst agora = Date.now();\nif (agora - (flow.get('simUltPot') || 0) >= 1000) {\n  flow.set('simUltPot', agora);\n  out.push({ variable: 'potenciaKw', payload: Math.round((BASE + carga + (Math.random() - 0.5) * 0.1) * 100) / 100 });\n}\nreturn out.length ? [out] : null;\n",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "wires": [
+   [
+    "sdd2_w"
+   ]
+  ],
+  "x": 440,
+  "y": 240
+ }
+]

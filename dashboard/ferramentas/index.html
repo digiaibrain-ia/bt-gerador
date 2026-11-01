@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pt-BR">
+<!-- index.html (v0.2) · 29/10/2026 — corrige a procura dos arquivos (3 pastas, mostra onde procurou), confere os .js de apoio e traz AJUDA. Nome fixo de propósito. --><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.2"><title>Ferramentas · Bancos de teste</title>
+<!-- index.html (v0.1) · 29/10/2026 — PÁGINA DE ENTRADA. Nome fixo de propósito (é o endereço que você guarda nos favoritos); a versão fica neste comentário.
+  PARA QUE SERVE (leigo): uma lista com todas as ferramentas do projeto. Abra UMA vez  http://IP:1880/index.html  (o IP do PC do banco), guarde nos favoritos e clique na ferramenta.
+  POR QUE: abrir o HTML com duplo clique usa file:///C:/Users/… e o navegador bloqueia as chamadas ao Node-RED; por http tudo funciona (inclusive módulos .js separados).
+  DE ONDE VEM A LISTA: catalogo_ferramentas_v0.2.js (mesma pasta). Para trocar a versão de uma ferramenta edita-se SÓ lá. Os dois arquivos .js ficam na mesma pasta public.
+  O QUE FAZ AUTOMATICAMENTE: pergunta ao servidor (HEAD, sem baixar) se cada arquivo existe e marca ✓ (achou) ou ✗ (falta copiar para a pasta public).
+  NÃO FAZ: não lê PLC/DSE/Node-RED, não grava nada. Em file:// avisa e não oferece links que não funcionam. -->
+<style>
+:root{color-scheme:light;--bg:#f4f3f0;--sf:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--ln:#c3c2b7;--blue:#2a78d6;--grn:#1b8a52;--red:#d03b3b}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0d0d0d;--sf:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--ln:#383835;--blue:#3987e5;--grn:#3fc489;--red:#ec5f5f}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,"Segoe UI",sans-serif;padding:20px 16px;max-width:860px;margin-inline:auto}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--ink2);font-size:13px;margin-bottom:14px}
+h2{font-size:13px;color:var(--ink2);margin:18px 0 6px;font-weight:650}
+a.c{display:flex;gap:12px;align-items:flex-start;background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:10px 14px;margin:6px 0;color:inherit;text-decoration:none}
+a.c:hover,a.c:focus-visible{border-color:var(--blue);outline:2px solid var(--blue);outline-offset:-2px}
+a.c b{display:block}a.c small{display:block;color:var(--ink2)}a.c.leg{opacity:.55}a.c .st{margin-left:auto;font-weight:700;min-width:1.2em;text-align:center}
+.w{background:#fde7e5;color:#7a1f1f;border:1px solid var(--red);border-radius:8px;padding:8px 12px;margin:10px 0}
+code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0 5px}
+</style></head><body>
+<h1>Ferramentas · Bancos de teste</h1><div class="sub" id="sub">—</div><div id="aviso"></div><div id="lista"></div>
+<script src="catalogo_ferramentas_v0.2.js"></script>
+<script>
+(function(){
+  'use strict';
+  /* index v0.2 (29/10/2026) — o v0.1 procurava os arquivos só na pasta deste index e mostrava ✗ sem dizer onde procurou.
+     Agora procura em 3 lugares (a pasta deste index, a raiz do servidor e /html/), abre o arquivo no lugar onde o achou e,
+     se não achar, diz exatamente QUAIS endereços tentou. Também confere os arquivos de apoio (.js) que o medidor carrega. */
+  const CAT=window.CATALOGO_FERRAMENTAS,$=i=>document.getElementById(i),emFile=location.protocol==='file:';
+  if(!CAT){$('aviso').innerHTML='<div class="w"><b>catalogo_ferramentas_v0.2.js não foi encontrado.</b> Copie o arquivo para a MESMA pasta deste index.html (pasta public do Node-RED). Veja o botão Ajuda.</div>';return}
+  const pasta=emFile?'':new URL('.',location.href).href,cands=emFile?[]:[...new Set([pasta,location.origin+'/',location.origin+'/html/'])];
+  $('sub').textContent='Catálogo de '+CAT.atualizado+(emFile?'':' · pasta deste index: '+pasta);
+  if(emFile)$('aviso').innerHTML='<div class="w"><b>Página aberta como arquivo (file://).</b> As ferramentas só funcionam abertas pelo Node-RED. Abra <code>http://IP:1880/index.html</code> (IP do PC do banco) e guarde nos favoritos.</div>';
+  let g='',h='';
+  CAT.itens.forEach(i=>{
+    if(i.grupo!==g){g=i.grupo;h+='<h2>'+g+'</h2>'}
+    h+='<a class="c'+(i.legado?' leg':'')+'" id="a-'+i.id+'" href="'+(emFile?'#':pasta+i.arquivo)+'"'+(emFile?'':' target="bt2_'+i.id+'"')+' rel="noopener"><span><b>'+i.nome+'</b><small>'+i.arquivo+' — '+i.desc+(i.aviso?' ('+i.aviso+')':'')+'</small><small class="onde" id="o-'+i.id+'"></small></span><span class="st" id="s-'+i.id+'"></span></a>';
+  });
+  $('lista').innerHTML=h;
+  if(emFile){document.querySelectorAll('a.c').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));return}
+  const acha=async nome=>{for(const c of cands){try{const r=await fetch(c+nome,{method:'HEAD',cache:'no-store'});if(r.ok)return c}catch(e){return undefined}}return null}; /* undefined = servidor não respondeu */
+  let achados=0,total=CAT.itens.length;
+  Promise.all(CAT.itens.map(async i=>{const s=$('s-'+i.id),o=$('o-'+i.id),c=await acha(i.arquivo);
+    if(c===undefined){s.textContent='?';s.title='sem resposta do servidor';return}
+    if(c){achados++;s.textContent='✓';s.style.color='var(--grn)';s.title='arquivo encontrado em '+c+i.arquivo;$('a-'+i.id).href=c+i.arquivo;if(c!==pasta)o.textContent='aberto de '+c.replace(location.origin,'')+' (não está na pasta deste index)'}
+    else{s.textContent='✗';s.style.color='var(--red)';s.title='não encontrado';o.style.color='var(--red)';o.textContent='não encontrado em: '+cands.map(x=>x.replace(location.origin,'')+i.arquivo).join('  ·  ')}
+  })).then(async()=>{
+    if(!achados&&total)$('aviso').innerHTML='<div class="w"><b>Nenhuma ferramenta foi encontrada.</b> Copie os arquivos .html e .js do catálogo para a pasta do servidor que corresponde a <code>'+pasta.replace(location.origin,'')+'</code> (a pasta <code>public</code> do Node-RED, ou uma subpasta dela). Botão Ajuda explica o passo a passo.</div>';
+    const falta=[];for(const n of (CAT.apoio||[])){const c=await acha(n);if(c===null)falta.push(n)}
+    if(falta.length)$('aviso').innerHTML+='<div class="w"><b>Arquivos de apoio ausentes:</b> '+falta.join(', ')+'. O medidor carrega esses arquivos da mesma pasta dele; sem eles o menu ☰ e os atalhos não funcionam.</div>';
+  });
+})();
+</script><script>
+/* =====================================================================================================================
+   dica_ui_v0.1.js — DICA DE INTERFACE: "que elemento é este?" (nome do tipo + id de programação + coordenadas) · 29/10/2026
+   Colado (inline) em todos os HTML do projeto (medidor, gráfico, mapa dos FBs, gerenciador de logs, amostras, simulador de rodízio,
+   visor da API, painel BT2). Documento: modulos/DICA_UI_v0.1.md.
+
+   PARA QUE SERVE (leigo): para conversar com a programação sem dizer "aquele botãozinho lá". Ligando este modo, ao passar o mouse sobre
+   qualquer coisa da tela aparece uma etiqueta com (1) o NOME DO TIPO do elemento (Botão, Chip, Card, Janela…), (2) o ID usado no código
+   (ex.: #bAnalisar, #cardBancoCargas) e (3) as COORDENADAS na tela. Alt + clique "fixa" a etiqueta: ela fica aberta até você fechar (✕ ou Esc)
+   e tem o botão "Copiar" para colar numa mensagem. Um contorno tracejado mostra exatamente qual é o elemento.
+
+   COMO LIGAR: tecla  Alt + I  (liga/desliga; lembra a escolha) · ou abrir a página com  ?ui=1  · ou  DICAUI.liga(true)  pelo console.
+   Desligado por padrão: o operador não vê nada diferente (a dica é ferramenta de quem desenvolve/valida).
+
+   NOME CORRETO DOS ELEMENTOS (pergunta do operador): a etiqueta que aparece ao passar o mouse e some ao sair = "tooltip" (dica de ferramenta).
+   A que fica aberta até ser fechada, sem travar a tela = "popover" (é o que o Alt+clique cria, e o aviso de risco do módulo JANELAS).
+   A mensagem que aparece num canto e some sozinha = "toast" (snackbar). Janela que trava a tela de trás = "diálogo modal".
+
+   POR QUE ASSIM (técnico): usa o atributo popover="manual" (camada de cima do navegador) para a etiqueta aparecer ACIMA de <dialog> abertos; se o
+   navegador não tiver popover, cai para position:fixed com z-index alto. O contorno é uma <div> fixa sobre o retângulo do elemento — NÃO mexe no
+   elemento, então não muda o layout (REGRA_LAYOUT_ESTAVEL_v0.1). Enquanto o modo está ligado, o atributo title do elemento sob o mouse é guardado
+   e o texto vai para dentro da etiqueta (evita duas dicas empilhadas); é devolvido ao sair.
+   O que ele NÃO faz: não altera nenhum dado, não lê PLC/Node-RED, não envia nada para fora. Clique normal continua funcionando; só Alt+clique é
+   capturado (para fixar). Coordenadas: "tela" = posição na janela do navegador (px); "mouse" = cursor na janela; "monitor" = cursor no monitor.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.DICAUI) return;
+  const CHAVE = 'bt2.dicaui';
+  let ligado = false, tip = null, caixa = null, fixa = null, ult = null, tmr = 0;
+  try { ligado = localStorage.getItem(CHAVE) === '1'; } catch (e) {}
+  if (/[?&]ui=1\b/.test(location.search)) ligado = true;
+  const temPop = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
+
+  /* ---------- CSS próprio (injetado uma vez; cores neutras, legíveis em tema claro e escuro) ---------- */
+  const css = document.createElement('style');
+  css.textContent = `
+  .dicaui-tip,.dicaui-fixa{position:fixed;margin:0;inset:auto;z-index:2147483200;max-width:min(360px,92vw);padding:6px 9px;border-radius:7px;border:1px solid #5d6b7a;
+    background:#10202f;color:#eaf2fa;font:12px/1.35 system-ui,Segoe UI,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;overflow:visible}
+  .dicaui-fixa{pointer-events:auto;padding-right:30px}
+  .dicaui-tip b,.dicaui-fixa b{color:#8fd0ff}.dicaui-tip i,.dicaui-fixa i{font-style:normal;color:#ffd27a}
+  .dicaui-tip small,.dicaui-fixa small{display:block;color:#aebccb;font-size:11px}
+  .dicaui-fixa .x{position:absolute;top:3px;right:4px;width:20px;height:20px;border:0;border-radius:4px;background:transparent;color:#eaf2fa;cursor:pointer;font:700 13px/1 system-ui}
+  .dicaui-fixa .x:hover{background:rgba(255,255,255,.18)}
+  .dicaui-fixa .cp{margin-top:5px;font:600 11px system-ui;padding:2px 8px;border-radius:5px;border:1px solid #8fd0ff;background:transparent;color:#8fd0ff;cursor:pointer}
+  .dicaui-caixa{position:fixed;margin:0;inset:auto;z-index:2147483100;pointer-events:none;border:2px dashed #ff9f1c;background:rgba(255,159,28,.08);box-sizing:border-box;padding:0}
+  `;
+  (document.head || document.documentElement).appendChild(css);
+
+  /* ---------- nome do tipo (PT-BR) a partir da tag, do papel (role) e das classes ---------- */
+  const cls = e => { const c = e.getAttribute && e.getAttribute('class'); return c ? String(c) : ''; };
+  function tipoDe(e) {
+    const t = (e.tagName || '').toLowerCase(), c = cls(e), role = e.getAttribute && e.getAttribute('role');
+    if (e.classList && e.classList.contains('jwbtn')) return 'Botão de tamanho da janela (⤢)';
+    if (t === 'dialog') return e.hasAttribute('open') && e.classList.contains('jflut') ? 'Janela flutuante (dialog)' : 'Janela (dialog)';
+    if (/\b(chip|enschip|gchip|gd-chip)\b/.test(c)) return 'Chip';
+    if (t === 'section' && /\bpanel\b/.test(c)) return 'Painel (seção de cards)';
+    if (/\bcard\b/.test(c)) return 'Card';
+    if (/\bbx\b/.test(c)) return 'Bloco FB (cartão do mapa)';
+    if (/\binfo\b/.test(c) && e.closest && e.closest('.bx')) return 'Ícone de informação (i)';
+    if (/\bjt\b/.test(c)) return 'Barra de título da janela';
+    if (t === 'button' || role === 'button' || (t === 'input' && /^(button|submit|reset)$/.test(e.type))) return 'Botão';
+    if (t === 'select') return 'Lista suspensa (select)';
+    if (t === 'textarea') return 'Campo de texto longo';
+    if (t === 'input') return e.type === 'checkbox' ? 'Caixa de seleção' : e.type === 'radio' ? 'Opção (radio)' : e.type === 'range' ? 'Controle deslizante' : 'Campo de entrada (' + (e.type || 'text') + ')';
+    if (role === 'tab') return 'Aba';
+    if (t === 'a') return 'Link';
+    if (t === 'canvas') return 'Gráfico (canvas)';
+    if (t === 'table') return 'Tabela';
+    if (t === 'svg') return 'Desenho (svg)';
+    if (/^h[1-6]$/.test(t)) return 'Título (' + t + ')';
+    if (t === 'label') return 'Rótulo';
+    if (t === 'iframe') return 'Quadro embutido (iframe)';
+    if (/\b(popover|jwtip|expmenu)\b/.test(c) || e.hasAttribute && e.hasAttribute('popover')) return 'Popover / menu';
+    return 'Elemento <' + t + '>';
+  }
+  const conhecido = e => { const t = (e.tagName || '').toLowerCase(); return !!(e.id || /^(button|input|select|textarea|a|dialog|table|canvas|label|iframe)$/.test(t) || /\b(chip|enschip|gchip|card|bx|jwbtn|jt|panel)\b/.test(cls(e)) || (e.getAttribute && /^(button|tab)$/.test(e.getAttribute('role') || ''))); };
+  /* sobe da folha (um <span> de texto, por exemplo) até o primeiro elemento que tenha id ou seja de um tipo conhecido */
+  function alvoDe(e) { let x = e; for (let i = 0; x && i < 8; i++, x = x.parentElement) if (conhecido(x)) return x; return e; }
+
+  function descreve(e, ev) {
+    const r = e.getBoundingClientRect(), id = e.id || '', pai = !id && e.closest ? e.closest('[id]') : null;
+    const t = e.dataset && e.dataset.dicauiT != null ? e.dataset.dicauiT : (e.getAttribute && e.getAttribute('title')) || e.getAttribute && e.getAttribute('aria-label') || '';
+    const n = v => Math.round(v);
+    return { tipo: tipoDe(e), id, pai: pai ? pai.id : '', dica: t, x: n(r.left), y: n(r.top), w: n(r.width), h: n(r.height),
+             mx: ev ? n(ev.clientX) : null, my: ev ? n(ev.clientY) : null, sx: ev ? n(ev.screenX) : null, sy: ev ? n(ev.screenY) : null };
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function html(d) {
+    return '<b>' + esc(d.tipo) + '</b> · ' + (d.id ? '<i>#' + esc(d.id) + '</i>' : '<i>(sem id)</i>' + (d.pai ? ' dentro de <i>#' + esc(d.pai) + '</i>' : '')) +
+      '<small>tela x ' + d.x + ' · y ' + d.y + ' · ' + d.w + '×' + d.h + ' px</small>' +
+      (d.mx != null ? '<small>mouse ' + d.mx + ',' + d.my + ' · monitor ' + d.sx + ',' + d.sy + '</small>' : '') +
+      (d.dica ? '<small>dica: ' + esc(d.dica) + '</small>' : '');
+  }
+  const texto = d => d.tipo + ' ' + (d.id ? '#' + d.id : '(sem id)' + (d.pai ? ' dentro de #' + d.pai : '')) + ' | tela x=' + d.x + ' y=' + d.y + ' ' + d.w + 'x' + d.h + 'px' + (d.mx != null ? ' | mouse ' + d.mx + ',' + d.my + ' monitor ' + d.sx + ',' + d.sy : '') + (d.dica ? ' | dica: ' + d.dica : '') + ' | página ' + (location.pathname.split('/').pop() || '');
+
+  /* ---------- peças visuais ---------- */
+  function cria(classe, pop) {
+    const d = document.createElement('div'); d.className = classe; if (pop && temPop) d.setAttribute('popover', 'manual'); (document.body || document.documentElement).appendChild(d); return d;
+  }
+  const abre = d => { if (temPop) { try { if (!d.matches(':popover-open')) d.showPopover(); } catch (e) {} } else d.style.display = 'block'; };
+  const fecha = d => { if (!d) return; if (temPop) { try { d.hidePopover(); } catch (e) {} } else d.style.display = 'none'; };
+  function iniPecas() {
+    if (!tip) { tip = cria('dicaui-tip', true); caixa = cria('dicaui-caixa', true); fecha(tip); fecha(caixa); }
+  }
+  function posiciona(el, x, y) {
+    const w = el.offsetWidth || 240, h = el.offsetHeight || 60;
+    el.style.left = Math.max(4, Math.min(innerWidth - w - 4, x + 14)) + 'px';
+    el.style.top = Math.max(4, Math.min(innerHeight - h - 4, y + 18)) + 'px';
+  }
+  function contorna(e) { const r = e.getBoundingClientRect(); Object.assign(caixa.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }); abre(caixa); }
+
+  /* ---------- eventos ---------- */
+  function devolveTitle() { if (ult && ult.dataset && ult.dataset.dicauiT != null) { ult.setAttribute('title', ult.dataset.dicauiT); delete ult.dataset.dicauiT; } }
+  function mover(ev) {
+    if (!ligado) return;
+    const crua = ev.target; if (!crua || (crua.closest && crua.closest('.dicaui-tip,.dicaui-fixa,.dicaui-caixa'))) return;
+    const e = alvoDe(crua);
+    if (e !== ult) {
+      devolveTitle(); ult = e;
+      if (e.getAttribute && e.hasAttribute('title') && !(e.dataset && e.dataset.dicauiT != null)) { e.dataset.dicauiT = e.getAttribute('title'); e.removeAttribute('title'); }
+      contorna(e);
+    }
+    const d = descreve(e, ev); tip.innerHTML = html(d); abre(tip); posiciona(tip, ev.clientX, ev.clientY);
+  }
+  function sair() { fecha(tip); fecha(caixa); devolveTitle(); ult = null; }
+  function fixar(ev) {
+    if (!ligado || !ev.altKey) return;
+    const e = alvoDe(ev.target); if (e.closest && e.closest('.dicaui-fixa')) return;
+    ev.preventDefault(); ev.stopPropagation();                 // Alt+clique é só para fixar: não aciona o botão por baixo
+    const d = descreve(e, ev); fechaFixa();
+    fixa = cria('dicaui-fixa', true); fixa.innerHTML = html(d) + '<button type="button" class="cp">Copiar</button><button type="button" class="x" aria-label="Fechar">✕</button>';
+    fixa.querySelector('.x').onclick = fechaFixa;
+    fixa.querySelector('.cp').onclick = ev2 => { const t = texto(d); try { navigator.clipboard.writeText(t); ev2.target.textContent = 'Copiado'; } catch (x) { ev2.target.textContent = 'Selecione e copie'; } };
+    abre(fixa); posiciona(fixa, ev.clientX, ev.clientY); contorna(e);
+  }
+  function fechaFixa() { if (fixa) { fecha(fixa); fixa.remove(); fixa = null; } fecha(caixa); }
+  document.addEventListener('mousemove', mover, true);
+  document.addEventListener('mouseleave', sair, true);
+  document.addEventListener('click', fixar, true);
+  document.addEventListener('keydown', ev => {
+    if (ev.altKey && !ev.ctrlKey && !ev.metaKey && (ev.key === 'i' || ev.key === 'I')) { ev.preventDefault(); liga(!ligado, true); }
+    else if (ev.key === 'Escape' && fixa) fechaFixa();
+  }, true);
+
+  function liga(b, avisa) {
+    ligado = !!b; try { localStorage.setItem(CHAVE, ligado ? '1' : '0'); } catch (e) {}
+    iniPecas();
+    if (!ligado) { sair(); fechaFixa(); }
+    if (avisa) { tip.innerHTML = '<b>Dica de interface ' + (ligado ? 'ligada' : 'desligada') + '</b><small>Alt+I liga/desliga · Alt+clique fixa a etiqueta</small>'; abre(tip); posiciona(tip, innerWidth / 2 - 130, 40); setTimeout(() => { if (!ult) fecha(tip); }, 1800); }
+  }
+  const inicia = () => { iniPecas(); if (ligado) liga(true, false); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inicia); else inicia();
+  global.DICAUI = { liga, alterna: () => liga(!ligado, true), ativo: () => ligado, descreve, tipoDe };
+})(window);
+</script>
+<script>
+/* =====================================================================================================================
+   ajuda_v0.1.js — BOTÃO "AJUDA" PADRÃO + JANELA DE AJUDA, igual em todo HTML do projeto · 29/10/2026
+   Colado (inline) em: mapa_fbs_v0.11, gerenciador_logs_v1.6, api_cards_visor_v0.3, index.html v0.2 (o medidor, o gráfico e o simulador de amostras
+   já têm a própria Ajuda). Documento: modulos/AJUDA_v0.1.md.
+
+   REGRA DO PROJETO (decisão do operador, 29/10/2026): "toda HTML tem que vir com AJUDA". Este módulo é o jeito mais barato de cumprir a regra:
+   cada página só informa o TEXTO (AJUDA.inicia({...})); o botão, a janela, o fechar (✕ no canto direito, Esc) e a seção padrão da
+   "Dica de interface (Alt+I)" já vêm prontos.
+
+   PARA QUE SERVE (leigo): um botão "Ajuda" que abre uma janelinha dizendo, em português simples, para que serve a tela, como usar, o que cada
+   botão faz e o significado das palavras técnicas (glossário).
+
+   COMO USAR (programação):
+     AJUDA.inicia({ titulo:'Mapa dos FBs', resumo:'texto curto', secoes:[{t:'Como usar', l:['passo 1','passo 2']}], glossario:[['FB','bloco de função']],
+                    onde:'header' })      // onde = seletor CSS do lugar do botão; sem ele (ou não achado) o botão fica fixo no canto superior direito
+   POR QUE ASSIM (técnico): <dialog> aberto com show() (não modal): não trava a tela de trás, e quem tem o módulo JANELAS ganha o ⤢ automaticamente.
+   Sem JANELAS a janela ainda se redimensiona pelo canto (resize:both). Não altera dados, não lê PLC/Node-RED, não envia nada.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.AJUDA) return;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let dlg = null;
+  const css = document.createElement('style');
+  css.textContent = `
+  #dlgAjuda{position:fixed;top:8vh;left:50%;transform:translateX(-50%);margin:0;width:min(640px,94vw);max-height:84vh;overflow:auto;resize:both;padding:0;
+    border:1px solid #7a8794;border-radius:10px;background:#fff;color:#16222e;font:14px/1.45 system-ui,"Segoe UI",sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:2147482000}
+  @media (prefers-color-scheme:dark){#dlgAjuda{background:#1b2229;color:#e8edf2;border-color:#4d5964}}
+  #dlgAjuda .jt{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid rgba(128,128,128,.4);position:sticky;top:0;background:inherit}
+  #dlgAjuda .jt b{flex:1;font-size:15px}
+  #dlgAjuda .jx{width:28px;height:28px;border:1px solid rgba(128,128,128,.55);border-radius:6px;background:transparent;color:inherit;cursor:pointer;font:700 14px/1 system-ui}
+  #dlgAjuda .jx:hover{background:rgba(128,128,128,.25)}
+  #dlgAjuda .cp{padding:6px 16px 14px}
+  #dlgAjuda h3{font-size:13px;margin:14px 0 4px;color:#2a6fb3}
+  @media (prefers-color-scheme:dark){#dlgAjuda h3{color:#7db7f0}}
+  #dlgAjuda ul{margin:4px 0 4px 18px;padding:0}#dlgAjuda li{margin:2px 0}
+  #dlgAjuda dt{font-weight:650;margin-top:4px}#dlgAjuda dd{margin:0 0 2px 0;color:inherit;opacity:.85}
+  #dlgAjuda kbd{border:1px solid rgba(128,128,128,.6);border-bottom-width:2px;border-radius:4px;padding:0 5px;font:12px system-ui}
+  #bAjudaPadrao{font:600 13px system-ui,sans-serif;padding:5px 12px;border:1px solid #7a8794;border-radius:7px;background:transparent;color:inherit;cursor:pointer}
+  #bAjudaPadrao:hover{background:rgba(128,128,128,.22)}
+  #bAjudaPadrao.fixo{position:fixed;top:8px;right:10px;z-index:2147481000;background:#fff;color:#16222e}
+  @media (prefers-color-scheme:dark){#bAjudaPadrao.fixo{background:#1b2229;color:#e8edf2}}`;
+  (document.head || document.documentElement).appendChild(css);
+
+  function inicia(c) {
+    c = c || {};
+    const corpo = '<p>' + esc(c.resumo || '') + '</p>' +
+      (c.secoes || []).map(s => '<h3>' + esc(s.t) + '</h3><ul>' + s.l.map(x => '<li>' + x + '</li>').join('') + '</ul>').join('') +
+      ((c.glossario && c.glossario.length) ? '<h3>Glossário</h3><dl>' + c.glossario.map(g => '<dt>' + esc(g[0]) + '</dt><dd>' + g[1] + '</dd>').join('') + '</dl>' : '') +
+      '<h3>Descobrir o nome de qualquer elemento da tela</h3><ul><li>Tecle <kbd>Alt</kbd>+<kbd>I</kbd>: ao passar o mouse aparece o tipo (Botão, Chip, Card…), o <b>id de programação</b> e as coordenadas. <kbd>Alt</kbd>+clique fixa a etiqueta e tem o botão Copiar. <kbd>Alt</kbd>+<kbd>I</kbd> de novo desliga.</li></ul>';
+    dlg = document.createElement('dialog'); dlg.id = 'dlgAjuda'; dlg.className = 'jan livre';
+    dlg.innerHTML = '<div class="jt"><b>Ajuda · ' + esc(c.titulo || document.title) + '</b><button type="button" class="jx" data-fecha aria-label="Fechar">✕</button></div><div class="cp">' + corpo + '</div>';
+    document.body.appendChild(dlg);
+    dlg.querySelector('.jx').onclick = fecha;
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dlg.open) fecha(); });
+    const b = document.createElement('button'); b.type = 'button'; b.id = 'bAjudaPadrao'; b.textContent = 'Ajuda'; b.setAttribute('aria-haspopup', 'dialog');
+    b.title = 'Para que serve esta tela e como usar'; b.onclick = () => (dlg.open ? fecha() : abre());
+    const onde = c.onde && document.querySelector(c.onde);
+    if (onde) onde.appendChild(b); else { b.classList.add('fixo'); document.body.appendChild(b); }
+  }
+  const abre = () => { if (dlg && !dlg.open) dlg.show(); };
+  const fecha = () => { if (dlg && dlg.open) dlg.close(); };
+  global.AJUDA = { inicia, abre, fecha };
+})(window);
+AJUDA.inicia({"titulo": "Ferramentas · Bancos de teste", "resumo": "Lista com todas as ferramentas do projeto. Clique numa para abri-la em outra aba. O símbolo à direita mostra se o arquivo foi encontrado no servidor: ✓ encontrado, ✗ não encontrado (o texto abaixo diz onde procurei), ? o servidor não respondeu.", "secoes": [{"t": "Como usar", "l": ["Abra <code>http://IP:1880/…/index.html</code> (IP do PC do banco), pela pasta onde o index está, e guarde nos favoritos.", "Todos os arquivos da lista (e os <b>.js de apoio</b>: catalogo_ferramentas_v0.2.js, menu_dev_v0.1.js) ficam na <b>mesma pasta</b>. No PC do banco, a pasta public do Node-RED é <code>C:\\Users\\b02raf\\.node-red\\public</code> (settings.js, httpStatic); a pasta <code>html</code> dentro dela aparece no endereço como <code>/html/</code>.", "Este index procura cada arquivo na pasta dele, na raiz do servidor e em <code>/html/</code>, e abre onde achar."]}, {"t": "Se aparecer ✗", "l": ["Copie o arquivo indicado para a pasta do index (ou para a raiz public) e recarregue a página (F5).", "Teste direto no navegador: <code>http://IP:1880/html/nome_do_arquivo.html</code>. Se der \"Cannot GET\", o arquivo não está nessa pasta.", "Depois de trocar uma versão, atualize o nome na linha correspondente do <code>catalogo_ferramentas_v0.2.js</code>."]}], "glossario": [["public / httpStatic", "pasta que o Node-RED publica como site; tudo que está nela abre por http://IP:1880/"], ["Catálogo", "o arquivo catalogo_ferramentas_v0.2.js: a agenda com nome e versão de cada ferramenta"]]});
+</script>
+</body></html>
