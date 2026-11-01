@@ -1,0 +1,38 @@
+FUNCTION "fc_vidaET" : Void
+TITLE = fc_vidaET v0.1
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+////====================================
+//// fc_vidaET
+//// VERSAO    : 0.1 (27/10/2026)
+//// ONDE RODA : ET200 (IM151-8 PN/DP CPU, programa Gerador_BC015). Chamar 1x por ciclo no OB1.
+//// O QUE FAZ : incrementa o contador de vida do ET200 (vidaET, DBW8) nos dois DBs de
+////             comunicacao: db38_ComBC56 (BC56) e db39_ComBC400 (BC400).
+//// POR QUE   : a 1515 le o vidaET por GET. Se ele nao mudar em TempoVida (T#3s), o FB101
+////             entende que o ET200 morreu: ComOk=FALSE, derruba saidas e bloqueia o banco.
+////             Sem este bloco o vidaET fica em 0 e o ComOk nunca fica TRUE.
+//// COMO OPERA: soma 1 a cada chamada; ao chegar em 32767 volta a 0 (mesma regra do vida1515).
+//// ATENCAO   : 1) NAO compilado aqui (sem TIA). 2) O numero do FC e atribuido pelo TIA ao
+////             importar (nao fixei numero para nao colidir com FC existente).
+////             3) Se ja existir outra rede escrevendo vidaET, remover para nao duplicar.
+////             4) Nao testa defeito do ET200: so prova que o programa dele esta rodando.
+//// COMO TESTAR: online, db38_ComBC56.vidaET e db39_ComBC400.vidaET devem ficar mudando;
+////             na 1515 o ComOk das duas instancias do FB101 vira TRUE em ate 3 s.
+////=====================================
+BEGIN
+   // ---- BC56 ----
+   // Soma 1 e volta a 0 antes de estourar o Int (32767).
+   IF "db38_ComBC56".vidaET >= 32767 THEN
+      "db38_ComBC56".vidaET := 0;
+   ELSE
+      "db38_ComBC56".vidaET := "db38_ComBC56".vidaET + 1;
+   END_IF;
+
+   // ---- BC400 ----
+   IF "db39_ComBC400".vidaET >= 32767 THEN
+      "db39_ComBC400".vidaET := 0;
+   ELSE
+      "db39_ComBC400".vidaET := "db39_ComBC400".vidaET + 1;
+   END_IF;
+END_FUNCTION

@@ -1,0 +1,57 @@
+REGISTRO DE APRENDIZADO - Medidor do Gerador v1.9.77
+Gerado em 25/10/2026 05:43:07
+Sessões: 1
+======================================================================
+
+SESSÃO S-TESTE-001
+  DSE: DSE7320   Gerador: Gerador 125 kVA   Série: SN123   Versão: 1.9.77
+  Início: 25/10/2026 05:28:07   Fim: 25/10/2026 05:42:07   Duração: 14:00
+  (Os tempos deste resumo são em segundos de registro: 1 amostra por segundo.)
+  Amostras: 810   Sem dado: 0   Tipo de ensaio no início: Padrão
+  Parâmetros no início: tolerância ±10,0%, estabilidade 1,5 a 4,5 s, média 2,0 s, liberar SALVAR 90%, mín. em 100%: 5,0 min, desvio tensão ±2,5%
+  Etapas planejadas (alvo%/min): 0/2  30/1  50/1  100/5  107/2  0/1
+  Água: início 70,7 °C, máxima 71,0 °C, fim 70,6 °C; tempo em atenção 13:30, crítico 00:00
+
+  POR ETAPA (valores na ordem da tela; tempos em mm:ss)
+   Etapa 1 (alvo 0%): relógio 00:00 a 02:14, entrou na faixa após 00:00, contando 02:00, estabilizando 00:10
+     carga média 0,04% (mín -0,60, máx 0,58, desvio 0,34), maior excesso sobre o alvo 0,58 pt
+     fim da etapa: 0,0 kW, tensão média 440,4 V, corrente média 67 A, água 70,5 °C, rpm 1800, freq 60,00 Hz, fp 0,80
+   Etapa 2 (alvo 30%): relógio 02:15 a 03:29, entrou na faixa após 00:08, contando 01:00, estabilizando 00:11
+     carga média 30,03% (mín 29,40, máx 30,60, desvio 0,36), maior excesso sobre o alvo 0,60 pt
+     fim da etapa: 27,4 kW, tensão média 440,4 V, corrente média 77 A, água 70,4 °C, rpm 1800, freq 59,99 Hz, fp 0,80
+   Etapa 3 (alvo 50%): relógio 03:30 a 04:44, entrou na faixa após 00:08, contando 01:00, estabilizando 00:10
+     carga média 50,02% (mín 49,40, máx 50,59, desvio 0,36), maior excesso sobre o alvo 0,59 pt
+     fim da etapa: 45,6 kW, tensão média 440,5 V, corrente média 83 A, água 70,4 °C, rpm 1800, freq 60,01 Hz, fp 0,80
+   Etapa 4 (alvo 100%): relógio 04:45 a 09:59, entrou na faixa após 00:09, contando 05:00, estabilizando 00:10
+     carga média 99,98% (mín 99,40, máx 100,60, desvio 0,35), maior excesso sobre o alvo 0,60 pt
+     fim da etapa: 90,7 kW, tensão média 440,5 V, corrente média 100 A, água 70,4 °C, rpm 1800, freq 59,99 Hz, fp 0,80
+   Etapa 5 (alvo 107%): relógio 10:00 a 12:14, entrou na faixa após 00:10, contando 02:00, estabilizando 00:10
+     carga média 107,01% (mín 106,41, máx 107,59, desvio 0,34), maior excesso sobre o alvo 0,59 pt
+     fim da etapa: 97,4 kW, tensão média 440,6 V, corrente média 102 A, água 70,5 °C, rpm 1800, freq 59,98 Hz, fp 0,80
+   Etapa 6 (alvo 0%): relógio 12:15 a 13:29, entrou na faixa após 00:00, contando 01:00, estabilizando 00:11
+     carga média 0,07% (mín -0,57, máx 0,59, desvio 0,33), maior excesso sobre o alvo 0,59 pt
+     fim da etapa: -0,0 kW, tensão média 440,5 V, corrente média 67 A, água 70,5 °C, rpm 1800, freq 60,00 Hz, fp 0,80
+
+  PATAMARES DE CARGA (carga parada por 8 s ou mais) e TRANSIÇÕES
+   1) início 00:00, duração 02:16, carga 0,0% (mín -0,6, máx 2,3), 0,0 kW
+      transição para 30,0% em 10 s
+   2) início 02:26, duração 01:03, carga 30,0% (mín 29,4, máx 30,6), 27,3 kW
+      transição para 50,0% em 11 s
+   3) início 03:40, duração 01:04, carga 50,0% (mín 49,4, máx 50,6), 45,5 kW
+      transição para 100,0% em 12 s
+   4) início 04:56, duração 05:03, carga 100,0% (mín 99,4, máx 100,6), 90,9 kW
+      transição para 107,0% em 11 s
+   5) início 10:10, duração 02:04, carga 107,0% (mín 106,4, máx 107,6), 97,3 kW
+      transição para 0,0% em 1 s
+   6) início 12:15, duração 01:14, carga 0,0% (mín -0,6, máx 0,6), 0,0 kW
+
+  EVENTOS (tempo desde o início da sessão)
+   02:15  Etapa 1 concluída
+   03:30  Etapa 2 concluída
+   04:45  Etapa 3 concluída
+   10:00  Etapa 4 concluída
+   12:15  Etapa 5 concluída
+   13:30  Etapa 6 concluída
+----------------------------------------------------------------------
+
+Colunas do CSV: sessao, hora, t_s, relogio_s, tipo_ensaio, etapa, alvo_pct, cron_s, estado_cron, gerador, carga_pct, kw, va, vb, vc, ia, ib, ic, agua_c, rpm, bat_v, freq_hz, kva, kvar, fp, consumo_lh, nivel_agua, simulado

@@ -1,0 +1,162 @@
+DATA_BLOCK "db53_BancoTeste2_SNAP_MANUAL"
+TITLE = db53_BancoTeste2_SNAP_MANUAL (DB53)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db53_BancoTeste2_SNAP_MANUAL (DB53)
+//// O QUE FAZ : guarda o preenchimento (print do SAP) e os 6 degraus do ensaio MANUAL do Banco de Teste 2,
+////             enquanto o ensaio acontece. Sobrescrito no ensaio seguinte (nao e memoria de longo prazo).
+//// ONDE FICA : PLC dos Bancos de Carga (atende BC1-BC4). Separado do DB DSE continuo (DB52).
+//// POR QUE DB GLOBAL SEM OTIMIZACAO : o Node-RED de selecao grava por offset via S7 (PUT/GET), por isso o layout e fixo e nao pode ser reordenado.
+//// ESCRITOR UNICO : Node-RED de selecao (aba "Selecao do ensaio", fluxo novo). O PLC e o HTML apenas leem (leitura de volta = SB_DB SNAP).
+//// REGRA DO BIT salva : <etapaN>Salva so sobe para TRUE depois que os 13 valores do degrau ja foram gravados e conferidos.
+////             Um leitor nunca deve ver um degrau com salva=TRUE e valores pela metade.
+//// RELACAO COM OUTROS DBs : par deste e o DB SNAP AUTO (PLC Ensaio Automatico, numero ainda a definir); DB seletor (numero ainda a definir) guarda qual dos dois esta ativo.
+//// PENDENCIA : numero definitivo deste DB (usado DB53 nesta versao), numero do DB seletor e do DB SNAP AUTO ainda a confirmar.
+//// Autor: Reginaldo Lobo  -  Versao: 0.1  -  Projeto: Banco de Testes - Gerador Diesel
+////=====================================
+   STRUCT
+      preenchValido : Bool;   // Preenchimento gravado (serie preenchida); false = campo vazio, ainda nao foi gravado
+      preenchReserva1 : Bool;
+      preenchReserva2 : Bool;
+      preenchReserva3 : Bool;
+      preenchReserva4 : Bool;
+      preenchReserva5 : Bool;
+      preenchReserva6 : Bool;
+      preenchReserva7 : Bool;
+      serie : String[20];   // Numero de serie do gerador (ex.: DZFA00045)
+      versao : String[12];   // Versao do teste (ex.: 773323)
+      data : String[10];   // Data do ensaio, formato dd.mm.aaaa
+      fase : String[12];   // Monofasico ou Trifasico
+      frequenciaHz : Real;   // Frequencia nominal [Hz]
+      tensaoV : Real;   // Tensao nominal [V]
+      tempAmbienteC : Real;   // Temperatura ambiente no inicio do ensaio [grau C]
+      potenciaKw : Real;   // Potencia nominal do gerador [kW]
+      equipMotorFabricante : String[20];   // Motor - fabricante
+      equipMotorModelo : String[20];   // Motor - modelo
+      equipMotorSerie : String[20];   // Motor - numero de serie
+      equipAltFabricante : String[20];   // Alternador - fabricante
+      equipAltModelo : String[20];   // Alternador - modelo
+      equipAltSerie : String[20];   // Alternador - numero de serie
+      equipCtrlFabricante : String[20];   // Controlador - fabricante
+      equipCtrlModelo : String[20];   // Controlador - modelo
+      equipCtrlSerie : String[20];   // Controlador - numero de serie
+      equipRetFabricante : String[20];   // Retificador - fabricante
+      equipRetModelo : String[20];   // Retificador - modelo
+      equipRetSerie : String[20];   // Retificador - numero de serie
+      equipRatFabricante : String[20];   // RAT - fabricante
+      equipRatModelo : String[20];   // RAT - modelo
+      equipRatSerie : String[20];   // RAT - numero de serie
+      equipBatFabricante : String[20];   // Bateria - fabricante
+      equipBatModelo : String[20];   // Bateria - modelo
+      equipBatSerie : String[20];   // Bateria - numero de serie
+
+      // ---- Degrau 1 (indice 1; padrao ISO: 0 % aquecimento) ----
+      etapa1Salva : Bool;   // Bit de confirmacao do degrau 1; so sobe apos gravar e conferir os valores
+      etapa1EtapaPerc : Int;   // % de carga alvo do degrau 1 (rotulo; 0, 30, 50, 100, 107...)
+      etapa1CargaReal : Real;   // % de carga medida no momento do salvar
+      etapa1Potencia : Real;   // Potencia ativa [kW]
+      etapa1TempMotor : Real;   // Temperatura do motor/agua [grau C]
+      etapa1Va : Real;   // Tensao L1-L2 [V]
+      etapa1Vb : Real;   // Tensao L2-L3 [V]
+      etapa1Vc : Real;   // Tensao L3-L1 [V]
+      etapa1Ia : Real;   // Corrente L1 [A]
+      etapa1Ib : Real;   // Corrente L2 [A]
+      etapa1Ic : Real;   // Corrente L3 [A]
+      etapa1Rpm : Real;   // Rotacao do motor [rpm]
+      etapa1Bateria : Real;   // Tensao da bateria [V]
+      etapa1TEstab : Real;   // Tempo de estabilidade exigido/atingido [s]
+      etapa1Cronometro : Real;   // Tempo cumprido do degrau [s]
+
+      // ---- Degrau 2 (indice 2; padrao ISO: 30 %) ----
+      etapa2Salva : Bool;
+      etapa2EtapaPerc : Int;
+      etapa2CargaReal : Real;
+      etapa2Potencia : Real;
+      etapa2TempMotor : Real;
+      etapa2Va : Real;
+      etapa2Vb : Real;
+      etapa2Vc : Real;
+      etapa2Ia : Real;
+      etapa2Ib : Real;
+      etapa2Ic : Real;
+      etapa2Rpm : Real;
+      etapa2Bateria : Real;
+      etapa2TEstab : Real;
+      etapa2Cronometro : Real;
+
+      // ---- Degrau 3 (indice 3; padrao ISO: 50 %) ----
+      etapa3Salva : Bool;
+      etapa3EtapaPerc : Int;
+      etapa3CargaReal : Real;
+      etapa3Potencia : Real;
+      etapa3TempMotor : Real;
+      etapa3Va : Real;
+      etapa3Vb : Real;
+      etapa3Vc : Real;
+      etapa3Ia : Real;
+      etapa3Ib : Real;
+      etapa3Ic : Real;
+      etapa3Rpm : Real;
+      etapa3Bateria : Real;
+      etapa3TEstab : Real;
+      etapa3Cronometro : Real;
+
+      // ---- Degrau 4 (indice 4; padrao ISO: 100 %) ----
+      etapa4Salva : Bool;
+      etapa4EtapaPerc : Int;
+      etapa4CargaReal : Real;
+      etapa4Potencia : Real;
+      etapa4TempMotor : Real;
+      etapa4Va : Real;
+      etapa4Vb : Real;
+      etapa4Vc : Real;
+      etapa4Ia : Real;
+      etapa4Ib : Real;
+      etapa4Ic : Real;
+      etapa4Rpm : Real;
+      etapa4Bateria : Real;
+      etapa4TEstab : Real;
+      etapa4Cronometro : Real;
+
+      // ---- Degrau 5 (indice 5; padrao ISO: 107 %) ----
+      etapa5Salva : Bool;
+      etapa5EtapaPerc : Int;
+      etapa5CargaReal : Real;
+      etapa5Potencia : Real;
+      etapa5TempMotor : Real;
+      etapa5Va : Real;
+      etapa5Vb : Real;
+      etapa5Vc : Real;
+      etapa5Ia : Real;
+      etapa5Ib : Real;
+      etapa5Ic : Real;
+      etapa5Rpm : Real;
+      etapa5Bateria : Real;
+      etapa5TEstab : Real;
+      etapa5Cronometro : Real;
+
+      // ---- Degrau 6 (indice 6; padrao ISO: 0 % final) ----
+      etapa6Salva : Bool;
+      etapa6EtapaPerc : Int;
+      etapa6CargaReal : Real;
+      etapa6Potencia : Real;
+      etapa6TempMotor : Real;
+      etapa6Va : Real;
+      etapa6Vb : Real;
+      etapa6Vc : Real;
+      etapa6Ia : Real;
+      etapa6Ib : Real;
+      etapa6Ic : Real;
+      etapa6Rpm : Real;
+      etapa6Bateria : Real;
+      etapa6TEstab : Real;
+      etapa6Cronometro : Real;
+   END_STRUCT;
+
+
+BEGIN
+
+END_DATA_BLOCK

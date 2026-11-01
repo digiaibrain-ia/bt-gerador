@@ -1,0 +1,422 @@
+[
+ {
+  "id": "s31_tab",
+  "type": "tab",
+  "label": "Ler gerador (.31) - seletor",
+  "disabled": false,
+  "info": "## Ler gerador (.31) - seletor\nCliente que le a API do servidor DSE e grava os dados no **DB52** (`db52_BancoTeste2_DSE`) do PLC 1515F do **Banco de Teste 2**.\n\n**Caminho:** botao -> `msg.url` -> GET `http://172.17.210.156:1880/api/gerador` -> mapeamento -> S7 (`172.17.209.135`, rack 0, slot 1).\n\n| Botao | Efeito |\n|---|---|\n| AUTOMATICO | le e grava a cada 2 s |\n| LER AGORA | uma leitura |\n| DESLIGAR | para a leitura (PLC ve seletor = 0) |\n\n**Comeca DESLIGADO** apos deploy ou restart e grava seletor = 0 no DB52 5 s depois (inject \"inicio = DESLIGADO\", item C3), para o PLC nao achar que a leitura continua ligada.\n\n**Falha** (servidor fora, timeout 1,5 s, HTTP diferente de 200, dado com mais de 10 s): grava so status, erros e heartbeat; as medidas ficam com o ultimo valor bom.\n\n`statusServidorOnline` (DBX0.4, v2, item C4) = servidor respondeu (mesmo 503). Com `statusLeituraOk` = 0 ele separa \"DSE sem dado\" (0.4 = 1) de \"servidor ou rede fora\" (0.4 = 0).\n\nRequisitos no PLC: DB52 nao otimizado e PUT/GET liberado na CPU.\nPacote: `node-red-contrib-s7`. Autor: Reginaldo Lobo."
+ },
+ {
+  "id": "s31_c",
+  "type": "comment",
+  "z": "s31_tab",
+  "name": "Começa DESLIGADO. Escolha clicando no quadrado do botão: AUTOMÁTICO, LER AGORA ou DESLIGAR. Ajuste o IP em 'msg.url'.",
+  "info": "",
+  "x": 400,
+  "y": 40,
+  "wires": []
+ },
+ {
+  "id": "s31_bauto",
+  "type": "inject",
+  "z": "s31_tab",
+  "name": "▶ AUTOMÁTICO (a cada 2 s)",
+  "props": [
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "auto",
+  "x": 170,
+  "y": 100,
+  "wires": [
+   [
+    "s31_modo",
+    "s31_est"
+   ]
+  ]
+ },
+ {
+  "id": "s31_bonce",
+  "type": "inject",
+  "z": "s31_tab",
+  "name": "● LER AGORA (1 vez)",
+  "props": [
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "once",
+  "x": 170,
+  "y": 160,
+  "wires": [
+   [
+    "s31_modo",
+    "s31_est"
+   ]
+  ]
+ },
+ {
+  "id": "s31_boff",
+  "type": "inject",
+  "z": "s31_tab",
+  "name": "■ DESLIGAR",
+  "props": [
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "off",
+  "x": 170,
+  "y": 220,
+  "wires": [
+   [
+    "s31_modo",
+    "s31_est"
+   ]
+  ]
+ },
+ {
+  "id": "s31_ini",
+  "type": "inject",
+  "z": "s31_tab",
+  "name": "inicio = DESLIGADO",
+  "props": [
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "5",
+  "topic": "off",
+  "x": 160,
+  "y": 290,
+  "wires": [
+   [
+    "s31_modo",
+    "s31_est"
+   ]
+  ],
+  "info": "Na partida do Node-RED (5 s apos deploy/restart, tempo para a conexao S7 subir) envia DESLIGAR uma vez: grava seletor = 0 no DB52 e deixa o repetidor parado (v2, item C3)."
+ },
+ {
+  "id": "s31_modo",
+  "type": "function",
+  "z": "s31_tab",
+  "name": "modo",
+  "func": "// ============================================================\n// NO: modo  (cliente .31 - aba \"Ler gerador (.31) - seletor\")\n// O QUE FAZ : traduz o botao clicado (inject) em comando para o repetidor\n//             de 2 s ou para uma leitura unica.\n// ENTRADA   : msg.topic = \"auto\" | \"off\" | \"once\" (vem dos 3 nos inject).\n// SAIDAS    : 1 -> liga o trigger \"repete a cada 2 s\"\n//             2 -> para o trigger (msg.reset = true)\n//             3 -> dispara uma unica leitura (vai direto ao msg.url)\n// ESTADO    : nao guarda nada; o estado do seletor para o PLC e gravado\n//             pelo no \"estado do seletor -> PLC\", que recebe o mesmo clique.\n// Autor: Reginaldo Lobo  -  Projeto: Banco de Testes - Gerador Diesel\n// ============================================================\n// Seletor de modo. Estado inicial: DESLIGADO (nada lê até você escolher).\n// msg.topic: \"auto\" = liga leitura a cada 2 s | \"off\" = desliga | \"once\" = uma leitura agora\nconst t = msg.topic;\nif (t === \"auto\") {\n  // AUTOMATICO: o trigger repete a mensagem a cada 2 s ate receber reset.\n  node.status({ fill: \"green\", shape: \"dot\", text: \"AUTOMÁTICO ligado (2 s)\" });\n  return [{ payload: \"1\" }, null, null];        // saída 1: liga o repetidor\n}\nif (t === \"off\") {\n  // DESLIGAR: msg.reset = true faz o trigger cancelar a repeticao sem enviar nada.\n  node.status({ fill: \"grey\", shape: \"ring\", text: \"DESLIGADO\" });\n  return [null, { reset: true, payload: \"0\" }, null];  // saída 2: para o repetidor\n}\nif (t === \"once\") {\n  // LER AGORA: nao mexe no repetidor; se o automatico estiver ligado, continua ligado.\n  return [null, null, { payload: \"1\" }];        // saída 3: leitura única\n}\n// Qualquer outro topic e ignorado (nenhuma saida).\nreturn null;\n",
+  "outputs": 3,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "node.status({ fill: \"grey\", shape: \"ring\", text: \"DESLIGADO\" });",
+  "finalize": "",
+  "libs": [],
+  "x": 390,
+  "y": 160,
+  "wires": [
+   [
+    "s31_rep"
+   ],
+   [
+    "s31_rep"
+   ],
+   [
+    "s31_url"
+   ]
+  ],
+  "info": "Traduz o botao (`msg.topic` = auto/off/once) em comando para o repetidor de 2 s ou leitura unica.\n\n- Saida 1: liga o repetidor\n- Saida 2: reset do repetidor\n- Saida 3: leitura unica"
+ },
+ {
+  "id": "s31_rep",
+  "type": "trigger",
+  "z": "s31_tab",
+  "name": "repete a cada 2 s",
+  "op1": "1",
+  "op2": "0",
+  "op1type": "str",
+  "op2type": "nul",
+  "duration": "-2",
+  "extend": false,
+  "overrideDelay": false,
+  "units": "s",
+  "reset": "",
+  "bytopic": "all",
+  "outputs": 1,
+  "x": 590,
+  "y": 110,
+  "wires": [
+   [
+    "s31_url"
+   ]
+  ],
+  "info": "Trigger em modo repeticao (intervalo 2 s). Repete ate receber `msg.reset` do no **modo** (DESLIGAR)."
+ },
+ {
+  "id": "s31_url",
+  "type": "change",
+  "z": "s31_tab",
+  "name": "msg.url",
+  "rules": [
+   {
+    "t": "set",
+    "p": "url",
+    "pt": "msg",
+    "to": "http://172.17.210.156:1880/api/gerador",
+    "tot": "str"
+   },
+   {
+    "t": "set",
+    "p": "requestTimeout",
+    "pt": "msg",
+    "to": "1500",
+    "tot": "num"
+   }
+  ],
+  "action": "",
+  "property": "",
+  "from": "",
+  "to": "",
+  "reg": false,
+  "x": 770,
+  "y": 160,
+  "wires": [
+   [
+    "s31_http"
+   ]
+  ],
+  "info": "Define `msg.url` (API do servidor DSE) e `msg.requestTimeout` = 1500 ms. **Troque aqui o IP** se o servidor mudar."
+ },
+ {
+  "id": "s31_http",
+  "type": "http request",
+  "z": "s31_tab",
+  "name": "GET servidor",
+  "method": "GET",
+  "ret": "obj",
+  "paytoqs": "ignore",
+  "url": "",
+  "tls": "",
+  "persist": false,
+  "proxy": "",
+  "insecureHTTPParser": false,
+  "authType": "",
+  "senderr": true,
+  "headers": [],
+  "x": 940,
+  "y": 160,
+  "wires": [
+   [
+    "s31_dbg",
+    "s31_map"
+   ]
+  ],
+  "info": "GET na API. Resposta JSON vira objeto (`ret: obj`).\n\nv2 (item C1): *Somente envie respostas nao-2xx para o no de Captura* MARCADO: erro de rede vai so para o Catch (nao em dobro). HTTP 503 continua pela saida normal."
+ },
+ {
+  "id": "s31_dbg",
+  "type": "debug",
+  "z": "s31_tab",
+  "name": "LEITURA",
+  "active": false,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": false,
+  "complete": "payload",
+  "targetType": "msg",
+  "x": 1110,
+  "y": 160,
+  "wires": [],
+  "info": "Debug da resposta. Fica **desativado** (v2, item C7); ative so para diagnostico."
+ },
+ {
+  "id": "s31_est",
+  "type": "function",
+  "z": "s31_tab",
+  "name": "estado do seletor -> PLC",
+  "func": "// ============================================================\n// NO: estado do seletor -> PLC\n// O QUE FAZ : a cada clique de botao (e uma vez na partida do Node-RED, pelo\n//             inject \"inicio = DESLIGADO\", item C3) grava no DB52 o estado do\n//             seletor, para o PLC e a tela saberem se a leitura esta ligada.\n// ENTRADA   : msg.topic = \"auto\" | \"off\" | \"once\".\n// SAIDA     : 2 mensagens para o no S7 (uma por variavel da vartable):\n//             Ints_Seletor -> DB52.DBW8 (seletor) e DBW10 (errosConsecutivos)\n//             Bits_Status  -> DB52.DBB0 (byte inteiro de status)\n// CONTEXTO  : flow.sel  = seletor atual (lido pelo no \"mapeia JSON -> DB52\")\n//             flow.errs = erros consecutivos (zerado ao desligar)\n// OBS       : Bits_Status grava o BYTE inteiro: 4 = so o bit 2 (statusAutomatico).\n//             Os bits LeituraOk/Http200 voltam a ser escritos no proximo ciclo.\n// Autor: Reginaldo Lobo  -  Projeto: Banco de Testes - Gerador Diesel\n// ============================================================\n// Estado do seletor para o PLC: 0 = desligado | 1 = automatico | 2 = ultima foi leitura unica\nconst m = { auto: 1, off: 0, once: 2 }[msg.topic];\nif (m === undefined) return null;                // topic desconhecido: nao grava nada\nflow.set(\"sel\", m);\nif (m === 0) { flow.set(\"errs\", 0); }            // ao desligar, zera o contador de erros\n// Array dentro de array: varias mensagens pela MESMA saida (uma por variavel S7).\n// Ints_Seletor e um endereco-array (INT8.2), por isso o payload vai como [[seletor, erros]].\nreturn [[{ variable: \"Ints_Seletor\", payload: [[m, flow.get(\"errs\") || 0]] },\n         { variable: \"Bits_Status\", payload: m === 1 ? 4 : 0 }]];\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "flow.set(\"sel\", 0);",
+  "finalize": "",
+  "libs": [],
+  "x": 390,
+  "y": 260,
+  "wires": [
+   [
+    "s31_plc"
+   ]
+  ],
+  "info": "Grava no DB52 o estado do seletor a cada clique e na partida do Node-RED: `Ints_Seletor` (DBW8 seletor, DBW10 erros) e `Bits_Status` (DBB0).\n\nGuarda `flow.sel` para o mapeamento."
+ },
+ {
+  "id": "s31_map",
+  "type": "function",
+  "z": "s31_tab",
+  "name": "mapeia JSON -> DB52",
+  "func": "// ============================================================\n// NO: mapeia JSON -> DB52\n// O QUE FAZ : converte a resposta do servidor DSE (GET /api/gerador) nas\n//             variaveis do DB52 \"db52_BancoTeste2_DSE\" (DB nao otimizado,\n//             acesso por offset via PUT/GET) e gera uma mensagem por variavel\n//             da vartable do no S7.\n// QUANDO    : a cada resposta do GET (2 s no automatico, ou 1 vez no LER AGORA)\n//             e a cada falha de rede vinda do Catch.\n// ENTRADA   : msg.statusCode (200, 503, codigo de erro ou 0) e msg.payload\n//             (objeto JSON do servidor, ou null em falha).\n// SAIDA     : [[{variable, payload}, ...]] -> no \"Escreve DB52\".\n// REGRA DE OURO (fail-safe):\n//   - Dado FRESCO (HTTP 200, ok = true e idade <= 10 s): grava tudo.\n//   - Qualquer falha: grava SO status, seletor/erros e heartbeat. As medidas\n//     do DB52 ficam com o ultimo valor bom; a tela deve olhar statusLeituraOk.\n// CONTEXTO  : flow.hb (heartbeat), flow.errs (erros consecutivos), flow.sel (seletor).\n// VERSAO 2  : itens da revisao C2 (bit de falha da ECU), C4 (bit servidor online),\n//             C5 (relogio com 19 caracteres) e C8 (sem recalculo de qtdNulos).\n// Autor: Reginaldo Lobo  -  Projeto: Banco de Testes - Gerador Diesel\n// ============================================================\n// Mapeia /api/gerador -> DB52 (nao otimizado). Uma mensagem por bloco de variaveis.\nconst IDADE_MAX = 10;            // s: dado mais velho que isso = \"dados antigos\", nao grava medidas\n// Ordem FIXA das 42 medidas Real gravadas a partir de DB52.DBD28 (vartable \"Reais\" = REAL28.42).\n// A posicao no array define o offset no DB: indice i -> DBD(28 + 4*i). Nao reordenar.\nconst REAIS = [\"tensaoL1L2\", \"tensaoL2L3\", \"tensaoL3L1\", \"tensaoFFMedia\", \"tensaoL1N\", \"tensaoL2N\", \"tensaoL3N\", \"tensaoFNMedia\", \"correnteL1\", \"correnteL2\", \"correnteL3\", \"corrente\", \"frequencia\", \"rpm\", \"kw\", \"kva\", \"kvar\", \"fp\", \"percCarga\", \"kwL1\", \"kwL2\", \"kwL3\", \"fpL1\", \"fpL2\", \"fpL3\", \"tempAguaC\", \"bateria\", \"alternador\", \"nivelCombustivel\", \"horasMotor\", \"kwh\", \"kvah\", \"kvarh\", \"desequilibrioTensaoPct\", \"desequilibrioCorrentePct\", \"kvaL1\", \"kvaL2\", \"kvaL3\", \"kvarL1\", \"kvarL2\", \"kvarL3\", \"percKvar\"];\n\n// ================= CLASSIFICACAO DA LEITURA =================\n// http200 : o servidor respondeu 200 com um objeto JSON.\n// okApi   : alem disso, o servidor declarou ok = true e informou a idade do dado.\n// fresco  : alem disso, a idade do dado do DSE esta dentro do limite (10 s).\n// Um 503 do servidor (DSE sem dado) cai em http200 = false.\n// servidorOnline (v2, item C4): o servidor respondeu com QUALQUER codigo HTTP\n//           (200, 503...). Falha de rede ou timeout chegam do Catch com\n//           statusCode = 0. Com ele o PLC separa \"servidor/rede fora\" (0) de\n//           \"DSE sem dado\" (1 com statusLeituraOk = 0).\nconst p = msg.payload;\nconst http200 = (msg.statusCode === 200) && p && typeof p === \"object\";\nconst servidorOnline = typeof msg.statusCode === \"number\" && msg.statusCode > 0;\nconst okApi = http200 && p.ok === true && typeof p.idadeSegundos === \"number\";\nconst fresco = okApi && p.idadeSegundos <= IDADE_MAX;\n\n// ================= CONTADORES DE SUPERVISAO =================\n// heartbeat: soma 1 a cada resposta processada (boa ou ruim). O PLC usa como\n//            watchdog: se parar de mudar, o Node-RED da .31 parou de gravar.\n//            Volta a 1 perto do limite do DInt para nunca estourar.\n// errs     : ciclos seguidos sem dado fresco; zera na primeira leitura boa;\n//            limitado ao maximo de um Int (32767).\nlet hb = (flow.get(\"hb\") || 0) + 1; if (hb > 2147483000) hb = 1; flow.set(\"hb\", hb);\nlet errs = flow.get(\"errs\") || 0;\nerrs = fresco ? 0 : Math.min(errs + 1, 32767); flow.set(\"errs\", errs);\nconst sel = flow.get(\"sel\") || 0;\n\n// ================= AUXILIARES DE ESCRITA =================\n// w(variavel, valor): empilha uma mensagem para o no S7. Enderecos-array da\n//                     vartable (ex.: INT4.2, REAL28.42) exigem payload [[...]].\n// bits([b0, b1, ...]): monta um byte; o 1o item vira o bit 0.\nconst out = [];\nconst w = (v, val) => out.push({ variable: v, payload: Array.isArray(val) ? [val] : val });  // endereco-array do S7 exige [[...]]\nconst bits = a => a.reduce((s, b, i) => s | (b ? (1 << i) : 0), 0);\n\n// ================= STATUS (SEMPRE GRAVADO) =================\n// DB52.DBB0: bit0 statusLeituraOk, bit1 statusHttp200, bit2 statusAutomatico,\n//            bit3 statusDadosAntigos (servidor ok, mas dado acima de 10 s),\n//            bit4 statusServidorOnline (servidor respondeu HTTP, mesmo 503).\n// DB52.DBW8/DBW10: seletor e errosConsecutivos.  DB52.DBD12: heartbeat.\n// Estado de comunicacao: grava SEMPRE (inclusive em falha)\nw(\"Bits_Status\", bits([fresco, !!http200, sel === 1, okApi && !fresco, servidorOnline]));\nw(\"Ints_Seletor\", [sel, errs]);\nw(\"Dint_Heartbeat\", hb);\n\n// ================= DADOS DO GERADOR (SO COM DADO FRESCO) =================\n// Campo nulo ou invalido no JSON vira 0 no DB52 e soma em qtdNulos, para a\n// tela saber que aquele 0 pode ser \"nao medido\" e nao um valor real.\n// Textos vao sem acento (String S7 so aceita ASCII) e cortados no tamanho\n// declarado no DB.\nif (fresco) {\n  let nulos = 0;\n  const num = v => (typeof v === \"number\" && isFinite(v)) ? v : (nulos++, 0);\n  const sem = s => String(s == null ? \"\" : s).normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\").replace(/[^\\x20-\\x7E]/g, \"?\");\n  const L = p.leds || {};\n  const al = Array.isArray(p.alarmes) ? p.alarmes : [];\n  // DB52.DBB1 alarmes (bit0 tem alarme, bit1 aviso, bit2 desligamento, bit3 trip eletrico,\n  //           bit4 desligamento controlado); DBB2 LEDs; DBB3 saidas.\n  // saidaFalhaEcu (v2, item C2): so com falhasEcu.quantidade > 0. O servidor manda\n  // falhasEcu como objeto mesmo sem falha; o objeto sozinho nao acende o bit.\n  w(\"Bits_Dados\", [\n    bits([p.temAlarme, p.alarmeAviso, p.alarmeDesligamento, p.alarmeTripEletrico, p.alarmeDesligamentoControlado]),\n    bits([L.stop, L.manual, L.teste, L.auto, L.disjuntorGerador, L.geradorDisponivel]),\n    bits([p.saidaCombustivel, p.saidaPartida, p.falhasEcu && p.falhasEcu.quantidade > 0])\n  ]);\n  w(\"Ints_Modo\", [Math.trunc(num(p.modoCodigo)), Math.round(p.idadeSegundos)]);        // DBW4 modo, DBW6 idade [s]\n  w(\"Dint_Horas\", [Math.trunc(num(p.horasMotorSegundos)), Math.trunc(num(p.partidas))]); // DBD16 horas [s], DBD20 partidas\n  w(\"Reais\", REAIS.map(k => num(p[k])));                                                // DBD28..DBD192, 42 Reals\n  w(\"Ints_Cont\", [Math.min(nulos, 32767), al.length]);   // depois de todos os num(): qtdNulos completo\n  w(\"Str_Modo\", sem(p.modo).slice(0, 16));                                     // DB52 S196, 16 caracteres\n  w(\"Str_Modelo\", sem(p.dse && p.dse.modeloConfigurado).slice(0, 12));         // DB52 S214, 12 caracteres\n  w(\"Str_Alarme\", sem(al.map(a => a.nome).join(\"; \")).slice(0, 60));           // DB52 S228, 60 caracteres\n  // Relogio (v2, item C5): hora LOCAL do DSE no formato AAAA-MM-DDTHH:MM:SS (19 caracteres).\n  // Remove \"Z\" e milissegundos caso o servidor seja anterior a v3.2.\n  w(\"Str_Relogio\", sem(p.relogioDse).replace(/Z$/, \"\").slice(0, 19));          // DB52 S290, String[20]\n}\n// ================= STATUS VISUAL DO NO =================\n// Verde: gravou dado fresco. Vermelho: motivo da falha + contador de erros.\nnode.status({ fill: fresco ? \"green\" : \"red\", shape: \"dot\",\n  text: (fresco ? \"gravado hb=\" + hb : (http200 ? (okApi ? \"dados antigos \" + p.idadeSegundos + \"s\" : \"servidor ok=false\") : \"HTTP \" + (msg.statusCode || \"?\"))) + \" | erros \" + errs });\nreturn [out];\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 1130,
+  "y": 240,
+  "wires": [
+   [
+    "s31_plc"
+   ]
+  ],
+  "info": "Converte o JSON do servidor nas variaveis do DB52.\n\n- **Sempre:** `Bits_Status` (DBB0), `Ints_Seletor` (DBW8/10), `Dint_Heartbeat` (DBD12).\n- **So com dado fresco** (HTTP 200, `ok`, idade <= 10 s): alarmes/LEDs/saidas (DBB1-3), modo e idade (DBW4/6), horas e partidas (DBD16/20), 42 Reals (DBD28-192), contadores (DBW24/26) e textos (S196, S214, S228, S290).\n- Campo nulo vira 0 e soma em `qtdNulos`.\n\nContexto: `flow.hb`, `flow.errs`, `flow.sel` (memoria; zeram no restart)."
+ },
+ {
+  "id": "s31_catch",
+  "type": "catch",
+  "z": "s31_tab",
+  "name": "falha do GET",
+  "scope": [
+   "s31_http"
+  ],
+  "uncaught": false,
+  "x": 940,
+  "y": 300,
+  "wires": [
+   [
+    "s31_err"
+   ]
+  ],
+  "info": "Captura erros de rede do GET (servidor desligado, cabo, timeout) e manda para **falha -> comunicacao ruim**."
+ },
+ {
+  "id": "s31_err",
+  "type": "function",
+  "z": "s31_tab",
+  "name": "falha -> comunicação ruim",
+  "func": "// ============================================================\n// NO: falha -> comunicacao ruim\n// O QUE FAZ : recebe do Catch os erros de rede do GET (servidor desligado,\n//             cabo, timeout de 1,5 s) e entrega ao mapeamento como \"sem resposta\".\n// RESULTADO : o no \"mapeia JSON -> DB52\" grava so o status\n//             (statusLeituraOk = 0, errosConsecutivos + 1, heartbeat + 1)\n//             e NAO sobrescreve as medidas ja gravadas no DB52.\n// OBS (v2)  : o GET esta com \"Somente envie respostas nao-2xx para o no de\n//             Captura\" marcado (item C1): erro de rede chega SO por aqui, nao em\n//             dobro. Respostas HTTP 503 continuam pela saida normal do GET.\n// Autor: Reginaldo Lobo  -  Projeto: Banco de Testes - Gerador Diesel\n// ============================================================\n// Falha de rede/timeout no GET (catch): marca comunicacao ruim sem apagar as ultimas medidas.\nmsg.payload = null; msg.statusCode = 0;         // statusCode 0 = \"sem resposta HTTP\"\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 1130,
+  "y": 300,
+  "wires": [
+   [
+    "s31_map"
+   ]
+  ],
+  "info": "Converte o erro capturado em `statusCode = 0` / `payload = null`, para o mapeamento gravar so o status."
+ },
+ {
+  "id": "s31_plc",
+  "type": "s7 out",
+  "z": "s31_tab",
+  "endpoint": "s31_ep",
+  "variable": "",
+  "name": "Escreve DB52 (Banco de Teste 2)",
+  "x": 1420,
+  "y": 260,
+  "wires": [],
+  "info": "Escreve no PLC. Cada mensagem traz `msg.variable` (nome da vartable do endpoint) e `msg.payload`."
+ },
+ {
+  "id": "s31_cm",
+  "type": "comment",
+  "z": "s31_tab",
+  "name": "DB52 NÃO otimizado; escrita a cada ciclo do seletor. Falha = só status (LeituraOk=0, erros++), medidas antigas não são sobrescritas.",
+  "info": "",
+  "x": 520,
+  "y": 340,
+  "wires": []
+ },
+ {
+  "id": "s31_ep",
+  "type": "s7 endpoint",
+  "transport": "iso-on-tcp",
+  "address": "172.17.209.135",
+  "port": "102",
+  "rack": "0",
+  "slot": "1",
+  "localtsaphi": "01",
+  "localtsaplo": "00",
+  "remotetsaphi": "01",
+  "remotetsaplo": "00",
+  "connmode": "rack-slot",
+  "adapter": "",
+  "busaddr": "2",
+  "cycletime": "1000",
+  "timeout": "2000",
+  "name": "PLC 1515F (DB52)",
+  "vartable": [
+   {
+    "name": "Bits_Status",
+    "addr": "DB52,BYTE0"
+   },
+   {
+    "name": "Bits_Dados",
+    "addr": "DB52,BYTE1.3"
+   },
+   {
+    "name": "Ints_Modo",
+    "addr": "DB52,INT4.2"
+   },
+   {
+    "name": "Ints_Seletor",
+    "addr": "DB52,INT8.2"
+   },
+   {
+    "name": "Dint_Heartbeat",
+    "addr": "DB52,DINT12"
+   },
+   {
+    "name": "Dint_Horas",
+    "addr": "DB52,DINT16.2"
+   },
+   {
+    "name": "Ints_Cont",
+    "addr": "DB52,INT24.2"
+   },
+   {
+    "name": "Reais",
+    "addr": "DB52,REAL28.42"
+   },
+   {
+    "name": "Str_Modo",
+    "addr": "DB52,S196.16"
+   },
+   {
+    "name": "Str_Modelo",
+    "addr": "DB52,S214.12"
+   },
+   {
+    "name": "Str_Alarme",
+    "addr": "DB52,S228.60"
+   },
+   {
+    "name": "Str_Relogio",
+    "addr": "DB52,S290.20"
+   }
+  ],
+  "info": "Conexao S7 com o PLC 1515F (Banco de Teste 2).\n\n| Variavel | Endereco | Conteudo |\n|---|---|---|\n| Bits_Status | DB52,BYTE0 | status de comunicacao |\n| Bits_Dados | DB52,BYTE1.3 | alarmes, LEDs, saidas |\n| Ints_Modo | DB52,INT4.2 | modo, idade |\n| Ints_Seletor | DB52,INT8.2 | seletor, erros |\n| Dint_Heartbeat | DB52,DINT12 | heartbeat |\n| Dint_Horas | DB52,DINT16.2 | horas [s], partidas |\n| Ints_Cont | DB52,INT24.2 | nulos, alarmes |\n| Reais | DB52,REAL28.42 | 42 medidas |\n| Str_Modo/Modelo/Alarme/Relogio | S196.16 / S214.12 / S228.60 / S290.20 | textos |\n\nOs offsets precisam bater com o DB52 (312 bytes, nao otimizado)."
+ }
+]

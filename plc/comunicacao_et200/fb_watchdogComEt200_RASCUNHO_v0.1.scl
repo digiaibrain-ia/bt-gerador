@@ -1,0 +1,123 @@
+// RASCUNHO - lado ET200 (programa "Gerador_BC015") - NAO TEM NUMERO DE BLOCO ainda: a numeracao de
+// FB/FC do "Gerador_BC015" eh de outro projeto, que eu nao conheco (Q6 do .md ainda sem resposta -
+// se eh o mesmo projeto TIA do 1515 ou outro). Escolha o numero conforme a convencao de LA e troque
+// "fb_watchdogComEt200" pelo nome final antes de colar no projeto.
+//
+// O QUE FAZ: cumpre o contrato de seguranca da secao 4.2 do PASSO_A_PASSO_PUT_GET_1515_ET200_v3.md:
+//   1) incrementa vidaET a cada ~100 ms, sempre (prova pro 1515 que o ET200 esta vivo).
+//   2) se vida1515 (que vem do PUT do 1515) parar de mudar por TempoPerdaMs -> ComOk=FALSE e TODAS as
+//      saidas das contatoras vao a FALSE (estado seguro).
+//   3) depois de uma queda de comunicacao, uma chave so volta a ligar depois que o CMD dela for
+//      recomandado (borda FALSE->TRUE) - evita religar sozinho com o ultimo comando antigo.
+//   4) Fb[n] (feedback pro 1515) eh sempre o contato auxiliar REAL (EntradaContatoAux), nunca copia de Cmd.
+//
+// CHAMAR 1x por ciclo, de preferencia num OB de tempo fixo (ex. OB35, se a sua CPU tiver) - se nao tiver,
+// chamar do OB1 funciona tambem (o oscilador de 100ms abaixo nao depende de OB de tempo).
+//
+// ATENCAO (risco - Q5 em aberto, NAO TESTADO, nao tenho TIA/STEP7 aqui para compilar):
+//   - Se "Gerador_BC015" for STEP 7 V5.5 Classic (SCL opcional) em vez de TIA Portal, a sintaxe de
+//     VAR_IN_OUT com array/struct passado por referencia e o timer TON podem exigir ajuste - confira o
+//     manual SCL da sua versao antes de compilar.
+//   - EntradaContatoAux[n] e SaidaContatora[n] precisam ser ligados, na CHAMADA deste bloco, aos
+//     enderecos fisicos reais de entrada/saida do "Gerador_BC015" - eu NAO conheco esses enderecos
+//     (nao invento - voce faz a ligacao na chamada, ver exemplo no final).
+//   - A regra 3 "exige novo comando apos queda" e MINHA sugestao (ainda sem seu OK formal - Q5) - se
+//     preferir o comportamento mais simples (religa sozinho assim que a comunicacao volta, sem exigir
+//     novo comando), me avise que eu simplifico.
+
+FUNCTION_BLOCK "fb_watchdogComEt200"
+TITLE = fb_watchdogComEt200 (numero de bloco a definir)
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.1
+
+   VAR_INPUT
+      NumChaves    : UInt;              // quantidade real de chaves ativas deste banco (1..16)
+      TempoPerdaMs : Time := T#2S;      // menor que o TempoVida do 1515 (3s) de proposito - ver secao 3 do .md
+   END_VAR
+
+   VAR_OUTPUT
+      ComOk : Bool;                     // TRUE = comunicacao com o 1515 viva (vida1515 mudando)
+   END_VAR
+
+   VAR_IN_OUT
+      Cmd                : Array[1..16] of Bool; // DB10/11.cmd      - vem do PUT do 1515, este bloco so LE
+      Vida1515           : Int;                  // DB10/11.vida1515 - vem do PUT do 1515, este bloco so LE
+      VidaET             : Int;                  // DB10/11.vidaET   - este bloco ESCREVE
+      Fbk                : Array[1..16] of Bool; // DB10/11.fbk      - este bloco ESCREVE (copia do contato aux. real) - "Fb" é palavra reservada do SCL
+      SaidaContatora     : Array[1..16] of Bool; // saida fisica real de cada contatora - este bloco ESCREVE
+      EntradaContatoAux  : Array[1..16] of Bool; // entrada fisica real do contato auxiliar - este bloco so LE
+   END_VAR
+
+   VAR
+      _tOsc100ms  : TON_TIME;    // oscilador livre ~100ms (para incrementar VidaET sem depender de OB de tempo)
+      _tPerda     : TON_TIME;    // watchdog: conta o tempo sem vida nova do 1515
+      _vida1515Ant: Int;
+      _vidaMudou  : Bool;
+      _comOkAnt   : Bool;
+      _cmdAnt     : Array[1..16] of Bool;
+      _rearmado   : Array[1..16] of Bool; // TRUE = ja viu Cmd[n] cair pra FALSE desde a ultima queda de ComOk
+      i           : Int;
+   END_VAR
+
+BEGIN
+
+   // ---- 1) vidaET incrementa a cada ~100ms, sempre (contrato 4.2 item 1) ----
+   #_tOsc100ms(IN := NOT #_tOsc100ms.Q, PT := T#100MS);
+   IF #_tOsc100ms.Q THEN
+      #VidaET := #VidaET + 1;
+      IF #VidaET >= 32767 THEN #VidaET := 0; END_IF;
+   END_IF;
+
+   // ---- 2) watchdog: vida1515 parou de mudar por TempoPerdaMs? ----
+   IF #Vida1515 <> #_vida1515Ant THEN
+      #_vida1515Ant := #Vida1515;
+      #_vidaMudou   := TRUE;
+   ELSE
+      #_vidaMudou := FALSE;
+   END_IF;
+
+   IF #_vidaMudou THEN
+      #_tPerda(IN := FALSE, PT := #TempoPerdaMs);   // comunicacao viva -> reseta o watchdog
+   ELSE
+      #_tPerda(IN := TRUE,  PT := #TempoPerdaMs);   // sem vida nova -> conta o tempo
+   END_IF;
+   #ComOk := NOT #_tPerda.Q;
+
+   // quando a comunicacao acabou de voltar, bloqueia religar sozinho (contrato 4.2 item 2/3)
+   IF #ComOk AND NOT #_comOkAnt THEN
+      FOR #i := 1 TO #NumChaves DO
+         #_rearmado[#i] := FALSE;
+      END_FOR;
+   END_IF;
+
+   // ---- 3) feedback sempre real; saida so liga com comunicacao viva E (nunca caiu OU ja rearmou) ----
+   FOR #i := 1 TO #NumChaves DO
+      #Fbk[#i] := #EntradaContatoAux[#i];                 // feedback = contato auxiliar REAL (contrato 4.2 item 4)
+
+      IF NOT #Cmd[#i] AND #_cmdAnt[#i] THEN                // borda de descida do comando: libera o rearme
+         #_rearmado[#i] := TRUE;
+      END_IF;
+
+      IF #ComOk AND (#_comOkAnt OR #_rearmado[#i]) THEN
+         #SaidaContatora[#i] := #Cmd[#i];
+      ELSE
+         #SaidaContatora[#i] := FALSE;                     // sem comunicacao (ou ainda nao rearmado) = seguro
+      END_IF;
+
+      #_cmdAnt[#i] := #Cmd[#i];
+   END_FOR;
+
+   #_comOkAnt := #ComOk;
+
+END_FUNCTION_BLOCK
+
+
+// Exemplo de chamada (voce liga Cmd/Fb no DB10 ou DB11, e as entradas/saidas fisicas reais do Gerador_BC015):
+//
+// "fb_watchdogComEt200_BC56"(NumChaves         := 13,
+//                             Cmd               := "ComBC56".cmd,
+//                             Vida1515          := "ComBC56".vida1515,
+//                             VidaET            := "ComBC56".vidaET,
+//                             Fbk               := "ComBC56".fbk,
+//                             SaidaContatora    := <enderecos fisicos reais das contatoras BC56>,
+//                             EntradaContatoAux := <enderecos fisicos reais dos contatos aux. BC56>);

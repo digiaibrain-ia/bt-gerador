@@ -1,0 +1,62 @@
+DATA_BLOCK "ComBC56"
+TITLE = ComBC56 v0.3 (DB38)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.3
+NON_RETAIN
+////====================================
+//// ComBC56 (DB38) - programa "Gerador_BC015"
+//// VERSAO    : 0.3 (27/10/2026) - so versao/autor/comentarios; layout IDENTICO ao v0.2 (12 bytes). Autor RegLobo: no ET200 o campo
+////             AUTHOR aceita no maximo 8 caracteres. A versao fica AQUI porque o nome do bloco no TIA nao leva versao.
+//// (ET200 IM151-8 PN/DP CPU, 172.17.209.158)
+//// O QUE FAZ : area de troca PUT/GET com o 1515 para o banco BC56 (12 bytes).
+////             PUT do 1515 escreve DBB0..5; GET do 1515 le DBB6..11.
+//// POR QUE DB GLOBAL SEM OTIMIZACAO : PUT/GET enderecam por byte/bit absoluto.
+//// ESCRITOR UNICO : DBB0..5 escritos so pelo PUT do 1515 (FB101); DBB6..11 escritos so pelo FC4
+////             do ET200. O FC4 nunca escreve em DBB0..5 e o 1515 nunca escreve em DBB6..11.
+//// RELACAO COM OUTROS DBs : par do db155i_BC400_ComEt200 (DB155, instancia do FB101) no 1515 (o nome "BC400" da instancia esta trocado: ela serve o BC56).
+////             Nome "ComBC56" mantido (dado pelo usuario no ET200); v0.1 era DB10.
+//// v0.2 (24/10/2026): opcao A - ligarBanco em DBX4.0, GET deslocado para DBX6.0, seletoraAuto DBX10.0.
+//// Autor: RegLobo  -  Versao: 0.3  -  Projeto: NOde-red (BT2)
+////=====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;   // DBX0.0..1.7 comando das contatoras (PUT do 1515)
+      vida1515 : Int;   // DBW2 contador de vida do 1515, 0 a 32766 (PUT)
+      ligarBanco : Bool;   // DBX4.0 comando Ligar banco (PUT)
+      resPut : Byte;
+      fbk : Array[1..16] of Bool;   // DBX6.0..7.7 contato auxiliar de cada contatora (GET)
+      vidaET : Int;   // DBW8 contador de vida do ET200, incrementar todo ciclo do FC4 (GET)
+      seletoraAuto : Bool;   // DBX10.0 seletora do banco em Auto/remoto, 1 = Auto (GET)
+      resGet : Byte;
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "ComBC400"
+TITLE = ComBC400 v0.3 (DB39)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.3
+NON_RETAIN
+////====================================
+//// ComBC400 (DB39) - programa "Gerador_BC015"
+//// VERSAO    : 0.3 (27/10/2026) - so versao/autor/comentarios; layout IDENTICO ao v0.2 (12 bytes). Autor RegLobo: no ET200 o campo
+////             AUTHOR aceita no maximo 8 caracteres. A versao fica AQUI porque o nome do bloco no TIA nao leva versao.
+//// O QUE FAZ : area de troca PUT/GET com o 1515 para o banco BC400 (12 bytes), layout igual ao DB38.
+//// POR QUE DB GLOBAL SEM OTIMIZACAO : PUT/GET enderecam por byte/bit absoluto.
+//// ESCRITOR UNICO : DBB0..5 so pelo PUT do 1515; DBB6..11 so pelo FC4 do ET200.
+//// RELACAO COM OUTROS DBs : par do db163i_BC56_ComEt200 (DB163) no 1515 (instancia que serve o BC400). v0.1 era DB11.
+//// Autor: RegLobo  -  Versao: 0.3  -  Projeto: NOde-red (BT2)
+////=====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;   // DBX0.0..1.7 comando das contatoras (PUT do 1515)
+      vida1515 : Int;   // DBW2 contador de vida do 1515, 0 a 32766 (PUT)
+      ligarBanco : Bool;   // DBX4.0 comando Ligar banco (PUT)
+      resPut : Byte;
+      fbk : Array[1..16] of Bool;   // DBX6.0..7.7 contato auxiliar de cada contatora (GET)
+      vidaET : Int;   // DBW8 contador de vida do ET200 (GET)
+      seletoraAuto : Bool;   // DBX10.0 seletora do banco em Auto/remoto, 1 = Auto (GET)
+      resGet : Byte;
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK

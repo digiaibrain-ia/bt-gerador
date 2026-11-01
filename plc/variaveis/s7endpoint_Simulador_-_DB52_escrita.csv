@@ -1,0 +1,5 @@
+DB52,X2.1;ledManual
+DB52,REAL28;tensaoL1L2
+DB52,REAL32;tensaoL2L3
+DB52,REAL36;tensaoL3L1
+DB52,REAL84;potenciaKw

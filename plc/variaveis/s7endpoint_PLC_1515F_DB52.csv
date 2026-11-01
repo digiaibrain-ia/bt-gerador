@@ -1,0 +1,12 @@
+DB52,BYTE0;Bits_Status
+DB52,BYTE1.3;Bits_Dados
+DB52,INT4.2;Ints_Modo
+DB52,INT8.2;Ints_Seletor
+DB52,DINT12;Dint_Heartbeat
+DB52,DINT16.2;Dint_Horas
+DB52,INT24.2;Ints_Cont
+DB52,REAL28.42;Reais
+DB52,S196.16;Str_Modo
+DB52,S214.12;Str_Modelo
+DB52,S228.60;Str_Alarme
+DB52,S290.20;Str_Relogio
