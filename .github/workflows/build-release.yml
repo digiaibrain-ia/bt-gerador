@@ -1,7 +1,5 @@
+# v3 (31/10/2026): nomes dos passos entre aspas (':' solto quebrava o YAML); publicação aceita Release já criado.
 # Gera o HTML único e publica no GitHub Release quando se cria uma tag medidor-vX.Y.Z.
-# v2 (31/10/2026): o passo de publicação agora aceita Release já criado à mão.
-# POR QUÊ: o Release foi criado na interface antes do workflow rodar, e o "gh release create" falhava
-# com "release already exists". Agora, se existir, só envia o HTML (--clobber substitui se já houver).
 name: build-release
 on:
   push:
@@ -17,10 +15,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
-      - name: Build (PR: só valida)
+      - name: "Build (PR - só valida)"
         if: github.event_name == 'pull_request'
         run: node dashboard/build/build.js
-      - name: Build (tag: confere versão)
+      - name: "Build (tag - confere versão)"
         if: github.event_name == 'push'
         run: node dashboard/build/build.js --expect-version "${GITHUB_REF_NAME#medidor-v}"
       - name: Publicar Release
