@@ -1,0 +1,227 @@
+FUNCTION_BLOCK "fb101_ComEt200"
+TITLE = fb101_ComEt200 v0.7 (FB101)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.7
+////====================================
+//// fb101_ComEt200 (FB101)
+//// VERSAO    : 0.7 (29/10/2026) - MESMA LOGICA da v0.6/v0.5; so comentarios (nomes reais das instancias no TIA).
+////             v0.6 (27/10/2026): so comentarios (mapeamento real: DB155 -> DB38 -> db150 = BC56).
+////             (a versao fica AQUI porque o nome do bloco no TIA nao leva versao: o arquivo external source
+////              "fb101_ComEt200_v0.7" perde o sufixo ao gerar o bloco. Padrao de 27/10/2026.)
+//// O QUE FAZ : troca de sinais 1515 <-> ET200 por S7 PUT/GET, um banco de carga por instancia.
+////             PUT (6 bytes): comando das 16 chaves + vida do 1515 + "Ligar banco".
+////             GET (6 bytes): feedback das 16 chaves + vida do ET200 + seletora do banco em Auto.
+////             Aplica no PLC o intertravamento do banco (o HTML e so conveniencia).
+//// INSTANCIAS (nomes reais no TIA, projeto BancoCarga_021026 - regra: DB de instancia leva "i" apos o numero):
+////             db155i_BC56_ComEt200 (DB155) -> remoto DB38 "ComBC56" -> db150_BC56_Chaves (confirmado online em 27/10/2026);
+////             db163i_BC400_ComEt200 (DB163) -> remoto DB39 "ComBC400" -> db158_BC400_Chaves (assumido). Ver chamadas v0.7.
+////             (na v0.6 este comentario trazia os nomes BC400/BC56 trocados; arvore de blocos do TIA de 29/10/2026 corrige.)
+//// COMO OPERA : chamar 1x por ciclo no OB ciclico, ANTES do fb100_setupChaves. O endereco remoto
+////             (RemotoCmd/RemotoFb) e passado pelo chamador (ver fb101_ComEt200_chamadas_v0.7.scl).
+////             IN_OUT: CbLigar[] e escrito pelo FB100/Node-RED e ZERADO por este FB quando o banco
+////             nao esta liberado; LigarBanco e escrito pelo Node-RED e ZERADO por este FB quando a
+////             seletora sai de Auto ou a comunicacao cai; SbLigada[] e escrito so por este FB.
+//// FALHA     : sem vida nova do ET200 por TempoVida -> ComOk=FALSE, SbLigada[] zerado,
+////             SeletoraAuto=FALSE, LigarBanco e CbLigar[] zerados (sem religamento automatico).
+//// v0.4 (24/10/2026): telegrama 4+4 -> 6+6 bytes (opcao A da PROPOSTA_SINAIS_LIGAR_BANCO_E_SELETORA
+////             v0.2): tx.ligarBanco (DBX4.0) e rx.seletoraAuto (DBX10.0, 1 bit, decisao D1);
+////             novos IN_OUT LigarBanco e OUTPUT SeletoraAuto; REGION 0 de intertravamento.
+////             Remotos renomeados DB10/DB11 -> DB38/DB39 (feito pelo usuario no ET200).
+//// v0.3 (23/10/2026): endereco remoto virou parametro do tipo Remote (sem copiar o FB).
+//// ATENCAO : 1) NAO compilado aqui (sem TIA). Tipo "Remote" como VAR_INPUT e PUT/GET como
+////             multi-instancia ja eram pontos da v0.3; se o TIA reclamar, mesma saida da v0.3.
+////           2) Muda o layout do DB38/DB39 no ET200 (12 bytes) e exige ajuste do FC4 (usuario).
+////              Carregar ET200 e 1515 juntos: telegrama antigo (4 bytes) com FB novo nao fecha.
+////           3) Com fio da seletora solto o bit le FALSE = Manual: lado seguro, mas sem aviso
+////              de defeito (decisao D1 = 1 bit).
+//// Fonte: claude/PROPOSTA_SINAIS_LIGAR_BANCO_E_SELETORA_v0.2.md e
+////        claude/PASSO_A_PASSO_PUT_GET_1515_ET200_v4.md (projeto "NOde-red").
+////=====================================
+   VAR_INPUT
+      Hab : Bool;   // TRUE = comunica; FALSE = para e vai para estado seguro
+      ID_Conexao : Word;   // ID local da conexao S7 (W#16#100, mesma para os 2 bancos)
+      RemotoCmd : Remote;   // remoto cmd+vida+ligarBanco. BC56: P#DB38.DBX0.0 BYTE 6
+      RemotoFb : Remote;   // remoto fbk+vida+seletora. BC56: P#DB38.DBX6.0 BYTE 6
+      TempoVida : Time := T#3S;   // sem vida nova do ET200 por este tempo = comunicacao perdida
+      Pausa : Time := T#100MS;   // pausa entre ciclos PUT/GET
+   END_VAR
+
+   VAR_OUTPUT
+      ComOk : Bool;   // TRUE = ET200 respondendo e vida mudando (ligar em sbBanco.comEt200Ok)
+      SeletoraAuto : Bool;   // TRUE = seletora do banco em Auto e ComOk (ligar em sbBanco.seletoraAuto)
+      StatusPut : Word;   // ultimo STATUS do PUT (0 = ok)
+      StatusGet : Word;   // ultimo STATUS do GET (0 = ok)
+      FalhaPut : Bool;   // ultimo PUT terminou com ERROR
+      FalhaGet : Bool;   // ultimo GET terminou com ERROR
+   END_VAR
+
+   VAR_IN_OUT
+      CbLigar : Array[1..16] of Bool;   // <db banco>.cb.ligar - FB100/Node-RED escrevem, este FB le e zera
+      SbLigada : Array[1..16] of Bool;   // <db banco>.sb.ligada - escrito so por este FB
+      LigarBanco : Bool;   // <db banco>.cbBanco.ligar - Node-RED escreve, este FB le e zera
+   END_VAR
+
+   VAR
+      statPut : PUT;   // multi-instancia do PUT
+      statGet : GET;   // multi-instancia do GET
+      tx : Struct   // 1515 -> ET200, 6 bytes
+         cmd : Array[1..16] of Bool;   // DBX0.0..1.7 remoto
+         vida : Int;   // DBW2 remoto
+         ligarBanco : Bool;   // DBX4.0 remoto
+         reserva : Byte;
+      END_STRUCT;
+      rx : Struct   // ET200 -> 1515, 6 bytes
+         fbk : Array[1..16] of Bool;   // DBX6.0..7.7 remoto ("fb" e palavra reservada)
+         vida : Int;   // DBW8 remoto
+         seletoraAuto : Bool;   // DBX10.0 remoto
+         reserva : Byte;
+      END_STRUCT;
+      estado : Int;   // 0 inicia PUT, 1 aguarda PUT, 2 inicia GET, 3 aguarda GET, 4 pausa
+      reqPut : Bool;
+      reqGet : Bool;
+      putDone : Bool;
+      putError : Bool;
+      getNdr : Bool;
+      getError : Bool;
+      vidaAnt : Int;   // ultima vida do ET200 vista
+      vidaMudou : Bool;   // vida do ET200 mudou neste ciclo
+      jaLeu : Bool;   // TRUE apos o 1o GET bem-sucedido
+      tPausa : TON_TIME;
+      tVida : TON_TIME;
+      i : Int;
+   END_VAR
+
+BEGIN
+
+   REGION "0) Intertravamento do banco (seguranca no PLC)"
+      // Executa todo ciclo, ANTES de montar o telegrama, com ComOk e rx do ciclo anterior.
+      // Banco liberado = comunicacao viva (ComOk) E seletora em Auto E LigarBanco = TRUE.
+      // Seletora fora de Auto ou comunicacao perdida: zera LigarBanco. O operador precisa
+      // comandar "Ligar banco" de novo; nada religa sozinho quando a comunicacao volta.
+      // Banco desligado: zera CbLigar[] (inclui a chave do Setup acionada pelo FB100), entao
+      // nenhuma chave e enviada ao ET200 nem fica "lembrada" para ligar depois.
+      // Bloqueio visivel no TIA: LigarBanco volta a FALSE sozinho = seletora/ComOk.
+      #SeletoraAuto := #ComOk AND #rx.seletoraAuto;
+      IF NOT #SeletoraAuto THEN
+         #LigarBanco := FALSE;
+      END_IF;
+      IF NOT #LigarBanco THEN
+         FOR #i := 1 TO 16 DO
+            #CbLigar[#i] := FALSE;
+         END_FOR;
+      END_IF;
+   END_REGION
+
+   REGION "1) Chamada das instrucoes PUT e GET"
+      // As instrucoes sao chamadas TODO ciclo; quem dispara e o REQ da maquina de estados.
+      // PUT envia tx (6 bytes) para RemotoCmd; GET le RemotoFb (6 bytes) para rx.
+      // O comprimento em RemotoCmd/RemotoFb tem que ser BYTE 6, igual ao tamanho de tx/rx;
+      // diferenca de tamanho gera ERROR com STATUS de parametrizacao (ver StatusPut/StatusGet).
+      // Limite da instrucao (~212 bytes por chamada) esta muito acima do usado aqui.
+      #statPut(REQ := #reqPut,
+               ID := #ID_Conexao,
+               DONE => #putDone,
+               ERROR => #putError,
+               STATUS => #StatusPut,
+               ADDR_1 := #RemotoCmd,
+               SD_1 := #tx);
+      #statGet(REQ := #reqGet,
+               ID := #ID_Conexao,
+               NDR => #getNdr,
+               ERROR => #getError,
+               STATUS => #StatusGet,
+               ADDR_1 := #RemotoFb,
+               RD_1 := #rx);
+   END_REGION
+
+   REGION "2) Maquina de estados PUT -> GET -> pausa"
+      // Um job por vez na conexao (os 2 bancos dividem o mesmo ID_Conexao).
+      // Estado 0: copia CbLigar[] e LigarBanco (ja intertravados na REGION 0) para tx,
+      //           incrementa a vida do 1515 e dispara o PUT.
+      // Estado 1: aguarda DONE ou ERROR do PUT; ERROR fica em FalhaPut.
+      // Estado 2: dispara o GET.
+      // Estado 3: aguarda NDR ou ERROR do GET; com NDR marca jaLeu e detecta vida nova do ET200.
+      // Estado 4: pausa (Pausa) e volta ao estado 0.
+      // Hab = FALSE: volta ao estado 0 sem REQ, e jaLeu = FALSE derruba ComOk.
+      #vidaMudou := FALSE;
+      IF NOT #Hab THEN
+         #estado := 0;
+         #reqPut := FALSE;
+         #reqGet := FALSE;
+         #jaLeu := FALSE;
+      ELSE
+         CASE #estado OF
+            0:
+               FOR #i := 1 TO 16 DO
+                  #tx.cmd[#i] := #CbLigar[#i];
+               END_FOR;
+               #tx.ligarBanco := #LigarBanco;
+               #tx.vida := #tx.vida + 1;
+               IF #tx.vida >= 32767 THEN
+                  #tx.vida := 0;
+               END_IF;
+               #reqPut := TRUE;
+               #estado := 1;
+            1:
+               IF #putDone OR #putError THEN
+                  #FalhaPut := #putError;
+                  #reqPut := FALSE;
+                  #estado := 2;
+               END_IF;
+            2:
+               #reqGet := TRUE;
+               #estado := 3;
+            3:
+               IF #getNdr OR #getError THEN
+                  #FalhaGet := #getError;
+                  IF #getNdr THEN
+                     #jaLeu := TRUE;
+                     IF #rx.vida <> #vidaAnt THEN
+                        #vidaAnt := #rx.vida;
+                        #vidaMudou := TRUE;
+                     END_IF;
+                  END_IF;
+                  #reqGet := FALSE;
+                  #estado := 4;
+               END_IF;
+            4:
+               IF #tPausa.Q THEN
+                  #estado := 0;
+               END_IF;
+            ELSE
+               #estado := 0;
+         END_CASE;
+      END_IF;
+   END_REGION
+
+   REGION "3) Temporizadores de pausa e de vida"
+      // tPausa conta so no estado 4 e libera o proximo ciclo PUT/GET.
+      // tVida conta enquanto a vida do ET200 NAO muda; qualquer vida nova reinicia a contagem.
+      // tVida.Q = TRUE significa ET200 parado, cabo/rede fora ou conexao S7 nao estabelecida.
+      // Os dois temporizadores sao chamados todo ciclo (regra do TON).
+      // Com Hab = FALSE os dois ficam resetados.
+      #tPausa(IN := #Hab AND (#estado = 4), PT := #Pausa);
+      #tVida(IN := #Hab AND NOT #vidaMudou, PT := #TempoVida);
+   END_REGION
+
+   REGION "4) Saidas: comunicacao, feedback e seletora"
+      // ComOk exige Hab, ao menos um GET bem-sucedido e vida do ET200 mudando.
+      // Com ComOk: SbLigada[] recebe o feedback real das contatoras (rx.fbk).
+      // Sem ComOk: SbLigada[] zerado (o ET200 ja derrubou as saidas pela vida parada).
+      // SeletoraAuto e recalculada aqui para a tela/Node-RED verem o valor deste ciclo;
+      // o intertravamento da REGION 0 usa esse valor no proximo ciclo.
+      #ComOk := #Hab AND #jaLeu AND NOT #tVida.Q;
+      #SeletoraAuto := #ComOk AND #rx.seletoraAuto;
+      IF #ComOk THEN
+         FOR #i := 1 TO 16 DO
+            #SbLigada[#i] := #rx.fbk[#i];
+         END_FOR;
+      ELSE
+         FOR #i := 1 TO 16 DO
+            #SbLigada[#i] := FALSE;
+         END_FOR;
+      END_IF;
+   END_REGION
+
+END_FUNCTION_BLOCK

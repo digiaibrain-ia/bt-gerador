@@ -1,0 +1,51 @@
+// ============================================================================
+// fb101_ComEt200 (FB101) - CHAMADAS v0.7 (29/10/2026)  |  usa fb101_ComEt200_v0.7.scl
+// VERSAO : 0.7 (29/10/2026) - so nomes das instancias e comentarios; mesmos enderecos da v0.6. A versao fica AQUI porque o nome do bloco no TIA nao leva versao.
+// ESTE ARQUIVO NAO E UM BLOCO: copie as 2 chamadas para o OB1 (ou para o FC que o OB1 ja chama), ANTES das
+// chamadas do fb100_setupChaves. Substitui as 2 chamadas antigas do FB101 v0.3 (BYTE 4 / GET em DBX4.0).
+//
+// O QUE MUDOU vs v0.6: nomes das instancias corrigidos (db155i_BC56 / db163i_BC400). vs v0.5: DB do banco da DB155 = db150 e da DB163 = db158.
+//
+// ----------------------------- TABELA DE MAPEAMENTO (1 lugar so) ---------------------------------------
+//  Instancia (nome no TIA)       Remoto no ET200        DB do banco (CbLigar/SbLigada/LigarBanco/ComOk/SeletoraAuto)
+//  db155i_BC56_ComEt200  DB155   DB38 "ComBC56"         db150_BC56_Chaves    (CONFIRMADO na chamada online, 27/10/2026)
+//  db163i_BC400_ComEt200 DB163   DB39 "ComBC400"        db158_BC400_Chaves   (ASSUMIDO por padrao: nao vi esta chamada)
+// CORRECAO v0.7 (29/10/2026): os nomes das instancias aqui estavam TROCADOS (v0.6 chamava "db155i_BC400..." e "db163i_BC56...").
+//   Os nomes reais no TIA (foto da arvore de blocos, 29/10/2026) sao db155i_BC56_ComEt200 e db163i_BC400_ComEt200 - o nome agora
+//   concorda com os dados (DB155 -> DB38 -> db150 = BC56). Com os nomes trocados a chamada NAO compilava.
+// REGRA DE NOME (REGRAS_NOMES_E_VERSOES_v0.3, secao 6): DB de INSTANCIA de FB leva "i" depois do numero (db155i_...); DB de dados nao (db150_...).
+// CONFIRMAR: (1) a chamada da DB163 (qual DB entra em CbLigar); (2) no teste, girar a seletora do BC56 e ver
+//   qual chip muda na tela. REGRA: ComOk, SeletoraAuto e LigarBanco SEMPRE no MESMO DB do CbLigar.
+// ID_Conexao = W#16#100 (S7_Connection_1, confirmado no TIA na v0.4).
+// POR QUE ATUALIZAR AS DUAS CHAMADAS: o FB101 v0.5 monta PUT/GET de 6 bytes; a chamada antiga ainda manda
+//   BYTE 4 / DBX4.0. Com o tamanho do endereco diferente do dado, PUT e GET terminam em erro (FalhaPut/FalhaGet
+//   TRUE no monitor de 27/10/2026) e ComOk nunca fica TRUE.
+// ============================================================================
+
+"db155i_BC56_ComEt200"(Hab          := TRUE,
+                        ID_Conexao   := W#16#100,
+                        RemotoCmd    := P#DB38.DBX0.0 BYTE 6,   // cmd[1..16] + vida1515 + ligarBanco
+                        RemotoFb     := P#DB38.DBX6.0 BYTE 6,   // fbk[1..16] + vidaET + seletoraAuto (v0.3 lia DBX4.0 BYTE 4)
+                        ComOk        => "db150_BC56_Chaves".sbBanco.comEt200Ok,
+                        SeletoraAuto => "db150_BC56_Chaves".sbBanco.seletoraAuto,
+                        CbLigar      := "db150_BC56_Chaves".cb.ligar,
+                        SbLigada     := "db150_BC56_Chaves".sb.ligada,
+                        LigarBanco   := "db150_BC56_Chaves".cbBanco.ligar);
+
+"db163i_BC400_ComEt200"(Hab          := TRUE,
+                       ID_Conexao   := W#16#100,
+                       RemotoCmd    := P#DB39.DBX0.0 BYTE 6,
+                       RemotoFb     := P#DB39.DBX6.0 BYTE 6,
+                       ComOk        => "db158_BC400_Chaves".sbBanco.comEt200Ok,
+                       SeletoraAuto => "db158_BC400_Chaves".sbBanco.seletoraAuto,
+                       CbLigar      := "db158_BC400_Chaves".cb.ligar,
+                       SbLigada     := "db158_BC400_Chaves".sb.ligada,
+                       LigarBanco   := "db158_BC400_Chaves".cbBanco.ligar);
+
+// Chamadas existentes do FB100 continuam iguais, DEPOIS das duas acima:
+// "fb100_setupChaves_DB154"(...);   // BC56
+// "fb100_setupChaves_DB162"(...);   // BC400
+//
+// ORDEM DE CARGA (os dois PLCs juntos): 1) snapshot do DB150/DB158 -> "Copy snapshots to start values";
+// 2) importar db150_BC56_Chaves_v0.3.db e db158_BC400_Chaves_v0.3.db; 3) importar fb101_ComEt200_v0.7.scl;
+// 4) colar estas chamadas; 5) compilar e carregar; 6) ver no monitor: RemotoFb = ...DBX6.0, vidaMudou piscando, ComOk TRUE.
