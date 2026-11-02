@@ -5,7 +5,7 @@
 <!-- index.html (v0.1) · 29/10/2026 — PÁGINA DE ENTRADA. Nome fixo de propósito (é o endereço que você guarda nos favoritos); a versão fica neste comentário.
   PARA QUE SERVE (leigo): uma lista com todas as ferramentas do projeto. Abra UMA vez  http://IP:1880/index.html  (o IP do PC do banco), guarde nos favoritos e clique na ferramenta.
   POR QUE: abrir o HTML com duplo clique usa file:///C:/Users/… e o navegador bloqueia as chamadas ao Node-RED; por http tudo funciona (inclusive módulos .js separados).
-  DE ONDE VEM A LISTA: catalogo_ferramentas_v0.2.js (mesma pasta). Para trocar a versão de uma ferramenta edita-se SÓ lá. Os dois arquivos .js ficam na mesma pasta public.
+  DE ONDE VEM A LISTA: catalogo_ferramentas_v0.7.js (mesma pasta). Para trocar a versão de uma ferramenta edita-se SÓ lá. Os dois arquivos .js ficam na mesma pasta public.
   O QUE FAZ AUTOMATICAMENTE: pergunta ao servidor (HEAD, sem baixar) se cada arquivo existe e marca ✓ (achou) ou ✗ (falta copiar para a pasta public).
   NÃO FAZ: não lê PLC/DSE/Node-RED, não grava nada. Em file:// avisa e não oferece links que não funcionam. -->
 <style>
@@ -21,7 +21,7 @@ a.c b{display:block}a.c small{display:block;color:var(--ink2)}a.c.leg{opacity:.5
 code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0 5px}
 </style></head><body>
 <h1>Ferramentas · Bancos de teste</h1><div class="sub" id="sub">—</div><div id="aviso"></div><div id="lista"></div>
-<script src="catalogo_ferramentas_v0.2.js"></script>
+<script src="catalogo_ferramentas_v0.7.js"></script>
 <script>
 (function(){
   'use strict';
@@ -29,7 +29,7 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
      Agora procura em 3 lugares (a pasta deste index, a raiz do servidor e /html/), abre o arquivo no lugar onde o achou e,
      se não achar, diz exatamente QUAIS endereços tentou. Também confere os arquivos de apoio (.js) que o medidor carrega. */
   const CAT=window.CATALOGO_FERRAMENTAS,$=i=>document.getElementById(i),emFile=location.protocol==='file:';
-  if(!CAT){$('aviso').innerHTML='<div class="w"><b>catalogo_ferramentas_v0.2.js não foi encontrado.</b> Copie o arquivo para a MESMA pasta deste index.html (pasta public do Node-RED). Veja o botão Ajuda.</div>';return}
+  if(!CAT){$('aviso').innerHTML='<div class="w"><b>catalogo_ferramentas_v0.7.js não foi encontrado.</b> Copie o arquivo para a MESMA pasta deste index.html (pasta public do Node-RED). Veja o botão Ajuda.</div>';return}
   const pasta=emFile?'':new URL('.',location.href).href,cands=emFile?[]:[...new Set([pasta,location.origin+'/',location.origin+'/html/'])];
   $('sub').textContent='Catálogo de '+CAT.atualizado+(emFile?'':' · pasta deste index: '+pasta);
   if(emFile)$('aviso').innerHTML='<div class="w"><b>Página aberta como arquivo (file://).</b> As ferramentas só funcionam abertas pelo Node-RED. Abra <code>http://IP:1880/index.html</code> (IP do PC do banco) e guarde nos favoritos.</div>';
@@ -273,6 +273,6 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
   const fecha = () => { if (dlg && dlg.open) dlg.close(); };
   global.AJUDA = { inicia, abre, fecha };
 })(window);
-AJUDA.inicia({"titulo": "Ferramentas · Bancos de teste", "resumo": "Lista com todas as ferramentas do projeto. Clique numa para abri-la em outra aba. O símbolo à direita mostra se o arquivo foi encontrado no servidor: ✓ encontrado, ✗ não encontrado (o texto abaixo diz onde procurei), ? o servidor não respondeu.", "secoes": [{"t": "Como usar", "l": ["Abra <code>http://IP:1880/…/index.html</code> (IP do PC do banco), pela pasta onde o index está, e guarde nos favoritos.", "Todos os arquivos da lista (e os <b>.js de apoio</b>: catalogo_ferramentas_v0.2.js, menu_dev_v0.1.js) ficam na <b>mesma pasta</b>. No PC do banco, a pasta public do Node-RED é <code>C:\\Users\\b02raf\\.node-red\\public</code> (settings.js, httpStatic); a pasta <code>html</code> dentro dela aparece no endereço como <code>/html/</code>.", "Este index procura cada arquivo na pasta dele, na raiz do servidor e em <code>/html/</code>, e abre onde achar."]}, {"t": "Se aparecer ✗", "l": ["Copie o arquivo indicado para a pasta do index (ou para a raiz public) e recarregue a página (F5).", "Teste direto no navegador: <code>http://IP:1880/html/nome_do_arquivo.html</code>. Se der \"Cannot GET\", o arquivo não está nessa pasta.", "Depois de trocar uma versão, atualize o nome na linha correspondente do <code>catalogo_ferramentas_v0.2.js</code>."]}], "glossario": [["public / httpStatic", "pasta que o Node-RED publica como site; tudo que está nela abre por http://IP:1880/"], ["Catálogo", "o arquivo catalogo_ferramentas_v0.2.js: a agenda com nome e versão de cada ferramenta"]]});
+AJUDA.inicia({"titulo": "Ferramentas · Bancos de teste", "resumo": "Lista com todas as ferramentas do projeto. Clique numa para abri-la em outra aba. O símbolo à direita mostra se o arquivo foi encontrado no servidor: ✓ encontrado, ✗ não encontrado (o texto abaixo diz onde procurei), ? o servidor não respondeu.", "secoes": [{"t": "Como usar", "l": ["Abra <code>http://IP:1880/…/index.html</code> (IP do PC do banco), pela pasta onde o index está, e guarde nos favoritos.", "Todos os arquivos da lista (e os <b>.js de apoio</b>: catalogo_ferramentas_v0.7.js, menu_dev_v0.1.js) ficam na <b>mesma pasta</b>. No PC do banco, a pasta public do Node-RED é <code>C:\\Users\\b02raf\\.node-red\\public</code> (settings.js, httpStatic); a pasta <code>html</code> dentro dela aparece no endereço como <code>/html/</code>.", "Este index procura cada arquivo na pasta dele, na raiz do servidor e em <code>/html/</code>, e abre onde achar."]}, {"t": "Se aparecer ✗", "l": ["Copie o arquivo indicado para a pasta do index (ou para a raiz public) e recarregue a página (F5).", "Teste direto no navegador: <code>http://IP:1880/html/nome_do_arquivo.html</code>. Se der \"Cannot GET\", o arquivo não está nessa pasta.", "Depois de trocar uma versão, atualize o nome na linha correspondente do <code>catalogo_ferramentas_v0.7.js</code>."]}], "glossario": [["public / httpStatic", "pasta que o Node-RED publica como site; tudo que está nela abre por http://IP:1880/"], ["Catálogo", "o arquivo catalogo_ferramentas_v0.7.js: a agenda com nome e versão de cada ferramenta"]]});
 </script>
 </body></html>
