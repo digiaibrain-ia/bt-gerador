@@ -50,3 +50,16 @@ Regra: o que está no PLC hoje é a verdade. Nada foi renumerado nesta etapa (re
 | `fc_vidaET_v0.1.scl` | `plc/comunicacao_et200/` | igual (roda no ET200, não na 1515) |
 
 Pendente de análise: nenhum dos cinco foi analisado nesta etapa, só conferido e guardado.
+
+## Lote de 02/11/2026 (2º lote, conferido)
+
+| Arquivo recebido | Onde está no repositório | Situação |
+|---|---|---|
+| `fb101_ComEt200_v0.6.scl` | `plc/arquivo/` | igual (versão antiga, guardada) |
+| `fb101_ComEt200_chamadas_v0.6.scl` | `plc/arquivo/` | igual (versão antiga, guardada) |
+| `db38_db39_ComEt200_v0.3.scl` | `plc/comunicacao_et200/` | igual |
+| `catalogo_dse_v0.1.py` | `catalogo/` | igual |
+| `RODIZIO_CHAVES_v0.1.md` | `docs/RODIZIO_CHAVES_v0.1.md` | novo (guardado agora) |
+
+Pendente de análise: nenhum destes foi analisado nesta etapa.
+Atenção: as chamadas v0.6 mapeiam DB155 → DB38 → db150 e DB163 → DB39 → db158. A v0.6 do FB101 comenta que o nome "BC400" da instância DB155 está trocado. Guardado para a análise, sem corrigir.
