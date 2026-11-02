@@ -75,3 +75,15 @@ Atenção: as chamadas v0.6 mapeiam DB155 → DB38 → db150 e DB163 → DB39 �
 | `PADRAO_OCORRENCIAS_ALERTAS_FALHAS_v1.1.md` | `docs/` | igual |
 
 Pendente de análise. Anotação para a análise: a regra de versão (v0.2) diz que o último número do medidor é contador de entrega; o padrão de ocorrências usa `T-AAA-NNN` na tela, e a chave interna continua `AAA-NNN`.
+
+## Lote de 02/11/2026 (4º lote, só documentos)
+
+| Arquivo recebido | Onde está no repositório | Situação |
+|---|---|---|
+| `MANUAL_GUIADO_v0.2.md` | `docs/MANUAL_GUIADO_v0.2.md` | novo (guardado) |
+| `GRAFICO_ENSAIO_v0.1.md` | `docs/GRAFICO_ENSAIO_v0.1.md` | novo (guardado) |
+| `ANALISADOR_GRAFICO_v0.1.md` | `docs/ANALISADOR_GRAFICO_v0.1.md` | novo (guardado) |
+| `LEIA-ME_CATALOGO_v0.1.md` | `catalogo/LEIA-ME_CATALOGO_v0.1.md` | igual |
+| `GERENCIADOR_REVISAO_PADRAO_v0.1.md` | `docs/GERENCIADOR_REVISAO_PADRAO_v0.1.md` | igual |
+
+Pendente de análise. Anotação: o MANUAL_GUIADO_v0.2 descreve o rodízio com critério fixo "ambos" e chaves só de 56/400; a versão atual já usa os 4 bancos. Guardado sem corrigir.
