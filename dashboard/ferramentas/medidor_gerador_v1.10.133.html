@@ -7011,7 +7011,7 @@ try{const dm=JSON.parse(localStorage.getItem('medidor.modeloEscolhido')||'null')
     const r=R.sugere(e);
     bancosAtivos().forEach(({b})=>{G.sel[b.id]=r.selecao[b.id].slice();G.sug[b.id]=r.selecao[b.id].slice()});
     G.msg=(r.aviso||'')+' Sugerido '+fmtKw(r.total)+' kW para o alvo de '+pt(alvoKw(),1)+' kW ('+pctAlvo()+' %).';
-    planoDe();desenha();
+    planoDe();desenha();pinta();   // v1.10.133: faltava pinta() aqui — a seleção era calculada (G.sel/G.sug) mas as chaves sugeridas não apareciam tracejadas no card Cargas até outra ação (zera/pat) chamar pinta()
   }
   /** v1.10.106: percentuais INTERMEDIÁRIOS entre a etapa anterior e a etapa atual (ex.: 30→50 de 5 em 5 → [35,40,45]). Vazio = sem sub-degraus.
    *  Só com o ensaio iniciado e só nas transições que existem em G.esc.trechos (de→ate); descidas nunca têm sub-degrau (aliviar carga é seguro). */
@@ -7210,7 +7210,7 @@ try{const dm=JSON.parse(localStorage.getItem('medidor.modeloEscolhido')||'null')
   }
   /** Resumo da sugestão por banco (as chaves em si aparecem tracejadas no card Cargas — sem lista duplicada aqui). */
   const resumo=()=>{const L=bancosAtivos().map(({b,bi})=>{const k=[];(G.sel[b.id]||[]).forEach((v,j)=>{if(v)k.push('#'+(j+1)+' ('+fmtKw(kwEf(off(bi)+j))+')')});return '<b>BC'+b.id+':</b> '+(k.length?k.join(', '):'nenhuma chave')});
-    return '<div class="gd-resumo">'+L.join('<br>')+'<div class="cat-i">As chaves sugeridas aparecem tracejadas (laranja) no card Cargas; o rodízio escolhe quais.</div></div>'};
+    return '<div class="gd-resumo">'+L.join('<br>')+' <span class="ibub" tabindex="0" data-tip="As chaves sugeridas aparecem tracejadas (laranja) no card Cargas; o rodízio escolhe quais.">i</span></div>'};
   /** Opções do Patamar SEM 0 % (v1.9.87): o roteiro só pede carga; o retorno sem carga é "Abrir TODAS as chaves".
       Se o ensaio estiver numa etapa de 0 % e "Seguir" marcado, essa etapa aparece desabilitada só para o seletor não ficar em branco. */
   /** v1.10.2: Patamar em botões de marcar (✓): só as %, sem 0 %. Nasce sem nenhum marcado; clicar no marcado desmarca. Com o ensaio iniciado acompanha a etapa (desabilitado). */
@@ -7461,7 +7461,8 @@ try{const dm=JSON.parse(localStorage.getItem('medidor.modeloEscolhido')||'null')
   const mg=$('mgCorpo');
   function injetaGuiado(){
     if(!mg)return;mg.querySelectorAll('[data-guicons]').forEach(x=>x.remove());const u=uso();if(!u.length)return;
-    mg.insertAdjacentHTML('afterbegin','<p class="jnota" data-guicons>Em uso como consulta: '+u.map(b=>'BC'+E(b.id)+' ('+window.fKwC(tot(b))+' kW)').join(', ')+'. Estes bancos não têm PLC/Node-RED e <b>não entram</b> nas sugestões nem nos comandos do Guiado.</p>');
+    /* v1.10.133: era um parágrafo inteiro sempre visível (poluía o topo do Patamar); virou uma linha curta com (i) — o texto completo só aparece ao tocar/passar o mouse no ícone. */
+    mg.insertAdjacentHTML('afterbegin','<p class="jnota" data-guicons>Só consulta (sem comando): '+u.map(b=>'BC'+E(b.id)).join(', ')+' <span class="ibub" tabindex="0" data-tip="'+esc('Em uso como consulta: '+u.map(b=>'BC'+E(b.id)+' ('+window.fKwC(tot(b))+' kW)').join(', ')+'. Estes bancos não têm PLC/Node-RED e não entram nas sugestões nem nos comandos do Guiado.')+'">i</span></p>');
   }
   if(mg){new MutationObserver(()=>{const tem=mg.querySelector('[data-guicons]');if(uso().length?!tem:!!tem)injetaGuiado()}).observe(mg,{childList:true});injetaGuiado()}
   document.addEventListener('bancosuso',()=>{dlgs.length&&document.querySelectorAll('[data-chtabs]').forEach(injetaAbas);injetaTroca();injetaGuiado()});
