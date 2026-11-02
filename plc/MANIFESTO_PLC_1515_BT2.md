@@ -63,3 +63,15 @@ Pendente de análise: nenhum dos cinco foi analisado nesta etapa, só conferido 
 
 Pendente de análise: nenhum destes foi analisado nesta etapa.
 Atenção: as chamadas v0.6 mapeiam DB155 → DB38 → db150 e DB163 → DB39 → db158. A v0.6 do FB101 comenta que o nome "BC400" da instância DB155 está trocado. Guardado para a análise, sem corrigir.
+
+## Lote de 02/11/2026 (3º lote, só documentos)
+
+| Arquivo recebido | Onde está no repositório | Situação |
+|---|---|---|
+| `REGRAS_NOMES_E_VERSOES_v0.2.md` | `docs/REGRAS_NOMES_E_VERSOES_v0.2.md` | novo (guardado) |
+| `REGRA_LAYOUT_ESTAVEL_v0.1.md` | `docs/REGRA_LAYOUT_ESTAVEL_v0.1.md` | novo (guardado) |
+| `MAPA_VERSOES_FUNCOES_v0.1.md` | `docs/MAPA_VERSOES_FUNCOES_v0.1.md` | novo (guardado) |
+| `PROPOSTA_ARQUITETURA_FB_MAE_FILHOS_v0.1.md` | `docs/` | igual |
+| `PADRAO_OCORRENCIAS_ALERTAS_FALHAS_v1.1.md` | `docs/` | igual |
+
+Pendente de análise. Anotação para a análise: a regra de versão (v0.2) diz que o último número do medidor é contador de entrega; o padrão de ocorrências usa `T-AAA-NNN` na tela, e a chave interna continua `AAA-NNN`.
