@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<!--
+  maquete_layout_v0.1.html — MAQUETE de layout da tela principal (01/11/2026)
+  O QUE É: ferramenta de rascunho, SEM lógica nenhuma de PLC/Node-RED/DSE — só blocos
+  retangulares com o nome de cada card, arrastáveis pela barra de título e
+  redimensionáveis pelo canto inferior direito (resize:both do navegador).
+  PARA QUE SERVE: testar arranjos de layout da tela principal (medidor_gerador)
+  sem risco de quebrar o HTML real. Arraste/redimensione, tire um print e
+  mande para o Claude aplicar no HTML de produção.
+  LAYOUT INICIAL: já vem com a sugestão discutida em 01/11/2026 — o card
+  "Patamar (Manual Guiado)" empilhado ACIMA do card "Cargas · Banco de Carga",
+  pois o Patamar sugere diretamente as chaves desse card.
+  NÃO FAZ: não lê PLC, não fala com Node-RED, não tem nenhum dado real.
+  Tamanho da área de trabalho = 1536×694 px (viewport do notebook informado
+  em CONTEXTO_MEDIDOR_GERADOR.md), mas pode redimensionar a janela do navegador.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquete de layout — tela principal</title>
+<style>
+  :root{
+    --bg:#0f1720; --area:#17202b; --card:#1f2a37; --line:#3a4654;
+    --txt:#e8edf2; --sub:#9aa6b5; --acento:#e08a00;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,sans-serif}
+  header{padding:10px 16px;background:#0a1017;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{font-size:15px;margin:0;font-weight:700}
+  header .dica{color:var(--sub);font-size:12px}
+  header button{font:inherit;padding:6px 12px;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:6px;cursor:pointer}
+  header button:hover{background:#28333f}
+  #area{position:relative;margin:16px;width:1536px;max-width:calc(100vw - 32px);height:694px;background:var(--area);
+        border:1px dashed var(--line);border-radius:10px;overflow:auto}
+  .blk{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:8px;
+       min-width:140px;min-height:80px;resize:both;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .blk .bt{background:#28333f;padding:6px 10px;font-weight:700;font-size:12px;cursor:move;
+          border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;
+          user-select:none;border-radius:8px 8px 0 0}
+  .blk .bt small{color:var(--sub);font-weight:400}
+  .blk .bd{padding:10px;color:var(--sub);font-size:12px}
+  .blk.patamar{border-color:var(--acento)}
+  .blk.patamar .bt{background:#3a2a10;color:var(--acento)}
+  .medidas{position:absolute;right:6px;bottom:4px;font-size:10px;color:var(--sub);pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Maquete de layout — tela principal</h1>
+  <span class="dica">Arraste pela barra de título · redimensione pelo canto inferior direito · depois tire o print</span>
+  <button id="bReset" type="button">↺ Voltar ao layout sugerido</button>
+</header>
+
+<div id="area"></div>
+
+<script>
+'use strict';
+/* Blocos iniciais: layout sugerido em 01/11/2026 — 3 colunas, Patamar empilhado
+   acima do card Cargas·Banco de Carga (coluna 3). Ajuste os valores de
+   x,y,w,h abaixo se quiser mudar o ponto de partida sem usar o mouse. */
+const BLOCOS = [
+  {id:'etapas',   nome:'Etapas do ensaio',          x:16,  y:16,  w:360, h:280},
+  {id:'grafico',  nome:'Gráfico',                    x:16,  y:312, w:360, h:366},
+  {id:'grandezas',nome:'Leitura das grandezas',      x:396, y:16,  w:380, h:662},
+  {id:'patamar',  nome:'Patamar (Manual Guiado)',     x:796, y:16,  w:380, h:140, cls:'patamar'},
+  {id:'cargas',   nome:'Cargas · Banco de Carga',    x:796, y:164, w:380, h:360},
+  {id:'registro', nome:'Registro do ensaio',          x:796, y:532, w:380, h:146},
+];
+
+const area = document.getElementById('area');
+
+function medidas(b){
+  return Math.round(b.offsetWidth)+'×'+Math.round(b.offsetHeight)+'px';
+}
+
+function criaBloco(def){
+  const b = document.createElement('div');
+  b.className = 'blk' + (def.cls ? ' '+def.cls : '');
+  b.id = 'blk-'+def.id;
+  b.style.left = def.x+'px'; b.style.top = def.y+'px';
+  b.style.width = def.w+'px'; b.style.height = def.h+'px';
+  b.innerHTML = '<div class="bt">'+def.nome+' <small>#'+def.id+'</small></div>'+
+                '<div class="bd">bloco de representação — sem dados reais</div>'+
+                '<div class="medidas"></div>';
+  area.appendChild(b);
+
+  const bt = b.querySelector('.bt');
+  const med = b.querySelector('.medidas');
+  const atualizaMedidas = () => { med.textContent = medidas(b); };
+  atualizaMedidas();
+  new ResizeObserver(atualizaMedidas).observe(b);
+
+  // arrastar pela barra de título (pointer events, sem libs externas)
+  let ax=0, ay=0, bx=0, by=0, arrastando=false;
+  bt.addEventListener('pointerdown', e=>{
+    arrastando = true;
+    ax = e.clientX; ay = e.clientY;
+    bx = b.offsetLeft; by = b.offsetTop;
+    b.style.zIndex = ++zTopo;
+    bt.setPointerCapture(e.pointerId);
+  });
+  bt.addEventListener('pointermove', e=>{
+    if(!arrastando) return;
+    const nx = Math.max(0, bx + (e.clientX-ax));
+    const ny = Math.max(0, by + (e.clientY-ay));
+    b.style.left = nx+'px'; b.style.top = ny+'px';
+  });
+  bt.addEventListener('pointerup', ()=>{ arrastando=false; });
+  bt.addEventListener('pointercancel', ()=>{ arrastando=false; });
+  return b;
+}
+let zTopo = 1;
+
+function monta(){
+  area.innerHTML = '';
+  BLOCOS.forEach(criaBloco);
+}
+monta();
+document.getElementById('bReset').addEventListener('click', monta);
+</script>
+</body>
+</html>
