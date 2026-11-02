@@ -87,3 +87,15 @@ Pendente de análise. Anotação para a análise: a regra de versão (v0.2) diz 
 | `GERENCIADOR_REVISAO_PADRAO_v0.1.md` | `docs/GERENCIADOR_REVISAO_PADRAO_v0.1.md` | igual |
 
 Pendente de análise. Anotação: o MANUAL_GUIADO_v0.2 descreve o rodízio com critério fixo "ambos" e chaves só de 56/400; a versão atual já usa os 4 bancos. Guardado sem corrigir.
+
+## Lote de 02/11/2026 (5º lote, conferido)
+
+| Arquivo recebido | Onde está no repositório | Situação |
+|---|---|---|
+| `exemplo_chamada_fb100_v0.3.scl` | `plc/bancos_cargas/` | igual |
+| `fb100_setupChaves_v0.3.scl` | `plc/bancos_cargas/` | igual |
+| `fb_watchdogComEt200_RASCUNHO_v0.1.scl` | `plc/comunicacao_et200/` | igual |
+| `fb101_ComEt200_v0.4.scl` | `plc/arquivo/` | novo (versão antiga, guardada) |
+| `fb101_ComEt200_chamadas_v0.4.scl` | `plc/arquivo/` | novo (versão antiga, guardada) |
+
+Pendente de análise. Anotação: a v0.4 do FB101 chama o remoto ET200 de DB38/DB39 e a instância de DB155 (BC56) e DB163 (BC400). A v0.6 corrige o mapeamento para db150/db158 (ver lote anterior).
