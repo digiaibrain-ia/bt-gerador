@@ -12,7 +12,7 @@ Regra: o que está no PLC hoje é a verdade. Nada foi renumerado nesta etapa (re
 | FB100 fb100_setupChaves | FB | `plc/bancos_cargas/fb100_setupChaves_v0.3.scl` + `exemplo_chamada_fb100_v0.3.scl` | OK (v0.3) |
 | FB101 fb101_ComEt200 | FB | `plc/comunicacao_et200/fb101_ComEt200_v0.7.scl` + `fb101_ComEt200_chamadas_v0.7.scl` | OK (v0.7) |
 | DB20 db20_exemploStruct | DB | (nenhuma; citado como padrão nos cabeçalhos) | FALTA exportar (só exemplo) |
-| DB52 db52_BancoTeste2_DSE | DB | `plc/bancos_cargas/` (ver nota) | CONFERIR (o arquivo db52 está só no TIA) |
+| DB52 db52_BancoTeste2_DSE | DB | (nenhuma; só os endereços em `plc/variaveis/s7endpoint_PLC_1515F_DB52.csv`) | FALTA exportar `db52_BancoTeste2_DSE.db` |
 | DB53 db53_BancoTeste2_SNAP_MANUAL | DB | `plc/bancos_cargas/db53_BancoTeste2_SNAP_MANUAL-v0.1.db` | OK (v0.1) |
 | DB150 db150_BC56_Chaves | DB | `plc/bancos_cargas/db150_BC56_Chaves_v0.3.db` | OK (v0.3) |
 | DB152 db152_BC56_SetupPorTensao | DB | `plc/bancos_cargas/db152_BC56_SetupPorTensao_v0.2.db` | OK (v0.2) |
@@ -35,6 +35,6 @@ Regra: o que está no PLC hoje é a verdade. Nada foi renumerado nesta etapa (re
 
 ## Pendências para a migração
 
-1. Exportar do TIA como fonte externa: OB1, FC100, DB52 (conferir versão do repositório) e DB20.
+1. Exportar do TIA como fonte externa: OB1, FC100, DB52 (`db52_BancoTeste2_DSE.db`, já existe no TIA como fonte externa) e DB20.
 2. Definir a ordem: BT2 primeiro, depois BT1 (decisão de 01/11/2026).
 3. Renumerar para as faixas v4 só depois de fechar o inventário acima.
