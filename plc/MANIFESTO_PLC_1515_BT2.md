@@ -38,3 +38,15 @@ Regra: o que está no PLC hoje é a verdade. Nada foi renumerado nesta etapa (re
 1. Exportar do TIA como fonte externa: OB1, FC100, DB52 (`db52_BancoTeste2_DSE.db`, já existe no TIA como fonte externa) e DB20.
 2. Definir a ordem: BT2 primeiro, depois BT1 (decisão de 01/11/2026).
 3. Renumerar para as faixas v4 só depois de fechar o inventário acima.
+
+## Lote de 02/11/2026 (conferido, já no repositório)
+
+| Arquivo recebido | Onde está no repositório | Situação |
+|---|---|---|
+| `grafico_ensaio_v0.10.html` | `dashboard/ferramentas/` | igual |
+| `gerenciador_logs_v1.6.html` | `dashboard/ferramentas/` | igual |
+| `api_cards_visor_v0.3.html` | `dashboard/ferramentas/` | igual |
+| `amostras_simulador_v0.6.html` | `dashboard/ferramentas/` | igual |
+| `fc_vidaET_v0.1.scl` | `plc/comunicacao_et200/` | igual (roda no ET200, não na 1515) |
+
+Pendente de análise: nenhum dos cinco foi analisado nesta etapa, só conferido e guardado.
