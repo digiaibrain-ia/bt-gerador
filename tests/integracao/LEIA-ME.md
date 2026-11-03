@@ -27,7 +27,7 @@ Um arquivo so:
 | `f9_simulador_bancada.test.js` | simulador de bancada (sem DSE real) |
 | `f10_contrato_html_rotas.test.js` | toda rota que o HTML chama existe num fluxo |
 
-F11 (front real com Playwright) **nao esta** nesta suite ainda.
+| `f11_front_contra_back.test.js` | o medidor real (Chromium) contra o Node-RED de teste: chip do PLC, estado das chaves na tela, comando de ligar o banco, queda do PLC (503) com aviso, recuperacao. O navegador so acessa o Node-RED de teste; o resto e bloqueado |
 
 ## Trava de seguranca (4 camadas, `trava_producao.js`)
 1. Configuracao so aceita localhost/127.0.0.1; IPs reais do projeto sao recusados.
@@ -36,7 +36,7 @@ F11 (front real com Playwright) **nao esta** nesta suite ainda.
 4. Recusa `NODE_ENV=production` e roda so com `BT2_AMBIENTE_TESTE=local` (o `npm test` faz isso).
 
 ## Achados pendentes
-Testes marcados `todo` mostram o comportamento esperado e falham de proposito: **F4-2, F4-1, F2-1**. Estao em `BACKLOG_FORA_DE_ESCOPO.md`.
+Testes marcados `todo` mostram o comportamento esperado e falham de proposito: **F4-2, F4-1, F2-1**. O F11 registra (sem falhar) o endereco real que o navegador tentou acessar: **F2-3**. Estao em `BACKLOG_FORA_DE_ESCOPO.md`.
 
 ## Arquivos que nao vao ao Git
 `tests/integracao/runtime/` (instalacao do Node-RED e pasta temporaria de cada execucao).

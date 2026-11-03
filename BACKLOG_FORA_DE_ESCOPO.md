@@ -11,6 +11,12 @@ Achados que os testes da Fase 1 revelaram aparecem como testes **pendentes** (`t
 | F4-1 | Média | mesma rota | A validação aceita dado de até **5 s** de idade (DB3002), enquanto o `GET` já recusa com **2,5 s**. Entre 2,5 e 5 s o POST tenta escrever sem PLC. | Recusar com 503 antes de escrever, com a mesma regra de idade do `GET`. | `f4_setup_tensao.test.js` (ACHADO F4-1) |
 | F2-1 | Baixa | `http in` de todas as rotas de chaves | JSON malformado no corpo volta como **500** ("Internal Server Error"): erro do cliente tratado como erro do servidor. | 400. | `f2_comando_chaves.test.js` (ACHADO F2-1) |
 
+## Achados do F11 (para a Fase 2)
+
+| ID | Gravidade | Onde | Observação |
+|---|---|---|---|
+| F2-3 | Média | `medidor_gerador_v1.10.166.html` | O HTML traz **fixo o endereco real do DSE** (`172.17.210.156:1880`) e tenta falar com ele a cada consulta. Durante o teste o navegador foi bloqueado (a trava funcionou), mas o cliente conhece um endereco de producao. Tema da Fase 2 (nunca confiar no cliente). |
+
 ## Outros achados (anotados, sem teste ainda)
 
 | ID | Gravidade | Onde | Observação |

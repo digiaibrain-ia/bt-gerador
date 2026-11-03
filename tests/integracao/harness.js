@@ -13,7 +13,7 @@ const FLUXOS = path.join(__dirname, '..', '..', 'nodered', 'flows', 'bt2');
 const RED = require(path.join(RUNTIME, 'node_modules', 'node-red'));
 const express = require(path.join(RUNTIME, 'node_modules', 'express'));
 
-async function sobe({ fluxos, plc = new PlcSimulado(), env = {}, envAbas = {} } = {}) {
+async function sobe({ fluxos, plc = new PlcSimulado(), env = {}, envAbas = {}, servirHtml = false } = {}) {
   verificaAmbiente(Object.assign({}, process.env, env), {});
   instalaGuardaRede();
   Object.assign(process.env, env);                       // ex.: WD_HTML_S reduzido nos testes do vigia
@@ -42,6 +42,8 @@ async function sobe({ fluxos, plc = new PlcSimulado(), env = {}, envAbas = {} } 
     telemetryEnabled: false, editorTheme: { projects: { enabled: false } }, logging: { console: { level: process.env.BT2_LOG_NIVEL || 'error', metrics: false, audit: false } },
   };
   RED.init(server, settings);
+  // (opcional, so para o F11) serve o HTML do medidor a partir da copia de DISCO do repositorio, na mesma origem do Node-RED de teste
+  if (servirHtml) app.use('/html', express.static(path.join(__dirname, '..', '..', 'dashboard', 'ferramentas'), { index: false }));
   app.use(settings.httpNodeRoot, RED.httpNode);
   await RED.start();
   server.listen(0, '127.0.0.1');
