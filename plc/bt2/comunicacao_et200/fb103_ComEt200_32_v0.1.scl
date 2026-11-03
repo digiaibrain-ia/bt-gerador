@@ -10,7 +10,7 @@ VERSION : 0.1
 //// TELEGRAMA : PUT 8 bytes = cmd[1..32] (DBX0.0..3.7) + vida1515 (DBW4) + ligarBanco (DBX6.0) + reserva (DBB7).
 ////             GET 8 bytes = fbk[1..32] (DBX8.0..11.7) + vidaET (DBW12) + seletoraAuto (DBX14.0) + reserva (DBB15).
 ////             Total 16 bytes no remoto (era 12). RemotoCmd = P#DBn.DBX0.0 BYTE 8; RemotoFb = P#DBn.DBX8.0 BYTE 8.
-//// INSTANCIAS: db3205i_BC595_ComEt200 -> remoto DB40 "ComBC595"; db3305i_BC550_ComEt200 -> remoto DB41 "ComBC550"
+//// INSTANCIAS: db3205i_BC595_ComEt200 -> remoto DB40 "ComBC595" (so o BC59,5, 18 chaves). Bancos ate 16 chaves usam o FB101. Ver chamadas_BC595_v0.2.scl.
 ////             (numeros dos remotos = sugestao, confirmar no projeto do ET200). Ver chamadas v0.1.
 //// ET200     : exige novos DBs remotos (db40_db41_ComEt200_32_v0.1.scl) e o FC4 do ET200 estendido para 32 bits
 ////             de comando/feedback por banco (feito pelo operador no TIA do ET200).
