@@ -1,5 +1,5 @@
 'use strict';
-// F11 - Front REAL (medidor_gerador_v1.10.166.html, no Chromium/Playwright) operando contra o Node-RED local de teste e o PLC simulado.
+// F11 - Front REAL (medidor_gerador_v1.10.167.html, no Chromium/Playwright) operando contra o Node-RED local de teste e o PLC simulado.
 // O navegador so fala com o Node-RED de teste: qualquer outro endereco e BLOQUEADO (inclusive o DSE real fixo no HTML).
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
@@ -23,7 +23,7 @@ describe('F11 front real contra o Node-RED de teste', () => {
       if (u.startsWith(h.url)) return r.continue();
       bloqueados.push(u); return r.abort();                 // trava no navegador: so o Node-RED de teste
     });
-    await p.goto(h.url + '/html/medidor_gerador_v1.10.166.html');
+    await p.goto(h.url + '/html/medidor_gerador_v1.10.167.html');
     assert.ok(await esperaAte(async () => (await txt('#lkPlc') || '').includes('leitura ok'), 12000), 'o chip do PLC nunca mostrou "leitura ok"');
   });
   after(async () => { if (b) await b.close(); if (h) await h.para(); });
@@ -67,10 +67,12 @@ describe('F11 front real contra o Node-RED de teste', () => {
     assert.ok(await esperaAte(async () => (await txt('#lkPlc') || '').includes('leitura ok'), 12000), 'a tela nao se recuperou: ' + await txt('#lkPlc'));
   });
 
-  test('informativo: o navegador tentou falar com enderecos fora do Node-RED de teste (bloqueados)', () => {
+  test('o navegador so fala com o Node-RED de teste (IP de rede fixo nao pode aparecer)', () => {
     // achado para a Fase 2 (cliente com endereco real fixo): nao falha o teste, so registra
     const reais = [...new Set(bloqueados.map(u => { try { return new URL(u).host; } catch (x) { return u; } }))];
     console.log('     bloqueados pelo teste (' + bloqueados.length + '): ' + reais.join(', '));
     assert.ok(bloqueados.every(u => !u.startsWith('http://127.0.0.1')), 'o teste bloqueou um endereco local por engano');
+    // S1 (Fase 2): a tela nao pode mais tentar falar com IP de rede fixo (o DSE vem da propria origem)
+    assert.equal(bloqueados.filter(u => /172\.17\./.test(u)).length, 0, 'a tela ainda tenta falar com IP de rede fixo');
   });
 });

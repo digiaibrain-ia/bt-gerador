@@ -15,7 +15,7 @@ Achados que os testes da Fase 1 revelaram aparecem como testes **pendentes** (`t
 
 | ID | Gravidade | Onde | Observação |
 |---|---|---|---|
-| F2-3 | Média | `medidor_gerador_v1.10.166.html` | O HTML traz **fixo o endereco real do DSE** (`172.17.210.156:1880`) e tenta falar com ele a cada consulta. Durante o teste o navegador foi bloqueado (a trava funcionou), mas o cliente conhece um endereco de producao. Tema da Fase 2 (nunca confiar no cliente). |
+| F2-3 | ~~Média~~ **resolvido no Portão 1 (medidor 1.10.167)** | `medidor_gerador_v1.10.166.html` (antes) | O HTML traz **fixo o endereco real do DSE** (`172.17.210.156:1880`) e tenta falar com ele a cada consulta. Durante o teste o navegador foi bloqueado (a trava funcionou), mas o cliente conhece um endereco de producao. Tema da Fase 2 (nunca confiar no cliente). |
 
 ## Outros achados (anotados, sem teste ainda)
 
