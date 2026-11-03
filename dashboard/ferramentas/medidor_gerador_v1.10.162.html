@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="1.10.161">
+<meta name="app-version" content="1.10.162">
 <title>Medidor do Gerador</title>
 <style>
   /* v1.9.88: TOKENS DE COR DA INTERFACE (um lugar só). POR QUÊ: verde/vermelho/amarelo são SINAL (ligado, falha, alerta) e não podem ser usados como cor de enfeite;
@@ -3692,8 +3692,11 @@ document.querySelectorAll('dialog.jan').forEach(d=>{
 /* ===== CONTROLE DE VERSÃO =====
    A cada alteração: aumente VERSAO (maior.menor.correção), troque VERSAO_DATA,
    acrescente um item NO TOPO de HISTORICO e atualize <meta name="app-version"> no <head>. */
-const VERSAO='1.10.161', VERSAO_DATA='03/11/2026';
+const VERSAO='1.10.162', VERSAO_DATA='03/11/2026';
 const HISTORICO=[
+  {v:"1.10.162",d:"03/11/2026",i:[
+    'CORRIGIDO no resumo do Registro de aprendizado: o \"maior excesso sobre o alvo\" de uma etapa que DESCE (ex.: 0 % final depois de 107 %) mostrava ~106 pt porque contava as amostras ainda em \"estabilizando\" com a carga da etapa anterior. Agora, em etapa que desce, só conta o trecho \"contando\"; em etapa que sobe continua contando tudo (overshoot real). Achado nos seus logs de 03/11.'
+  ]},
   {v:"1.10.161",d:"03/11/2026",i:[
     'CORRIGIDO no celular: o popup \"Resultado do ensaio · confira antes de gravar\" (e qualquer janela com etiqueta no cabeçalho) abria sem o ✕ de fechar, que ficava fora da tela (a etiqueta \"Nº série · versão\" deixava o cabeçalho mais largo que a janela). Agora a etiqueta encolhe com reticências e o ✕ fica sempre visível. Medido a 390 px: ✕ de x=409 (fora) para dentro da tela.'
   ]},
@@ -8399,9 +8402,12 @@ function rgResumoSessao(s){
       const ct=r.filter(a=>a[8]==='contando'),es=r.filter(a=>a[8]==='estabilizando');
       const base=ct.length?ct:r,cs=base.map(a=>a[10]);
       const fin=r.slice(-10);
+      // v1.10.162: "maior excesso sobre o alvo". Etapa que SOBE: vale tudo (ultrapassar o alvo durante a subida é overshoot de verdade). Etapa que DESCE
+      // (ex.: 107 % -> 0 %): as amostras de "estabilizando" ainda trazem a carga da etapa anterior e não são excesso — antes davam 106 pt em etapa de 0 %.
+      const rAnt=rows.find(a=>a[5]===n-1),desce=!!rAnt&&rAnt[6]>alvo,baseEx=(desce&&ct.length)?ct:r;
       L.push('   Etapa '+n+' (alvo '+alvo+'%): relógio '+rgMS(t0)+' a '+rgMS(tf)+', entrou na faixa após '+(na?rgMS(na[2]-t0):'nunca')+
         ', contando '+rgMS(ct.length)+', estabilizando '+rgMS(es.length));
-      L.push('     carga média '+rgF(rgMedia(cs),2,'%')+' (mín '+rgF(Math.min(...cs),2)+', máx '+rgF(Math.max(...cs),2)+', desvio '+rgF(rgDesvio(cs),2)+'), maior excesso sobre o alvo '+rgF(Math.max(...r.map(a=>a[10]))-alvo,2,' pt'));
+      L.push('     carga média '+rgF(rgMedia(cs),2,'%')+' (mín '+rgF(Math.min(...cs),2)+', máx '+rgF(Math.max(...cs),2)+', desvio '+rgF(rgDesvio(cs),2)+'), maior excesso sobre o alvo '+rgF(Math.max(...baseEx.map(a=>a[10]))-alvo,2,' pt'));
       L.push('     fim da etapa: '+rgF(rgMedia(fin.map(a=>a[11])),1,' kW')+', tensão média '+rgF(rgMedia(fin.flatMap(a=>[a[12],a[13],a[14]])),1,' V')+', corrente média '+rgF(rgMedia(fin.flatMap(a=>[a[15],a[16],a[17]])),0,' A')+
         ', água '+rgF(rgMedia(fin.map(a=>a[18])),1,' °C')+', rpm '+rgF(rgMedia(fin.map(a=>a[19])),0)+', freq '+rgF(rgMedia(fin.map(a=>a[21])),2,' Hz')+', fp '+rgF(rgMedia(fin.map(a=>a[24])),2));
     });
