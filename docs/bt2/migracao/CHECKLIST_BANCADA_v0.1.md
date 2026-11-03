@@ -1,8 +1,17 @@
 # Checklist de validacao de bancada (PC BT2 / TI) - v0.1
 
 Complementa o `IMPLANTACAO_ROTEIRO_v0.5.md`. **Nada deste checklist foi possivel verificar no repositorio** (PLC simulado). Preencha a coluna "Resultado" e devolva o documento.
-Regras: executar **em bancada** (PLC de teste ou carga desacoplada; confirmar com o procedimento de seguranca do local antes de energizar qualquer carga); **nunca** importar o simulador no PC de producao; ao menor comportamento inesperado, voltar a versao anterior (secao 9).
-Dados da execucao: data ____ / responsavel ____ / versao do Node-RED ____ / versao do `node-red-contrib-s7` ____ / commit do pacote: `51481df` / medidor `1.10.167`.
+**Execucao conjunta (decisao do projeto):** a **Engenharia de Automacao** conduz as validacoes funcionais (tempos, regras de negocio, comportamento de seguranca no Node-RED e no PLC) e a **TI** conduz e valida a infraestrutura do PC BT2 (variaveis do PM2, `settings.js`/`adminAuth`, rede e origem). Cada bloco abaixo indica o lider.
+**Ambiente:** o proprio **PC BT2 fisico**, com a **carga de potencia DESACOPLADA** (disjuntores/contatores de potencia abertos e sinalizacao de seguranca ativa). Confirmar tambem o procedimento de seguranca do local.
+Regras: **nunca** importar o simulador no PC de producao; ao menor comportamento inesperado, voltar a versao anterior (secao 9). Como a carga esta desacoplada, bits de **retorno** (`Ligada`/`sb`) vindos de contatores/ET200 podem nao reagir como em operacao: **anotar** quando um item depender disso, sem forcar o equipamento.
+Dados da execucao: data ____ / Engenharia (nome) ____ / TI (nome) ____ / versao do Node-RED ____ / versao do `node-red-contrib-s7` ____ / commit do pacote: `51481df` / medidor `1.10.167`.
+
+| Bloco | Lider | Apoio |
+|---|---|---|
+| 0 (pre-condicoes) e 1 (importacao) | TI | Engenharia confere os `GET` |
+| 2 (medicoes), 3 (driver S7), 5 (comportamento), 6 (falhas), 7 (soak) | Engenharia | TI acompanha rede/logs |
+| 4 (protecao no PLC/TIA) | Engenharia (responsavel pelo PLC) | - |
+| 8 (go/no-go) e 9 (voltar atras) | decisao conjunta; execucao do rollback pela TI | |
 
 ## 0. Pre-condicoes (todas obrigatorias)
 | # | Item | Resultado |
@@ -13,6 +22,9 @@ Dados da execucao: data ____ / responsavel ____ / versao do Node-RED ____ / vers
 | 0.4 | `adminAuth` ativo no `settings.js` (login do editor) e porta do Node-RED acessivel so pela rede da planta | |
 | 0.5 | **Nao existe** a aba "Simulador DSE (Demo)" no editor | |
 | 0.6 | Anotadas as variaveis atuais de cada aba (`WD_HTML_S` etc.) | |
+| 0.7 | **Carga de potencia DESACOPLADA**: disjuntores/contatores de potencia abertos, sinalizacao de seguranca ativa; conferido por (nome) ____ antes de qualquer comando | |
+| 0.8 | Papeis combinados: lider da Engenharia ____ e lider da TI ____; quem pode interromper o teste (qualquer um dos dois) | |
+| 0.9 | Estado seguro conhecido: sabem como colocar o banco em "desligado" fora do Node-RED (comando local/seletora em Manual) | |
 
 ## 1. Importacao (uma aba por vez; Deploy e conferencia antes da proxima)
 | # | Aba | Conferencia apos o Deploy | Resultado |

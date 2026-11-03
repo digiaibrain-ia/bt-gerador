@@ -24,7 +24,7 @@
 1. **Variaveis do processo (PM2):** `PLC_IP`, `DSE_URL`. Sem elas os enderecos ficam `${PLC_IP}` (falha segura: nao conecta).
 2. **Seguranca do Node-RED:** `adminAuth` no `settings.js`; porta acessivel so pela rede da planta; (opcional) HTTPS. A guarda de Origin **nao substitui login** e DNS rebinding passa nela (rede/nome sao da TI).
 3. **Confirmar versao do Node-RED e do `node-red-contrib-s7`** do PC (a suite rodou no Node-RED 5.0.9).
-4. **Executar o `CHECKLIST_BANCADA_v0.1.md`** e devolver preenchido; ajustar `CONF_JANELA_MS` (BC595) se o item 2.1 pedir.
+4. **Executar o `CHECKLIST_BANCADA_v0.1.md` em conjunto com a Engenharia de Automacao**, no **PC BT2 fisico com a carga de potencia DESACOPLADA**, e devolver preenchido; ajustar `CONF_JANELA_MS` (BC595) se o item 2.1 pedir. A TI lidera os blocos 0 e 1 (infraestrutura) e acompanha os demais.
 5. Importar **uma aba por vez**, conferindo o `GET` de cada rota; manter os arquivos antigos para voltar atras.
 
 ## 4. Mudancas visiveis de comportamento (para o suporte)
