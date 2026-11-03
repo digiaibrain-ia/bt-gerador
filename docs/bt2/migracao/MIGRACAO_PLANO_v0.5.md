@@ -30,3 +30,10 @@ Compilação no TIA; PLC e ET200 reais; Node-RED real; FC4 do ET200 (fonte não 
 ## Limites conhecidos
 - Registro de logs de desenvolvedor (`sel56`, `lig56`, `b56`…) ainda usa nomes fixos para BC56/BC400; não afeta a operação.
 - O HTML continua dizendo "DB150" em textos antigos do histórico (só texto).
+
+## Complemento (03/11/2026, 2ª rodada)
+- Lado ET200 escrito (rascunho): `fb_bancoEt200_16/32`, `fc_bancosNovosEt200`, `tags_ET200_bancos_v0.1.csv` (endereços físicos a preencher). FC4 atual intocado.
+- 1515: `fc_chamadasBancos_BT2_v0.1.scl` reúne as chamadas dos 4 bancos; o OB1 só chama o FC.
+- Conexão S7 única para os 4 bancos: decisão do operador.
+- Medidor 1.10.157: log de desenvolvedor cobre os 4 bancos. Pacote `bt2-1.10.157` (substitui o 1.10.156, que nunca foi instalado).
+- Fluxo `dev-logs-api-v1.1` (DB2100).

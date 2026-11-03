@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="1.10.156">
+<meta name="app-version" content="1.10.157">
 <title>Medidor do Gerador</title>
 <style>
   /* v1.9.88: TOKENS DE COR DA INTERFACE (um lugar só). POR QUÊ: verde/vermelho/amarelo são SINAL (ligado, falha, alerta) e não podem ser usados como cor de enfeite;
@@ -3636,8 +3636,11 @@ document.querySelectorAll('dialog.jan').forEach(d=>{
 /* ===== CONTROLE DE VERSÃO =====
    A cada alteração: aumente VERSAO (maior.menor.correção), troque VERSAO_DATA,
    acrescente um item NO TOPO de HISTORICO e atualize <meta name="app-version"> no <head>. */
-const VERSAO='1.10.156', VERSAO_DATA='03/11/2026';
+const VERSAO='1.10.157', VERSAO_DATA='03/11/2026';
 const HISTORICO=[
+  {v:"1.10.157",d:"03/11/2026",i:[
+    'Log de desenvolvedor (observabilidade) agora cobre TODOS os bancos: seletora (selXXX), "Ligar banco" (ligXXX) e comunicação (com.bXXX) de BC56, BC400, BC59,5 (595) e BC550 (550). Os nomes de BC56 e BC400 não mudam (sel56, lig400…).'
+  ]},
   {v:"1.10.156",d:"03/11/2026",i:[
     'MIGRAÇÃO BT2: tirados os literais \'56\'/\'400\' do código — DB de cada banco (agora numeração v4: BC56=DB3000, BC400=DB3100, BC59,5=DB3200, BC550=DB3300; DB por tensão = +2), botões da janela de Logs, soma de acionamentos (rodízio) e a lista "Cards x flow" saem da tabela BANCOS. Um 5º banco vira só uma linha em BANCOS.',
     'NOVO — chave "BC59,5 e BC550 já estão no PLC" em Detalhes › Ajustes (ou abrindo a página com ?novos=1 / ?novos=0). Desligada (padrão) = como antes (bancos novos só no Demo local). Ligada = tiram o semPlc: polling, leitura e comando como BC56/BC400, usando as rotas /api/chaves/595 e /550 dos fluxos chaves-595 e chaves-550. Ligar SÓ depois de importar os blocos no PLC e os fluxos no Node-RED.'
@@ -8697,12 +8700,12 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
     if(T.started)ens=!T.fim?(T.run?'rodando':'armado'):(T.gravado?'finalizado+gravado':'finalizado');
     const tl=cl=>[...document.querySelectorAll('#bancos .tile[data-i]')].filter(t=>t.classList.contains(cl)).map(t=>+t.dataset.i);
     let setup=null;try{if(typeof window.chSetupSel==='function')setup=window.chSetupSel()}catch(e){}
-    const com={dse:null,b56:null,b400:null};
-    try{com.dse=!!LINK.dse.ok;if(srvUsaPlc()){com.b56=!!LINK.bancoOk('56');com.b400=!!LINK.bancoOk('400')}}catch(e){}
+    const com=Object.assign({dse:null},Object.fromEntries(BANCOS_PLC.map(b=>['b'+rotaDe(b.id),null])));   // v1.10.157: um por banco no PLC
+    try{com.dse=!!LINK.dse.ok;if(srvUsaPlc())BANCOS_PLC.forEach(b=>{com['b'+rotaDe(b.id)]=!!LINK.bancoOk(b.id)})}catch(e){}
     const ch=tl('s1'),cmd=tl('cmd');
     return{modo:srvChave(),gen:demo?SIM.gen:GEN.estado,sim:demo?(auto?'AUTO':'MANUAL'):null,ens,et:T.started?T.et:null,
       ch,cmd,chL:chL(ch),cmdL:chL(cmd), // v1.9.74: chL/cmdL = o mesmo conteúdo em texto "BC56 1,2 · BC400 1" (banco + posição no banco)
-      sel56:BKS['56'].sel,lig56:BKS['56'].lig,sel400:BKS['400'].sel,lig400:BKS['400'].lig, // v1.9.74: seletora/“Ligar banco” (v1.9.77: no PLC vêm do flow v2.4)
+      ...Object.fromEntries(BANCOS.flatMap(b=>[['sel'+rotaDe(b.id),BKS[b.id].sel],['lig'+rotaDe(b.id),BKS[b.id].lig]])), // v1.9.74: seletora/“Ligar banco” (v1.9.77: no PLC vêm do flow v2.4)
       setup,pop:[...document.querySelectorAll('dialog[open]')].map(d=>d.id).filter(Boolean),com};
   }
   const snapSafe=()=>{try{return snap()}catch(e){return null}};
@@ -8730,8 +8733,10 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
   window.addEventListener('message',m=>{const d=m&&m.data;if(!d||d.k!=='pede'||!obsWin||m.source!==obsWin)return;OUV.add(obsWin);responde(obsWin)}); // só responde à janela que ESTE botão abriu
 
   /* ---- transições de estado (varre a cada 300 ms; não depende de cada handler) ---- */
-  const ROT={modo:'modo',gen:'gerador',sim:'simulação',ens:'ensaio',et:'etapa',setup:'chave no Setup',ch:'chaves ligadas (verde)',cmd:'chaves comandadas (laranja)',sel56:'seletora BC56',lig56:'BC56 ligado (cbBanco.ligar)',sel400:'seletora BC400',lig400:'BC400 ligado (cbBanco.ligar)','com.dse':'comunicação DSE','com.b56':'comunicação BC56','com.b400':'comunicação BC400'};
-  const CARDC={modo:'DEV.DEM',gen:'app',sim:'app',ens:'ens',et:'ens',setup:'bco.SU',ch:'bco',cmd:'bco',sel56:'bco',lig56:'bco',sel400:'bco',lig400:'bco','com.dse':'modo','com.b56':'modo','com.b400':'modo'};
+  const ROT={modo:'modo',gen:'gerador',sim:'simulação',ens:'ensaio',et:'etapa',setup:'chave no Setup',ch:'chaves ligadas (verde)',cmd:'chaves comandadas (laranja)','com.dse':'comunicação DSE'};
+  BANCOS.forEach(b=>{const r=rotaDe(b.id);ROT['sel'+r]='seletora BC'+b.id;ROT['lig'+r]='BC'+b.id+' ligado (cbBanco.ligar)';ROT['com.b'+r]='comunicação BC'+b.id});   // v1.10.157
+  const CARDC={modo:'DEV.DEM',gen:'app',sim:'app',ens:'ens',et:'ens',setup:'bco.SU',ch:'bco',cmd:'bco','com.dse':'modo'};
+  BANCOS.forEach(b=>{const r=rotaDe(b.id);CARDC['sel'+r]='bco';CARDC['lig'+r]='bco';CARDC['com.b'+r]='modo'});
   const fmt=v=>v===null||v===undefined?'—':(Array.isArray(v)?'['+v.join(',')+']':(v===true?'OK':(v===false?'FALHA':String(v))));
   function transicao(c,de,para,s){
     let res='info';
@@ -8747,8 +8752,8 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
       else{
         ['modo','gen','sim','ens','et','setup'].forEach(c=>{if(s[c]!==prev[c])transicao(c,prev[c],s[c],s)});
         ['ch','cmd'].forEach(c=>{if(JSON.stringify(s[c])!==JSON.stringify(prev[c]))transicao(c,prev[c],s[c],s)});
-        ['sel56','lig56','sel400','lig400'].forEach(c=>{if(s[c]!==prev[c])transicao(c,prev[c],s[c],s)});
-        ['dse','b56','b400'].forEach(c=>{if(s.com[c]!==prev.com[c])transicao('com.'+c,prev.com[c],s.com[c],s)});
+        BANCOS.flatMap(b=>['sel'+rotaDe(b.id),'lig'+rotaDe(b.id)]).forEach(c=>{if(s[c]!==prev[c])transicao(c,prev[c],s[c],s)});
+        ['dse',...BANCOS_PLC.map(b=>'b'+rotaDe(b.id))].forEach(c=>{if(s.com[c]!==prev.com[c])transicao('com.'+c,prev.com[c],s.com[c],s)});
         s.pop.filter(x=>prev.pop.indexOf(x)<0).forEach(x=>log(DLG[x]||'app','transicao','abriu popup '+x,'info',{campo:'pop',id:x},{est:s}));
         prev.pop.filter(x=>s.pop.indexOf(x)<0).forEach(x=>log(DLG[x]||'app','transicao','fechou popup '+x,'info',{campo:'pop',id:x},{est:s}));
       }

@@ -209,9 +209,186 @@ def gera_tudo(idb, ver_db='0.2', ver_flow='1.1'):
                       ('chamadas_%s_v%s.scl' % (idb, ver_db), chamadas(b, N))):
         open(os.path.join(out, nome), 'w', encoding='utf-8').write(txt); print('gerado', nome)
 
+
+# ---------------------------------------------------------------- ET200 (FBs de banco) e FC de chamadas do 1515
+def fb_et200(N, ver='0.1'):
+    nb = 6 if N == 16 else 8
+    return f"""FUNCTION_BLOCK "fb_bancoEt200_{N}"
+TITLE = fb_bancoEt200_{N} v{ver}
+{{ S7_Optimized_Access := 'TRUE' }}
+AUTHOR : 'RegLobo'
+VERSION : {ver}
+////====================================
+//// fb_bancoEt200_{N}  -  RASCUNHO v{ver} (03/11/2026) GERADO por gerar_banco_v0.2.py - nao compilado, nao testado
+//// ONDE RODA : ET200 (programa Gerador_BC015). 1 instancia por banco NOVO (BC550, BC59,5). BC56 e BC400 seguem no FC4 atual.
+//// O QUE FAZ : lado ET200 do telegrama PUT/GET do banco (ate {N} chaves, {nb}+{nb} bytes):
+////    1) vidaET incrementa a cada ~100 ms (prova ao 1515 que o ET200 esta vivo).
+////    2) vida1515 parou de mudar por TempoPerdaMs -> ComOk=FALSE e TODAS as saidas vao a FALSE.
+////    3) apos queda, a chave so religa depois de o comando cair a FALSE e ser recomandado (nao religa sozinha).
+////    4) saida da contatora so liga com ComOk E LigarBanco E seletora em Auto (defesa extra; o 1515 ja zera o comando).
+////    5) fbk[n] = contato auxiliar REAL; seletoraAuto = entrada fisica da seletora do banco (1 = Auto).
+//// COMO CHAMAR: ver fc_bancosNovosEt200 (gerado). Entradas/saidas fisicas entram pelas tags da tabela tags_ET200_bancos.
+////=====================================
+   VAR_INPUT
+      NumChaves        : Int;                       // chaves reais deste banco (1..{N})
+      SeletoraEntrada  : Bool;                      // entrada fisica: seletora do banco em Auto (1 = Auto)
+      TempoPerdaMs     : Time := T#2S;              // menor que o TempoVida do 1515 (3 s)
+   END_VAR
+   VAR_OUTPUT
+      ComOk : Bool;
+   END_VAR
+   VAR_IN_OUT
+      Cmd               : Array[1..{N}] of Bool;   // <DB remoto>.cmd       (PUT do 1515; so le)
+      Vida1515          : Int;                     // <DB remoto>.vida1515  (so le)
+      LigarBanco        : Bool;                    // <DB remoto>.ligarBanco (so le)
+      VidaET            : Int;                     // <DB remoto>.vidaET    (escreve)
+      Fbk               : Array[1..{N}] of Bool;   // <DB remoto>.fbk       (escreve)
+      SeletoraAuto      : Bool;                    // <DB remoto>.seletoraAuto (escreve)
+      SaidaContatora    : Array[1..{N}] of Bool;   // saidas fisicas (copiadas pelo fc_bancosNovosEt200)
+      EntradaContatoAux : Array[1..{N}] of Bool;   // contatos auxiliares fisicos
+   END_VAR
+   VAR
+      _tOsc100ms   : TON_TIME;
+      _tPerda      : TON_TIME;
+      _vida1515Ant : Int;
+      _vidaMudou   : Bool;
+      _comOkAnt    : Bool;
+      _cmdAnt      : Array[1..{N}] of Bool;
+      _rearmado    : Array[1..{N}] of Bool;
+      i            : Int;
+   END_VAR
+
+BEGIN
+   #_tOsc100ms(IN := NOT #_tOsc100ms.Q, PT := T#100MS);
+   IF #_tOsc100ms.Q THEN
+      #VidaET := #VidaET + 1;
+      IF #VidaET >= 32767 THEN #VidaET := 0; END_IF;
+   END_IF;
+
+   IF #Vida1515 <> #_vida1515Ant THEN
+      #_vida1515Ant := #Vida1515;
+      #_vidaMudou := TRUE;
+   ELSE
+      #_vidaMudou := FALSE;
+   END_IF;
+   #_tPerda(IN := NOT #_vidaMudou, PT := #TempoPerdaMs);   // vida nova reseta; sem vida nova conta
+   #ComOk := NOT #_tPerda.Q;
+
+   IF #ComOk AND NOT #_comOkAnt THEN
+      FOR #i := 1 TO #NumChaves DO
+         #_rearmado[#i] := FALSE;
+      END_FOR;
+   END_IF;
+
+   #SeletoraAuto := #SeletoraEntrada;
+
+   FOR #i := 1 TO {N} DO
+      IF #i <= #NumChaves THEN
+         #Fbk[#i] := #EntradaContatoAux[#i];
+         IF NOT #Cmd[#i] AND #_cmdAnt[#i] THEN
+            #_rearmado[#i] := TRUE;
+         END_IF;
+         IF #ComOk AND #LigarBanco AND #SeletoraEntrada AND (#_comOkAnt OR #_rearmado[#i]) THEN
+            #SaidaContatora[#i] := #Cmd[#i];
+         ELSE
+            #SaidaContatora[#i] := FALSE;
+         END_IF;
+         #_cmdAnt[#i] := #Cmd[#i];
+      ELSE
+         #Fbk[#i] := FALSE;
+         #SaidaContatora[#i] := FALSE;
+      END_IF;
+   END_FOR;
+
+   #_comOkAnt := #ComOk;
+END_FUNCTION_BLOCK
+"""
+
+def dbrem_nome(b):
+    return '"Com%s"' % b['nome'].replace(',', '')
+
+def fc_et200_novos(bancos):
+    ln = ["""FUNCTION "fc_bancosNovosEt200" : Void
+TITLE = fc_bancosNovosEt200 v0.1
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+////====================================
+//// fc_bancosNovosEt200 v0.1 (03/11/2026) - GERADO por gerar_banco_v0.2.py - RASCUNHO, nao compilado
+//// ONDE RODA : ET200 (Gerador_BC015). Chamar 1x por ciclo no OB1, junto do FC4 atual (que continua cuidando de BC56/BC400).
+//// O QUE FAZ : para cada banco novo, copia as tags fisicas (tabela tags_ET200_bancos_v0.1.csv, enderecos A PREENCHER)
+////             para arrays, chama o fb_bancoEt200_16/32 e devolve as saidas. Nao inventa endereco fisico.
+//// ATENCAO   : criar no TIA do ET200 as instancias "fbEt200_<banco>" (DB de instancia) e as tags da tabela, com os enderecos reais.
+////=====================================
+   VAR_TEMP
+      saida16 : Array[1..16] of Bool;
+      aux16   : Array[1..16] of Bool;
+      saida32 : Array[1..32] of Bool;
+      aux32   : Array[1..32] of Bool;
+   END_VAR
+BEGIN"""]
+    tags = []
+    for k, b in bancos:
+        n = len(b['chaves']); N = tamanho(n); rem = b['remoto']; dbn = dbrem_nome(b)
+        sa, au = '#saida%d' % N, '#aux%d' % N
+        ln.append('\n   // ---------------- %s (%d chaves, remoto DB%d) ----------------' % (b['nome'], n, rem))
+        for i in range(1, N + 1):
+            if i <= n:
+                ln.append('   %s[%d] := "%s_I%02d";' % (au, i, k, i))
+                tags.append(('%s_I%02d' % (k, i), 'Bool', '', 'contato auxiliar da contatora %d do %s' % (i, b['nome'])))
+            else:
+                ln.append('   %s[%d] := FALSE;' % (au, i))
+        ln.append('   "fbEt200_%s"(NumChaves := %d, SeletoraEntrada := "%s_SEL_AUTO", Cmd := %s.cmd, Vida1515 := %s.vida1515, LigarBanco := %s.ligarBanco,' % (k, n, k, dbn, dbn, dbn))
+        ln.append('       VidaET := %s.vidaET, Fbk := %s.fbk, SeletoraAuto := %s.seletoraAuto, SaidaContatora := %s, EntradaContatoAux := %s);' % (dbn, dbn, dbn, sa, au))
+        tags.append(('%s_SEL_AUTO' % k, 'Bool', '', 'seletora do %s em Auto (1 = Auto)' % b['nome']))
+        for i in range(1, n + 1):
+            ln.append('   "%s_Q%02d" := %s[%d];' % (k, i, sa, i))
+            tags.append(('%s_Q%02d' % (k, i), 'Bool', '', 'saida da contatora %d do %s' % (i, b['nome'])))
+    ln.append('END_FUNCTION\n')
+    return '\n'.join(ln), tags
+
+def fc_1515(bancos):
+    ln = ["""FUNCTION "fc_chamadasBancos_BT2" : Void
+TITLE = fc_chamadasBancos_BT2 v0.1
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.1
+////====================================
+//// fc_chamadasBancos_BT2 v0.1 (03/11/2026) - GERADO por gerar_banco_v0.2.py - RASCUNHO, nao compilado
+//// ONDE RODA : 1515 (BT2). Chamar 1x por ciclo no OB1: "fc_chamadasBancos_BT2"();   (substitui colar chamadas uma a uma)
+//// O QUE FAZ : para cada banco, 1) comunicacao com o ET200 (FB101/FB103) e 2) setup das chaves (FB100/FB102), nessa ordem.
+//// OBS       : todos os bancos usam a MESMA conexao S7 (W#16#100), decisao do operador de 03/11/2026.
+//// ATENCAO   : os DBs de instancia (db30x4i_.../db30x5i_...) precisam existir com esses nomes (criar no TIA como instancia dos FBs).
+////=====================================
+BEGIN"""]
+    for k, b in bancos:
+        N = tamanho(len(b['chaves'])); txt = chamadas(dict(b, id=k), N)
+        txt = '\n'.join(l for l in txt.split('\n') if not l.startswith('//'))
+        ln.append('\n   // ---------------- %s (%d chaves, FB%s) ----------------' % (b['nome'], len(b['chaves']), '100/101' if N == 16 else '102/103'))
+        ln.append('\n'.join('   ' + l if l.strip() else l for l in txt.strip().split('\n')))
+    ln.append('END_FUNCTION\n')
+    return '\n'.join(ln)
+
+def gera_extras():
+    fic = json.load(open(os.path.join(AQUI, 'bancos_bt2_v0.2.json')))
+    todos = [(k, dict(v, id=k)) for k, v in fic.items() if k.startswith('BC')]
+    novos = [(k, v) for k, v in todos if v['db'] >= 3200]
+    et = os.path.join(RAIZ, 'plc/bt2/comunicacao_et200'); bc = os.path.join(RAIZ, 'plc/bt2/bancos_cargas')
+    for N in (16, 32):
+        open(os.path.join(et, 'fb_bancoEt200_%d_v0.1.scl' % N), 'w', encoding='utf-8').write(fb_et200(N))
+    txt, tags = fc_et200_novos(novos)
+    open(os.path.join(et, 'fc_bancosNovosEt200_v0.1.scl'), 'w', encoding='utf-8').write(txt)
+    with open(os.path.join(et, 'tags_ET200_bancos_v0.1.csv'), 'w', encoding='utf-8') as f:
+        f.write('nome;tipo;endereco;comentario\n')
+        for t in tags: f.write(';'.join(t) + '\n')
+    open(os.path.join(bc, 'fc_chamadasBancos_BT2_v0.1.scl'), 'w', encoding='utf-8').write(fc_1515(todos))
+    print('gerados: fb_bancoEt200_16/32, fc_bancosNovosEt200, tags (%d), fc_chamadasBancos_BT2' % len(tags))
+
 if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    if '--extras' in sys.argv: gera_extras(); raise SystemExit
     if not args: raise SystemExit(__doc__)
+    if '--extras' in sys.argv: gera_extras(); raise SystemExit
     if '--blocos' in sys.argv: gera_tudo(args[0]); raise SystemExit
     fic = json.load(open(os.path.join(AQUI, 'bancos_bt2_v0.2.json')))
     b = fic[args[0]]; N = tamanho(len(b['chaves']))
