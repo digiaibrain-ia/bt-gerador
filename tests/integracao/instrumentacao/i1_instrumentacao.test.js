@@ -78,7 +78,7 @@ describe('I1 instrumentacao - verificador de invariantes (unitario, trace sintet
 
 describe('I1 instrumentacao - dentro do Node-RED de teste (fluxo BC56 v3.2 de producao, so lido do disco)', () => {
   const sobeBc56 = async () => {
-    const h = await sobe({ fluxos: ['chaves-56-api-v3.3'], env: ENV_TESTE });
+    const h = await sobe({ fluxos: ['chaves-56-api-v3.4'], env: ENV_TESTE });
     const e = enderecos('56'); h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true);
     assert.ok(await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 10000), 'BC56 nao ficou pronto');
     return { h, e };

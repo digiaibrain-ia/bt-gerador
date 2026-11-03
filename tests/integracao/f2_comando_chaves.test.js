@@ -7,7 +7,7 @@ const { ENV_TESTE, enderecos, esperaAte, get, post, sobe } = require('./ajudas.j
 describe('F2 comando de chaves do BC56', () => {
   let h, e;
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.3'], env: ENV_TESTE });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.4'], env: ENV_TESTE });
     e = enderecos('56');
     await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 5000);
   });

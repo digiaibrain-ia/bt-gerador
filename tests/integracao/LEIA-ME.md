@@ -61,3 +61,6 @@ Limite: a escrita **serial** e uma suposicao sobre o driver S7 real (nao confirm
 
 ## Fase 3, Etapa 4a - P3-A1/A2/A3 corrigidos (chaves-56/400 v3.3, 550/595 v1.4)
 Gerador: `nodered/gerador/gerar_fluxos_portao4a_v0.1.py` (versoes novas, sem sobrescrever). `concorrencia/c3_etapa4a.test.js` (25 testes: estatico + 5 cenarios x 4 bancos). Verificado por mutacao: os cenarios A1/A2/A3 FALHAM nas versoes anteriores (v3.2/v1.3) e passam nas novas. Em `c2_caracterizacao`, os `todo` A1/A2/A3 viraram testes de invariante (estado final = ultimo comando aceito, resposta verdadeira).
+
+## Fase 3, Etapa 4b - P3-A4 e P3-A5 corrigidos (chaves-56/400 v3.4, 550/595 v1.5)
+Gerador: `nodered/gerador/gerar_fluxos_portao4b_v0.1.py` (parte das versoes da 4a; nao sobrescreve). `concorrencia/c4_etapa4b.test.js` (estatico + 4 cenarios x 4 bancos). Janela de confirmacao (`CONF_JANELA_MS`, 504 `incerto:true`), quarentena por variavel (`QUARENTENA_MS`, 503 `AGUARDE_CONFIRMACAO` + `Retry-After`), seguranca (desligar chave/banco, ZERAR) passa e e reafirmada. Em `c2`, os `todo` A4 e A5 viraram testes de invariante; os testes usam janela/quarentena reduzidas por variavel da aba (`envAbas`). Verificado por mutacao nas versoes da 4a.

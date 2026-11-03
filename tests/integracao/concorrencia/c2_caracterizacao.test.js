@@ -15,7 +15,7 @@ const P = (h, rota, c) => post(h, '/api/chaves/56/' + rota, c);
 
 // BC56 v3.2 pronto, com a comunicacao ET200 e a seletora em Auto (condicao normal para ligar banco)
 async function bc56(opt = {}) {
-  const h = await sobe(Object.assign({ fluxos: ['chaves-56-api-v3.3'], env: ENV_TESTE }, opt)); const e = enderecos('56');
+  const h = await sobe(Object.assign({ fluxos: ['chaves-56-api-v3.4'], env: ENV_TESTE }, opt)); const e = enderecos('56');
   h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true);
   assert.ok(await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 10000), 'BC56 nao ficou pronto');
   return { h, e };
@@ -107,23 +107,35 @@ describe('C2 R1/R5 BC56 - ordem e validacao dos comandos', () => {
 });
 
 describe('C2 R2/R3/R6 BC56 - escrita atrasada, timeout e repeticao', () => {
-  test('ACHADO P3-A4 (Media): se a escrita demora mais que a espera do fluxo (450 ms) a resposta e 500 e a escrita e APLICADA depois: o erro deveria refletir o estado final', { todo: 'ACHADO P3-A4: 500 "leitura de volta nao conferiu" e, 9 s depois, o PLC aplica a escrita (falso erro; cliente repete ou desiste)' }, async () => {
+  test('P3-A4 (corrigido, 4b): escrita mais lenta que a espera de 450 ms mas dentro da janela de 2 s => 200 (sem falso erro) e aplicada', async () => {
     const { h, e } = await bc56();
     try {
-      h.plc.atrasosEscrita.push(9000);
-      const t0 = Date.now(); const r = await P(h, 'habilitar', { indice: 4, habilitada: true });
-      await dorme(Math.max(0, 9400 - (Date.now() - t0)));
-      const aplicou = h.plc.ler(e.hab(4)) === true;
-      assert.equal(r.status === 200, aplicou, 'resposta ' + r.status + ' mas a escrita ' + (aplicou ? 'FOI' : 'NAO foi') + ' aplicada');
+      h.plc.atrasosEscrita.push(900);
+      const r = await P(h, 'habilitar', { indice: 4, habilitada: true });
+      assert.equal(r.status, 200, 'falso erro com a escrita ainda dentro da janela: ' + r.t);
+      assert.equal(h.plc.ler(e.hab(4)), true);
     } finally { await h.para(); }
   });
 
-  test('a fila NAO fica presa depois de um falso 500: o proximo comando e atendido e as respostas sao uma por pedido (sem duplicidade)', async () => {
-    const { h, e } = await bc56();
+  test('P3-A4 (corrigido, 4b): escrita alem da janela => 504 incerto:true (nunca 500 com escrita que sera aplicada depois) e a resposta e coerente com o estado', async () => {
+    const { h, e } = await bc56({ envAbas: { CONF_JANELA_MS: 1000 } });
     try {
-      h.plc.atrasosEscrita.push(700);          // 1a escrita atrasa 700 ms (> 450): o 1o comando responde 500
+      h.plc.atrasosEscrita.push(3000);
+      const t0 = Date.now(); const r = await P(h, 'habilitar', { indice: 4, habilitada: true }); const dt = Date.now() - t0;
+      assert.equal(r.status, 504, r.t); assert.equal(r.j.incerto, true); assert.match(r.j.erro, /confira o estado antes de repetir/);
+      assert.ok(dt >= 900 && dt < 2500, 'a janela de 1 s deveria fechar perto de 1 s; veio ' + dt + ' ms');
+      assert.equal(h.plc.ler(e.hab(4)), false, 'ainda nao aplicada quando o 504 saiu');
+      assert.ok(await esperaAte(() => h.plc.ler(e.hab(4)) === true, 5000), 'a escrita tardia nao chegou (o 504 e "incerto", nao "falhou")');
+      assert.equal(V.respostasEmDuplicidade(h.logs).length, 0);
+    } finally { await h.para(); }
+  });
+
+  test('a fila NAO fica presa depois de um 504: o proximo comando (outra variavel) e atendido e as respostas sao uma por pedido (sem duplicidade)', async () => {
+    const { h, e } = await bc56({ envAbas: { CONF_JANELA_MS: 1000 } });
+    try {
+      h.plc.atrasosEscrita.push(2500);
       const a = await P(h, 'habilitar', { indice: 5, habilitada: true });
-      assert.equal(a.status, 500, a.t);
+      assert.equal(a.status, 504, a.t);
       const b = await P(h, 'habilitar', { indice: 6, habilitada: true });
       assert.equal(b.status, 200, 'a fila ficou presa/atrasada: ' + b.t);
       assert.equal(V.respostasEmDuplicidade(h.logs).length, 0, JSON.stringify(h.logs.slice(-2)));
@@ -175,19 +187,23 @@ describe('C2 R2/R3/R6 BC56 - escrita atrasada, timeout e repeticao', () => {
 });
 
 describe('C2 R2/R5 BC56 - modo CONCORRENTE (so onde muda o resultado)', () => {
-  test('ACHADO P3-A5 (Alta, CONDICIONAL ao driver): escrita antiga atrasada (9 s) ultrapassa a nova e o estado final contraria o ultimo comando aceito (que respondeu 200)', { todo: 'ACHADO P3-A5: so ocorre se o driver S7 real aplicar escritas concorrentes; CbLigar1 termina TRUE apos "ligar:false" ter respondido 200' }, async () => {
-    const { h, e } = await bc56();
+  test('P3-A5 (corrigido, 4b): modo CONCORRENTE - escrita antiga atrasada que desfaz um "desligar" aceito e CORRIGIDA pela reafirmacao (estado final = ultimo comando aceito)', async () => {
+    const { h, e } = await bc56({ envAbas: { CONF_JANELA_MS: 1000, QUARENTENA_MS: 4000 } });
     try {
       h.plc.latencia.serial = false;
       h.plc.escrever(e.cbBanco, true); h.plc.escrever(e.hab(1), true);
       assert.ok(await veNaLeitura(h, j => j.bancoLigado === true && j.habilitada?.[0] === true));
-      h.plc.atrasosEscrita.push(9000);
-      const t0 = Date.now();
-      await P(h, 'ligar', { indice: 1, ligar: true });          // responde 500 (falso erro) e a escrita fica "no ar" por 9 s
-      const b = await P(h, 'ligar', { indice: 1, ligar: false });
+      h.plc.trace.length = 0; h.plc.atrasosEscrita.push(4000);
+      const a = await P(h, 'ligar', { indice: 1, ligar: true });          // 504 incerto: a escrita fica "no ar" por 4 s
+      assert.equal(a.status, 504, a.t);
+      const b = await P(h, 'ligar', { indice: 1, ligar: false });          // desligar e comando de SEGURANCA: passa pela quarentena
       assert.equal(b.status, 200, b.t);
-      await dorme(Math.max(0, 9500 - (Date.now() - t0)));
-      assert.equal(h.plc.ler(e.cb(1)), false, 'CbLigar1 ficou TRUE depois de "ligar:false" aceito (200)');
+      // a escrita antiga (TRUE) chega ao PLC e a reafirmacao precisa devolver FALSE
+      assert.ok(await esperaAte(() => h.plc.trace.some(t => t.ok && t.addr === e.cb(1) && t.valor === true), 6000), 'a escrita antiga nao chegou (cenario nao reproduzido)');
+      assert.ok(await esperaAte(() => h.plc.ler(e.cb(1)) === false, 6000, 100), 'CbLigar1 ficou TRUE depois de "ligar:false" aceito (200): a reafirmacao nao corrigiu');
+      const ok = h.plc.trace.filter(t => t.ok && t.addr === e.cb(1)).sort((x, y) => x.ordem - y.ordem);
+      assert.deepEqual(ok.map(t => t.valor), [false, true, false], 'sequencia aplicada: ' + ok.map(t => t.valor).join(','));
+      assert.ok(ok[2].tAplicada - ok[1].tAplicada < 3500, 'tempo com a chave TRUE indevidamente: ' + (ok[2].tAplicada - ok[1].tAplicada) + ' ms');
     } finally { await h.para(); }
   });
 });

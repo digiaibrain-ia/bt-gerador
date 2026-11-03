@@ -7,7 +7,7 @@ const { ENV_TESTE, enderecos, esperaAte, get, post, sobe } = require('./ajudas.j
 describe('F8 logs', () => {
   let h;
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.3', 'dev-logs-api-v1.2'], env: ENV_TESTE });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.4', 'dev-logs-api-v1.2'], env: ENV_TESTE });
     await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 5000);
   });
   after(async () => { if (h) await h.para(); });

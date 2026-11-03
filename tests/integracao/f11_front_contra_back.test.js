@@ -12,7 +12,7 @@ describe('F11 front real contra o Node-RED de teste', () => {
   const temClasse = (sel, cls) => p.evaluate(([s, c]) => { const el = document.querySelector(s); return !!el && el.classList.contains(c); }, [sel, cls]);
 
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.3', 'chaves-400-api-v3.3', 'registro-ensaio-db2100-api-v1.7'], env: ENV_TESTE, servirHtml: true });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.4', 'chaves-400-api-v3.4', 'registro-ensaio-db2100-api-v1.7'], env: ENV_TESTE, servirHtml: true });
     e56 = enderecos('56'); e400 = enderecos('400');
     for (const e of [e56, e400]) { h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); }
     b = await chromium.launch();

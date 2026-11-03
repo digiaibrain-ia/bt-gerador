@@ -10,7 +10,7 @@ const { chromium } = require('playwright');
 const { ENV_TESTE, enderecos, esperaAte, get, post, sobe } = require('../ajudas.js');
 
 const PASTA = path.join(__dirname, '..', '..', '..', 'nodered', 'flows', 'bt2');
-const PROTEGIDOS = ['chaves-56-api-v3.3', 'chaves-400-api-v3.3', 'chaves-550-api-v1.4', 'chaves-595-api-v1.4', 'registro-ensaio-db2100-api-v1.7', 'dev-logs-api-v1.2', 'simulador-dse-demo-v7'];
+const PROTEGIDOS = ['chaves-56-api-v3.4', 'chaves-400-api-v3.4', 'chaves-550-api-v1.5', 'chaves-595-api-v1.5', 'registro-ensaio-db2100-api-v1.7', 'dev-logs-api-v1.2', 'simulador-dse-demo-v7'];
 const lerFluxo = n => JSON.parse(fs.readFileSync(path.join(PASTA, n + '.json'), 'utf8'));
 const ESCRITA = ['post', 'put', 'patch', 'delete'];
 const rotasEscrita = n => lerFluxo(n).filter(x => x.type === 'http in' && ESCRITA.includes(String(x.method).toLowerCase()));
@@ -136,7 +136,7 @@ describe('S3 Portao 3 - guarda de escrita (D3)', () => {
 
   describe('lista de origens extras (BT2_ORIGENS_OK, variavel da aba)', () => {
     test('origem listada passa; origem nao listada continua barrada; "null" so passa se listado de proposito', async () => {
-      const h = await sobe({ fluxos: ['chaves-56-api-v3.3'], env: ENV_TESTE, envAbas: { BT2_ORIGENS_OK: 'http://painel.exemplo:1880, null' } });
+      const h = await sobe({ fluxos: ['chaves-56-api-v3.4'], env: ENV_TESTE, envAbas: { BT2_ORIGENS_OK: 'http://painel.exemplo:1880, null' } });
       try {
         const e = enderecos('56'); h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true);
         assert.ok(await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 8000));
