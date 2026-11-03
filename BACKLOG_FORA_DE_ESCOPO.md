@@ -34,6 +34,13 @@ Achados que os testes da Fase 1 revelaram aparecem como testes **pendentes** (`t
 | D-6 | Baixa | uso do medidor como arquivo local | `Origin: null` e barrado; abrir pelo endereco do servidor. `BT2_ORIGENS_OK=null` existe mas libera paginas isoladas de qualquer site (nao recomendado). |
 | D-7 | Baixa | `dev-logs` e simulador | Rotas de log/simulador estao sob a mesma guarda; o simulador continua so para bancada (D4). |
 
+## Fase 3 - observacoes do Portao 1 (a CONFIRMAR no Portao 2; nada foi corrigido)
+
+| ID | Observacao (explorando o BC56 v3.2 com a instrumentacao) | Estado |
+|---|---|---|
+| P3-o1 | Com latencia de escrita de **700 ms** (> espera de 450 ms do fluxo), os 6 comandos `habilitar` simultaneos responderam **500** (leitura de volta nao conferiu) enquanto o PLC simulado aplicou as escritas (5 de 6 ja aplicadas quando a resposta saiu, a 6a ainda em voo). Sinal de resposta **antes** da escrita terminar / falso erro que levaria o cliente a repetir. Relaciona-se a R2, R6 e ao F4-2. | hipotese; caracterizar no Portao 2 |
+| P3-o2 | Com 6 comandos simultaneos e escrita serial, a fila atendeu **um por vez** (sem sobreposicao), com ~570 ms por comando (a ultima resposta a ~3,5 s). | informativo (I1 ok neste cenario) |
+
 ## Itens já listados antes (sem mudança nesta fase)
 
 - **Tipo `Remote` em `VAR_INPUT`** nos FBs de comunicação (FB101/FB103): a confirmar no TIA.

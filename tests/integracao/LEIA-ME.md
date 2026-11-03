@@ -44,3 +44,14 @@ Testes marcados `todo` mostram o comportamento esperado e falham de proposito: *
 ## Portao 3 (D3) - guarda de escrita
 `seguranca/s3_portao3.test.js` (13 testes): toda rota de escrita das versoes novas (chaves v3.2/v1.3, registro v1.7, dev-logs v1.2, simulador v7) exige Origin/Referer da mesma origem e `Content-Type: application/json`; origem externa, sem origem ou outro tipo de conteudo -> 403 e nada vai ao PLC. Inclui ataque real no Chromium (pagina de outra origem, POST `text/plain` no-cors).
 O auxiliar `post()` de `ajudas.js` imita a tela (manda `Origin` do servidor); o 4o argumento sobrescreve/remove cabecalhos.
+
+## Fase 3, Portao 1 - instrumentacao de concorrencia (so teste; nenhum fluxo de producao alterado)
+Recursos novos do PLC simulado (`plc_simulado.js`) e do harness:
+- `plc.latencia = { escritaMs, escritaJitterMs, leituraMs, leituraJitterMs, serial }` - latencia/jitter de escrita e de leitura. `serial:true` (padrao) = escritas uma apos a outra, como a fila de um driver; `false` = concorrentes (podem se ultrapassar).
+- `plc.semente(n)` - jitter reproduzivel. `plc.atrasosEscrita.push(ms | fn)` - atraso explicito, um por escrita, na ordem.
+- `plc.falhas.escritaApos = n` - depois de n escritas dos fluxos o PLC "cai" e as seguintes sao recusadas.
+- `plc.trace` - escritas FEITAS PELOS FLUXOS: `{n, addr, valor, tChegada, tInicio, tAplicada, ok, ordem}`; `plc.maxEmVoo`. (`plc.escrever` direto do teste nao entra no trace.)
+- `h.logs` - avisos/erros do Node-RED da execucao (para achar resposta em duplicidade).
+- `verificador.js` - `valoresAplicados`, `sobreposicoes`, `ordemDeInicio`, `semRespostaPerdida`, `respostasEmDuplicidade`, `percentis`.
+`instrumentacao/i1_instrumentacao.test.js` (15 testes) prova que o ambiente reproduz e mede; **nao** afirma nada sobre o comportamento dos fluxos (isso e o Portao 2).
+Limite: a escrita **serial** e uma suposicao sobre o driver S7 real (nao confirmada); por isso o Portao 2 testa os dois modos.

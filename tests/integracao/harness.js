@@ -43,6 +43,12 @@ async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), 
     telemetryEnabled: false, editorTheme: { projects: { enabled: false } }, logging: { console: { level: process.env.BT2_LOG_NIVEL || 'error', metrics: false, audit: false } },
   };
   RED.init(server, settings);
+  // captura TODOS os avisos/erros do Node-RED desta execucao (instrumentacao da Fase 3: resposta em duplicidade, erro de no, etc.)
+  const logs = [];
+  // o manipulador de log do Node-RED e um EventEmitter que recebe o evento 'log' com {level, msg, type, name}
+  const capta = new (require('events').EventEmitter)();
+  capta.on('log', m => { if (m.level <= RED.log.WARN) logs.push({ nivel: m.level, msg: String(m.msg && m.msg.message ? m.msg.message : m.msg), tipo: m.type, nome: m.name, t: Date.now() }); });
+  RED.log.addHandler(capta);
   // (opcional, so para o F11) serve o HTML do medidor a partir da copia de DISCO do repositorio, na mesma origem do Node-RED de teste
   if (servirHtml) app.use('/html', express.static(path.join(__dirname, '..', '..', 'dashboard', 'ferramentas'), { index: false }));
   app.use(settings.httpNodeRoot, RED.httpNode);
@@ -52,8 +58,9 @@ async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), 
   const url = 'http://127.0.0.1:' + server.address().port;
 
   return {
-    url, plc, reescritos, red: RED,
+    url, plc, reescritos, red: RED, logs,
     async para() {
+      RED.log.removeHandler(capta);
       await RED.stop();
       await new Promise(r => server.close(r));
       global.__BT2_PLC__ = null;

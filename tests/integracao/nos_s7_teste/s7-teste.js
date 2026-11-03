@@ -28,7 +28,9 @@ module.exports = function (RED) {
       if (!plc || plc.falhas.leitura) return;   // PLC "fora": nao entrega leitura nova (o cache envelhece)
       const payload = {};
       for (const v of ep.vartable) payload[v.name] = plc.ler(v.addr);
-      node.send({ payload, topic: ep.name || 'PLC simulado' });
+      const ms = plc.atrasoLeitura ? plc.atrasoLeitura() : 0;   // latencia/jitter de leitura (instrumentacao da Fase 3): entrega o INSTANTANEO ja velho
+      if (ms > 0) setTimeout(() => node.send({ payload, topic: ep.name || 'PLC simulado' }), ms);
+      else node.send({ payload, topic: ep.name || 'PLC simulado' });
     };
     const h = setInterval(tick, ep.cycletime);
     this.on('close', () => clearInterval(h));
@@ -47,7 +49,7 @@ module.exports = function (RED) {
       const nome = msg.variable || msg.address;
       const addr = ep.nomeVar[nome] || (String(nome || '').startsWith('DB') ? nome : null);
       if (!addr) { done(new Error('variavel S7 desconhecida: ' + nome)); return; }
-      try { plc.escrever(addr, msg.payload); done(); }
+      try { plc.escreverDoFluxo(addr, msg.payload).then(() => done(), e => done(e)); }   // com latencia/queda/serial da instrumentacao; trace em plc.trace
       catch (e) { done(e); }
     });
   }

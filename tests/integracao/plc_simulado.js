@@ -2,8 +2,13 @@
 // PLC SIMULADO EM MEMORIA. Guarda DBs como bytes reais (big-endian, como o S7) e le/escreve os enderecos
 // no mesmo formato que os fluxos usam: DBn,X<byte>.<bit> | DBn,BYTE<ofs>.<n> | DBn,INT<ofs> | DBn,REAL<ofs>[.<n>] | DBn,S<ofs>.<max>
 // Nao e o driver S7 real: e a memoria do PLC para o teste. Falhas injetaveis: falhas.leitura / falhas.escrita.
+// PORTAO 1 DA FASE 3 (instrumentacao, so para teste): latencia/jitter de leitura e escrita, atrasos explicitos por escrita,
+// queda do PLC apos N escritas, escrita serial (como a fila de um driver) ou concorrente, semente fixa (reproduzivel)
+// e TRACE das escritas feitas pelos FLUXOS (ordem, inicio, aplicacao, concorrencia). Veja LEIA-ME.md e verificador.js.
 
 const TAM_DB = 4096;
+const dorme = ms => new Promise(r => setTimeout(r, ms));
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 function parseAddr(addr) {
   const m = /^DB(\d+),(X|BYTE|INT|REAL|S)(\d+)(?:\.(\d+))?$/.exec(String(addr).trim());
@@ -17,8 +22,37 @@ class PlcSimulado {
   constructor() { this.reset(); }
   reset() {
     this.dbs = new Map();
-    this.falhas = { leitura: false, escrita: false };
+    this.falhas = { leitura: false, escrita: false, escritaApos: null };   // escritaApos=n: depois de n escritas dos fluxos o PLC "cai" (todas as seguintes falham)
     this.escritas = [];   // historico de escritas (para os testes conferirem a ordem)
+    // --- instrumentacao (Portao 1, Fase 3) ---
+    this.latencia = { escritaMs: 0, escritaJitterMs: 0, leituraMs: 0, leituraJitterMs: 0, serial: true };   // serial=true: escritas uma apos a outra (como a fila do driver); false: concorrentes (pode reordenar)
+    this.atrasosEscrita = [];   // fila de atrasos EXPLICITOS (ms ou funcao (addr,valor)=>ms), consumidos na ordem, um por escrita dos fluxos
+    this.trace = [];            // escritas dos FLUXOS: {n, addr, valor, tChegada, tInicio, tAplicada, ok}
+    this.nEscrita = 0; this.aplicadas = 0; this.emVoo = 0; this.maxEmVoo = 0;
+    this._rand = mulberry32(1); this._cadeia = Promise.resolve();
+  }
+  semente(n) { this._rand = mulberry32(n); }
+  _jitter(base, jit) { return Math.max(0, Math.round(base + (jit ? (this._rand() * 2 - 1) * jit : 0))); }
+  atrasoLeitura() { return this._jitter(this.latencia.leituraMs, this.latencia.leituraJitterMs); }
+  _atrasoEscrita(addr, valor) {
+    if (this.atrasosEscrita.length) { const a = this.atrasosEscrita.shift(); return Math.max(0, Math.round(typeof a === 'function' ? a(addr, valor) : a)); }
+    return this._jitter(this.latencia.escritaMs, this.latencia.escritaJitterMs);
+  }
+  // Escrita DOS FLUXOS (usada pelo no 's7 out' de teste): aplica atraso/queda e registra no trace. Devolve promessa que rejeita se o PLC "caiu".
+  escreverDoFluxo(addr, valor) {
+    const n = ++this.nEscrita, tChegada = Date.now(), ms = this._atrasoEscrita(addr, valor);   // o atraso e sorteado na CHEGADA (ordem de chegada = ordem do sorteio)
+    const exec = async () => {
+      const tInicio = Date.now(); this.emVoo++; this.maxEmVoo = Math.max(this.maxEmVoo, this.emVoo);
+      const reg = { n, addr, valor: JSON.parse(JSON.stringify(valor)), tChegada, tInicio, tAplicada: null, ok: false };
+      this.trace.push(reg);
+      try {
+        if (ms > 0) await dorme(ms);
+        if (this.falhas.escrita || (this.falhas.escritaApos != null && this.aplicadas >= this.falhas.escritaApos)) throw new Error('escrita recusada pelo PLC (simulado)');
+        this.escrever(addr, valor); reg.ok = true; reg.ordem = ++this.aplicadas;   // ordem de APLICACAO (1,2,3...)
+      } finally { reg.tAplicada = Date.now(); this.emVoo--; }
+    };
+    if (!this.latencia.serial) return exec();
+    const p = this._cadeia.then(exec, exec); this._cadeia = p.catch(() => {}); return p;
   }
   db(n) { if (!this.dbs.has(n)) this.dbs.set(n, Buffer.alloc(TAM_DB)); return this.dbs.get(n); }
 
