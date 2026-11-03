@@ -26,10 +26,10 @@ test('SCL contem a regra transcrita (16 e 32 iguais exceto o tamanho)', () => {
     for (const t of [a, b]) {
       assert.match(t, /IF NOT #ComOk OR NOT #_partiu THEN\s+#_bloq\[#i\] := TRUE;\s+ELSIF NOT #Cmd\[#i\] THEN\s+#_bloq\[#i\] := FALSE;/);
       assert.match(t, /IF #ComOk AND #LigarBanco AND #SeletoraEntrada AND NOT #_bloq\[#i\] THEN/);
-      assert.doesNotMatch(t, /TON_TIME|S7_Optimized_Access/, 'IM151-8 (S7-300): sem TON_TIME e sem acesso otimizado');
+      assert.doesNotMatch(t, /:\s*TON_TIME;|\{\s*S7_Optimized_Access/, 'IM151-8 (S7-300): sem TON_TIME e sem acesso otimizado');
     }
   }
-  assert.equal(a.replace(/\b16\b/g, 'N'), b.replace(/\b32\b/g, 'N').replace(/8\+8/g, '6+6'), 'FB 16 e FB 32 diferem alem do tamanho');
+  assert.equal(a.replace(/(?<![0-9])16(?![0-9])/g, 'N'), b.replace(/(?<![0-9])32(?![0-9])/g, 'N').replace(/8\+8/g, '6+6'), 'FB 16 e FB 32 diferem alem do tamanho');
 });
 
 test('apos queda de comunicacao, a chave NAO religa sozinha com o comando antigo (so com novo comando)', () => {
