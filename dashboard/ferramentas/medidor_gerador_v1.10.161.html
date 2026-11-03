@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="1.10.160">
+<meta name="app-version" content="1.10.161">
 <title>Medidor do Gerador</title>
 <style>
   /* v1.9.88: TOKENS DE COR DA INTERFACE (um lugar só). POR QUÊ: verde/vermelho/amarelo são SINAL (ligado, falha, alerta) e não podem ser usados como cor de enfeite;
@@ -573,6 +573,12 @@
   .jan .jr{display:flex;align-items:center;gap:8px}
   .jan .jtag{border:1px solid #fff;padding:4px 9px;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:none;white-space:nowrap}
   .jan .jx{width:28px;height:26px;border:1px solid #fff;background:transparent;color:#fff;font-size:14px;line-height:1;padding:0}
+  /* v1.10.161: o ✕ de fechar NUNCA sai da tela. No celular o cabeçalho (título + etiqueta + ⤢ + ✕) era mais largo que a janela e empurrava o ✕ para fora. */
+  .jan .jt>span:first-child{flex:1 1 auto;min-width:0}
+  .jan .jr{flex:0 1 auto;min-width:0;max-width:100%}
+  .jan .jtag{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .jan .jx,.jan .jwbtn{flex:0 0 auto}
+  @media(max-width:600px){.jan .jt{flex-wrap:wrap;row-gap:6px}.jan .jr{flex-wrap:wrap;justify-content:flex-end;row-gap:6px}.jan .jt>span:first-child{flex:1 1 60%}}   /* celular: botões do cabeçalho quebram de linha em vez de sair da tela */
   .jan .jx:hover{background:#fff;color:var(--jazul)}
   .jan .jb{padding:12px 16px 14px}
   /* v1.9.63: bolinhas de comunicação no card Modo + fontes menores */
@@ -3686,8 +3692,11 @@ document.querySelectorAll('dialog.jan').forEach(d=>{
 /* ===== CONTROLE DE VERSÃO =====
    A cada alteração: aumente VERSAO (maior.menor.correção), troque VERSAO_DATA,
    acrescente um item NO TOPO de HISTORICO e atualize <meta name="app-version"> no <head>. */
-const VERSAO='1.10.160', VERSAO_DATA='03/11/2026';
+const VERSAO='1.10.161', VERSAO_DATA='03/11/2026';
 const HISTORICO=[
+  {v:"1.10.161",d:"03/11/2026",i:[
+    'CORRIGIDO no celular: o popup \"Resultado do ensaio · confira antes de gravar\" (e qualquer janela com etiqueta no cabeçalho) abria sem o ✕ de fechar, que ficava fora da tela (a etiqueta \"Nº série · versão\" deixava o cabeçalho mais largo que a janela). Agora a etiqueta encolhe com reticências e o ✕ fica sempre visível. Medido a 390 px: ✕ de x=409 (fora) para dentro da tela.'
+  ]},
   {v:"1.10.160",d:"03/11/2026",i:[
     'CORRIGIDO (regressão da 1.10.154): no Registro compacto a linha com os botões \"Salvar valores da etapa\" ficava escondida, então o operador não conseguia salvar a etapa pela tabela. Achado pelo Operador secreto: na 1.10.141 o ensaio completo passava (6 etapas) e da 1.10.154 em diante parava na etapa 1. Agora a linha Salvar aparece também no modo compacto.'
   ]},
