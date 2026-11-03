@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="1.10.158">
+<meta name="app-version" content="1.10.159">
 <title>Medidor do Gerador</title>
 <style>
   /* v1.9.88: TOKENS DE COR DA INTERFACE (um lugar só). POR QUÊ: verde/vermelho/amarelo são SINAL (ligado, falha, alerta) e não podem ser usados como cor de enfeite;
@@ -2053,9 +2053,48 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
     return { selecao, total: esc.kw, erro: arred(esc.kw - alvo), dentro: erroDe(esc) <= (p.modoAlvo === 'minimo' ? p.excessoMaxKw : 0) + 1e-9, aviso, candidatos: grupo.length };
   }
 
+  /** v0.5 (03/11/2026) — PROGRAMAÇÃO DINÂMICA por soma. Substitui a enumeração de 2^n combinações (22 chaves = 1,8 s; 32 chaves = inviável)
+   *  por uma tabela soma(kW em unidades de 0,5 kW) → melhor custo, O(n × somas). É o mesmo resultado de menor custo da enumeração, porque o custo é
+   *  ADITIVO por chave: desgaste da chave (se ligada) + pesoMudanca × (mudou de estado). Chaves desabilitadas ficam fora (como antes).
+   *  Em SCL: arrays de tamanho fixo [0..MAX_SOMA] de REAL/INT, 1 laço por chave — cabe no ciclo do PLC.
+   *  Devolve null se algum kW não for múltiplo de 0,1 (aí o chamador usa a enumeração antiga, só viável até ~22 chaves). */
+  function escalaKw(kws) { for (const u of [2, 10]) if (kws.every(k => Math.abs(k * u - Math.round(k * u)) < 1e-9)) return u; return null; }
+  function blocoDP(b, p, tetoKw) {
+    const n = b.kws.length, esc = escalaKw(b.kws); if (!esc) return null;
+    const hab = b.habil || b.kws.map(() => true), atual = b.atual || b.kws.map(() => false);
+    const cust = custosDesgaste(b.estado, n, p.rodizio), pm = p.pesoMudanca;
+    const idx = []; for (let i = 0; i < n; i++) if (hab[i]) idx.push(i);
+    const teto = Number.isFinite(tetoKw) ? Math.floor(tetoKw * esc + 1e-6) : Infinity;
+    let total = 0; for (const i of idx) total += Math.round(b.kws[i] * esc); const S = Math.min(total, teto);
+    // custo constante das chaves desabilitadas que estão ligadas (não podem ser ligadas/mantidas: contam como mudança)
+    let fixo = 0; for (let i = 0; i < n; i++) if (!hab[i] && atual[i]) fixo += pm;
+    const INF = Infinity; let dp = new Array(S + 1).fill(INF); dp[0] = 0;
+    const pega = idx.map(() => new Uint8Array(S + 1));            // pega[j][s] = 1 se a chave j foi LIGADA no melhor caminho até s
+    idx.forEach((i, j) => {
+      const w = Math.round(b.kws[i] * esc), cOn = cust[i] + (atual[i] ? 0 : pm), cOff = atual[i] ? pm : 0;
+      const nx = new Array(S + 1).fill(INF);
+      for (let s = 0; s <= S; s++) {
+        if (dp[s] === INF) continue;
+        const off = dp[s] + cOff; if (off < nx[s] - 1e-12) { nx[s] = off; pega[j][s] = 0; }
+        const t = s + w; if (t <= S) { const on = dp[s] + cOn; if (on < nx[t] - 1e-12) { nx[t] = on; pega[j][t] = 1; } }
+      }
+      dp = nx;
+    });
+    const m = new Map();
+    for (let s = 0; s <= S; s++) {
+      if (dp[s] === INF) continue;
+      const sel = new Array(n).fill(false); let t = s;
+      for (let j = idx.length - 1; j >= 0; j--) if (pega[j][t]) { sel[idx[j]] = true; t -= Math.round(b.kws[idx[j]] * esc); }
+      let mud = 0, cd = 0; for (let i = 0; i < n; i++) { if (sel[i] !== !!atual[i]) mud++; if (sel[i]) cd += cust[i]; }
+      const kw = arred(s / esc), custo = dp[s] + fixo;
+      m.set(kw, { kw, partes: [{ kw, sel, custo, mud, cd }], custo });
+    }
+    return m;
+  }
   /** Bloco de UM banco: mapa soma(kW) → melhor opção daquela soma. Base dos FBs de 3+ bancos.
    *  Por quê: guardar uma entrada por soma faz o número de estados depender do alvo, não do produto dos bancos (que esgotou a memória). */
-  function blocoDoBanco(b, p) {
+  function blocoDoBanco(b, p, tetoKw) {
+    const dp = blocoDP(b, p, tetoKw); if (dp) return dp;          // v0.5: caminho normal (rápido)
     const m = new Map();
     for (const o of opcoesDoBanco(b, p).values()) m.set(o.kw, { kw: o.kw, partes: [o], custo: o.custo });
     return m;
@@ -2074,7 +2113,7 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
     const p = mescla(PADRAO, ent); p.rodizio = mescla(PADRAO.rodizio, ent.rodizio);
     const alvo = ent.alvoKw, lim = limiteKw(ent.kw100, ent.pctLimite);
     const teto = Math.min(p.modoAlvo === 'minimo' ? alvo + p.excessoMaxKw : alvo, lim == null ? Infinity : lim);
-    return { p, alvo, lim, teto, blocos: ent.bancos.map(b => blocoDoBanco(b, p)) };
+    return { p, alvo, lim, teto, blocos: ent.bancos.map(b => blocoDoBanco(b, p, teto)) };
   }
   /** Escolhe a melhor soma do bloco final (mesma regra do FB de 2 bancos) e devolve a seleção por banco. */
   function escolheDoBloco(ent, s, comb) {
@@ -2118,7 +2157,7 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
     // v0.4 (03/11/2026): FALHA SEGURA. Alvo invalido (NaN, negativo, infinito) ou nenhuma combinacao possivel nao pode lancar excecao: devolve "nada ligado" + aviso.
     const vazio = aviso => ({ selecao: Object.fromEntries(ent.bancos.map(b => [b.id, b.kws.map(() => false)])), total: 0, erro: null, dentro: false, aviso, candidatos: 0 });
     if (!(typeof ent.alvoKw === 'number' && isFinite(ent.alvoKw) && ent.alvoKw >= 0)) return vazio('Alvo inválido: nada foi sugerido.');
-    try { return n <= 2 ? sugere2(ent) : n === 3 ? sugere3(ent) : n === 4 ? sugere4(ent) : sugereN(ent); }
+    try { return n === 1 ? sugereN(ent) : n === 2 ? sugereN(ent) : n === 3 ? sugere3(ent) : n === 4 ? sugere4(ent) : sugereN(ent); }   // v0.5: 1 e 2 bancos também por blocos (DP); sugere2 fica como oráculo
     catch (e) { return vazio('Não foi possível calcular a sugestão (' + (e && e.message || 'erro') + '): nada foi sugerido.'); }
   }
 
@@ -2207,7 +2246,7 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
   /** "Chave trocada" (manutenção/operador): zera o desgaste daquela chave. Por quê: chave nova não deve ser tratada como velha. */
   function chaveTrocada(estado, i) { estado.acion = estado.acion || []; estado.horas = estado.horas || []; estado.acion[i] = 0; estado.horas[i] = 0; return estado; }
 
-  raiz.RodizioChaves = { TABELA_FISICA, PADRAO, sugere, avalia, planoEntrada, picoPlano, limiteKw, guarda, podeLigar, registraUso, chaveTrocada, soma };
+  raiz.RodizioChaves = { TABELA_FISICA, PADRAO, sugere, sugereExaustivo: sugere2, avalia, planoEntrada, picoPlano, limiteKw, guarda, podeLigar, registraUso, chaveTrocada, soma };
   if (typeof module !== 'undefined') module.exports = raiz.RodizioChaves;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -2879,6 +2918,10 @@ buildTabela();
   const TOL_CONF_KW = 0.5;        // ASSUMIDO: tolerância entre kW comandado e kW confirmado fisicamente
   const FOLGA_CONF_S = 20;        // ASSUMIDO: tempo extra além do plano para o retorno físico confirmar
 
+  /** v0.12: tolerância de confirmação = min(0,5 kW; metade da menor chave habilitada). Com chave de 0,5 kW (BC59,5) a tolerância cai para 0,25 kW,
+   *  então uma chave que não confirmou NÃO passa mais como confirmada. */
+  function tolKw(h) { const ex = (h.extra && h.extra()) || {}, m = +ex.menorChaveKw; return (isFinite(m) && m > 0) ? Math.min(TOL_CONF_KW, m / 2) : TOL_CONF_KW; }
+
   function criaMae(h) {
     let previa = null, chaveParam = '', tEstado = 0, armada = false, estado = 'PARADO', msg = '', etAplic = -1, tIni = 0, tConf = 0, planoS = 0, selKw = 0, alvoKw = 0, guarda = null, log = [];
     let canal = null; try { canal = new BroadcastChannel(CANAL); } catch (e) { /* sem canal: só localStorage */ }
@@ -2939,7 +2982,7 @@ buildTabela();
       set(3, 'ok', 'etapa ' + (et + 1) + ' · ' + pct + ' % → ' + alvoKw.toFixed(1) + ' kW');
       set(7, 'ativo', 'etapa há ' + Math.round(h.tempoEtapaS()) + ' s');
       // ---- etapa nova: a mãe chama 4 -> 11 -> 10 -> 6 ----
-      const exP = (h.extra && h.extra()) || {}, chP = kw100 + '|' + exP.pctLim + '|' + exP.degrauKw + '|' + exP.escSig;
+      const exP = (h.extra && h.extra()) || {}, chP = kw100 + '|' + exP.pctLim + '|' + exP.degrauKw + '|' + exP.escSig + '|' + exP.nHabil;   // v0.12: habilitar/desabilitar chaves também recalcula a etapa
       if (etAplic >= 0 && et === etAplic && chP !== chaveParam) { reg('parâmetros mudaram (kW a 100 %/limite/degrau): recalculando a etapa'); etAplic = -1; }   // v0.4
       chaveParam = chP;
       if (et !== etAplic) {   // v0.3: etapa nova SEMPRE tenta de novo (uma falha numa etapa não trava as seguintes)
@@ -2978,8 +3021,8 @@ buildTabela();
       const dt = (h.agora() - tIni) / 1000;
       if (estado === 'ESCALONANDO' && dt >= planoS) { vai('CONFIRMANDO', 'aguardando retorno físico'); tConf = h.agora(); set(10, 'ok', 'plano concluído'); }
       if (estado === 'CONFIRMANDO') {
-        const d = Math.abs(h.kwConfirmado() - selKw); set(6, d <= TOL_CONF_KW ? 'ok' : 'ativo', 'cmd ' + h.kwComandado().toFixed(1) + ' · conf ' + h.kwConfirmado().toFixed(1) + ' kW');
-        if (d <= TOL_CONF_KW) vai('NO_PATAMAR', 'confirmado ' + h.kwConfirmado().toFixed(1) + ' kW');
+        const TOL = tolKw(h), d = Math.abs(h.kwConfirmado() - selKw); set(6, d <= TOL ? 'ok' : 'ativo', 'cmd ' + h.kwComandado().toFixed(1) + ' · conf ' + h.kwConfirmado().toFixed(1) + ' kW');
+        if (d <= TOL) vai('NO_PATAMAR', 'confirmado ' + h.kwConfirmado().toFixed(1) + ' kW');
         else if ((h.agora() - tConf) / 1000 > FOLGA_CONF_S) { vai('FALHA', 'retorno físico não confirmou (cmd × conf divergem)'); set(6, 'falha', msg); }
       }
       // ---- v0.5: PRÉVIA da próxima etapa (salvamento manual: etapa cumprida, esperando o SALVAR) ----
@@ -2999,13 +3042,15 @@ buildTabela();
       }
       if (estado === 'NO_PATAMAR') {   // v0.4: vigia divergência (só avisa; o operador pode ter ajustado à mão de propósito)
         const dv = Math.abs(h.kwComandado() - selKw);
-        if (dv > TOL_CONF_KW) { msg = 'chaves ≠ sugerido (' + h.kwComandado().toFixed(1) + ' × ' + selKw.toFixed(1) + ' kW): ajuste manual?'; set(6, 'falha', msg); }
+        if (dv > tolKw(h)) { msg = 'chaves ≠ sugerido (' + h.kwComandado().toFixed(1) + ' × ' + selKw.toFixed(1) + ' kW): ajuste manual?'; set(6, 'falha', msg); }
         else if (/^chaves ≠/.test(msg)) msg = 'confirmado ' + h.kwConfirmado().toFixed(1) + ' kW';
       }
       set(9, estado === 'FALHA' ? 'falha' : (estado === 'NO_PATAMAR' || estado === 'SEM_CARGA' ? 'ok' : 'ativo'), estado + (msg ? ' — ' + msg : ''));
       publica();
     }
-    return { arma, desarma, ciclo, foto, get armada() { return armada; }, get estado() { return estado; } };
+    /** v0.12: REARME explícito pelo operador após FALHA (retorno físico, guarda, sem combinação). Só vale se o DSE responde. Nunca é automático. */
+    function rearma() { if (estado !== 'FALHA' || !h.dseOk()) return false; reg('rearme pelo operador'); arma(); return true; }
+    return { arma, desarma, rearma, ciclo, foto, get armada() { return armada; }, get estado() { return estado; } };
   }
   raiz.FBV = { criaMae, NOMES, CANAL, LS };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -3640,8 +3685,13 @@ document.querySelectorAll('dialog.jan').forEach(d=>{
 /* ===== CONTROLE DE VERSÃO =====
    A cada alteração: aumente VERSAO (maior.menor.correção), troque VERSAO_DATA,
    acrescente um item NO TOPO de HISTORICO e atualize <meta name="app-version"> no <head>. */
-const VERSAO='1.10.158', VERSAO_DATA='03/11/2026';
+const VERSAO='1.10.159', VERSAO_DATA='03/11/2026';
 const HISTORICO=[
+  {v:"1.10.159",d:"03/11/2026",i:[
+    'FB Sugerir chaves reescrito por PROGRAMAÇÃO DINÂMICA (sem testar todas as 2^n combinações): 4 bancos reais caem de ~150 ms para 2–40 ms e um banco de 32 chaves passa a ser viável (antes: 22 chaves = 1,8 s, 32 = impossível). Resultado de menor custo igual ao anterior (150 casos conferidos). Bancos com kW fora da grade de 0,1 caem no cálculo antigo.',
+    'FB mãe: tolerância de confirmação agora = menor entre 0,5 kW e a metade da menor chave habilitada (com chave de 0,5 kW do BC59,5, uma chave que não fecha não passa mais como confirmada); habilitar/desabilitar chaves recalcula a etapa; após FALHA, o 1º clique no chip "Patamar: On" REARMA (só com o DSE respondendo; nunca automático).',
+    'Testes automáticos dos FBs: tests/fb (25 testes). Módulos-fonte: rodizio_chaves_v0.5 e fbs_virtuais_v0.12, iguais ao embutido aqui.'
+  ]},
   {v:"1.10.158",d:"03/11/2026",i:[
     'CORRIGIDO (achado da suíte de testes tests/fb): o FB Sugerir chaves (sugere) lançava exceção interna com alvo inválido (vazio, NaN, negativo). Agora falha segura: nada ligado + aviso, sem travar a tela.'
   ]},
@@ -7373,6 +7423,7 @@ try{const dm=JSON.parse(localStorage.getItem('medidor.modeloEscolhido')||'null')
   function limpaManual(){G.manualSug=false;G.selCons={};G.sug=sugVazio();bancosAtivos().forEach(({b})=>{G.sel[b.id]=b.chaves.map(()=>false)});pinta()}   // tira tracejado/seleção do uso manual
   function alternaRodar(){
     if(!G.guiadoOn&&!autoOk()){G.msg=MSG_AUTO;msgGer(MSG_AUTO,8000);atualizaBtnRodar();desenha();return}
+    if(G.guiadoOn&&mae.estado==='FALHA'&&mae.rearma()){msgGer('Patamar rearmado pelo operador: recalculando a etapa.',5000);atualizaBtnRodar();desenha();return}   // v1.10.159: em FALHA o 1º clique REARMA (não desliga)
     G.guiadoOn=!G.guiadoOn;G.guiadoOff=!G.guiadoOn;   // não é guardado: a cada abertura da página nasce desligado
     if(G.guiadoOn){limpaManual();mae.arma()}else{mae.desarma('guiado desligado pelo operador');limpaManual()}
     atualizaBtnRodar();desenha()}
@@ -7381,7 +7432,7 @@ try{const dm=JSON.parse(localStorage.getItem('medidor.modeloEscolhido')||'null')
     {const f0=$('gFicha');if(f0)f0.hidden=true;const gb=$('bGuiado');if(gb){if(gb.textContent!=='🧭 Patamar Guiado')gb.textContent='🧭 Patamar Guiado';gb.classList.toggle('gdrun-on',on)}}   // v1.10.103: o estado vai no chip "Patamar: On/Off"; a ficha do gerador vai no tooltip do chip
     /* v1.10.103: chip curto "Patamar: On/Off" (On/Off = convenção do projeto para chips de estado). Detalhes (aguardando INICIAR, FALHA, chaves ≠ sugerido…) ficam no tooltip. */
     const t=on?'Patamar: On':'Patamar: Off';
-    const det=on?'Patamar Guiado LIGADO'+(e==='AGUARDA_INICIO'?' · aguardando INICIAR':e==='FALHA'?' · FALHA':e==='PREVIA'?' · '+maeMsg():e==='NO_PATAMAR'?(/^chaves ≠/.test(mae.foto().msg)?' · chaves ≠ sugerido':' · no patamar'):e==='FIM'?' · fim':''):(T.started&&!T.fim?'Patamar Guiado DESLIGADO — nada será sugerido neste ensaio':'Patamar Guiado desligado');
+    const det=on?'Patamar Guiado LIGADO'+(e==='AGUARDA_INICIO'?' · aguardando INICIAR':e==='FALHA'?' · FALHA — clique em Patamar para REARMAR':e==='PREVIA'?' · '+maeMsg():e==='NO_PATAMAR'?(/^chaves ≠/.test(mae.foto().msg)?' · chaves ≠ sugerido':' · no patamar'):e==='FIM'?' · fim':''):(T.started&&!T.fim?'Patamar Guiado DESLIGADO — nada será sugerido neste ensaio':'Patamar Guiado desligado');
     if(b.textContent!==t)b.textContent=t;
     const cl='enschip'+(on?(e==='FALHA'?' err':' ok'):(T.started&&!T.fim?' mock':''));
     if(b.className!==cl)b.className=cl;

@@ -2,12 +2,12 @@
 // Cada teste monta um host falso (relogio, DSE, chaves) e anda a maquina ciclo a ciclo, como um OB ciclico.
 // Itens marcados { todo } sao ACHADOS conhecidos (ver docs/bt2/analise/): o teste descreve o comportamento desejado e hoje falha.
 const test = require('node:test'), assert = require('node:assert/strict');
-globalThis.BroadcastChannel = undefined; // evita canal aberto segurando o processo
-const { FBV } = (() => { require('../../dashboard/modulos-fonte/fbs_virtuais_v0.11.js'); return { FBV: globalThis.FBV }; })();
+globalThis.BroadcastChannel = undefined; globalThis.BANCOS = [{ id: '56' }, { id: '400' }]; // evita canal aberto segurando o processo
+const { FBV } = (() => { require('../../dashboard/modulos-fonte/fbs_virtuais_v0.12.js'); return { FBV: globalThis.FBV }; })();
 
 function criaHost(o = {}) {
   const h = { t: 0, ini: true, et: 0, pcts: [50, 100], kw100d: 100, dse: true, sel: 50, cmd: 0, conf: 0, manual: false, aplicou: false, salvar: false,
-    chamadas: { aplica: 0, derruba: 0, sugere: 0 }, guardaOk: true, plano: 5, extra: { nHabil: 10, pctLim: 107, menorChaveKw: 5 }, fim: false };
+    chamadas: { aplica: 0, derruba: 0, sugere: 0 }, guardaOk: true, plano: 5, extraD: { nHabil: 10, pctLim: 107, menorChaveKw: 5 }, fim: false };
   Object.assign(h, o);
   return Object.assign(h, {
     agora: () => h.t, iniciado: () => h.ini, fimEnsaio: () => h.fim, etapa: () => h.et, nEtapas: () => h.pcts.length, alvoPct: i => h.pcts[i],
@@ -16,7 +16,7 @@ function criaHost(o = {}) {
     guarda: () => h.guardaOk ? { ok: true, total: h.sel, limiteKw: 107 } : { ok: false, total: h.sel, limiteKw: 107, mensagem: 'Bloqueado: acima do limite' },
     aplica: () => { h.chamadas.aplica++; h.cmd = h.sel; }, duracaoPlanoS: () => h.plano, aguardaSalvar: () => h.salvar,
     sugerePrevia: () => ({ total: 100 }), limpaPrevia() {}, derruba: () => { h.chamadas.derruba++; h.cmd = 0; h.conf = 0; },
-    kwComandado: () => h.cmd, kwConfirmado: () => h.conf, marco() {}, tempoEtapaS: () => 0, extra: () => h.extra,
+    kwComandado: () => h.cmd, kwConfirmado: () => h.conf, marco() {}, tempoEtapaS: () => 0, extra: () => h.extraD,
     aplicaManual: () => h.manual, aplicouEt: () => h.aplicou,
   });
 }
@@ -67,21 +67,34 @@ test('fim do ensaio desarma a mae', () => {
   assert.equal(m.estado, 'FIM'); assert.equal(m.armada, false);
 });
 
-// ---------------- ACHADOS conhecidos (comportamento desejado, hoje falha) ----------------
-test('ACHADO A1: divergencia de 0,5 kW (menor chave do BC59,5) deveria ser detectada', { todo: 'TOL_CONF_KW=0,5 e igual a menor chave' }, () => {
-  const h = criaHost({ sel: 50 }), m = FBV.criaMae(h); m.arma(); anda(m, h, 7);
+// ---------------- achados F3, F4, F5 (corrigidos na v0.12) ----------------
+test('F3: com chave de 0,5 kW, divergencia de 0,5 kW NAO confirma (tolerancia = metade da menor chave)', () => {
+  const h = criaHost({ sel: 50, extraD: { nHabil: 10, pctLim: 107, menorChaveKw: 0.5 } }), m = FBV.criaMae(h); m.arma(); anda(m, h, 7);
   assert.equal(m.estado, 'CONFIRMANDO'); h.conf = 49.5; anda(m, h, 1);
-  assert.notEqual(m.estado, 'NO_PATAMAR', 'chave de 0,5 kW sem confirmar passou como confirmada');
+  assert.equal(m.estado, 'CONFIRMANDO', 'chave de 0,5 kW sem confirmar passou como confirmada');
+  h.conf = 49.9; anda(m, h, 1); assert.equal(m.estado, 'NO_PATAMAR', 'divergencia de 0,1 kW (ruido) deve confirmar');
 });
 
-test('ACHADO A2: apos FALHA por retorno fisico deveria existir saida (rearme) sem trocar de etapa', { todo: 'FALHA e terminal ate a etapa mudar' }, () => {
+test('F3: com chaves grandes a tolerancia continua 0,5 kW', () => {
+  const h = criaHost({ sel: 50 }), m = FBV.criaMae(h); m.arma(); anda(m, h, 7); h.conf = 49.5; anda(m, h, 1);
+  assert.equal(m.estado, 'NO_PATAMAR');
+});
+
+test('F4: rearma() tira a mae da FALHA de retorno fisico, so por ato do operador e com DSE ok', () => {
   const h = criaHost(), m = FBV.criaMae(h); m.arma(); anda(m, h, 2); h.conf = 0; anda(m, h, 31);
   assert.equal(m.estado, 'FALHA'); h.conf = 50; anda(m, h, 3);
-  assert.notEqual(m.estado, 'FALHA', 'retorno voltou ao normal e a mae segue em FALHA');
+  assert.equal(m.estado, 'FALHA', 'nao pode sair sozinha');
+  h.dse = false; assert.equal(m.rearma(), false, 'sem DSE nao rearma'); h.dse = true;
+  assert.equal(m.rearma(), true); anda(m, h, 8); h.conf = 50; anda(m, h, 1);
+  assert.equal(m.estado, 'NO_PATAMAR');
 });
 
-test('ACHADO A3: habilitar chaves depois de "nenhuma combinacao" deveria recalcular a etapa', { todo: 'habilitacao nao entra na assinatura de parametros' }, () => {
-  const h = criaHost({ sel: 0, extra: { nHabil: 0, pctLim: 107, menorChaveKw: 5 } }), m = FBV.criaMae(h); m.arma(); anda(m, h, 2);
-  assert.equal(m.estado, 'FALHA'); h.sel = 50; h.extra = { nHabil: 10, pctLim: 107, menorChaveKw: 5 }; anda(m, h, 3);
-  assert.notEqual(m.estado, 'FALHA', 'operador habilitou as chaves e a mae continua em FALHA');
+test('F4: rearma() fora de FALHA nao faz nada', () => {
+  const h = criaHost(), m = FBV.criaMae(h); m.arma(); anda(m, h, 2); assert.equal(m.rearma(), false);
+});
+
+test('F5: habilitar chaves depois de "nenhuma combinacao" recalcula a etapa', () => {
+  const h = criaHost({ sel: 0, extraD: { nHabil: 0, pctLim: 107, menorChaveKw: 5 } }), m = FBV.criaMae(h); m.arma(); anda(m, h, 2);
+  assert.equal(m.estado, 'FALHA'); h.sel = 50; h.extraD = { nHabil: 10, pctLim: 107, menorChaveKw: 5 }; anda(m, h, 3);
+  assert.notEqual(m.estado, 'FALHA');
 });

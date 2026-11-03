@@ -9,7 +9,7 @@ Você é um engenheiro de verificação de software de controle industrial, trab
 Provar (ou refutar) que a lógica dos FBs está correta ANTES de ir para o PLC. Você descobre defeitos, não os esconde.
 
 ## Onde está o código
-- `dashboard/modulos-fonte/rodizio_chaves_v0.4.js` (sugestão, guarda, plano de entrada) e `fbs_virtuais_v0.11.js` (FB mãe + 11 filhos).
+- `dashboard/modulos-fonte/rodizio_chaves_v0.5.js` (sugestão, guarda, plano de entrada) e `fbs_virtuais_v0.12.js` (FB mãe + 11 filhos).
 - O código que de fato roda está embutido em `dashboard/ferramentas/medidor_gerador_v*.html` — a fonte em `modulos-fonte` pode estar defasada. Confira antes de concluir.
 - Testes: `tests/fb/` (`node --test tests/fb/rodizio_chaves.test.js tests/fb/fbs_virtuais.test.js`).
 - Relatório de achados: `docs/bt2/analise/ANALISE_GERAL_v0.1.md` (F1–F9).

@@ -2,7 +2,7 @@
 // Estrategia: (1) oraculo por forca bruta em bancos pequenos, (2) testes diferenciais entre os FBs de 2/3/4/N bancos,
 // (3) invariantes de seguranca (guarda, limite, habilitacao), (4) casos de borda, (5) orcamento de tempo com os 4 bancos reais.
 const test = require('node:test'), assert = require('node:assert/strict');
-const R = require('../../dashboard/modulos-fonte/rodizio_chaves_v0.4.js');
+const R = require('../../dashboard/modulos-fonte/rodizio_chaves_v0.5.js');
 
 // gerador pseudoaleatorio deterministico (mulberry32): mesmos casos em toda execucao
 const rng = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -112,4 +112,44 @@ test('desempenho: 4 bancos reais (13+13+18+12 chaves) em ate 1 s', () => {
   const bancos = REAIS(), t = Date.now();
   for (const alvo of [30, 213.4, 600, 1000]) R.sugere({ bancos, alvoKw: alvo, kw100: 1000, pctLimite: 107 });
   assert.ok((Date.now() - t) / 4 < 1000, 'sugere acima de 1 s por chamada');
+});
+
+// ---------------- v0.5: programacao dinamica (sem enumeracao 2^n) ----------------
+function custoSel(bancos, sel, pm = 0.01) {            // custo independente do codigo: desgaste normalizado (acion+horas) + pm por chave que mudou
+  let c = 0;
+  for (const b of bancos) { const n = b.kws.length, mA = Math.max(1, ...b.estado.acion), mH = Math.max(1, ...b.estado.horas);
+    for (let i = 0; i < n; i++) { if (sel[b.id][i]) c += b.estado.acion[i] / mA + b.estado.horas[i] / mH; if (sel[b.id][i] !== !!b.atual[i]) c += pm; } }
+  return c;
+}
+test('DP == exaustivo: mesmo total/erro e custo igual ou menor (150 casos com desgaste e estado atual)', () => {
+  const r = rng(2026);
+  for (let c = 0; c < 150; c++) {
+    const nb = 1 + Math.floor(r() * 3);
+    const bancos = Array.from({ length: nb }, (_, i) => { const n = 3 + Math.floor(r() * 6); const kws = Array.from({ length: n }, () => [0.5,1,2,5,10,25][Math.floor(r() * 6)]);
+      const b = banco('B' + i, kws, kws.map(() => r() > 0.15)); b.estado = { acion: kws.map(() => Math.floor(r() * 20)), horas: kws.map(() => Math.floor(r() * 50)) }; b.atual = kws.map(() => r() > 0.5); return b; });
+    const alvo = Math.round(r() * 80 * 2) / 2, ent = { bancos, alvoKw: alvo };
+    const a = R.sugere(ent), e = R.sugereExaustivo(ent);
+    assert.equal(a.total, e.total, `caso ${c}: total difere`);
+    assert.ok(custoSel(bancos, a.selecao) <= custoSel(bancos, e.selecao) + 1e-6, `caso ${c}: DP com custo pior que a enumeracao`);
+    bancos.forEach(b => b.kws.forEach((_, i) => { if (!b.habil[i]) assert.equal(a.selecao[b.id][i], false); }));
+  }
+});
+
+test('escala: banco de 32 chaves + 4 bancos reais responde em ate 1 s (antes: inviavel)', () => {
+  const grande = banco('G', Array.from({ length: 32 }, (_, i) => [0.5, 1, 2, 5, 10][i % 5]));
+  const bancos = REAIS().concat([grande]);
+  const t = Date.now(), s = R.sugere({ bancos, alvoKw: 777.5, kw100: 1500, pctLimite: 107 });
+  assert.ok(Date.now() - t < 1000, `demorou ${Date.now() - t} ms`);
+  assert.ok(totalSel(bancos, s.selecao) <= 777.5 + 1e-9);
+  assert.equal(totalSel(bancos, s.selecao), s.total);
+});
+
+test('kW fora da grade de 0,1: cai para a enumeracao e continua correto', () => {
+  const b = banco('A', [0.25, 0.75, 1.5]); const s = R.sugere({ bancos: [b], alvoKw: 1 });
+  assert.ok(Math.abs(s.total - 1) < 1e-9, `total ${s.total}`);
+});
+
+test('vetores congelados: o modulo atual reproduz os vetores de tests/fb/vetores (regressao e referencia para o SCL)', () => {
+  const v = JSON.parse(require('fs').readFileSync(__dirname + '/vetores/sugere_vetores_v0.1.json', 'utf8'));
+  for (const c of v.casos) { const s = R.sugere(c.entrada); assert.equal(s.total, c.saida.total, c.nome + ': total'); assert.equal(s.erro, c.saida.erro, c.nome + ': erro'); }
 });
