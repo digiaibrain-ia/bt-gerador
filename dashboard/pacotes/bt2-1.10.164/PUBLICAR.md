@@ -1,12 +1,12 @@
-# Pacote BT2 — medidor 1.10.163 + preparação da migração (03/11/2026)
+# Pacote BT2 — medidor 1.10.164 + preparação da migração (03/11/2026)
 
 Conteúdo:
-- `html/` → copiar para `C:\Users\b02raf\.node-red\public\html\` (medidor 1.10.163 (log de dev com os 4 bancos) e catálogo já apontando para ele). Guarde as versões antigas em `arquivo\`.
+- `html/` → copiar para `C:\Users\b02raf\.node-red\public\html\` (medidor 1.10.164 (log de dev com os 4 bancos) e catálogo já apontando para ele). Guarde as versões antigas em `arquivo\`.
 - `nodered/` → fluxos para importar no editor (Menu → Importar → Deploy). **Só importar na ordem e no momento do `IMPLANTACAO_ROTEIRO_v0.2.md`**: eles usam os DBs com número novo.
 - `plc/` → blocos para o TIA do 1515 e DBs do ET200 (rascunhos, nunca compilados).
 - `IMPLANTACAO_ROTEIRO_v0.2.md`, `ET200_PREVISIBILIDADE_v0.1.md`, `MAPA_RENUMERACAO_BT2_v0.1.csv`, `PLANO_NUMERACAO_BLOCOS_PLC_v6_exemplo.xlsx`.
 
-O medidor 1.10.163 funciona hoje com o PLC atual (chaves v2.6) **somente se** os fluxos antigos ainda estiverem no Node-RED e o número dos DBs for só informativo no HTML — ele não envia número de DB, só rotas. Os bancos BC59,5/BC550 continuam só no Demo até ligar a chave `?novos=1`.
+O medidor 1.10.164 funciona hoje com o PLC atual (chaves v2.6) **somente se** os fluxos antigos ainda estiverem no Node-RED e o número dos DBs for só informativo no HTML — ele não envia número de DB, só rotas. Os bancos BC59,5/BC550 continuam só no Demo até ligar a chave `?novos=1`.
 
 Novidades desta versão (157): FBs e FC do lado ET200 para os bancos novos (`plc/fb_bancoEt200_*`, `fc_bancosNovosEt200`, tabela de tags com endereços a preencher), FC único de chamadas do 1515 (`fc_chamadasBancos_BT2`) e fluxo `dev-logs-api-v1.1` (DB2100).
 
@@ -23,3 +23,5 @@ Versão 162: corrige o "maior excesso sobre o alvo" do resumo de aprendizado em 
 Versão 163 (auditoria geral de 03/11): FBs corrigidos (guarda, kW real, rearme, carga confirmada acima do limite) e 10 correções de operação no celular/desktop. PLC: FB100 v0.4, FB102 v0.2 e lado ET200 v0.2 (a contatora não religa sozinha após queda de comunicação). Simulador de bancada v5 (4 bancos).
 
 r2 (03/11/2026): ferramentas com títulos/versões corrigidos (gráfico 0.11, mapa 0.15, logs 1.7, amostras 0.7, maquete 0.4; catálogo já aponta para elas) e comentários dos SCL corrigidos (FB103 v0.2, DB41 v0.2, FC de chamadas v0.2).
+
+Versão 164: botão direito / toque longo com "Pacote para a IA" (captura de área, imagens com OCR, contexto, pergunta, copiar/salvar .md/.json). Nada do que existia mudou. Se o OCR for usar, a pasta /tesseract/ precisa estar em public/html (como já era para o import do SAP).

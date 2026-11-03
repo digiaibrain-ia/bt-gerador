@@ -10361,6 +10361,12 @@ window.abreEmb=function(html,nome,feat,id){
   @media (max-width:760px){
     dialog.pia{width:100vw;max-width:100vw;height:var(--pia-h,100dvh);max-height:none;margin:0;border-width:0;position:fixed;inset:0}
     .pia-img{max-width:none}
+    /* rodapé compacto no celular: "Copiar e fechar" em linha própria e os 3 outros lado a lado (antes ocupava ~25 % da tela) */
+    .pia-foot{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:6px 10px}
+    .pia-foot .tok{grid-column:1/-1;font-size:11px;line-height:1.25}
+    .pia-foot #piaCopiar{grid-column:1/-1}
+    .pia-foot .bt{padding:7px 4px;font-size:12.5px;min-height:34px}
+    .pia-foot .pia-aviso{grid-column:1/-1}
   }`;
   D.head.appendChild(css);
 
@@ -10438,7 +10444,7 @@ window.abreEmb=function(html,nome,feat,id){
     add('janelas', 'Janelas abertas', abertas.join(', ') || 'nenhuma');
     const T = g('T'); if (T && typeof T === 'object') add('ensaio', 'Ensaio', 'iniciado=' + !!T.started + ' · rodando=' + !!T.run + ' · etapa=' + ((T.et | 0) + 1) + ' · fim=' + !!T.fim);
     try { const f = JSON.parse(localStorage.getItem('medidor.fbv.v1') || 'null'); if (f) add('mae', 'FB mãe (Patamar)', f.estado + (f.msg ? ' — ' + f.msg : '') + (f.kw ? ' · alvo ' + (+f.kw.alvo).toFixed(1) + ' kW · sugerido ' + (+f.kw.sel).toFixed(1) + ' · comandado ' + (+f.kw.cmd).toFixed(1) : '')); } catch (e) {}
-    try { const b = raiz.devObs && raiz.devObs.buf && raiz.devObs.buf(); if (b && b.length) L.push({ id: 'log', rot: 'Últimos eventos do log (' + Math.min(12, b.length) + ')', valor: b.slice(-12).map(x => Array.isArray(x) ? x.join(' | ') : (typeof x === 'object' ? [x.t || x.hora || '', x.card || '', x.tipo || '', x.acao || '', x.res || '', x.det || ''].filter(Boolean).join(' | ') : String(x))).join('\n'), on: false }); } catch (e) {}
+    try { const b = raiz.devObs && raiz.devObs.buf && raiz.devObs.buf(); if (b && b.length) L.push({ id: 'log', rot: 'Últimos eventos do log (' + Math.min(12, b.length) + ')', valor: b.slice(-12).map(x => { const t = v => (v != null && typeof v === 'object') ? JSON.stringify(v).slice(0, 160) : String(v == null ? '' : v); return Array.isArray(x) ? x.map(t).join(' | ') : (typeof x === 'object' ? [x.t || x.hora || '', x.card || '', x.tipo || '', x.acao || '', x.res || '', x.det || ''].map(t).filter(Boolean).join(' | ') : String(x)); }).join('\n'), on: false }); } catch (e) {}
     if (ERROS.length) L.push({ id: 'erros', rot: 'Erros de JavaScript (' + ERROS.length + ')', valor: ERROS.join('\n'), on: true });
     return L;
   }
