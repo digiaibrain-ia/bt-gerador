@@ -90,6 +90,9 @@ Comportamentos **corretos** confirmados (testes verdes): fila FIFO para comandos
 8. **Itens mantidos de proposito:** F2-1, F4-1, F4-2 e a rota `tensao` (mesmo padrao do P3-A4).
 9. `rid`/Idempotency-Key (etapa 4d) **adiado** por decisao: 504 `incerto`, quarentena e reafirmacao cobrem as repeticoes.
 
+## CONGELAMENTO (decisao apos a Etapa 5)
+Codigo congelado no commit `51481df`. **P3-E1 e P3-E2 permanecem abertos de proposito** (testes `todo`) ate haver os numeros reais da bancada (checklist `docs/bt2/migracao/CHECKLIST_BANCADA_v0.1.md`, itens 2.4 e 6.1). Proximo passo: validacao de bancada com o roteiro v0.5; so depois reavaliar E1/E2, F2-1, F4-1, F4-2.
+
 ## Itens já listados antes (sem mudança nesta fase)
 
 - **Tipo `Remote` em `VAR_INPUT`** nos FBs de comunicação (FB101/FB103): a confirmar no TIA.
