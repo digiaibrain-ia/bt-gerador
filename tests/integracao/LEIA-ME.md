@@ -55,3 +55,6 @@ Recursos novos do PLC simulado (`plc_simulado.js`) e do harness:
 - `verificador.js` - `valoresAplicados`, `sobreposicoes`, `ordemDeInicio`, `semRespostaPerdida`, `respostasEmDuplicidade`, `percentis`.
 `instrumentacao/i1_instrumentacao.test.js` (15 testes) prova que o ambiente reproduz e mede; **nao** afirma nada sobre o comportamento dos fluxos (isso e o Portao 2).
 Limite: a escrita **serial** e uma suposicao sobre o driver S7 real (nao confirmada); por isso o Portao 2 testa os dois modos.
+
+## Fase 3, Portao 2 - caracterizacao de concorrencia (nenhum fluxo alterado)
+`concorrencia/c2_caracterizacao.test.js` (20 testes: 12 verdes + 8 `todo` = achados P3-A1..A5, P3-B1, P3-C1, P3-C2). Cada `todo` escreve o comportamento ESPERADO; quando o fluxo for corrigido o teste passa a verde e o `todo` sai. Modo de escrita: serial (padrao) e concorrente so onde muda o resultado (P3-A5 e o teste de FIFO). Detalhes e gravidades no `BACKLOG_FORA_DE_ESCOPO.md`.
