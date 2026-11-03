@@ -1,0 +1,66 @@
+{
+ "versao": "0.1",
+ "gerado": "2026-11-03",
+ "itens": [
+  {
+   "id": "botao_alertas_vazio",
+   "titulo": "Botão Alertas (sem alertas)",
+   "arquivo": "img/botao_alertas_vazio.png",
+   "tags": [
+    "cabeçalho",
+    "ocorrências"
+   ],
+   "descricao": "Botão do cabeçalho com triângulo AMARELO e o texto \"Alertas 0\" em fundo escuro: não há alerta ativo. Alerta = aviso, nada quebrou (ex.: comando bloqueado de propósito). Clicar abre a janela só com alertas; lá dentro o chip \"Falhas\" liga as falhas junto."
+  },
+  {
+   "id": "botao_alertas_com_alerta",
+   "titulo": "Botão Alertas (com alerta ativo)",
+   "arquivo": "img/botao_alertas_com_alerta.png",
+   "tags": [
+    "cabeçalho",
+    "ocorrências"
+   ],
+   "descricao": "Mesmo botão com o fundo AMARELO e o número de alertas ativos (ex.: \"Alertas 2\"). Alerta é aviso: nada quebrou."
+  },
+  {
+   "id": "botao_falhas_vazio",
+   "titulo": "Botão Falhas (sem falhas)",
+   "arquivo": "img/botao_falhas_vazio.png",
+   "tags": [
+    "cabeçalho",
+    "ocorrências"
+   ],
+   "descricao": "Botão do cabeçalho com triângulo VERMELHO e o texto \"Falhas 0\" em fundo escuro: não há falha ativa. Falha = algo que deveria funcionar e não funciona. Clicar abre a janela só com falhas; o chip \"Alertas\" liga os alertas junto."
+  },
+  {
+   "id": "botao_falhas_com_falha",
+   "titulo": "Botão Falhas (com falha ativa)",
+   "arquivo": "img/botao_falhas_com_falha.png",
+   "tags": [
+    "cabeçalho",
+    "ocorrências"
+   ],
+   "descricao": "Mesmo botão com fundo BRANCO, contorno VERMELHO e o número de falhas ativas (ex.: \"Falhas 2\"). Falha ativa = causa existindo agora; ao normalizar, o número cai sozinho."
+  },
+  {
+   "id": "triangulo_card_com_contador",
+   "titulo": "Triângulo de ocorrências no cabeçalho de um card",
+   "arquivo": "img/triangulo_card_com_contador.png",
+   "tags": [
+    "card",
+    "ocorrências"
+   ],
+   "descricao": "Triângulo AMARELO com um número ao lado, no título de um card: quantidade de ocorrências ATIVAS (alertas e falhas juntos) daquele card. Só aparece quando há ocorrência. Clicar abre a janela já filtrada nesse card, com alertas e falhas."
+  },
+  {
+   "id": "chip_patamar_off",
+   "titulo": "Chip \"Patamar: Off\"",
+   "arquivo": "img/chip_patamar_off.png",
+   "tags": [
+    "patamar",
+    "guiado"
+   ],
+   "descricao": "Chip do card Patamar: \"Patamar: Off\" = o Patamar Guiado está desligado (nada será sugerido nem aplicado sozinho). \"Patamar: On\" = ligado; em FALHA, o primeiro clique rearma."
+  }
+ ]
+}

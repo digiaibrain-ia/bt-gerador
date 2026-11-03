@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="1.10.164">
+<meta name="app-version" content="1.10.166">
 <title>Medidor do Gerador</title>
 <style>
   /* v1.9.88: TOKENS DE COR DA INTERFACE (um lugar só). POR QUÊ: verde/vermelho/amarelo são SINAL (ligado, falha, alerta) e não podem ser usados como cor de enfeite;
@@ -618,10 +618,16 @@
   .ocb.novo svg{animation:ocbalanca .9s ease-out 1}
   @keyframes ocbalanca{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(3deg)}}
   @media (prefers-reduced-motion:reduce){.ocb.novo svg{animation:none}}
-  #bOcor{display:inline-flex;align-items:center;gap:6px;border:0;cursor:pointer;color:#fff}
+  /* v1.10.166: Alertas e Falhas são DOIS botões independentes (dentro do grupo #bOcor). Cada um abre a janela com o seu tipo e, lá dentro, dá para ligar o outro tipo junto. */
+  #bOcor{display:inline-flex;align-items:center;gap:6px}
+  #bAlertas,#bFalhas{display:inline-flex;align-items:center;gap:6px;border:0;cursor:pointer;color:#fff}
   #bOcor svg{width:16px;height:15px;display:block;flex:none}
-  #bOcor.tem{background:#f5c400;color:#111;font-weight:700}
-  #bOcor.temF{background:#fff;color:#8a1c15;box-shadow:inset 0 0 0 2px #d92d20}   /* v1.10.163: há FALHA ativa (ver desenhaCards) */
+  #bAlertas.tem{background:#f5c400;color:#111;font-weight:700}
+  #bFalhas.tem{background:#fff;color:#8a1c15;box-shadow:inset 0 0 0 2px #d92d20;font-weight:700}   /* há FALHA ativa */
+  #ocTipos{display:inline-flex;gap:6px}
+  #ocTipos button{border:1px solid #9aa6b5;background:#fff;color:#1b2a3a;border-radius:14px;padding:3px 11px;font:inherit;font-size:12.5px;cursor:pointer;min-height:28px}
+  #ocTipos button.on[data-t=m]{background:#f5c400;border-color:#8a6d00;font-weight:700}
+  #ocTipos button.on[data-t=f]{background:#fff4f2;border-color:#d92d20;color:#8a1c15;font-weight:700;box-shadow:inset 0 0 0 1px #d92d20}
   dialog#dlgOcor.jan.livre{border-color:#9a6a00}
   #dlgOcor .jt.livre{background:#9a6a00}
   #dlgOcor .jx:hover{color:#9a6a00}
@@ -1309,7 +1315,7 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
   <button type="button" class="pill" id="pMotorAl" style="display:none;background:#d64545;border:0;color:#fff;cursor:pointer" title="Clique para abrir Motor">⚠ MOTOR</button>
   <button type="button" class="pill" id="pVer" title="Versão do programa — clique para ver o histórico de alterações" style="border:0;color:#fff;cursor:pointer">v—</button>
   
-  <button type="button" class="pill" id="bOcor" aria-label="Alertas e Falhas" title="Alertas e Falhas de todos os cards e da aplicação"><svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 1.6 23 20.4H1Z" fill="#f5c400" stroke="#141414" stroke-width="1.5" stroke-linejoin="round"/><rect x="10.9" y="7.4" width="2.2" height="7" rx=".6" fill="#141414"/><circle cx="12" cy="17.3" r="1.35" fill="#141414"/></svg><span>Alertas</span><svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 1.6 23 20.4H1Z" fill="#d92d20"/><rect x="10.9" y="7.4" width="2.2" height="7" rx=".6" fill="#fff"/><circle cx="12" cy="17.3" r="1.35" fill="#fff"/></svg><span>Falhas</span><b id="ocN">0</b></button>
+  <span id="bOcor" class="ocgrp" role="group" aria-label="Alertas e Falhas"><button type="button" class="pill" id="bAlertas" title="Alertas ativos de todos os cards e da aplicação"><svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 1.6 23 20.4H1Z" fill="#f5c400" stroke="#141414" stroke-width="1.5" stroke-linejoin="round"/><rect x="10.9" y="7.4" width="2.2" height="7" rx=".6" fill="#141414"/><circle cx="12" cy="17.3" r="1.35" fill="#141414"/></svg><span>Alertas 0</span></button><button type="button" class="pill" id="bFalhas" title="Falhas ativas de todos os cards e da aplicação"><svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 1.6 23 20.4H1Z" fill="#d92d20"/><rect x="10.9" y="7.4" width="2.2" height="7" rx=".6" fill="#fff"/><circle cx="12" cy="17.3" r="1.35" fill="#fff"/></svg><span>Falhas 0</span></button><b id="ocN" hidden>0</b></span>
   <button type="button" class="pill" id="bLogs" title="Log da comunicação HTML ↔ Node-RED ↔ PLC (chaves)" style="border:0;color:#fff;cursor:pointer">Logs</button>
   <span id="menuDevHost"></span>
 
@@ -1328,7 +1334,8 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
     <input type="text" id="url" value="http://172.17.210.156:1880/api/gerador">
     <label style="display:none" aria-hidden="true">a cada <input type="number" id="seg" value="1" min="0.5" step="0.5" style="width:46px"> s</label><!-- v1.10.111: visual "a cada 1 s" retirado (confundiu na apresentação); o campo continua existindo (valor 1 s) porque o código lê $('seg') -->
     <input type="checkbox" id="demo" style="display:none">
-    <button id="bDemo" type="button" style="background:#2a2a2a;color:#fff;border:1px solid #666;border-radius:6px;padding:4px 10px;font-size:12px;white-space:nowrap" title="Demo e Servidor: URL do Node-RED do PLC, Demo local ou Demo + PLC, simulação de falha do motor">Demo</button>
+    <input id="demoSenha" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="senha" aria-label="Senha do modo de testes" title="Modo operador. Digite a senha de testes para liberar o botão Demo." style="width:74px;background:#2a2a2a;color:#fff;border:1px solid #666;border-radius:6px;padding:4px 8px;font-size:12px">
+    <button id="bDemo" type="button" style="display:none;background:#2a2a2a;color:#fff;border:1px solid #666;border-radius:6px;padding:4px 10px;font-size:12px;white-space:nowrap" title="Demo e Servidor: URL do Node-RED do PLC, Demo local ou Demo + PLC, simulação de falha do motor">Demo</button>
     <button id="go">Aplicar</button>
   </div>
 </div>
@@ -1650,6 +1657,7 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
   <div class="jt livre"><span id="ocTit">Alertas e Falhas</span><div class="jr"><span class="jtag" id="ocTag">0 ativas</span><button type="button" class="jx" data-fecha aria-label="Fechar" title="Fechar">✕</button></div></div>
   <div class="jb ocjb">
     <div class="ocbar">
+      <span id="ocTipos" role="group" aria-label="Tipos a mostrar"><button type="button" data-t="m">Alertas</button><button type="button" data-t="f">Falhas</button></span>
       <label class="oclbl" for="ocCard">Card</label><select id="ocCard" aria-label="Filtrar por card"></select>
       <span class="ensseg" id="ocFiltro"><button type="button" data-f="a">Ativas</button><button type="button" data-f="t">Todas</button></span>
       <button type="button" class="bt s" id="ocLimpa" title="Remove da lista o que já normalizou">Limpar normalizadas</button>
@@ -3795,8 +3803,15 @@ document.querySelectorAll('dialog.jan').forEach(d=>{
 /* ===== CONTROLE DE VERSÃO =====
    A cada alteração: aumente VERSAO (maior.menor.correção), troque VERSAO_DATA,
    acrescente um item NO TOPO de HISTORICO e atualize <meta name="app-version"> no <head>. */
-const VERSAO='1.10.164', VERSAO_DATA='03/11/2026';
+const VERSAO='1.10.166', VERSAO_DATA='03/11/2026';
 const HISTORICO=[
+  {v:"1.10.166",d:"03/11/2026",i:[
+    'Alertas e Falhas viraram DOIS botões independentes no cabeçalho (cada um com a sua contagem e cor). Clicar em Alertas abre a janela só com alertas; clicar em Falhas, só com falhas. Dentro da janela há dois chips (Alertas N / Falhas N) para ligar o outro tipo junto — ou desligar, sempre sobrando pelo menos um. Clicar de novo no mesmo botão fecha; clicar no outro troca o tipo sem fechar. O triângulo do cabeçalho de cada card continua abrindo os dois tipos daquele card.'
+  ]},
+  {v:"1.10.165",d:"03/11/2026",i:[
+    'MODO OPERADOR é o padrão ao abrir a página: o botão Demo agora fica ESCONDIDO e no lugar dele há uma caixa de senha. Digitando a senha de testes (sem precisar de Enter) o botão Demo aparece e as ferramentas de teste/desenvolvimento são liberadas; o cadeado trava de novo e volta ao modo operador. Acabou o prompt() de senha, que não abria no celular. A senha é trava contra uso por engano, não segurança.',
+    'Pacote para a IA: só Markdown (saiu o botão .json) e nova seção \"Referências\": descrições prontas de figuras que se repetem (ex.: triângulo de ocorrências, estados das chaves), lidas da pasta referencias/ publicada ao lado do HTML. Marque as que valem para a pergunta e elas entram no pacote.'
+  ]},
   {v:"1.10.164",d:"03/11/2026",i:[
     'NOVO — botão direito (e TOQUE LONGO no celular; Shift+F10 no teclado) abre um menu com: \"Capturar para a IA\", \"Abrir pacote (só imagem/texto)\", \"Inspecionar objetos (Alt+I)\", \"Copiar descrição deste objeto\" e \"Tamanho desta janela (⤢)\". Nada que já existia mudou: botões, popups, ⤢ e Alt+I continuam iguais; o menu só aponta para eles. Nos campos de texto continua o menu normal do navegador. Nenhum comando de chave/banco/gerador entra no menu.',
     'NOVO — \"Capturar para a IA\": faixa \"Captura ativa\" (Esc ou Cancelar desarma; desarma sozinha em 60 s); você arrasta um retângulo (ou toca em um objeto) e abre a janela \"Pacote para a IA\", nesta ordem: imagens (cole com Ctrl+V, arraste ou escolha da galeria; legenda e OCR opcional com o Tesseract local), objetos da área (nome, texto, posição, tamanho, estado, cor — com caixinha para tirar o que não interessa), contexto (versão, tela, Demo/PLC, janelas abertas, ensaio, FB mãe, erros; o log é opcional), a PERGUNTA, prévia e a estimativa de tokens. Botões fixos embaixo: \"Copiar e fechar\", Salvar .md, Salvar .json e Fechar (pergunta antes de descartar o que você escreveu). Campo de senha nunca entra. Se a cópia automática for bloqueada (página http), usa um plano B e, em último caso, seleciona a prévia.'
@@ -8220,16 +8235,15 @@ const OCOR=(function(){
         if(cresceu){t.btn.classList.remove('novo');void t.btn.offsetWidth;t.btn.classList.add('novo')}
       }
     });
-    const at=ativas(),tot=at.length,nf=at.filter(o=>o.tipo==='f').length,na=tot-nf,bt=$('bOcor');
-    if(bt){
+    const at=ativas(),tot=at.length,nf=at.filter(o=>o.tipo==='f').length,na=tot-nf,bA=$('bAlertas'),bF=$('bFalhas');
+    if(bA&&bF){
       const n=$('ocN');if(n.textContent!==String(tot))n.textContent=tot;
-      /* v1.10.163: contagem SEPARADA por tipo. Antes: um total só, ao lado da palavra "Falhas" e sempre amarelo (2 falhas pareciam 2 alertas).
-         Agora "Alertas N" e "Falhas N"; com falha ativa o botão ganha contorno vermelho (o texto também diz: cor não é o único sinal). */
-      n.hidden=true;
-      const sp=bt.querySelectorAll(':scope>span');if(sp.length>=2){setTxt(sp[0],'Alertas '+na);setTxt(sp[1],'Falhas '+nf)}
-      bt.classList.toggle('tem',tot>0);bt.classList.toggle('temF',nf>0);
-      const tt=tot?nf+(nf===1?' falha':' falhas')+' e '+na+(na===1?' alerta ativo':' alertas ativos')+' — clique para ver todos':'Sem ocorrências ativas. Clique para ver o histórico desta sessão.';
-      if(bt.title!==tt)bt.title=tt;
+      /* v1.10.166: DOIS botões independentes, cada um com a sua contagem e cor (cor não é o único sinal: o número e o nome estão no botão) */
+      setTxt(bA.querySelector('span'),'Alertas '+na);setTxt(bF.querySelector('span'),'Falhas '+nf);
+      bA.classList.toggle('tem',na>0);bF.classList.toggle('tem',nf>0);
+      const ta=na?na+(na===1?' alerta ativo':' alertas ativos')+' — clique para ver':'Sem alertas ativos. Clique para ver o histórico desta sessão.',
+            tf=nf?nf+(nf===1?' falha ativa':' falhas ativas')+' — clique para ver':'Sem falhas ativas. Clique para ver o histórico desta sessão.';
+      if(bA.title!==ta)bA.title=ta;if(bF.title!==tf)bF.title=tf;
     }
   }
 
@@ -8237,6 +8251,7 @@ const OCOR=(function(){
   const codExib=(cod,tipo,ref)=>(tipo==="f"?"F":"A")+"-"+cod+(ref?" · "+ref:"");   // v1.10.103: T-AAA-NNN (T = F de Falha / A de Alerta)
   let ultVis=[];
   let filtro='a',cardSel='',verJanela=-1;
+  let tiposOn={m:true,f:true};   // v1.10.166: tipos mostrados na janela (independentes; sempre pelo menos um ligado)
   const dlg=()=>$('dlgOcor');
   function opcoesCard(){
     const s=$('ocCard');if(s.options.length)return;
@@ -8247,7 +8262,7 @@ const OCOR=(function(){
     verJanela=ver;
     const todas=lista().filter(o=>!cardSel||o.card===cardSel);
     const ordem=todas.slice().sort((a,b)=>(b.ativa-a.ativa)||(b.desde-a.desde));
-    const vis=filtro==='a'?ordem.filter(o=>o.ativa):ordem;
+    const vis=(filtro==='a'?ordem.filter(o=>o.ativa):ordem).filter(o=>tiposOn[o.tipo==='f'?'f':'m']);
     const nA=todas.filter(o=>o.ativa).length,nF=todas.filter(o=>o.ativa&&o.tipo==='f').length,nM=todas.filter(o=>o.ativa&&o.tipo==='m').length,nN=todas.length-nA;
     const st=(l,v,bad)=>`<div class="ocst"><small>${l}</small><b${bad?' class="bad"':''}>${v}</b></div>`;
     $('ocStats').innerHTML=st('Ativas',nA,nA>0)+st('Falhas ativas',nF,nF>0)+st('Alertas ativos',nM)+st('Normalizadas',nN);
@@ -8259,9 +8274,11 @@ const OCOR=(function(){
     v.textContent=vis.length?'':(filtro==='a'?(todas.length?'Nenhuma ocorrência ativa agora. Use “Todas” para ver as que já normalizaram.':'Nenhuma ocorrência nesta sessão.'):'Nenhuma ocorrência registrada nesta sessão.');
     $('ocStatus').textContent='Atualizado às '+hhmmss(Date.now())+' · '+vis.length+' linha(s)';
     $('ocFiltro').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.f===filtro));
+    $('ocTipos').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',!!tiposOn[b.dataset.t]);b.setAttribute('aria-pressed',tiposOn[b.dataset.t]?'true':'false');b.textContent=(b.dataset.t==='f'?'Falhas ':'Alertas ')+(b.dataset.t==='f'?nF:nM)});
   }
-  function abre(card){
+  function abre(card,tipo){   // tipo: 'm' (Alertas), 'f' (Falhas) ou nada (os dois, como antes)
     opcoesCard();
+    tiposOn=tipo==='m'?{m:true,f:false}:tipo==='f'?{m:false,f:true}:{m:true,f:true};
     cardSel=card||'';$('ocCard').value=cardSel;
     if(!card)filtro=ativas().length?'a':'t'; // abrindo pelo botão geral sem nada ativo: mostra o histórico
     const d=dlg();if(!d.open)d.show();
@@ -8291,12 +8308,16 @@ const OCOR=(function(){
   function init(){
     const d=dlg();if(!d)return;
     opcoesCard();
-    $('bOcor').addEventListener('click',()=>{const d=dlg();if(d.open&&!cardSel){d.close();return}abre('')});
+    /* v1.10.166: cada botão abre a janela com o SEU tipo; clicar de novo no mesmo fecha; clicar no outro troca para ele (a janela continua aberta).
+       Dentro da janela os chips Alertas/Falhas ligam e desligam cada tipo (os dois juntos, se quiser). */
+    const clicaTipo=t=>{const d=dlg();if(d.open&&!cardSel&&tiposOn[t]&&!tiposOn[t==='f'?'m':'f']){d.close();return}abre('',t)};
+    $('bAlertas').addEventListener('click',()=>clicaTipo('m'));$('bFalhas').addEventListener('click',()=>clicaTipo('f'));
+    $('ocTipos').addEventListener('click',e=>{const b=e.target.closest('button[data-t]');if(!b)return;const t=b.dataset.t,o=t==='f'?'m':'f';if(tiposOn[t]&&!tiposOn[o])return;tiposOn[t]=!tiposOn[t];janela()});   // nunca desliga os dois
     $('ocCard').addEventListener('change',()=>{cardSel=$('ocCard').value;janela()});
     $('ocFiltro').addEventListener('click',e=>{const b=e.target.closest('button[data-f]');if(!b)return;filtro=b.dataset.f;janela()});
     $('ocLimpa').addEventListener('click',()=>{[...L.values()].filter(o=>!o.ativa).forEach(o=>L.delete(o.k));ver++;janela()});
     $('ocImprime').addEventListener('click',e=>{ // v1.10.103: Exportar ▾ (TXT / MD / PDF)
-      const c=cardSel?nomeCard(cardSel):'todos os cards e a aplicação',tit='Alertas e Falhas — '+c+' — '+(filtro==='a'?'somente ativas':'todas');
+      const c=cardSel?nomeCard(cardSel):'todos os cards e a aplicação',tit='Alertas e Falhas — '+c+' — '+(tiposOn.m&&tiposOn.f?'alertas e falhas':tiposOn.f?'somente falhas':'somente alertas')+' — '+(filtro==='a'?'somente ativas':'todas');
       const dados=()=>({cabec:['Desde','Tipo','Card','Código','Texto','Estado','Vezes'],
         linhas:ultVis.map(o=>[new Date(o.desde).toLocaleString('pt-BR'),o.tipo==='f'?'Falha':'Alerta',nomeCard(o.card),codExib(o.cod,o.tipo,o.ref),o.txt,o.ativa?'Ativa':'Normalizou ('+hhmmss(o.fim)+')',o.vezes])});
       EXPO.menu(e.currentTarget,EXPO.itensTabela(tit,'alertas_falhas',dados,()=>{
@@ -8806,23 +8827,32 @@ $('srvUrl').addEventListener('change',()=>{
   srvSalvaUrl(v);
 });
 $('srvUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('srvUrl').blur()}});
+/* v1.10.165: MODO OPERADOR é o padrão ao abrir a página. O botão Demo só aparece depois de digitar a senha na caixa ao lado (antes: prompt() ao clicar,
+   que não abria no celular). A senha é uma trava contra uso por engano — NÃO é segurança (está no código da página); segurança de verdade é o login do Node-RED. */
+function desbloqueiaTestes(){
+  testeDesbloqueado=true;
+  $('demoSenha').style.display='none';$('demoSenha').value='';
+  $('bDemo').style.display='';
+  $('bDemoLock').style.display='';
+  $('bDevCards').style.display='';
+  $('bDevObs').style.display='';
+  try{window.MENU_DEV&&MENU_DEV.mostra(true)}catch(e){}   // v1.10.109: menu ☰ de desenvolvimento acompanha o modo de testes
+}
+$('demoSenha').addEventListener('input',()=>{if($('demoSenha').value.trim().toLowerCase()==='mwm')desbloqueiaTestes()});
+$('demoSenha').addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;e.preventDefault();
+  if($('demoSenha').value.trim().toLowerCase()==='mwm')desbloqueiaTestes();
+  else{const c=$('demoSenha');c.value='';c.style.borderColor='#d92d20';setTimeout(()=>{c.style.borderColor='#666'},900)}
+});
 $('bDemo').addEventListener('click',()=>{
-  if(!testeDesbloqueado){
-    const senha=prompt('Senha para abrir o modo de testes (Demo / servidor):');
-    if(senha==null)return;
-    if(senha!=='mwm'){alert('Senha incorreta.');return}
-    testeDesbloqueado=true;
-    $('bDemoLock').style.display='';
-    $('bDevCards').style.display='';
-    $('bDevObs').style.display='';
-    try{window.MENU_DEV&&MENU_DEV.mostra(true)}catch(e){}   // v1.10.109: menu ☰ de desenvolvimento acompanha o modo de testes
-  }
+  if(!testeDesbloqueado)return;   // (o botão nem aparece antes de desbloquear)
   dmAtualiza();
   if(!srvUsaPlc())srvSondaPlc();
   $('dlgDemo').showModal();
 });
 $('bDemoLock').onclick=()=>{ // desliga a senha: sai do Demo (se estiver nele) e trava de novo o modo de testes
   testeDesbloqueado=false;
+  $('bDemo').style.display='none';$('demoSenha').style.display='';   // v1.10.165: volta ao MODO OPERADOR (botão Demo some, a caixa de senha volta)
   $('bDemoLock').style.display='none';
   $('bDevCards').style.display='none';
   try{window.MENU_DEV&&!MENU_DEV.automatico()&&MENU_DEV.mostra(false)}catch(e){}   // v1.10.109: travou os testes = esconde o menu ☰ (salvo se este navegador estiver marcado como dev)
@@ -10296,9 +10326,9 @@ window.abreEmb=function(html,nome,feat,id){
 })(window);
 </script>
 <script>
-/* ===== pacote_ia_v0.1 (menu de botão direito + Pacote para a IA) — fonte: dashboard/modulos-fonte/pacote_ia_v0.1.js ===== */
+/* ===== pacote_ia_v0.2 (menu de botão direito + Pacote para a IA) — fonte: dashboard/modulos-fonte/pacote_ia_v0.2.js ===== */
 /* =====================================================================================
-   pacote_ia_v0.1.js — "Pacote para a IA": menu de BOTÃO DIREITO / TOQUE LONGO + captura de área + pacote em texto — v0.1 (03/11/2026)
+   pacote_ia_v0.2.js — "Pacote para a IA": menu de BOTÃO DIREITO / TOQUE LONGO + captura de área + pacote em texto — v0.2 (03/11/2026) — v0.2: sem botão JSON (só .md, pedido do operador) e seção "Referências" (imagens/descrições da pasta referencias/)
    -------------------------------------------------------------------------------------
    O QUE É (leigo): botão direito (ou toque longo no celular) abre um menu. "Capturar para a IA" arma a captura: você arrasta um retângulo sobre a tela
    e abre uma janela com (nesta ordem) imagens, objetos da área, contexto, a sua pergunta e os botões. O pacote sai em texto (Markdown ou JSON) para
@@ -10312,7 +10342,7 @@ window.abreEmb=function(html,nome,feat,id){
 (function (raiz) {
   'use strict';
   const D = raiz.document, $ = id => D.getElementById(id);
-  const VER = '0.1';
+  const VER = '0.2';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const temPop = typeof HTMLElement !== 'undefined' && HTMLElement.prototype.hasOwnProperty('popover');
   const MAX_OBJ = 60;                     // limite de objetos por captura (evita pacote gigante)
@@ -10349,6 +10379,8 @@ window.abreEmb=function(html,nome,feat,id){
   .pia-img textarea{width:100%;box-sizing:border-box;height:56px;font:12px/1.3 ui-monospace,monospace}
   .pia-body .bt,.pia-foot .bt{border:1px solid #1a4a78;background:#fff;color:#1a4a78;border-radius:5px;padding:8px 12px;font:inherit;font-weight:700;cursor:pointer;min-height:36px}
   .pia-foot .bt.p{background:#1a4a78;color:#fff}
+  .pia-ref{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid #e3e7ec;font-size:12.5px}
+  .pia-ref img{height:34px;max-width:120px;object-fit:contain;background:#fff;border:1px solid #d7dde5;flex:none}
   .pia-lista{margin:0;padding:0;list-style:none}
   .pia-lista li{display:flex;gap:6px;align-items:flex-start;padding:4px 0;border-bottom:1px solid #e3e7ec;font-size:12px}
   .pia-lista code{font-size:11.5px;word-break:break-all}
@@ -10362,7 +10394,7 @@ window.abreEmb=function(html,nome,feat,id){
     dialog.pia{width:100vw;max-width:100vw;height:var(--pia-h,100dvh);max-height:none;margin:0;border-width:0;position:fixed;inset:0}
     .pia-img{max-width:none}
     /* rodapé compacto no celular: "Copiar e fechar" em linha própria e os 3 outros lado a lado (antes ocupava ~25 % da tela) */
-    .pia-foot{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:6px 10px}
+    .pia-foot{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:6px 10px}
     .pia-foot .tok{grid-column:1/-1;font-size:11px;line-height:1.25}
     .pia-foot #piaCopiar{grid-column:1/-1}
     .pia-foot .bt{padding:7px 4px;font-size:12.5px;min-height:34px}
@@ -10451,7 +10483,13 @@ window.abreEmb=function(html,nome,feat,id){
 
   /* ----------------------------------- a janela ----------------------------------- */
   let dlg = null, S = null;   // S = estado do pacote aberto
-  const novoEstado = () => ({ rect: null, objs: [], ctx: itensContexto(), imgs: [], pergunta: '' });
+  const novoEstado = () => ({ rect: null, objs: [], ctx: itensContexto(), imgs: [], pergunta: '', refs: REFS.map(r => Object.assign({ on: false }, r)) });
+  let REFS = [], REFS_BASE = './referencias/', REFS_ST = 'nao';   // índice carregado de ./referencias/indice.json (pasta publicada junto do HTML)
+  function carregaRefs() {
+    if (REFS_ST !== 'nao') return Promise.resolve(); REFS_ST = 'indo';
+    return fetch(REFS_BASE + 'indice.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))).then(j => { REFS = (j && j.itens) || []; REFS_ST = 'ok'; })
+      .catch(() => { REFS = []; REFS_ST = 'erro'; });
+  }
   function monta() {
     if (dlg) return;
     dlg = D.createElement('dialog'); dlg.id = 'piaDlg'; dlg.className = 'pia';
@@ -10461,6 +10499,8 @@ window.abreEmb=function(html,nome,feat,id){
         <div class="pia-imgs" id="piaImgs"></div>
         <p><label class="bt" style="display:inline-block">＋ Anexar imagem<input type="file" id="piaFile" accept="image/*" multiple hidden></label>
         <small>Se o problema é VISUAL (cor, alinhamento, sobreposição), anexe o print também na conversa.</small></p>
+        <h4>Referências <small>(descrições prontas de figuras que se repetem; marque as que valem para a pergunta)</small></h4>
+        <div id="piaRefs"><small>Carregando…</small></div>
         <h4>Objetos da área <small id="piaNObj"></small></h4>
         <div id="piaObjs"></div>
         <h4>Contexto</h4>
@@ -10473,7 +10513,6 @@ window.abreEmb=function(html,nome,feat,id){
         <span class="tok" id="piaTok"></span>
         <button type="button" class="bt p" id="piaCopiar" title="Copia o pacote e fecha esta janela">Copiar e fechar</button>
         <button type="button" class="bt" id="piaMd">Salvar .md</button>
-        <button type="button" class="bt" id="piaJson">Salvar .json</button>
         <button type="button" class="bt" id="piaFechar">Fechar</button>
         <span class="pia-aviso" id="piaAviso"></span>
       </div>`;
@@ -10484,7 +10523,7 @@ window.abreEmb=function(html,nome,feat,id){
     dlg.addEventListener('paste', colar); dlg.addEventListener('dragover', e => { e.preventDefault(); });
     dlg.addEventListener('drop', e => { e.preventDefault(); [...(e.dataTransfer ? e.dataTransfer.files : [])].filter(f => /^image\//.test(f.type)).forEach(addImg); });
     $('piaQ').addEventListener('input', () => { S.pergunta = $('piaQ').value; atualiza(); });
-    $('piaCopiar').onclick = copiar; $('piaMd').onclick = () => salva('md'); $('piaJson').onclick = () => salva('json');
+    $('piaCopiar').onclick = copiar; $('piaMd').onclick = () => salva();
     if (raiz.visualViewport) { const aj = () => dlg.style.setProperty('--pia-h', raiz.visualViewport.height + 'px'); raiz.visualViewport.addEventListener('resize', aj); aj(); }
   }
   function colar(e) {
@@ -10512,6 +10551,7 @@ window.abreEmb=function(html,nome,feat,id){
       <button type="button" class="bt" data-ocr="${i}"${im.lendo ? ' disabled' : ''}>${im.lendo ? 'Lendo…' : 'Ler texto (OCR)'}</button>
       <button type="button" class="bt" data-rm="${i}">Remover</button>
       <textarea data-i="${i}" data-k="ocr" placeholder="Texto lido da imagem (você pode corrigir)">${esc(im.ocr)}</textarea></div>`).join('') : '<small>Nenhuma imagem anexada.</small>';
+    $('piaRefs').innerHTML = S.refs.length ? S.refs.map((r, i) => `<label class="pia-ref"><input type="checkbox" data-r="${i}"${r.on ? ' checked' : ''}><img src="${esc(REFS_BASE + r.arquivo)}" alt="" loading="lazy"><span><b>${esc(r.titulo)}</b><br><small>${esc(r.descricao)}</small></span></label>`).join('') : '<small>' + (REFS_ST === 'erro' ? 'Pasta referencias/ não encontrada ao lado do HTML (publique a pasta junto, em public/html).' : (REFS_ST === 'ok' ? 'Nenhuma referência cadastrada.' : 'Carregando…')) + '</small>';
     $('piaNObj').textContent = S.rect ? '(' + S.objs.filter(o => o.on !== false).length + ' de ' + S.objs.length + ' · área ' + Math.round(S.rect.width) + '×' + Math.round(S.rect.height) + ' px)' : '';
     $('piaObjs').innerHTML = S.objs.length ? `<p><button type="button" class="bt" data-todos="1">Marcar todos</button> <button type="button" class="bt" data-todos="0">Limpar</button></p><ul class="pia-lista">` +
       S.objs.map((o, i) => `<li><input type="checkbox" data-o="${i}"${o.on !== false ? ' checked' : ''}><span><code>${esc(o.sel)}</code> ${o.texto ? '“' + esc(o.texto) + '”' : ''}<br><small>${o.w}×${o.h} em (${o.x},${o.y})${o.estado ? ' · ' + esc(o.estado) : ''}</small></span></li>`).join('') + '</ul>'
@@ -10532,6 +10572,7 @@ window.abreEmb=function(html,nome,feat,id){
       const t = e.target;
       if (t.dataset.o != null) { S.objs[+t.dataset.o].on = t.checked; atualiza(); $('piaNObj').textContent = '(' + S.objs.filter(o => o.on !== false).length + ' de ' + S.objs.length + ')'; }
       else if (t.dataset.c != null) { S.ctx[+t.dataset.c].on = t.checked; atualiza(); }
+      else if (t.dataset.r != null) { S.refs[+t.dataset.r].on = t.checked; atualiza(); }
     });
     corpo.addEventListener('input', e => {
       const t = e.target; if (t.dataset.k == null) return;
@@ -10543,7 +10584,8 @@ window.abreEmb=function(html,nome,feat,id){
   const sufixo = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()); };
   function pacote() {
     const objs = S.objs.filter(o => o.on !== false), ctx = S.ctx.filter(c => c.on);
-    return { gerado: new Date().toISOString(), pacoteIA: VER, pergunta: S.pergunta.trim(), contexto: ctx.map(c => ({ item: c.rot, valor: c.valor })),
+    const refs = (S.refs || []).filter(r => r.on).map(r => ({ titulo: r.titulo, descricao: r.descricao, arquivo: r.arquivo }));
+    return { gerado: new Date().toISOString(), pacoteIA: VER, referencias: refs, pergunta: S.pergunta.trim(), contexto: ctx.map(c => ({ item: c.rot, valor: c.valor })),
       imagens: S.imgs.map((im, i) => ({ arquivo: 'pacote-' + S.sfx + '-img' + (i + 1) + '.png', legenda: im.legenda, textoOCR: im.ocr })),
       area: S.rect ? { x: Math.round(S.rect.left), y: Math.round(S.rect.top), w: Math.round(S.rect.width), h: Math.round(S.rect.height) } : null,
       objetos: objs.map(o => ({ seletor: o.sel, tipo: o.tipo, texto: o.texto, x: o.x, y: o.y, w: o.w, h: o.h, estado: o.estado, cor: o.cor, fundo: o.fundo, fonte: o.fonte, dica: o.dica })) };
@@ -10553,6 +10595,7 @@ window.abreEmb=function(html,nome,feat,id){
     L.push('## Pergunta', '', p.pergunta || '(sem pergunta escrita)', '');
     if (p.contexto.length) { L.push('## Contexto', ''); p.contexto.forEach(c => L.push(c.valor.includes('\n') ? '- **' + c.item + ':**\n```\n' + c.valor + '\n```' : '- **' + c.item + ':** ' + c.valor)); L.push(''); }
     if (p.imagens.length) { L.push('## Imagens (anexadas à conversa como arquivos separados)', ''); p.imagens.forEach(im => { L.push('- `' + im.arquivo + '` — ' + (im.legenda || '(sem legenda)')); if (im.textoOCR) L.push('  - Texto lido (OCR):\n```\n' + im.textoOCR + '\n```'); }); L.push(''); }
+    if (p.referencias && p.referencias.length) { L.push('## Referências (figuras conhecidas do projeto)', ''); p.referencias.forEach(r => L.push('- **' + r.titulo + '** — ' + r.descricao + (r.arquivo ? ' _(arquivo: referencias/' + r.arquivo + ')_' : ''))); L.push(''); }
     if (p.area) { L.push('## Área capturada', '', 'x=' + p.area.x + ', y=' + p.area.y + ', ' + p.area.w + '×' + p.area.h + ' px (coordenadas da janela do navegador).', ''); }
     if (p.objetos.length) { L.push('## Objetos (' + p.objetos.length + ')', '', '| seletor | texto | x,y | w×h | estado | cor / fundo |', '|---|---|---|---|---|---|');
       p.objetos.forEach(o => L.push('| `' + o.seletor + '`' + (o.tipo ? ' (' + o.tipo + ')' : '') + ' | ' + (o.texto || '').replace(/\|/g, '/') + ' | ' + o.x + ',' + o.y + ' | ' + o.w + '×' + o.h + ' | ' + (o.estado || '') + ' | ' + o.cor + ' / ' + o.fundo + ' |')); L.push(''); }
@@ -10565,9 +10608,9 @@ window.abreEmb=function(html,nome,feat,id){
     $('piaTok').textContent = md.length + ' caracteres · ≈ ' + tok + ' tokens (estimativa)' + (S.imgs.length ? ' · as imagens vão como arquivos e contam à parte' : '');
   }
   function baixa(nome, texto, tipo) { const a = D.createElement('a'); a.href = URL.createObjectURL(new Blob([texto], { type: tipo })); a.download = nome; D.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
-  function salva(tipo) {
+  function salva() {
     const p = pacote(), base = 'pacote-' + S.sfx;
-    if (tipo === 'md') baixa(base + '.md', markdown(p), 'text/markdown'); else baixa(base + '.json', JSON.stringify(p, null, 1), 'application/json');
+    baixa(base + '.md', markdown(p), 'text/markdown');
     S.imgs.forEach((im, i) => { const a = D.createElement('a'); a.href = im.url; a.download = base + '-img' + (i + 1) + '.png'; D.body.appendChild(a); setTimeout(() => { a.click(); a.remove(); }, 200 * (i + 1)); });
     $('piaAviso').textContent = 'Arquivo salvo (pasta Downloads).';
   }
@@ -10592,6 +10635,7 @@ window.abreEmb=function(html,nome,feat,id){
   function fechaJanela() { if (dlg && dlg.open) dlg.close(); if (S) S.imgs.forEach(i => { try { URL.revokeObjectURL(i.url); } catch (e) {} }); }
   function abrePacote(rect, objs) {
     monta(); if (!dlg.__lig) { ligaCorpo(); dlg.__lig = true; }
+    carregaRefs().then(() => { if (S && dlg.open) { const sel = new Set(S.refs.filter(r => r.on).map(r => r.id)); S.refs = REFS.map(r => Object.assign({ on: sel.has(r.id) }, r)); desenha(); } });
     S = novoEstado(); S.sfx = sufixo(); S.rect = rect || null; S.objs = objs || [];
     $('piaQ').value = ''; $('piaAviso').textContent = '';
     desenha();
