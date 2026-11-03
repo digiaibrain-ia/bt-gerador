@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="1.10.157">
+<meta name="app-version" content="1.10.158">
 <title>Medidor do Gerador</title>
 <style>
   /* v1.9.88: TOKENS DE COR DA INTERFACE (um lugar só). POR QUÊ: verde/vermelho/amarelo são SINAL (ligado, falha, alerta) e não podem ser usados como cor de enfeite;
@@ -2115,7 +2115,11 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
   /** SUGERE a seleção: escolhe sozinho o FB pelo número de bancos entrando no cálculo (2, 3, 4 ou 5+). */
   function sugere(ent) {
     const n = ent.bancos.length;
-    return n <= 2 ? sugere2(ent) : n === 3 ? sugere3(ent) : n === 4 ? sugere4(ent) : sugereN(ent);
+    // v0.4 (03/11/2026): FALHA SEGURA. Alvo invalido (NaN, negativo, infinito) ou nenhuma combinacao possivel nao pode lancar excecao: devolve "nada ligado" + aviso.
+    const vazio = aviso => ({ selecao: Object.fromEntries(ent.bancos.map(b => [b.id, b.kws.map(() => false)])), total: 0, erro: null, dentro: false, aviso, candidatos: 0 });
+    if (!(typeof ent.alvoKw === 'number' && isFinite(ent.alvoKw) && ent.alvoKw >= 0)) return vazio('Alvo inválido: nada foi sugerido.');
+    try { return n <= 2 ? sugere2(ent) : n === 3 ? sugere3(ent) : n === 4 ? sugere4(ent) : sugereN(ent); }
+    catch (e) { return vazio('Não foi possível calcular a sugestão (' + (e && e.message || 'erro') + '): nada foi sugerido.'); }
   }
 
   /** AVALIA uma seleção feita à mão pelo operador (sem pedir confirmação de liga/desliga: o operador manda).
@@ -3636,8 +3640,11 @@ document.querySelectorAll('dialog.jan').forEach(d=>{
 /* ===== CONTROLE DE VERSÃO =====
    A cada alteração: aumente VERSAO (maior.menor.correção), troque VERSAO_DATA,
    acrescente um item NO TOPO de HISTORICO e atualize <meta name="app-version"> no <head>. */
-const VERSAO='1.10.157', VERSAO_DATA='03/11/2026';
+const VERSAO='1.10.158', VERSAO_DATA='03/11/2026';
 const HISTORICO=[
+  {v:"1.10.158",d:"03/11/2026",i:[
+    'CORRIGIDO (achado da suíte de testes tests/fb): o FB Sugerir chaves (sugere) lançava exceção interna com alvo inválido (vazio, NaN, negativo). Agora falha segura: nada ligado + aviso, sem travar a tela.'
+  ]},
   {v:"1.10.157",d:"03/11/2026",i:[
     'Log de desenvolvedor (observabilidade) agora cobre TODOS os bancos: seletora (selXXX), "Ligar banco" (ligXXX) e comunicação (com.bXXX) de BC56, BC400, BC59,5 (595) e BC550 (550). Os nomes de BC56 e BC400 não mudam (sel56, lig400…).'
   ]},
