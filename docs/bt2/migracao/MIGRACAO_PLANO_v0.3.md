@@ -33,3 +33,10 @@ Offsets dos DBs de 32 chaves (para o Node-RED): chaves — `cb.ligar` X0.0, `sb.
 
 ## Próximo (sem esperar)
 Fase 4: Node-RED parametrizado para os bancos novos (rotas `/api/chaves/{id}` com offsets acima).
+
+## Fase 4 — feito (rascunho): fluxos Node-RED dos bancos novos
+- `nodered/flows/bt2/chaves-595-api-v1.0.json` (DB3200/DB3202, 18 chaves) e `chaves-550-api-v1.0.json` (DB3300/DB3302, 12 chaves).
+- Gerados do `chaves-400-api-v2.6` (mesma lógica de fila, vigia "HTML sumiu", conferência de releitura e Setup por tensão), trocando só DBs, offsets, tamanho (32) e prefixo dos nós (`chv595_`, `chv550_`).
+- Rotas: `/api/chaves/595/...` e `/api/chaves/550/...` (`/api/logs/{id}`). **Slug 595 e não "59,5"** para não ter vírgula na URL; o HTML (id `59,5`) ganha um campo `rota` na fase 5.
+- Checado: JSON válido, JS de todos os nós sem erro de sintaxe, ids únicos. **Não testado em PLC/Node-RED.**
+- Ao importar: o mesmo IP do PLC (172.17.209.135) dos fluxos atuais; só funciona depois dos DBs/FBs no 1515 e do ET200.
