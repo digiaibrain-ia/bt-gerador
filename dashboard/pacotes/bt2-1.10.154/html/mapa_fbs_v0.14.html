@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="pt-BR">
+<!-- mapa_fbs_v0.14 · 31/10/2026 — CELULAR: barra de cima compacta e a faixa Gerador → Banco → Carga cabe na tela (os 3 blocos quebram em linhas); botões sem borda. Resto igual à v0.13. | mapa_fbs_v0.13 · 30/10/2026 — igual à v0.12; só os rótulos da mãe: "aplicação do patamar" (Manual/Auto) e "aguardando aplicar". --><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.13"><title>Mapa dos FBs · Manual guiado</title>
+<!-- mapa_fbs_v0.13.html · 30/10/2026
+  v0.13: patamar MANUAL/AUTO passa a ser a APLICAÇÃO das chaves (FBs virtuais v0.10, estado AGUARDA_APLICAR); salvar a etapa não depende mais disso.
+  v0.12 (sugestões aprovadas 30/10): (1) borda do cartão = cor da FAMÍLIA (dados azul, cálculo violeta, execução verde, segurança vermelho);
+  (2) pino cheio verde = valor chegando ao vivo, cheio cinza = sem sinal, vazado = só previsto (a proposta o cita, o módulo ainda não publica valor);
+  (3) moldura tracejada "Núcleo de controle consolidado" em volta dos filhos (a mãe fica fora, na faixa de cima); (4) linha de status em cada cartão
+  (ocioso / contando / falha / ok) com bolinha — só cor e texto; (5) presilhas nos pontos de entrada do barramento; (6) fios de SEGURANÇA mais grossos, vermelhos e por cima.
+  NOVO: faixa discreta GERADOR → BANCO → CARGA (animada quando há kW/chaves) só com grandezas que os FBs já publicam + % carga (= kW medido ÷ kW a 100 %, conta feita aqui).
+  Salvamento por patamar (FBs virtuais v0.9): a mãe mostra "salvamento do patamar" e "aplicar liberado". Nada muda de tamanho/posição por estado (REGRA_LAYOUT_ESTAVEL_v0.1).
+  Não copiado do mockup: cabeçalho HMI/logo/data e textos truncados.
+  v0.10 também traz a DICA DE INTERFACE (dica_ui_v0.1.js: Alt+I, tipo + id + coordenadas).
+  v0.10 (pedido do operador): LIGAÇÕES COMO TRILHAS DE PLACA — os fios andam só nos canais entre colunas e numa pista abaixo dos blocos, em ângulos retos com cantos a 45°, e nunca passam por cima de um cartão. Uma trilha por fio. Dados, pinos e lista de fios iguais à v0.9.
+  v0.9 (pedido do operador): ícone "i" em cada FB, clique no cartão acende/apaga as ligações, fios sempre visíveis.
+  v0.8 (pedido do usuário): REDESENHO como esquema de PLC. Some a escolha Macro/Explodido (eram quase iguais): agora há UM esquema que usa a tela toda, com cada filho desenhado
+  como um FB do TIA — ENTRADAS à esquerda, SAÍDAS à direita, valor ao vivo ao lado de cada pino e FIOS ligando quem entrega a quem recebe (pino a pino). Clicar num bloco destaca
+  os fios dele (o resto esmaece) e abre uma GAVETA à direita com duas abas: "Resumo" (texto para leigos: o que faz, que erro isola) e "Técnico" (todos os valores ao vivo, a conta
+  em andamento, quem liga com quem, protótipo). A gaveta fecha com ✕, Esc ou clique no fundo — o texto não ocupa mais a tela. Zoom (− + Ajustar). Pino vazado = previsto na proposta
+  mas ainda sem valor publicado pelos FBs virtuais (não inventamos valor). Exportar ▾ (PDF/PNG/SVG) e log [DEV.OBS] mantidos. Dados: mesmos canais da v0.7 (BroadcastChannel "fbv",
+  localStorage "medidor.fbv.v1", postMessage). Documento: modulos/MAPA_FBS_v0.9.md.
+  mapa_fbs_v0.7.html · 29/10/2026
+  v0.7: botão "Exportar ▾" (PDF, imagem PNG e SVG do diagrama que está na tela). O menu abre por cima de qualquer janela. Nada mais mudou.
+  mapa_fbs_v0.6.html · 29/10/2026
+  v0.6: REGISTRADOR DE LOG [DEV.OBS]: o mapa anota (abriu, sinal ao vivo ligou/desligou, mudança de estado da mãe, bloco clicado, visão trocada, erro JavaScript) e entrega ao
+  Gerenciador de logs v1.3 (aba "Mapa dos FBs"). Só observa; o desenho não mudou. Pode abrir no painel do medidor OU em janela própria (botão "↗ Janela própria", para a segunda tela).
+  mapa_fbs_v0.5.html · 28/10/2026
+  v0.5 (pedido do operador, medidor v1.10.103): a visão EXPLODIDO agora MANTÉM as linhas de "quem conversa com quem" (mesmo diagrama do Macro) e as caixas
+  ficaram menores: cada caixa mostra o nome, o estado e só as 3 primeiras entradas e 2 primeiras saídas (os valores completos ficam no painel de detalhe ao clicar).
+  Motivo técnico: o desenho em grade (v0.3/v0.4) escondia as ligações. Leigo: é o mesmo mapa, só que com os números ao vivo dentro das caixas.
+  O medidor abre este mapa num painel DENTRO da própria página (não mais numa janela separada que ia para trás ao clicar SALVAR).
+  mapa_fbs_v0.4.html · 28/10/2026
+  v0.4: também recebe a foto por postMessage da janela que o abriu (funciona no celular com o medidor aberto como arquivo, sem servidor). O medidor v1.9.97 traz este mapa EMBUTIDO.
+  mapa_fbs_v0.3.html · 28/10/2026
+  v0.3: duas visões — MACRO (diagrama, uma linha por bloco) e EXPLODIDO (cada bloco com TODAS as entradas e saídas e seus valores ao vivo).
+  Os valores vêm da foto dos FBs virtuais v0.2 (modulos/fbs_virtuais_v0.2.js, medidor v1.9.91): campos filhos[id].ent e .sai.
+  mapa_fbs_v0.2.html · 28/10/2026
+  v0.2: AO VIVO. Lê a foto publicada pelos FBs VIRTUAIS do medidor (modulos/fbs_virtuais_v0.1.js, medidor v1.9.90) pelo BroadcastChannel "fbv" e por
+  localStorage "medidor.fbv.v1" (abra este arquivo no MESMO endereço/origem do medidor). Cada caixa ganha a cor do estado (verde = ok, azul = em ação, vermelho = falha, cinza = parado)
+  e uma linha com o que o filho está fazendo. SOMENTE LEITURA: não comanda nada. Sem sinal há mais de 5 s mostra "sem sinal".
+  (cabeçalho original abaixo)
+  mapa_fbs_v0.1.html · 27/10/2026
+  PARA QUE SERVE (equipe não técnica): mostra, em "caixinhas", os blocos de função (FB) propostos para o Manual guiado e o
+  Automático: o que cada um faz, o que entra, o que sai, que erro ele isola e como muda conforme o modo.
+  COMO FUNCIONA: o desenho é gerado a partir do JSON "BLOCOS" abaixo (única fonte). Para mudar o mapa, muda-se o JSON.
+  ESTADO: é um MAPA DA PROPOSTA (PROPOSTA_ARQUITETURA_FB_MAE_FILHOS_v0.1.md) — nada aqui existe no PLC ainda.
+  NÃO INVENTA número de bloco/DB: a coluna "bloco no PLC" fica "a definir" até a engenharia numerar (plano de numeração).
+  NÃO LÊ nem ESCREVE no PLC. Versão futura: valores ao vivo pelo mesmo canal do medidor. -->
+<style>
+:root{color-scheme:light;--bg:#f4f3f0;--sf:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--mut:#6f6e69;--ln:#c3c2b7;--blue:#2a78d6;--vio:#6250d6;--grn:#1baf7a;--org:#eb6834;--red:#d03b3b;--yel:#eda100;--okbg:#e3f4ea;--atbg:#e1ecfa;--flbg:#fde7e5}
+@media (prefers-color-scheme:dark){:root:where(:not([data-t=l])){color-scheme:dark;--bg:#0d0d0d;--sf:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--mut:#a09f98;--ln:#383835;--blue:#3987e5;--vio:#9085e9;--grn:#199e70;--org:#d95926;--red:#ec5f5f;--yel:#c98500;--okbg:#16382a;--atbg:#15304f;--flbg:#4a1d1d}}
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+header{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:8px 14px;border-bottom:1px solid var(--ln);background:var(--sf)}
+h1{font-size:17px;margin:0}
+.seg{display:inline-flex;border:1px solid var(--ln);border-radius:8px;overflow:hidden}.seg button{border:0;border-right:1px solid var(--ln);border-radius:0;background:var(--sf)}.seg button:last-child{border:0}
+.seg button[aria-pressed=true]{background:var(--blue);color:#fff}
+button{font:inherit;color:var(--ink);background:var(--sf);border:1px solid var(--ln);border-radius:7px;padding:5px 11px;min-height:32px;cursor:pointer}
+button:focus-visible,.bx:focus-visible{outline:3px solid var(--blue);outline-offset:-3px}
+#vivo{font-size:12.5px;border-radius:999px;padding:2px 10px;border:1px solid var(--ln)}#vivo.on{background:var(--okbg);color:#17613a;border-color:#17613a}#vivo.off{background:#eee;color:#555}
+@media (prefers-color-scheme:dark){:root:where(:not([data-t=l])) #vivo.on{color:#7fe0ae}:root:where(:not([data-t=l])) #vivo.off{background:#262625;color:#a09f98}}
+.zoom{display:inline-flex;align-items:center;gap:4px;margin-left:auto}.zoom span{min-width:44px;text-align:center;font-size:12.5px;color:var(--ink2)}
+.nota{color:var(--mut);font-size:12.5px}
+#cv{flex:1;min-height:0;overflow:auto;position:relative}
+svg{display:block}
+/* blocos: a cor de estado é só preenchimento (não muda o tamanho de nada — REGRA_LAYOUT_ESTAVEL_v0.1) */
+.bx{cursor:pointer}.bx .corpo{fill:var(--sf);stroke:var(--fam,var(--ln));stroke-width:1.6}.bx .tit{fill:var(--ink);font:650 13px system-ui}.bx .est{fill:var(--ink2);font:11.5px system-ui}
+.bx.st-ok .corpo{fill:var(--okbg)}.bx.st-ativo .corpo{fill:var(--atbg)}.bx.st-falha .corpo{fill:var(--flbg)}
+.bx.sel .corpo{stroke:var(--ink);stroke-width:3}.bx.lit .corpo{stroke:var(--blue);stroke-width:2.6}
+.bx .info{cursor:help}.bx .info circle{fill:var(--sf);stroke:var(--blue);stroke-width:1.5}.bx .info text{fill:var(--blue);font:700 12px Georgia,serif;font-style:italic}.bx .info:hover circle,.bx .info:focus-visible circle{fill:var(--blue)}.bx .info:hover text,.bx .info:focus-visible text{fill:var(--sf)}
+.pin{fill:var(--ink2);font:11px system-ui}.pin b{font-weight:650;fill:var(--ink)}.pin.so{fill:var(--mut)}
+.led{stroke:var(--sf);stroke-width:1.5}.led.idle{fill:#9a9990}.led.ok{fill:var(--grn)}.led.ativo{fill:var(--blue)}.led.falha{fill:var(--red)}
+.w{fill:none;stroke:var(--mut);stroke-width:1.5;opacity:.65}.w.off{opacity:.3}.w.on{stroke-width:2.6;opacity:1}
+.wl{font:11px system-ui;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:4px;stroke-linejoin:round}
+.mae .corpo{fill:var(--sf);stroke:var(--vio);stroke-width:2}.mae{cursor:pointer}.mae.sel .corpo{stroke-width:4}
+.bus{stroke:var(--vio);stroke-width:1.5;stroke-dasharray:5 4;fill:none;opacity:.7}
+.lg{padding:4px 14px;border-top:1px solid var(--ln);background:var(--sf);font-size:12.5px;color:var(--ink2);display:flex;flex-wrap:wrap;gap:4px 16px}.lg span{display:inline-flex;gap:5px;align-items:center}.lg i{width:12px;height:12px;border-radius:3px;display:inline-block}.lg i.p{border-radius:50%}
+/* gaveta de detalhes: sobrepõe o desenho (o esquema usa a tela toda); fecha com ✕, Esc ou clique no fundo */
+#dr{position:fixed;top:0;right:0;bottom:0;width:min(430px,100vw);background:var(--sf);border-left:1px solid var(--ln);box-shadow:-6px 0 18px rgba(0,0,0,.18);display:flex;flex-direction:column;z-index:5}
+#dr[hidden]{display:none}
+#dr .tp{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ln)}#dr .tp h2{margin:0;font-size:15px;flex:1}
+#dr .ab{display:flex;gap:0;padding:8px 12px 0}#dr .ab button{border-radius:7px 7px 0 0;border-bottom:0}#dr .ab button[aria-pressed=true]{background:var(--blue);color:#fff;border-color:var(--blue)}
+#dr .cp{flex:1;overflow:auto;padding:10px 14px 16px}
+dt{font-weight:650;margin-top:10px}dd{margin:2px 0 0;color:var(--ink2)}dl{margin:0}
+.cp table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}.cp th{text-align:left;color:var(--mut);font-weight:600;padding:2px 0;border-bottom:1px solid var(--ln)}.cp td{padding:2px 0;vertical-align:top}.cp td.v{text-align:right;font-weight:650;padding-left:10px;word-break:break-word}.cp td.so{color:var(--mut)}
+.cp h3{margin:14px 0 2px;font-size:13px}
+.conta{font:12.5px ui-monospace,Consolas,monospace;background:var(--bg);border:1px solid var(--ln);border-radius:7px;padding:6px 8px;margin:4px 0}
+.tag{display:inline-block;border:1px solid var(--ln);border-radius:999px;padding:1px 9px;font-size:12px;margin:2px 4px 2px 0}
+#log{font:11.5px ui-monospace,Consolas,monospace;margin:6px 0 0;padding:0;list-style:none;color:var(--ink2)}
+/* v0.12 */
+.w.seg{stroke:var(--red);stroke-width:3;opacity:.95}
+.nucleo{fill:none;stroke:var(--mut);stroke-width:1.4;stroke-dasharray:9 6;opacity:.8}.nucleo-t{font:600 12px system-ui;fill:var(--ink2);paint-order:stroke;stroke:var(--bg);stroke-width:5px}
+.clamp{fill:var(--vio)}
+#gc{display:flex;align-items:center;gap:8px;padding:5px 14px;border-bottom:1px solid var(--ln);background:var(--sf);font-size:12.5px;height:46px;flex:none;overflow:hidden}
+#gc .gcb{display:flex;align-items:center;gap:7px;border:1px solid var(--ln);border-radius:9px;padding:3px 10px;height:36px;white-space:nowrap}
+#gc .gcb div{display:flex;flex-direction:column;line-height:1.15}#gc .gcb b{font-size:12px}#gc .gcb span{color:var(--ink2);font-size:12px}
+#gc svg.gen{flex:none}.gen .gro{fill:none;stroke:var(--mut);stroke-width:2;stroke-dasharray:6 4}.gen .gar{fill:var(--sf);stroke:var(--grn);stroke-width:2}.gen text{font:700 11px system-ui;fill:var(--ink);text-anchor:middle}
+.gen.run .gro{stroke:var(--grn);animation:gcgira 2.4s linear infinite;transform-origin:18px 18px}
+@keyframes gcgira{to{transform:rotate(360deg)}}
+#gc .gcw{flex:1 1 40px;min-width:40px;height:0;border-top:3px dashed var(--mut);opacity:.55}
+#gc .gcw.flow{border-top-color:var(--grn);opacity:1;animation:gcflui 1s linear infinite;background:none}
+@keyframes gcflui{from{border-top-style:dashed;background-position:0 0}to{background-position:12px 0}}
+#gc .gcp{margin-left:auto;border:1px solid var(--ln);border-radius:999px;padding:2px 10px;white-space:nowrap}#gc .gcp.ok{background:var(--okbg);color:#17613a;border-color:#17613a}
+@media (prefers-reduced-motion:reduce){.gen.run .gro,#gc .gcw.flow{animation:none}}
+
+/* ===== v0.14: CELULAR + BOTÕES SEM BORDA (pedido do operador, 31/10/2026) =====
+   POR QUÊ: no celular a barra de cima ocupava a tela toda e a faixa "Gerador → Banco de cargas → Carga" (altura fixa 46 px, sem quebra) cortava o bloco Carga.
+   COMO: abaixo de 760 px a faixa vira grade que quebra linha e o fio tracejado some; botões sem borda, com fundo um tom acima. Só aparência — nada muda no desenho dos FBs. */
+:root{--btn:#e9e8e1}@media (prefers-color-scheme:dark){:root:where(:not([data-t=l])){--btn:#2b2b29}}
+button,header button{border-color:transparent!important;background:var(--btn)}
+.seg{border-color:transparent;background:var(--btn)}.seg button{border-right-color:transparent;background:transparent}
+.seg button[aria-pressed=true]{background:var(--blue)}
+#gc .gcp,#gc .gcb{border-color:transparent;background:var(--btn)}
+@media (max-width:760px){
+  header{gap:6px;padding:6px 10px}h1{font-size:14px;flex:1 1 100%}
+  button{min-height:28px;padding:3px 8px;font-size:12.5px}
+  .zoom{margin-left:0;flex-wrap:wrap}
+  #gc{height:auto;flex-wrap:wrap;overflow:visible;padding:6px 10px;gap:6px}
+  #gc .gcb{white-space:normal;height:auto;min-height:36px;flex:1 1 30%;min-width:104px}
+  #gc .gcw{display:none}
+  #gc .gcp{margin-left:0;flex:1 1 100%;text-align:center}
+}
+</style></head><body>
+<header><h1>Mapa dos FBs · Manual guiado e Automático</h1>
+<div class="seg" role="group" aria-label="Modo"><button data-m="sem" aria-pressed="true">Guiado sem DSE</button><button data-m="com" aria-pressed="false">Guiado com DSE</button><button data-m="aut" aria-pressed="false">Automático</button></div>
+<button type="button" id="bExp" aria-haspopup="menu" title="PDF, imagem (PNG) ou SVG do diagrama que está na tela">Exportar ▾</button><span id="vivo" class="off">sem sinal</span>
+<span class="zoom" role="group" aria-label="Zoom do diagrama"><button type="button" id="zm" title="Diminuir">−</button><span id="zp">100%</span><button type="button" id="zM" title="Aumentar">+</button><button type="button" id="apaga" hidden title="Apaga o destaque de todas as ligações">Apagar destaques</button><button type="button" id="zA" title="Cabe na largura da janela">Ajustar</button></span></header>
+<div id="gc" role="group" aria-label="Gerador, banco de cargas e carga: só as grandezas usadas pelos FBs e o % de carga">
+ <div class="gcb"><svg class="gen" id="gcIco" viewBox="0 0 36 36" width="30" height="30" aria-hidden="true"><circle class="gro" cx="18" cy="18" r="15"/><circle class="gar" cx="18" cy="18" r="10"/><text x="18" y="22">G</text></svg><div><b>Gerador</b><span id="gcG">sem sinal</span></div></div>
+ <i class="gcw" id="gcW1"></i>
+ <div class="gcb"><div><b>Banco de cargas</b><span id="gcB">sem sinal</span></div></div>
+ <i class="gcw" id="gcW2"></i>
+ <div class="gcb"><div><b>Carga</b><span id="gcC">sem sinal</span></div></div>
+ <span class="gcp" id="gcA" title="Como as chaves entram neste patamar (FB mãe)">—</span>
+</div>
+<div id="cv"><svg id="svgm" role="img" aria-label="Esquema dos blocos de função: entradas à esquerda, saídas à direita, fios entre eles"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs><g id="bus"></g><g id="ws"></g><g id="bl"></g><g id="wh" style="pointer-events:none"></g></svg></div>
+<div class="lg"><span><i style="background:var(--blue)"></i>dados e alvos</span><span><i style="background:var(--vio)"></i>cálculo</span><span><i style="background:var(--grn)"></i>execução</span><span><i style="background:var(--red)"></i>segurança</span><span><i class="p" style="background:var(--grn)"></i>pino com valor ao vivo</span><span><i class="p" style="background:#9a9990"></i>sem sinal</span><span><i class="p" style="border:2px solid var(--mut)"></i>vazado: só previsto (sem valor publicado)</span><span><i style="background:var(--red);height:5px"></i>fio de segurança</span><span class="nota">Clique no cartão: acende ou apaga as ligações · ícone i: informações do bloco</span></div>
+<aside id="dr" hidden aria-label="Detalhes do bloco"><div class="tp"><h2 id="dt">—</h2><button type="button" id="dx" title="Fechar (Esc)">✕</button></div><div class="ab"><button type="button" data-a="res" aria-pressed="true">Resumo</button><button type="button" data-a="tec" aria-pressed="false">Técnico</button></div><div class="cp" id="dc" aria-live="polite"></div></aside>
+
+<script>
+/* [DEV.OBS] Registrador de log desta página (mapa v0.6) — par do gerenciador_logs_v1.3.html.
+   PARA QUE SERVE (leigo): esta página anota o que acontece nela (abriu, recebeu dados, perdeu sinal, deu erro) e entrega essas anotações ao
+   Gerenciador de logs, que mostra tudo em ABAS separadas (Medidor | Gráfico | Mapa dos FBs). Serve para validar as páginas com o log que você nos manda.
+   POR QUÊ (técnico): mesmo canal do medidor (BroadcastChannel 'bt2-dev-obs'), evento no mesmo formato {sessao,n,t,ms,v,modo,card,tipo,acao,res,det,est}
+   mais o campo app. Guarda até 1000 eventos na memória; só PUBLICA depois que o gerenciador manda {k:'pede'} (aí envia o backlog e passa a enviar ao vivo).
+   NÃO FAZ: não comanda nada, não lê PLC/DSE, não guarda nada em disco, qualquer falha aqui dentro é engolida (o log nunca atrapalha a tela). */
+(function () {
+  'use strict';
+  const APP = 'mapa', CARD = 'mapa', VERP = '0.8', MAX = 1000;
+  const SESSAO = 'p' + APP + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), T0 = performance.now();
+  const BUF = []; let N = 0, observando = false, CAN = null;
+  try { if ('BroadcastChannel' in window) CAN = new BroadcastChannel('bt2-dev-obs'); } catch (e) { /* sem canal: o log fica só na memória */ }
+  const trunc = (s, n) => { s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+  const limpa = o => { if (o == null) return null; try { const x = JSON.stringify(o); return x.length <= 800 ? JSON.parse(x) : { _truncado: x.slice(0, 799) + '…' }; } catch (e) { return null; } };
+  function log(tipo, acao, res, det) {
+    try {
+      const e = { sessao: SESSAO, n: ++N, t: new Date().toISOString(), ms: Math.round(performance.now() - T0), v: VERP, app: APP, modo: null, card: CARD,
+        tipo: tipo || 'sistema', acao: trunc(acao, 300), res: res || 'info', det: limpa(det), est: null };
+      BUF.push(e); if (BUF.length > MAX) BUF.shift();
+      if (observando && CAN) CAN.postMessage({ k: 'ev', e });
+      return e;
+    } catch (err) { return null; }
+  }
+  if (CAN) CAN.onmessage = m => {
+    const d = m && m.data;
+    if (d && d.k === 'pede') { observando = true; try { CAN.postMessage({ k: 'backlog', sessao: SESSAO, app: APP, eventos: BUF.slice() }); } catch (x) {} }
+  };
+  window.addEventListener('error', ev => { log('erro', 'erro JavaScript: ' + (ev.message || '?'), 'falha', { arquivo: trunc(ev.filename, 80), linha: ev.lineno, coluna: ev.colno }); });
+  window.addEventListener('unhandledrejection', ev => { log('erro', 'promessa rejeitada: ' + trunc(ev.reason && ev.reason.message || ev.reason, 200), 'falha'); });
+  window.addEventListener('pagehide', () => { log('sistema', 'página fechada', 'info'); });
+  /* ---- específico desta página ---- */
+  /** O mapa chama isto a cada segundo: registra só as MUDANÇAS (sinal ao vivo ligou/desligou; estado da mãe mudou). */
+  let ultOn = null, ultEst = null;
+  function tickMapa(on, AO) {
+    if (ultOn !== on) { log('sistema', on ? 'sinal AO VIVO dos FBs virtuais recebido' : 'sem sinal dos FBs virtuais (ligue o Patamar Guiado no medidor)', on ? 'ok' : 'aviso'); ultOn = on; }
+    if (AO && AO.estado !== ultEst) {
+      log('transicao', 'mãe: ' + (ultEst || '—') + ' → ' + AO.estado + (AO.msg ? ' (' + AO.msg + ')' : ''), AO.estado === 'FALHA' ? 'falha' : 'info', { estado: AO.estado, msg: AO.msg, etapa: AO.etapa && AO.etapa.idx });
+      ultEst = AO.estado;
+    }
+  }
+  window.__obs = { log, app: APP, versao: VERP, buf: () => BUF.slice(), observando: () => observando, tickMapa };
+  log('sistema', 'página aberta (' + APP + ' v' + VERP + ')', 'info', { janelaMae: !!window.opener, canal: !!CAN, emIframe: window.self !== window.top });
+})();
+</script>
+<script>
+'use strict';
+/* ============ ÚNICA FONTE DO MAPA (v0.8) ============
+   PARA QUE SERVE (leigo): desenha cada "filho" como um bloco de PLC: entradas à esquerda, saídas à direita, e fios ligando quem entrega a quem recebe.
+   POR QUE ASSIM (técnico): os nomes dos pinos são EXATAMENTE as chaves que os FBs virtuais publicam (modulos/fbs_virtuais_v0.8.js, linhas 57-71: f.ent / f.sai),
+   então o valor ao vivo de cada pino é achado pelo nome. Pino com {so:1} está previsto na PROPOSTA_ARQUITETURA_FB_MAE_FILHOS_v0.1.md mas o módulo ainda NÃO publica valor
+   para ele: aparece vazado e com "—" (não inventamos valor). Pino com {de:[lado,nome]} mostra o valor de outro pino do mesmo bloco (repasse).
+   Para mudar o mapa: muda-se SÓ este bloco (BLOCOS, FIOS). Nenhum número de DB/FB do PLC é citado: continua "a definir". */
+const COR={dado:'var(--blue)',calc:'var(--vio)',exec:'var(--grn)',seg:'var(--red)'};
+const BLOCOS=[
+ {id:1,col:0,n:'Modelo / catálogo',c:'dado',
+  fn:'Entrega os valores nominais do modelo escolhido (kW stand-by, V, Hz, corrente).',erro:'dado do gerador errado',
+  js:'catalogo_dse_v0.1.py (catálogo pronto; a regra de 100 % ainda depende da engenharia)',
+  ent:['modelo escolhido'],sai:['kW a 100 %','kVA','V / Hz nominais']},
+ {id:2,col:0,n:'Origem dos dados',c:'dado',
+  fn:'Escolhe de onde vêm tensão, frequência e kW "oficiais" e diz se a leitura é confiável (qualidade).',erro:'mistura de fontes (virtual × real)',js:'fbs_virtuais_v0.8.js (filho 2)',
+  ent:['fonte','DSE responde'],sai:['kW medido','V medido','Hz medido','qualidade']},
+ {id:3,col:1,n:'Alvos do roteiro',c:'dado',
+  fn:'Converte cada patamar (30, 50, 100, 107 %) em kW alvo e faixa aceita.',erro:'conta do patamar',js:'fbs_virtuais_v0.8.js (filho 3)',
+  ent:['% do patamar','kW a 100 %'],sai:['kW alvo','modo',{n:'kW a 100 % (repasse)',de:['ent','kW a 100 %']}]},
+ {id:7,col:1,n:'Tempos',c:'dado',
+  fn:'Mantém cronômetros SEPARADOS: estabilização, patamar, total e a pausa entre degraus.',erro:'contagem de tempo',js:'fbs_virtuais_v0.8.js (filho 7)',
+  ent:['estado da mãe'],sai:['tempo da etapa','tempo neste estado']},
+ {id:8,col:1,n:'Supervisor de falhas',c:'seg',
+  fn:'Vigia a qualidade das fontes. Decisão do usuário (27/10): se o DSE cair, as chaves caem também.',erro:'falha de comunicação Modbus/DSE',js:'fbs_virtuais_v0.8.js (filho 8)',
+  ent:['DSE responde','tolerância'],sai:['parada segura']},
+ {id:4,col:2,n:'Motor de sugestão',c:'calc',
+  fn:'Escolhe a combinação de chaves de menor erro (nunca acima do alvo nem do limite da guarda; modo mínimo para 107 %), só entre as habilitadas, em 1 ou 2 bancos. Também AVALIA a seleção feita à mão pelo operador.',
+  erro:'escolha da combinação',js:'rodizio_chaves_v0.2.js → sugere, avalia',
+  ent:['kW alvo','chaves habilitadas','limite (guarda)',{n:'custo por chave',so:1}],sai:['kW sugerido','erro previsto']},
+ {id:5,col:2,n:'Rodízio / desgaste',c:'calc',
+  fn:'Guarda acionamentos e horas de cada chave e dá o custo de desgaste (rodízio macio: só desempata). Zera ao "chave trocada".',erro:'desgaste desigual',
+  js:'rodizio_chaves_v0.2.js → custosDesgaste, registraUso, chaveTrocada',
+  ent:['critério',{n:'acionamentos e horas',so:1}],sai:[{n:'custo por chave',so:1},'acionamentos BC56','acionamentos BC400']},
+ {id:11,col:3,n:'Guarda de capacidade',c:'seg',
+  fn:'OBRIGATÓRIO. Compara a carga a ser ligada com a capacidade teórica do gerador (kW a 100 % × % de segurança, a definir pela engenharia) e BLOQUEIA o que passar, com mensagem. Carga abaixo do alvo é livre (o operador completa depois). Sem dado de capacidade, bloqueia (falha segura).',
+  erro:'sobrecarga do gerador por seleção indevida',js:'rodizio_chaves_v0.2.js → limiteKw, guarda, podeLigar',
+  ent:['seleção','kW a 100 %','% de segurança'],sai:['limite','liberada','mensagem']},
+ {id:10,col:3,n:'Escalonador de entrada',c:'calc',
+  fn:'Transforma "estado atual → seleção nova" em passos no tempo (grupos de kW + pausa e sub-degraus) para geradores que disparam com degrau a seco. Tempo 0 = tudo de uma vez.',
+  erro:'degrau de carga mal dosado',js:'rodizio_chaves_v0.2.js → planoEntrada (ver ESCALONADOR_SUBDEGRAUS_v0.1.md)',
+  ent:['seleção liberada','degrau máx.','pausa','sub-degraus'],sai:['duração do plano']},
+ {id:6,col:4,n:'Comando / retorno das chaves',c:'exec',
+  fn:'Executa cada passo no PLC e distingue 3 coisas: comando pedido, saída ativada e retorno físico confirmado. Divergência vira falha.',erro:'divergência comando × realidade',
+  js:'fbs_virtuais_v0.8.js (filho 6; comanda pelos mesmos botões do card Cargas)',
+  ent:['passos do escalonador','kW sugerido',{n:'derruba as chaves',so:1},{n:'retorno físico das chaves',so:1}],sai:['kW comandado','kW confirmado','divergência',{n:'acionamentos contados',so:1}]}
+];
+const MAE={id:9,n:'Orquestrador (FB mãe)',fn:'Só ordena: chama os filhos na ordem do roteiro (sem carga → 30 → 50 → 100 → 107 → sem carga), recebe a parada do filho 8 e a confirmação do filho 6.',
+  erro:'sequência do roteiro',js:'fbs_virtuais_v0.8.js (filho 9)',ent:['armada','ensaio iniciado','etapa','aplicação do patamar'],sai:['estado','mensagem','aguardando aplicar']};
+/* FIOS: [bloco que entrega, pino de saída, bloco que recebe, pino de entrada]  (mesma lógica do ED da v0.7, agora ligando pino a pino) */
+const FIOS=[
+ [1,'kW a 100 %',3,'kW a 100 %'],[3,'kW a 100 % (repasse)',11,'kW a 100 %'],[3,'kW alvo',4,'kW alvo'],
+ [5,'custo por chave',4,'custo por chave'],[4,'kW sugerido',11,'seleção'],[11,'limite',4,'limite (guarda)'],
+ [11,'liberada',10,'seleção liberada'],[10,'duração do plano',6,'passos do escalonador'],[4,'kW sugerido',6,'kW sugerido'],
+ [2,'qualidade',8,'DSE responde'],[7,'tempo neste estado',10,'pausa'],[8,'parada segura',6,'derruba as chaves'],
+ [6,'acionamentos contados',5,'acionamentos e horas']
+];
+const MODOS={
+ sem:{o:'Operador confirma cada patamar',f:'gerador virtual ideal (a partir do modelo e dos dados salvos do ensaio)',n:'Chaves reais no PLC; sem DSE, o filho 8 não vigia o DSE.'},
+ com:{o:'Operador confirma cada patamar',f:'DSE real (Modbus)',n:'Chaves reais; DSE caiu → chaves caem.'},
+ aut:{o:'O sistema avança sozinho (HTML + DSE + PLC 100 % reais)',f:'DSE real (Modbus)',n:'Mesmos filhos; muda só quem dispara o orquestrador.'} };
+/* Contas em andamento: só as que existem no código (alvo = kW100×%/100: fbs_virtuais l.91; limite = kW100×%/100: rodizio l.168; erro e divergência: fbs_virtuais l.62/65) */
+const num=s=>{const x=parseFloat(String(s).replace(',','.'));return isNaN(x)?null:x};
+const CONTA={
+ 3:f=>{const p=num(f.ent['% do patamar']),k=num(f.ent['kW a 100 %']);return[['kW alvo = kW a 100 % × % do patamar ÷ 100',p!=null&&k!=null?k+' × '+p+' ÷ 100 = '+(k*p/100).toFixed(1)+' kW':'sem dados']]},
+ 11:f=>{const k=num(f.ent['kW a 100 %']),p=num(f.ent['% de segurança']);return[['limite = kW a 100 % × % de segurança ÷ 100',k!=null&&p!=null?k+' × '+p+' ÷ 100 = '+(k*p/100).toFixed(1)+' kW':'sem dados'],['liberada se a seleção ≤ limite','seleção '+f.ent['seleção']+' · limite '+f.sai['limite']+' → '+f.sai['liberada']]]},
+ 4:f=>{const s=num(f.sai['kW sugerido']),a=num(f.ent['kW alvo']);return[['erro previsto = kW sugerido − kW alvo',s!=null&&a!=null?s+' − '+a+' = '+(s-a).toFixed(1)+' kW':'sem dados']]},
+ 6:f=>{const c=num(f.sai['kW comandado']),k=num(f.sai['kW confirmado']);return[['divergência = kW comandado − kW confirmado',c!=null&&k!=null?c+' − '+k+' = '+(c-k).toFixed(1)+' kW':'sem dados']]}
+};
+const lit=new Set();   /* v0.9: blocos com as ligações acesas (clique no cartão liga/desliga) */
+let modo='sem',sel=null,aba='res',zoom=1,zoomManual=false,AO=null;
+const $=i=>document.getElementById(i),NS='http://www.w3.org/2000/svg';
+const B=id=>id===9?MAE:BLOCOS.find(b=>b.id===id);
+const obs=(t,a,r)=>{try{window.__obs&&window.__obs.log(t,a,r||'info')}catch(x){}};
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e}
+const cut=(t,n)=>{t=String(t);return t.length>n?t.slice(0,n-1)+'…':t};
+const vivoOk=()=>!!AO&&Date.now()-AO.ts<5000;
+const pn=p=>typeof p==='string'?p:p.n, pso=p=>typeof p==='object'&&!!p.so;
+/* valor ao vivo de um pino (undefined = não há) */
+function valor(b,lado,p){
+  if(!vivoOk())return undefined;const f=AO.filhos&&AO.filhos[b.id];if(!f)return undefined;
+  if(typeof p==='object'&&p.de)return (f[p.de[0]]||{})[p.de[1]];
+  return pso(p)?undefined:(f[lado]||{})[pn(p)];
+}
+/* ---------- GEOMETRIA ---------- */
+const W=330,CX=410,X0=40,YT=150,GAP=26,HD=34,LH=18,TOPO=HD+18+8;
+function geometria(){
+  const col={};BLOCOS.forEach(b=>{b.rows=Math.max(b.ent.length,b.sai.length);b.h=TOPO+b.rows*LH+10;b.x=X0+b.col*CX;(col[b.col]=col[b.col]||[]).push(b)});
+  Object.values(col).forEach(a=>{let y=YT;a.forEach(b=>{b.y=y;y+=b.h+GAP})});
+  const alt=Math.max(...Object.values(col).map(a=>a[a.length-1].y+a[a.length-1].h));
+  const nLong=FIOS.filter(([a,,z])=>B(z).col!==B(a).col+1).length;   /* v0.10: fios que não são entre colunas vizinhas correm numa pista sob os blocos */
+  return{w:X0*2+4*CX+W,h:alt+34+nLong*10,alt};
+}
+const pinY=(b,i)=>b.y+TOPO+i*LH+LH/2-1;
+function pino(b,lado,nome){const L=b[lado],i=L.findIndex(p=>pn(p)===nome);if(i<0)return null;return{x:lado==='ent'?b.x:b.x+W,y:pinY(b,i)}}
+function curva(a,z){const back=z.x<=a.x,dx=back?110:Math.max(60,(z.x-a.x)/2);return'M'+a.x+','+a.y+' C'+(a.x+dx)+','+a.y+' '+(z.x-dx)+','+z.y+' '+z.x+','+z.y}
+/* ---------- ROTEADOR ESTILO PLACA DE CIRCUITO (v0.10) ----------
+   POR QUE: antes cada fio era uma curva livre e cruzava os cartões. Agora o fio só anda em 3 lugares, nenhum deles em cima de um cartão:
+   (1) o "canal" vertical entre duas colunas (sobra CX-W px livres), (2) a "pista" horizontal abaixo de todos os blocos, (3) o pequeno trecho
+   horizontal que liga o canal ao pino. Fios entre colunas VIZINHAS usam só o canal; os demais descem por um canal até a pista, correm por ela
+   e sobem por outro canal. Cada fio recebe uma trilha própria no canal (x diferente) e uma pista própria (y diferente) para não se sobreporem.
+   Os cantos são cortados a 45° (como trilha de placa). NÃO muda dados, pinos nem a lista FIOS. */
+function rotas(G){
+  const gx=g=>g<=0?0:X0+(g-1)*CX+W, gw=g=>g<=0?X0:(g>=5?X0:CX-W);   /* início e largura do canal g (g = entre as colunas g-1 e g) */
+  const lista=FIOS.map(([a,pa,z,pz],i)=>{const A=B(a),Z=B(z),s=pino(A,'sai',pa),e=pino(Z,'ent',pz);return s&&e?{i,a,pa,z,pz,A,Z,s,e,viz:Z.col===A.col+1,gs:A.col+1,ge:Z.col}:null}).filter(Boolean);
+  const ocup={};lista.forEach(r=>{(ocup[r.gs]=ocup[r.gs]||[]).push(r);if(!r.viz)(ocup[r.ge]=ocup[r.ge]||[]).push(r)});
+  const trilha=(g,r)=>{const l=ocup[g],k=l.indexOf(r),n=l.length,w=gw(g),pad=Math.min(14,w/3),passo=n>1?Math.min(11,(w-2*pad)/(n-1)):0;return gx(g)+pad+k*passo+(n>1?0:(w-2*pad)/2)};
+  let nl=0;
+  lista.forEach(r=>{
+    if(r.viz){const x=trilha(r.gs,r);r.pts=[r.s,{x,y:r.s.y},{x,y:r.e.y},r.e]}
+    else{const xs=trilha(r.gs,r),xt=trilha(r.ge,r),y=G.alt+18+(nl++)*10;r.pts=[r.s,{x:xs,y:r.s.y},{x:xs,y},{x:xt,y},{x:xt,y:r.e.y},r.e]}
+    const p=[];r.pts.forEach(q=>{const n=p.length;if(n&&p[n-1].x===q.x&&p[n-1].y===q.y)return;if(n>1&&((p[n-2].x===p[n-1].x&&p[n-1].x===q.x)||(p[n-2].y===p[n-1].y&&p[n-1].y===q.y)))p.pop();p.push(q)});r.pts=p;
+    r.d=poli(p,5);
+  });
+  return lista;
+}
+function poli(p,r){let d='M'+p[0].x+','+p[0].y;
+  for(let i=1;i<p.length-1;i++){const a=p[i-1],c=p[i],b=p[i+1],l1=Math.hypot(c.x-a.x,c.y-a.y),l2=Math.hypot(b.x-c.x,b.y-c.y),k=Math.min(r,l1/2,l2/2);
+    d+=' L'+(c.x-(c.x-a.x)/l1*k)+','+(c.y-(c.y-a.y)/l1*k)+' L'+(c.x+(b.x-c.x)/l2*k)+','+(c.y+(b.y-c.y)/l2*k)}
+  return d+' L'+p[p.length-1].x+','+p[p.length-1].y}
+/* rótulo do fio aceso: no meio do trecho mais longo; se for vertical o texto gira e cabe dentro do canal */
+function rotulo(r){let m=null,L=0;for(let i=0;i<r.pts.length-1;i++){const a=r.pts[i],b=r.pts[i+1],l=Math.hypot(b.x-a.x,b.y-a.y);if(l>L){L=l;m={a,b}}}
+  const cx=(m.a.x+m.b.x)/2,cy=(m.a.y+m.b.y)/2;return m.a.x===m.b.x?{x:cx-4,y:cy,rot:-90}:{x:cx,y:cy-5,rot:0}}
+const ligado=id=>FIOS.some(([a,,z])=>(a===sel&&z===id)||(z===sel&&a===id));
+/* ---------- DESENHO ---------- */
+function desenha(){
+  const G=geometria();$('svgm').setAttribute('viewBox','0 0 '+G.w+' '+G.h);aplicaZoom(G);
+  ['bus','ws','bl','wh'].forEach(i=>$(i).innerHTML='');
+  /* mãe: faixa no topo + barramento "chama" até o 1º bloco de cada coluna */
+  const fm=vivoOk()&&AO.filhos[9],mx=X0,mw=G.w-2*X0,my=20,mh=84;
+  const gm=el('g',{class:'mae'+(sel===9?' sel':'')+(fm?' st-'+fm.estado:''),tabindex:0,role:'button','aria-label':'Bloco 9: orquestrador (FB mãe)'},$('bl'));
+  el('rect',{class:'corpo',x:mx,y:my,width:mw,height:mh,rx:10,style:fm?'fill:var(--'+({ok:'okbg',ativo:'atbg',falha:'flbg'}[fm.estado]||'sf')+')':''},gm);
+  el('rect',{x:mx,y:my,width:7,height:mh,rx:3,fill:'var(--vio)'},gm);
+  let t=el('text',{x:mx+20,y:my+22,class:'tit'},gm);t.textContent='9 · '+MAE.n+' — só ordena, chama os filhos conforme o roteiro';
+  el('circle',{cx:mx+mw-20,cy:my+18,r:6,class:'led '+(fm?fm.estado:'idle')},gm);
+  t=el('text',{x:mx+20,y:my+42,class:'est'},gm);
+  if(vivoOk()){const k=AO.kw,e=AO.etapa;t.textContent=AO.estado+(AO.msg?' — '+AO.msg:'')+' · etapa '+(e.idx+1)+(e.alvoPct==null?'':' ('+e.alvoPct+' %)')+' · alvo '+k.alvo.toFixed(1)+' kW · sugerido '+k.sel.toFixed(1)+' · comandado '+k.cmd.toFixed(1)+' · confirmado '+k.conf.toFixed(1)+' kW'}
+  else t.textContent=AO?'sem sinal (último estado: '+AO.estado+')':'sem sinal — no medidor, ligue o Demo e o Patamar Guiado para ver os valores ao vivo';
+  t=el('text',{x:mx+20,y:my+62,class:'est'},gm);t.textContent='dispara: '+MODOS[modo].o+' · origem V/Hz/kW: '+MODOS[modo].f+(vivoOk()&&AO.aplicar&&AO.aplicar.modo?' · aplicação do patamar: '+(AO.aplicar.modo==='M'?'Manual'+(AO.aplicar.liberado?' (aguardando o operador aplicar)':''):'Auto'):'');
+  gm.onclick=()=>escolhe(9);gm.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();escolhe(9)}};
+  const by=my+mh+22;let xs=[];BLOCOS.forEach(b=>{if(b.y===YT)xs.push(b.x+W/2)});
+  el('path',{class:'bus',d:'M'+xs[0]+','+(my+mh)+' V'+by+' H'+xs[xs.length-1]},$('bus'));
+  el('path',{class:'bus',d:'M'+(mx+mw/2)+','+(my+mh)+' V'+by},$('bus'));
+  xs.forEach(x=>{el('path',{class:'bus',d:'M'+x+','+by+' V'+(YT-3)},$('bus'));el('rect',{class:'clamp',x:x-7,y:YT-7,width:14,height:5,rx:2},$('bus'))});   /* v0.12: presilha na entrada do barramento */
+  /* v0.12: moldura do NÚCLEO (filhos 1–11); a mãe fica fora, na faixa de cima. O rótulo fica entre duas descidas do barramento (não cobre nenhuma). */
+  el('rect',{class:'nucleo',x:X0-12,y:YT-18,width:4*CX+W+24,height:G.alt-YT+30,rx:14},$('bus'));
+  const nt=el('text',{class:'nucleo-t',x:X0+W/2+18,y:YT-9},$('bus'));nt.textContent='Núcleo de controle consolidado (filhos 1 a 11)';
+  /* blocos */
+  BLOCOS.forEach(b=>{const f=vivoOk()&&AO.filhos[b.id];
+    const g=el('g',{class:'bx'+(f?' st-'+f.estado:'')+(sel===b.id?' sel':'')+(lit.has(b.id)?' lit':''),tabindex:0,role:'button','aria-label':'Bloco '+b.id+': '+b.n,style:'--fam:'+COR[b.c]},$('bl'));
+    el('rect',{class:'corpo',x:b.x,y:b.y,width:W,height:b.h,rx:9},g);
+    el('rect',{x:b.x,y:b.y,width:W,height:5,rx:2,fill:COR[b.c]},g);
+    let q=el('text',{x:b.x+12,y:b.y+23,class:'tit'},g);q.textContent=cut(b.id+' · '+b.n,30);
+    el('circle',{cx:b.x+W-16,cy:b.y+19,r:6,class:'led '+(f?f.estado:'idle')},g);
+    /* v0.9: ícone "i" = informações do bloco (abre a gaveta). O clique no resto do cartão só acende/apaga as ligações */
+    const gi=el('g',{class:'info',tabindex:0,role:'button','aria-label':'Informações do bloco '+b.id},g);
+    el('circle',{cx:b.x+W-40,cy:b.y+19,r:9},gi);const ti=el('text',{x:b.x+W-40,y:b.y+23.5,'text-anchor':'middle'},gi);ti.textContent='i';
+    const tt0=document.createElementNS(NS,'title');tt0.textContent='Informações do bloco '+b.id;gi.appendChild(tt0);
+    gi.onclick=ev=>{ev.stopPropagation();escolhe(b.id)};gi.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();ev.stopPropagation();escolhe(b.id)}};
+    q=el('text',{x:b.x+12,y:b.y+HD+10,class:'est'},g);q.textContent='● '+(f?({idle:'ocioso',ok:'ok',ativo:'contando',falha:'falha'}[f.estado]||f.estado)+(f.txt?' · '+cut(f.txt,36):''):(vivoOk()?'sem dados deste filho':'sem sinal'));
+    ['ent','sai'].forEach(lado=>b[lado].forEach((p,i)=>{
+      const v=valor(b,lado,p),ok=v!==undefined,y=pinY(b,i),px=lado==='ent'?b.x:b.x+W;
+      el('circle',{cx:px,cy:y,r:4.5,fill:ok?'var(--grn)':(pso(p)?'var(--sf)':'#9a9990'),stroke:pso(p)&&!ok?COR[b.c]:'var(--sf)','stroke-width':pso(p)&&!ok?1.8:1.5},g);   /* v0.12: cheio verde = ao vivo · cheio cinza = sem sinal · vazado = só previsto */
+      const x=el('text',{x:lado==='ent'?b.x+12:b.x+W-12,y:y+4,class:'pin'+(ok?'':' so'),'text-anchor':lado==='ent'?'start':'end'},g);
+      const nome=cut(pn(p),lado==='ent'?17:16),val=ok?cut(v,9):'—';const tt=document.createElementNS(NS,'title');tt.textContent=pn(p)+': '+(ok?v:(pso(p)?'previsto, sem valor ao vivo':'sem sinal'));x.appendChild(tt);
+      if(lado==='ent'){x.appendChild(document.createTextNode(nome+': '));const s=document.createElementNS(NS,'tspan');s.setAttribute('class','b');s.style.fontWeight='650';s.textContent=val;x.appendChild(s)}
+      else{const s=document.createElementNS(NS,'tspan');s.style.fontWeight='650';s.textContent=val;x.appendChild(document.createTextNode(nome+': '));x.appendChild(s)}
+    }));
+    g.onclick=()=>alterna(b.id);g.onkeydown=e=>{if(e.target===g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();alterna(b.id)}};
+  });
+  /* fios: camada de baixo (todos, discretos) e camada de cima (os do bloco escolhido, em destaque, com o nome do sinal) */
+  rotas(G).forEach(r=>{const on=lit.has(r.a)||lit.has(r.z),w=el('path',{class:'w'+(on?' off':''),d:r.d,'marker-end':'url(#ar)'},$('ws'));
+    if(r.A.c==='seg')el('path',{class:'w seg',d:r.d,'marker-end':'url(#ar)'},$('wh'));   /* v0.12: segurança por cima, grossa e vermelha */
+    const tt=document.createElementNS(NS,'title');tt.textContent=r.a+' · '+r.A.n+' ('+r.pa+') → '+r.z+' · '+r.Z.n+' ('+r.pz+')';w.appendChild(tt);
+    if(on){el('path',{class:'w on',d:r.d,stroke:COR[r.A.c],'marker-end':'url(#ar)'},$('wh'));
+      const q=rotulo(r),l=el('text',{x:q.x,y:q.y,class:'wl','text-anchor':'middle',transform:q.rot?'rotate('+q.rot+' '+q.x+' '+q.y+')':''},$('wh'));l.textContent=r.pa}});
+}
+function aplicaZoom(G){const s=$('svgm');s.style.width=Math.round(G.w*zoom)+'px';s.style.height=Math.round(G.h*zoom)+'px';$('zp').textContent=Math.round(zoom*100)+'%'}
+function ajusta(){const G=geometria();zoom=Math.max(.4,Math.min(1.6,($('cv').clientWidth-8)/G.w));aplicaZoom(G)}
+/* ---------- GAVETA DE DETALHES ---------- */
+const kvt=(o,so)=>Object.keys(o||{}).map(k=>'<tr><td>'+k+'</td><td class="v">'+o[k]+'</td></tr>').join('')+(so||[]).map(k=>'<tr><td class="so">'+k+'</td><td class="v so">sem valor ao vivo</td></tr>').join('')||'<tr><td>—</td></tr>';
+function gaveta(){
+  const b=sel==null?null:B(sel),D=$('dr');
+  if(!b){D.hidden=true;$('cv').style.marginRight='';return}
+  D.hidden=false;$('cv').style.marginRight=Math.min(430,innerWidth)+'px';$('dt').textContent=(b.id===9?'9 · ':b.id+' · ')+b.n;
+  document.querySelectorAll('#dr [data-a]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.a===aba));
+  const f=vivoOk()&&AO.filhos[b.id],m=MODOS[modo];let h='';
+  if(aba==='res'){
+    h='<dl><dt>O que faz</dt><dd>'+b.fn+'</dd><dt>Erro que ele isola</dt><dd>'+b.erro+'</dd>'+
+      '<dt>Agora</dt><dd>'+(f?f.estado+(f.txt?' — '+f.txt:''):'sem sinal')+'</dd>'+
+      (b.id===9||b.id===2?'<dt>Modo atual</dt><dd>'+(b.id===9?'Quem dispara: '+m.o:'Origem V/Hz/kW: '+m.f)+'<br>'+m.n+'</dd>':'')+
+      '<dt>Bloco no PLC</dt><dd>a definir (numeração conforme o plano de numeração)</dd></dl>'+
+      '<p style="color:var(--mut);font-size:12.5px;margin-top:12px">Os valores e as contas estão na aba <b>Técnico</b>.</p>';
+  }else{
+    const ent=b.ent.filter(pso).map(pn),sai=b.sai.filter(pso).map(pn);
+    h='<h3 style="margin-top:2px">Entradas</h3><table>'+kvt(f&&f.ent,ent)+'</table><h3>Saídas</h3><table>'+kvt(f&&f.sai,sai)+'</table>';
+    if(!f)h='<p style="color:var(--mut)">Sem sinal: os valores aparecem quando o Patamar Guiado estiver ligado no medidor.</p>'+h;
+    if(f&&CONTA[b.id]){h+='<h3>Conta em andamento</h3>'+CONTA[b.id](f).map(c=>'<div class="conta"><b>'+c[0]+'</b><br>'+c[1]+'</div>').join('')}
+    const rec=FIOS.filter(x=>x[2]===b.id).map(x=>x[0]+' · '+B(x[0]).n+' → <i>'+x[1]+'</i> → '+x[3]),ent2=FIOS.filter(x=>x[0]===b.id).map(x=>x[1]+' → '+x[2]+' · '+B(x[2]).n+' (<i>'+x[3]+'</i>)');
+    h+='<h3>Ligações</h3>'+(rec.length?'<div style="font-size:12.5px"><b>Recebe de:</b><br>'+rec.join('<br>')+'</div>':'')+(ent2.length?'<div style="font-size:12.5px;margin-top:6px"><b>Entrega a:</b><br>'+ent2.join('<br>')+'</div>':'')+(b.id===9?'<div style="font-size:12.5px">Chama todos os filhos pelo barramento tracejado.</div>':'');
+    h+='<h3>Protótipo</h3><div style="font-size:12.5px">'+b.js+'</div>';
+    if(b.id===9&&vivoOk())h+='<h3>Log da mãe</h3><ul id="log">'+AO.log.slice(0,10).map(l=>'<li>'+l.t+' '+l.m+'</li>').join('')+'</ul>';
+  }
+  $('dc').innerHTML=h;
+}
+function alterna(id){if(lit.has(id))lit.delete(id);else lit.add(id);obs('clique','ligações do bloco '+id+(lit.has(id)?' acesas':' apagadas'));ultSig='';desenha();$('apaga').hidden=!lit.size}
+function escolhe(id){sel=id;obs('clique','bloco '+id+' · '+B(id).n+' selecionado');ultSig='';desenha();gaveta();mostra(id)}
+/* com a gaveta aberta o desenho ganha margem à direita e rola até o bloco escolhido, para a gaveta não cobri-lo */
+function mostra(id){const b=id===9?null:B(id);if(!b)return;const c=$('cv'),x0=b.x*zoom,x1=(b.x+W)*zoom;if(x1>c.scrollLeft+c.clientWidth-8)c.scrollLeft=x1-c.clientWidth+16;if(x0<c.scrollLeft)c.scrollLeft=Math.max(0,x0-16)}
+function fecha(){if(sel==null)return;sel=null;ultSig='';desenha();gaveta()}
+document.querySelectorAll('#dr [data-a]').forEach(x=>x.onclick=()=>{aba=x.dataset.a;obs('clique','aba: '+aba);gaveta()});
+$('dx').onclick=fecha;
+$('apaga').onclick=()=>{lit.clear();ultSig='';desenha();$('apaga').hidden=true};
+addEventListener('keydown',e=>{if(e.key==='Escape')fecha()});
+$('cv').addEventListener('click',e=>{if(e.target===$('cv')||e.target===$('svgm'))fecha()});
+$('zm').onclick=()=>{zoomManual=true;zoom=Math.max(.4,zoom-.1);desenha()};$('zM').onclick=()=>{zoomManual=true;zoom=Math.min(2,zoom+.1);desenha()};$('zA').onclick=()=>{zoomManual=false;ajusta();desenha()};
+addEventListener('resize',()=>{if(!zoomManual){ajusta();desenha()}});
+document.querySelectorAll('.seg button[data-m]').forEach(b=>b.onclick=()=>{modo=b.dataset.m;document.querySelectorAll('.seg button[data-m]').forEach(x=>x.setAttribute('aria-pressed',x===b));ultSig='';desenha();gaveta()});
+/* ---------- AO VIVO: foto publicada pelos FBs virtuais do medidor (mesmos canais da v0.7) ---------- */
+let ultSig='';
+function recebe(f){if(f&&f.v===1){AO=f;AO.rec=Date.now();if(f.fonte)modo=f.fonte==='virtual'?'sem':'com';redesenha()}}
+/* v0.12: faixa GERADOR → BANCO → CARGA. Só lê o que os FBs já publicam (filho 2: kW/V/Hz medidos; mãe: alvo/comandado/confirmado; kW a 100 %); % carga = kW medido ÷ kW a 100 %. */
+function desenhaGC(){
+  const on=vivoOk(),F=on?AO.filhos:null,g=(id,n)=>F&&F[id]&&F[id].sai?F[id].sai[n]:undefined,f1=x=>x==null||isNaN(x)?'—':(+x).toFixed(1).replace('.',',');
+  const kwM=num(g(2,'kW medido')),V=num(g(2,'V medido')),Hz=num(g(2,'Hz medido')),k100=on&&AO.kw?+AO.kw.cap100:null,pct=kwM!=null&&k100>0?kwM/k100*100:null;
+  $('gcG').textContent=on?f1(kwM)+' kW · '+f1(V)+' V · '+f1(Hz)+' Hz':'sem sinal';
+  $('gcB').textContent=on?'alvo '+f1(AO.kw.alvo)+' · comandado '+f1(AO.kw.cmd)+' · confirmado '+f1(AO.kw.conf)+' kW':'sem sinal';
+  $('gcC').textContent=on?'% carga '+f1(pct)+' % (de '+f1(k100)+' kW a 100 %)':'sem sinal';
+  $('gcIco').classList.toggle('run',on&&kwM!=null&&kwM>0);$('gcW1').classList.toggle('flow',on&&kwM!=null&&kwM>0);$('gcW2').classList.toggle('flow',on&&AO.kw.conf>0);
+  const a=on&&AO.aplicar,p=$('gcA');p.className='gcp'+(a&&a.modo==='M'&&a.liberado?' ok':'');
+  p.textContent=!a||!a.modo?'aplicação: —':(a.modo==='M'?'Manual · '+(a.liberado?'aguardando o operador aplicar':'aplicado'):'Auto');
+}
+function redesenha(){const on=vivoOk(),v=$('vivo');try{desenhaGC()}catch(x){}try{window.__obs&&window.__obs.tickMapa(on,AO)}catch(x){}
+  v.className=on?'on':'off';v.textContent=on?'AO VIVO · mãe: '+AO.estado:(AO?'sem sinal (último: '+AO.estado+')':'sem sinal');
+  const sig=(on?JSON.stringify([AO.estado,AO.msg,AO.filhos,AO.kw,AO.etapa,AO.aplicar,modo,sel,aba]):'off'+modo+sel+aba)+zoom;if(sig===ultSig)return;ultSig=sig;
+  desenha();gaveta()}
+try{const ch=new BroadcastChannel('fbv');ch.onmessage=e=>recebe(e.data)}catch(e){}
+addEventListener('message',e=>{if(e.data&&e.data.v===1)recebe(e.data)});
+addEventListener('storage',e=>{if(e.key==='medidor.fbv.v1')try{recebe(JSON.parse(e.newValue))}catch(x){}});
+try{const j=JSON.parse(localStorage.getItem('medidor.fbv.v1')||'null');if(j)recebe(j)}catch(e){}
+setInterval(()=>{try{const j=JSON.parse(localStorage.getItem('medidor.fbv.v1')||'null');if(j&&(!AO||j.ts!==AO.ts))recebe(j)}catch(e){}redesenha()},1000);
+ajusta();desenha();gaveta();
+</script><script>
+/* =====================================================================================================================
+   exportar_menu_v0.1.js — MENU ÚNICO "Exportar ▾" + gerador mínimo de PDF (sem biblioteca, funciona offline)
+   Projeto bancos de teste · 29/10/2026 · fonte dos trechos que vão colados (inline) em: grafico_ensaio_v0.5, mapa_fbs_v0.7, gerenciador_logs_v1.4.
+
+   PARA QUE SERVE (leigo): um botão só, "Exportar ▾", que abre uma listinha com TODOS os formatos daquela tela (PDF, imagem, planilha, texto…).
+   Antes cada tela tinha botões soltos e o menu aparecia ATRÁS das janelas; agora ele aparece sempre por cima.
+
+   POR QUE (técnico): janelas <dialog> abertas com showModal() ficam na "camada de cima" (top layer) do navegador; um <div> comum, mesmo com
+   z-index enorme, fica por baixo delas. A solução é o atributo popover (showPopover()), que também entra na camada de cima.
+   Se o navegador não tiver popover (Chrome < 114), cai no modo antigo (div fixo com z-index alto).
+
+   API:
+     EXPMENU.menu(botao, [{rot, dica, fn}, ...])   abre o menu embaixo do botão (Esc ou clique fora fecha; setas ↑ ↓ navegam)
+     EXPMENU.baixa(blob, nome)                      download de um Blob
+     PDFMIN.imagem(canvas, titulo, linhas[])        -> Blob de um PDF A4 paisagem de 1 página: título, linhas de texto e a imagem do canvas
+   NÃO FAZ: não comanda nada, não lê PLC/DSE, não grava em disco sozinho (só o navegador, no download).
+   ===================================================================================================================== */
+const EXPMENU = (function () {
+  'use strict';
+  let m = null;
+  /* estilo próprio (a página não precisa ter CSS do menu). Cores neutras, legíveis em tema claro e escuro. */
+  (function () {
+    if (document.getElementById('expmenu-css')) return;
+    const s = document.createElement('style'); s.id = 'expmenu-css';
+    s.textContent = '.expmenu{position:fixed;margin:0;inset:auto;z-index:2147483000;background:#fff;color:#1b2a3a;border:1px solid #9aa5b1;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.35);display:flex;flex-direction:column;min-width:210px;max-width:min(340px,96vw);padding:3px;overflow:visible;font:13px system-ui,Segoe UI,Arial,sans-serif}' +
+      '.expmenu button{border:0;background:none;text-align:left;padding:7px 10px;font:inherit;color:inherit;cursor:pointer;border-radius:4px}' +
+      '.expmenu button:hover,.expmenu button:focus-visible{background:#e8eef6;outline:none}' +
+      '.expmenu small{display:block;color:#51606f;font-size:11px}' +
+      '.expmenu hr{border:0;border-top:1px solid #d3d9e0;margin:3px 2px;width:auto}';
+    document.head.appendChild(s);
+  })();
+  const fecha = () => {
+    if (m) { try { if (m.hidePopover && m.matches(':popover-open')) m.hidePopover(); } catch (e) {} m.remove(); m = null; }
+    document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true);
+  };
+  const fora = e => { if (m && !m.contains(e.target)) fecha(); };
+  const tecla = e => {
+    if (e.key === 'Escape') { fecha(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      const bs = [...m.querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+      bs[(i + (e.key === 'ArrowDown' ? 1 : bs.length - 1)) % bs.length].focus(); e.preventDefault();
+    }
+  };
+  function menu(btn, itens) {
+    fecha();
+    m = document.createElement('div'); m.className = 'expmenu'; m.setAttribute('role', 'menu');
+    itens.forEach(it => {
+      if (it === '-') { m.appendChild(document.createElement('hr')); return; }
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem');
+      b.innerHTML = it.rot + (it.dica ? '<small>' + it.dica + '</small>' : '');
+      b.onclick = () => { fecha(); try { it.fn(); } catch (e) { console.error('Exportar', e); alert('Não foi possível exportar: ' + (e && e.message || e)); } };
+      m.appendChild(b);
+    });
+    m.setAttribute('popover', 'manual'); document.body.appendChild(m);
+    try { m.showPopover(); } catch (e) { /* sem popover: fica o z-index alto do CSS */ }
+    const r = btn.getBoundingClientRect();
+    m.style.left = Math.max(4, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + 'px';
+    m.style.top = Math.max(4, Math.min(r.bottom + 2, innerHeight - m.offsetHeight - 8)) + 'px';
+    setTimeout(() => { document.addEventListener('pointerdown', fora, true); document.addEventListener('keydown', tecla, true); }, 0);
+    const p = m.querySelector('button'); if (p) p.focus();
+  }
+  function baixa(blob, nome) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  return { menu, baixa, fecha };
+})();
+
+/* ---------- gerador mínimo de PDF (A4 paisagem 842×595 pt; fonte Helvetica; 1 imagem JPEG por documento) ---------- */
+const PDFMIN = (function () {
+  'use strict';
+  const esc = s => String(s).replace(/[–—]/g, '-').replace(/[^\x00-\xFF]/g, '?').replace(/[\\()]/g, '\\$&');
+  function Pg() { this.o = []; }
+  /* texto: x,y em pt a partir do canto SUPERIOR esquerdo; b = negrito */
+  Pg.prototype.t = function (x, y, s, sz, b) { this.o.push('BT /' + (b ? 'F2' : 'F1') + ' ' + sz + ' Tf ' + x.toFixed(2) + ' ' + (595 - y).toFixed(2) + ' Td (' + esc(s) + ') Tj ET'); };
+  Pg.prototype.im = function (x, y, w, h) { this.o.push('q ' + w.toFixed(2) + ' 0 0 ' + h.toFixed(2) + ' ' + x.toFixed(2) + ' ' + (595 - y - h).toFixed(2) + ' cm /Im1 Do Q'); };
+  function blob(pgs, jpg, iw, ih) {
+    const enc = s => { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+    const ch = [], off = []; let len = 0; const add = u => { ch.push(u); len += u.length; };
+    const N = 5 + 2 * pgs.length;
+    add(enc('%PDF-1.4\n'));
+    const obj = (n, body) => { off[n] = len; add(enc(n + ' 0 obj\n' + body + '\nendobj\n')); };
+    const stm = (n, dict, bytes) => { off[n] = len; add(enc(n + ' 0 obj\n<<' + dict + '/Length ' + bytes.length + '>>\nstream\n')); add(bytes); add(enc('\nendstream\nendobj\n')); };
+    obj(1, '<</Type/Catalog/Pages 2 0 R>>');
+    obj(2, '<</Type/Pages/Kids[' + pgs.map((_, i) => (7 + 2 * i) + ' 0 R').join(' ') + ']/Count ' + pgs.length + '>>');
+    obj(3, '<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>');
+    obj(4, '<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>');
+    stm(5, '/Type/XObject/Subtype/Image/Width ' + iw + '/Height ' + ih + '/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode', jpg);
+    pgs.forEach((p, i) => {
+      stm(6 + 2 * i, '', enc(p.o.join('\n')));
+      obj(7 + 2 * i, '<</Type/Page/Parent 2 0 R/MediaBox[0 0 842 595]/Contents ' + (6 + 2 * i) + ' 0 R/Resources<</Font<</F1 3 0 R/F2 4 0 R>>/XObject<</Im1 5 0 R>>>>>>');
+    });
+    const xr = len; let x = 'xref\n0 ' + (N + 1) + '\n0000000000 65535 f \n';
+    for (let n = 1; n <= N; n++) x += String(off[n]).padStart(10, '0') + ' 00000 n \n';
+    x += 'trailer\n<</Size ' + (N + 1) + '/Root 1 0 R>>\nstartxref\n' + xr + '\n%%EOF';
+    add(enc(x));
+    return new Blob(ch, { type: 'application/pdf' });
+  }
+  /** PDF de 1 página: título, linhas de texto e a imagem do canvas (proporção preservada, cabe no A4 paisagem). */
+  function imagem(cv, titulo, linhas) {
+    const pg = new Pg(); pg.t(36, 34, titulo, 14, true);
+    let y = 52; (linhas || []).forEach(l => { pg.t(36, y, l, 8.5); y += 12; });
+    const iw = cv.width, ih = cv.height, top = y + 4, maxW = 770, maxH = 595 - top - 30;
+    let w = maxW, h = w * ih / iw; if (h > maxH) { h = maxH; w = h * iw / ih; }
+    pg.im(36, top, w, h);
+    pg.t(36, 575, 'Gerado em ' + new Date().toLocaleString('pt-BR'), 7);
+    const jpg = Uint8Array.from(atob(cv.toDataURL('image/jpeg', 0.92).split(',')[1]), c => c.charCodeAt(0));
+    return blob([pg], jpg, iw, ih);
+  }
+  return { Pg, blob, imagem };
+})();
+</script>
+<script>
+/* v0.7: EXPORTAR ▾ do mapa. O SVG usa cores do CSS da página (classes e variáveis); para virar arquivo, cada elemento recebe os estilos JÁ CALCULADOS em linha. */
+(function(){
+  const PROPS=['fill','stroke','stroke-width','stroke-dasharray','opacity','fill-opacity','stroke-opacity','font-family','font-size','font-weight','text-anchor','dominant-baseline','paint-order'];
+  function svgAutonomo(){
+    const o=document.getElementById('svgm'),c=o.cloneNode(true),so=[o].concat([...o.querySelectorAll('*')]),sc=[c].concat([...c.querySelectorAll('*')]);
+    so.forEach((e,i)=>{const cs=getComputedStyle(e);PROPS.forEach(p=>{const v=cs.getPropertyValue(p);if(v)sc[i].style.setProperty(p,v)})});
+    const vb=o.getAttribute('viewBox').split(/\s+/).map(Number);
+    c.removeAttribute('style');c.setAttribute('xmlns','http://www.w3.org/2000/svg');c.setAttribute('width',vb[2]*2);c.setAttribute('height',vb[3]*2);
+    return{xml:new XMLSerializer().serializeToString(c),w:vb[2]*2,h:vb[3]*2};
+  }
+  const base=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return 'mapa_fbs_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())};
+  function paraCanvas(cb){
+    const s=svgAutonomo(),img=new Image();
+    img.onload=()=>{const cv=document.createElement('canvas');cv.width=s.w;cv.height=s.h;const x=cv.getContext('2d');
+      x.fillStyle='#ffffff';x.fillRect(0,0,s.w,s.h);x.drawImage(img,0,0,s.w,s.h);cb(cv)};   // fundo branco: impressão
+    img.onerror=()=>alert('Não consegui montar a imagem do mapa.');
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s.xml);
+  }
+  document.getElementById('bExp').onclick=e=>EXPMENU.menu(e.currentTarget,[
+    {rot:'PDF (.pdf)',dica:'1 página com o diagrama visível agora',fn:()=>paraCanvas(cv=>{
+      const vivo=document.getElementById('vivo').textContent;
+      EXPMENU.baixa(PDFMIN.imagem(cv,'MAPA DOS FBs - MANUAL GUIADO E AUTOMÁTICO',['Sinal: '+vivo+' · blocos VIRTUAIS (JavaScript); nenhum existe no PLC ainda.']),base()+'.pdf')})},
+    {rot:'Imagem (.png)',dica:'o diagrama como figura',fn:()=>paraCanvas(cv=>cv.toBlob(b=>EXPMENU.baixa(b,base()+'.png'),'image/png'))},
+    {rot:'Vetor (.svg)',dica:'editável (Inkscape, Illustrator, PowerPoint)',fn:()=>EXPMENU.baixa(new Blob([svgAutonomo().xml],{type:'image/svg+xml'}),base()+'.svg')}]);
+})();
+</script>
+<script>
+/* =====================================================================================================================
+   dica_ui_v0.1.js — DICA DE INTERFACE: "que elemento é este?" (nome do tipo + id de programação + coordenadas) · 29/10/2026
+   Colado (inline) em todos os HTML do projeto (medidor, gráfico, mapa dos FBs, gerenciador de logs, amostras, simulador de rodízio,
+   visor da API, painel BT2). Documento: modulos/DICA_UI_v0.1.md.
+
+   PARA QUE SERVE (leigo): para conversar com a programação sem dizer "aquele botãozinho lá". Ligando este modo, ao passar o mouse sobre
+   qualquer coisa da tela aparece uma etiqueta com (1) o NOME DO TIPO do elemento (Botão, Chip, Card, Janela…), (2) o ID usado no código
+   (ex.: #bAnalisar, #cardBancoCargas) e (3) as COORDENADAS na tela. Alt + clique "fixa" a etiqueta: ela fica aberta até você fechar (✕ ou Esc)
+   e tem o botão "Copiar" para colar numa mensagem. Um contorno tracejado mostra exatamente qual é o elemento.
+
+   COMO LIGAR: tecla  Alt + I  (liga/desliga; lembra a escolha) · ou abrir a página com  ?ui=1  · ou  DICAUI.liga(true)  pelo console.
+   Desligado por padrão: o operador não vê nada diferente (a dica é ferramenta de quem desenvolve/valida).
+
+   NOME CORRETO DOS ELEMENTOS (pergunta do operador): a etiqueta que aparece ao passar o mouse e some ao sair = "tooltip" (dica de ferramenta).
+   A que fica aberta até ser fechada, sem travar a tela = "popover" (é o que o Alt+clique cria, e o aviso de risco do módulo JANELAS).
+   A mensagem que aparece num canto e some sozinha = "toast" (snackbar). Janela que trava a tela de trás = "diálogo modal".
+
+   POR QUE ASSIM (técnico): usa o atributo popover="manual" (camada de cima do navegador) para a etiqueta aparecer ACIMA de <dialog> abertos; se o
+   navegador não tiver popover, cai para position:fixed com z-index alto. O contorno é uma <div> fixa sobre o retângulo do elemento — NÃO mexe no
+   elemento, então não muda o layout (REGRA_LAYOUT_ESTAVEL_v0.1). Enquanto o modo está ligado, o atributo title do elemento sob o mouse é guardado
+   e o texto vai para dentro da etiqueta (evita duas dicas empilhadas); é devolvido ao sair.
+   O que ele NÃO faz: não altera nenhum dado, não lê PLC/Node-RED, não envia nada para fora. Clique normal continua funcionando; só Alt+clique é
+   capturado (para fixar). Coordenadas: "tela" = posição na janela do navegador (px); "mouse" = cursor na janela; "monitor" = cursor no monitor.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.DICAUI) return;
+  const CHAVE = 'bt2.dicaui';
+  let ligado = false, tip = null, caixa = null, fixa = null, ult = null, tmr = 0;
+  try { ligado = localStorage.getItem(CHAVE) === '1'; } catch (e) {}
+  if (/[?&]ui=1\b/.test(location.search)) ligado = true;
+  const temPop = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
+
+  /* ---------- CSS próprio (injetado uma vez; cores neutras, legíveis em tema claro e escuro) ---------- */
+  const css = document.createElement('style');
+  css.textContent = `
+  .dicaui-tip,.dicaui-fixa{position:fixed;margin:0;inset:auto;z-index:2147483200;max-width:min(360px,92vw);padding:6px 9px;border-radius:7px;border:1px solid #5d6b7a;
+    background:#10202f;color:#eaf2fa;font:12px/1.35 system-ui,Segoe UI,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;overflow:visible}
+  .dicaui-fixa{pointer-events:auto;padding-right:30px}
+  .dicaui-tip b,.dicaui-fixa b{color:#8fd0ff}.dicaui-tip i,.dicaui-fixa i{font-style:normal;color:#ffd27a}
+  .dicaui-tip small,.dicaui-fixa small{display:block;color:#aebccb;font-size:11px}
+  .dicaui-fixa .x{position:absolute;top:3px;right:4px;width:20px;height:20px;border:0;border-radius:4px;background:transparent;color:#eaf2fa;cursor:pointer;font:700 13px/1 system-ui}
+  .dicaui-fixa .x:hover{background:rgba(255,255,255,.18)}
+  .dicaui-fixa .cp{margin-top:5px;font:600 11px system-ui;padding:2px 8px;border-radius:5px;border:1px solid #8fd0ff;background:transparent;color:#8fd0ff;cursor:pointer}
+  .dicaui-caixa{position:fixed;margin:0;inset:auto;z-index:2147483100;pointer-events:none;border:2px dashed #ff9f1c;background:rgba(255,159,28,.08);box-sizing:border-box;padding:0}
+  `;
+  (document.head || document.documentElement).appendChild(css);
+
+  /* ---------- nome do tipo (PT-BR) a partir da tag, do papel (role) e das classes ---------- */
+  const cls = e => { const c = e.getAttribute && e.getAttribute('class'); return c ? String(c) : ''; };
+  function tipoDe(e) {
+    const t = (e.tagName || '').toLowerCase(), c = cls(e), role = e.getAttribute && e.getAttribute('role');
+    if (e.classList && e.classList.contains('jwbtn')) return 'Botão de tamanho da janela (⤢)';
+    if (t === 'dialog') return e.hasAttribute('open') && e.classList.contains('jflut') ? 'Janela flutuante (dialog)' : 'Janela (dialog)';
+    if (/\b(chip|enschip|gchip|gd-chip)\b/.test(c)) return 'Chip';
+    if (t === 'section' && /\bpanel\b/.test(c)) return 'Painel (seção de cards)';
+    if (/\bcard\b/.test(c)) return 'Card';
+    if (/\bbx\b/.test(c)) return 'Bloco FB (cartão do mapa)';
+    if (/\binfo\b/.test(c) && e.closest && e.closest('.bx')) return 'Ícone de informação (i)';
+    if (/\bjt\b/.test(c)) return 'Barra de título da janela';
+    if (t === 'button' || role === 'button' || (t === 'input' && /^(button|submit|reset)$/.test(e.type))) return 'Botão';
+    if (t === 'select') return 'Lista suspensa (select)';
+    if (t === 'textarea') return 'Campo de texto longo';
+    if (t === 'input') return e.type === 'checkbox' ? 'Caixa de seleção' : e.type === 'radio' ? 'Opção (radio)' : e.type === 'range' ? 'Controle deslizante' : 'Campo de entrada (' + (e.type || 'text') + ')';
+    if (role === 'tab') return 'Aba';
+    if (t === 'a') return 'Link';
+    if (t === 'canvas') return 'Gráfico (canvas)';
+    if (t === 'table') return 'Tabela';
+    if (t === 'svg') return 'Desenho (svg)';
+    if (/^h[1-6]$/.test(t)) return 'Título (' + t + ')';
+    if (t === 'label') return 'Rótulo';
+    if (t === 'iframe') return 'Quadro embutido (iframe)';
+    if (/\b(popover|jwtip|expmenu)\b/.test(c) || e.hasAttribute && e.hasAttribute('popover')) return 'Popover / menu';
+    return 'Elemento <' + t + '>';
+  }
+  const conhecido = e => { const t = (e.tagName || '').toLowerCase(); return !!(e.id || /^(button|input|select|textarea|a|dialog|table|canvas|label|iframe)$/.test(t) || /\b(chip|enschip|gchip|card|bx|jwbtn|jt|panel)\b/.test(cls(e)) || (e.getAttribute && /^(button|tab)$/.test(e.getAttribute('role') || ''))); };
+  /* sobe da folha (um <span> de texto, por exemplo) até o primeiro elemento que tenha id ou seja de um tipo conhecido */
+  function alvoDe(e) { let x = e; for (let i = 0; x && i < 8; i++, x = x.parentElement) if (conhecido(x)) return x; return e; }
+
+  function descreve(e, ev) {
+    const r = e.getBoundingClientRect(), id = e.id || '', pai = !id && e.closest ? e.closest('[id]') : null;
+    const t = e.dataset && e.dataset.dicauiT != null ? e.dataset.dicauiT : (e.getAttribute && e.getAttribute('title')) || e.getAttribute && e.getAttribute('aria-label') || '';
+    const n = v => Math.round(v);
+    return { tipo: tipoDe(e), id, pai: pai ? pai.id : '', dica: t, x: n(r.left), y: n(r.top), w: n(r.width), h: n(r.height),
+             mx: ev ? n(ev.clientX) : null, my: ev ? n(ev.clientY) : null, sx: ev ? n(ev.screenX) : null, sy: ev ? n(ev.screenY) : null };
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function html(d) {
+    return '<b>' + esc(d.tipo) + '</b> · ' + (d.id ? '<i>#' + esc(d.id) + '</i>' : '<i>(sem id)</i>' + (d.pai ? ' dentro de <i>#' + esc(d.pai) + '</i>' : '')) +
+      '<small>tela x ' + d.x + ' · y ' + d.y + ' · ' + d.w + '×' + d.h + ' px</small>' +
+      (d.mx != null ? '<small>mouse ' + d.mx + ',' + d.my + ' · monitor ' + d.sx + ',' + d.sy + '</small>' : '') +
+      (d.dica ? '<small>dica: ' + esc(d.dica) + '</small>' : '');
+  }
+  const texto = d => d.tipo + ' ' + (d.id ? '#' + d.id : '(sem id)' + (d.pai ? ' dentro de #' + d.pai : '')) + ' | tela x=' + d.x + ' y=' + d.y + ' ' + d.w + 'x' + d.h + 'px' + (d.mx != null ? ' | mouse ' + d.mx + ',' + d.my + ' monitor ' + d.sx + ',' + d.sy : '') + (d.dica ? ' | dica: ' + d.dica : '') + ' | página ' + (location.pathname.split('/').pop() || '');
+
+  /* ---------- peças visuais ---------- */
+  function cria(classe, pop) {
+    const d = document.createElement('div'); d.className = classe; if (pop && temPop) d.setAttribute('popover', 'manual'); (document.body || document.documentElement).appendChild(d); return d;
+  }
+  const abre = d => { if (temPop) { try { if (!d.matches(':popover-open')) d.showPopover(); } catch (e) {} } else d.style.display = 'block'; };
+  const fecha = d => { if (!d) return; if (temPop) { try { d.hidePopover(); } catch (e) {} } else d.style.display = 'none'; };
+  function iniPecas() {
+    if (!tip) { tip = cria('dicaui-tip', true); caixa = cria('dicaui-caixa', true); fecha(tip); fecha(caixa); }
+  }
+  function posiciona(el, x, y) {
+    const w = el.offsetWidth || 240, h = el.offsetHeight || 60;
+    el.style.left = Math.max(4, Math.min(innerWidth - w - 4, x + 14)) + 'px';
+    el.style.top = Math.max(4, Math.min(innerHeight - h - 4, y + 18)) + 'px';
+  }
+  function contorna(e) { const r = e.getBoundingClientRect(); Object.assign(caixa.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }); abre(caixa); }
+
+  /* ---------- eventos ---------- */
+  function devolveTitle() { if (ult && ult.dataset && ult.dataset.dicauiT != null) { ult.setAttribute('title', ult.dataset.dicauiT); delete ult.dataset.dicauiT; } }
+  function mover(ev) {
+    if (!ligado) return;
+    const crua = ev.target; if (!crua || (crua.closest && crua.closest('.dicaui-tip,.dicaui-fixa,.dicaui-caixa'))) return;
+    const e = alvoDe(crua);
+    if (e !== ult) {
+      devolveTitle(); ult = e;
+      if (e.getAttribute && e.hasAttribute('title') && !(e.dataset && e.dataset.dicauiT != null)) { e.dataset.dicauiT = e.getAttribute('title'); e.removeAttribute('title'); }
+      contorna(e);
+    }
+    const d = descreve(e, ev); tip.innerHTML = html(d); abre(tip); posiciona(tip, ev.clientX, ev.clientY);
+  }
+  function sair() { fecha(tip); fecha(caixa); devolveTitle(); ult = null; }
+  function fixar(ev) {
+    if (!ligado || !ev.altKey) return;
+    const e = alvoDe(ev.target); if (e.closest && e.closest('.dicaui-fixa')) return;
+    ev.preventDefault(); ev.stopPropagation();                 // Alt+clique é só para fixar: não aciona o botão por baixo
+    const d = descreve(e, ev); fechaFixa();
+    fixa = cria('dicaui-fixa', true); fixa.innerHTML = html(d) + '<button type="button" class="cp">Copiar</button><button type="button" class="x" aria-label="Fechar">✕</button>';
+    fixa.querySelector('.x').onclick = fechaFixa;
+    fixa.querySelector('.cp').onclick = ev2 => { const t = texto(d); try { navigator.clipboard.writeText(t); ev2.target.textContent = 'Copiado'; } catch (x) { ev2.target.textContent = 'Selecione e copie'; } };
+    abre(fixa); posiciona(fixa, ev.clientX, ev.clientY); contorna(e);
+  }
+  function fechaFixa() { if (fixa) { fecha(fixa); fixa.remove(); fixa = null; } fecha(caixa); }
+  document.addEventListener('mousemove', mover, true);
+  document.addEventListener('mouseleave', sair, true);
+  document.addEventListener('click', fixar, true);
+  document.addEventListener('keydown', ev => {
+    if (ev.altKey && !ev.ctrlKey && !ev.metaKey && (ev.key === 'i' || ev.key === 'I')) { ev.preventDefault(); liga(!ligado, true); }
+    else if (ev.key === 'Escape' && fixa) fechaFixa();
+  }, true);
+
+  function liga(b, avisa) {
+    ligado = !!b; try { localStorage.setItem(CHAVE, ligado ? '1' : '0'); } catch (e) {}
+    iniPecas();
+    if (!ligado) { sair(); fechaFixa(); }
+    if (avisa) { tip.innerHTML = '<b>Dica de interface ' + (ligado ? 'ligada' : 'desligada') + '</b><small>Alt+I liga/desliga · Alt+clique fixa a etiqueta</small>'; abre(tip); posiciona(tip, innerWidth / 2 - 130, 40); setTimeout(() => { if (!ult) fecha(tip); }, 1800); }
+  }
+  const inicia = () => { iniPecas(); if (ligado) liga(true, false); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inicia); else inicia();
+  global.DICAUI = { liga, alterna: () => liga(!ligado, true), ativo: () => ligado, descreve, tipoDe };
+})(window);
+</script>
+<script>
+/* =====================================================================================================================
+   ajuda_v0.1.js — BOTÃO "AJUDA" PADRÃO + JANELA DE AJUDA, igual em todo HTML do projeto · 29/10/2026
+   Colado (inline) em: mapa_fbs_v0.11, gerenciador_logs_v1.6, api_cards_visor_v0.3, index.html v0.2 (o medidor, o gráfico e o simulador de amostras
+   já têm a própria Ajuda). Documento: modulos/AJUDA_v0.1.md.
+
+   REGRA DO PROJETO (decisão do operador, 29/10/2026): "toda HTML tem que vir com AJUDA". Este módulo é o jeito mais barato de cumprir a regra:
+   cada página só informa o TEXTO (AJUDA.inicia({...})); o botão, a janela, o fechar (✕ no canto direito, Esc) e a seção padrão da
+   "Dica de interface (Alt+I)" já vêm prontos.
+
+   PARA QUE SERVE (leigo): um botão "Ajuda" que abre uma janelinha dizendo, em português simples, para que serve a tela, como usar, o que cada
+   botão faz e o significado das palavras técnicas (glossário).
+
+   COMO USAR (programação):
+     AJUDA.inicia({ titulo:'Mapa dos FBs', resumo:'texto curto', secoes:[{t:'Como usar', l:['passo 1','passo 2']}], glossario:[['FB','bloco de função']],
+                    onde:'header' })      // onde = seletor CSS do lugar do botão; sem ele (ou não achado) o botão fica fixo no canto superior direito
+   POR QUE ASSIM (técnico): <dialog> aberto com show() (não modal): não trava a tela de trás, e quem tem o módulo JANELAS ganha o ⤢ automaticamente.
+   Sem JANELAS a janela ainda se redimensiona pelo canto (resize:both). Não altera dados, não lê PLC/Node-RED, não envia nada.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.AJUDA) return;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let dlg = null;
+  const css = document.createElement('style');
+  css.textContent = `
+  #dlgAjuda{position:fixed;top:8vh;left:50%;transform:translateX(-50%);margin:0;width:min(640px,94vw);max-height:84vh;overflow:auto;resize:both;padding:0;
+    border:1px solid #7a8794;border-radius:10px;background:#fff;color:#16222e;font:14px/1.45 system-ui,"Segoe UI",sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:2147482000}
+  @media (prefers-color-scheme:dark){#dlgAjuda{background:#1b2229;color:#e8edf2;border-color:#4d5964}}
+  #dlgAjuda .jt{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid rgba(128,128,128,.4);position:sticky;top:0;background:inherit}
+  #dlgAjuda .jt b{flex:1;font-size:15px}
+  #dlgAjuda .jx{width:28px;height:28px;border:1px solid rgba(128,128,128,.55);border-radius:6px;background:transparent;color:inherit;cursor:pointer;font:700 14px/1 system-ui}
+  #dlgAjuda .jx:hover{background:rgba(128,128,128,.25)}
+  #dlgAjuda .cp{padding:6px 16px 14px}
+  #dlgAjuda h3{font-size:13px;margin:14px 0 4px;color:#2a6fb3}
+  @media (prefers-color-scheme:dark){#dlgAjuda h3{color:#7db7f0}}
+  #dlgAjuda ul{margin:4px 0 4px 18px;padding:0}#dlgAjuda li{margin:2px 0}
+  #dlgAjuda dt{font-weight:650;margin-top:4px}#dlgAjuda dd{margin:0 0 2px 0;color:inherit;opacity:.85}
+  #dlgAjuda kbd{border:1px solid rgba(128,128,128,.6);border-bottom-width:2px;border-radius:4px;padding:0 5px;font:12px system-ui}
+  #bAjudaPadrao{font:600 13px system-ui,sans-serif;padding:5px 12px;border:1px solid #7a8794;border-radius:7px;background:transparent;color:inherit;cursor:pointer}
+  #bAjudaPadrao:hover{background:rgba(128,128,128,.22)}
+  #bAjudaPadrao.fixo{position:fixed;top:8px;right:10px;z-index:2147481000;background:#fff;color:#16222e}
+  @media (prefers-color-scheme:dark){#bAjudaPadrao.fixo{background:#1b2229;color:#e8edf2}}`;
+  (document.head || document.documentElement).appendChild(css);
+
+  function inicia(c) {
+    c = c || {};
+    const corpo = '<p>' + esc(c.resumo || '') + '</p>' +
+      (c.secoes || []).map(s => '<h3>' + esc(s.t) + '</h3><ul>' + s.l.map(x => '<li>' + x + '</li>').join('') + '</ul>').join('') +
+      ((c.glossario && c.glossario.length) ? '<h3>Glossário</h3><dl>' + c.glossario.map(g => '<dt>' + esc(g[0]) + '</dt><dd>' + g[1] + '</dd>').join('') + '</dl>' : '') +
+      '<h3>Descobrir o nome de qualquer elemento da tela</h3><ul><li>Tecle <kbd>Alt</kbd>+<kbd>I</kbd>: ao passar o mouse aparece o tipo (Botão, Chip, Card…), o <b>id de programação</b> e as coordenadas. <kbd>Alt</kbd>+clique fixa a etiqueta e tem o botão Copiar. <kbd>Alt</kbd>+<kbd>I</kbd> de novo desliga.</li></ul>';
+    dlg = document.createElement('dialog'); dlg.id = 'dlgAjuda'; dlg.className = 'jan livre';
+    dlg.innerHTML = '<div class="jt"><b>Ajuda · ' + esc(c.titulo || document.title) + '</b><button type="button" class="jx" data-fecha aria-label="Fechar">✕</button></div><div class="cp">' + corpo + '</div>';
+    document.body.appendChild(dlg);
+    dlg.querySelector('.jx').onclick = fecha;
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dlg.open) fecha(); });
+    const b = document.createElement('button'); b.type = 'button'; b.id = 'bAjudaPadrao'; b.textContent = 'Ajuda'; b.setAttribute('aria-haspopup', 'dialog');
+    b.title = 'Para que serve esta tela e como usar'; b.onclick = () => (dlg.open ? fecha() : abre());
+    const onde = c.onde && document.querySelector(c.onde);
+    if (onde) onde.appendChild(b); else { b.classList.add('fixo'); document.body.appendChild(b); }
+  }
+  const abre = () => { if (dlg && !dlg.open) dlg.show(); };
+  const fecha = () => { if (dlg && dlg.open) dlg.close(); };
+  global.AJUDA = { inicia, abre, fecha };
+})(window);
+AJUDA.inicia({"titulo": "Mapa dos FBs", "onde": "header", "resumo": "Esquema dos blocos de função (FB) do Patamar Guiado: o orquestrador (FB mãe, 9) e os filhos. Mostra quem entrega qual sinal a quem, com os valores ao vivo quando o medidor está com o Patamar Guiado ligado. Só observa: não comanda nada.", "secoes": [{"t": "Como usar", "l": ["<b>Clique no cartão</b> de um bloco: acende as ligações dele (com o nome do sinal). Outro clique apaga. Vários blocos podem ficar acesos; <b>Apagar destaques</b> limpa todos.", "<b>Ícone i</b> no cartão: abre a gaveta com o Resumo (o que faz, que erro isola) e o Técnico (valores, contas, ligações).", "Os fios andam só entre as colunas e numa pista abaixo dos blocos, como trilhas de placa: nunca passam por cima de um cartão.", "Botões de modo (Guiado sem DSE / Guiado com DSE / Automático): mudam a explicação de quem dispara e de onde vêm V/Hz/kW.", "Zoom − / + / Ajustar; <b>Exportar ▾</b> gera PDF, imagem ou SVG do que está na tela."]}, {"t": "Sinal ao vivo", "l": ["\"sem sinal\": no medidor, ligue o Demo e o Patamar Guiado. Pino cheio = tem valor ao vivo; pino vazado = previsto, ainda sem valor publicado (não se inventa valor)."]}], "glossario": [["FB", "bloco de função do PLC (a lógica)"], ["FB mãe", "orquestrador: só ordena, chama os filhos conforme o roteiro"], ["Pino", "entrada (esquerda) ou saída (direita) de um bloco"], ["Gaveta", "painel lateral com os detalhes do bloco"]]});
+</script>
+</body></html>

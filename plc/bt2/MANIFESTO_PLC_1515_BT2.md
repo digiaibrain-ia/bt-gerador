@@ -99,3 +99,7 @@ Pendente de análise. Anotação: o MANUAL_GUIADO_v0.2 descreve o rodízio com c
 | `fb101_ComEt200_chamadas_v0.4.scl` | `plc/bt2/arquivo/` | novo (versão antiga, guardada) |
 
 Pendente de análise. Anotação: a v0.4 do FB101 chama o remoto ET200 de DB38/DB39 e a instância de DB155 (BC56) e DB163 (BC400). A v0.6 corrige o mapeamento para db150/db158 (ver lote anterior).
+
+## 03/11/2026 — fechamento da etapa 1.10.x
+
+Medidor 1.10.154 congelado (branch `backup/medidor-1.10.154`). Pacote `dashboard/pacotes/bt2-1.10.154/`. Plano da migração: `docs/bt2/migracao/MIGRACAO_PLANO_v0.1.md`. Inventário ainda incompleto: OB1, FC100, DB52, DB20.
