@@ -1,0 +1,67 @@
+DATA_BLOCK "db3300_BC550_Chaves"
+TITLE = db3300_BC550_Chaves v0.1 (DB3300)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3300_BC550_Chaves (DB3300)  -  RASCUNHO v0.1 (03/11/2026) - nao compilado no TIA, nao testado
+//// O QUE FAZ : mesmo papel do db150_BC56_Chaves v0.3, com arrays de 32 chaves. Banco BC550: 12 chaves reais, 20 reserva.
+//// OFFSETS (DB nao otimizado, calculados; CONFERIR na coluna "Deslocamento" do TIA apos compilar):
+////    cb.ligar[1..32]       DBX0.0     sb.ligada[1..32]    DBX4.0     setup.habilitada DBX8.0     setup.setupOk DBX12.0
+////    setup.kwReal          DBD16      rMedidoOhm          DBD144     rTeoricoOhm      DBD272     setupData     DBB400 (12 bytes cada)
+////    setup.nominal         DBD784     chaveSel (UInt)     DBW912     salvar           DBX914.0   usarKwReal    DBX914.1
+////    cbBanco.ligar        DBX916.0    sbBanco.seletoraAuto DBX918.0  sbBanco.comEt200Ok DBX918.1
+//// (no DB150 de 16 chaves os mesmos campos ficam em 0/2/4/6/8/72/136/200/392/456/458/460/462: aqui tudo escala por 32.)
+//// ESCRITORES : iguais ao DB150 (cb.ligar = FB102/Node-RED; sb.ligada = FB103; habilitada/chaveSel/salvar = Node-RED/HTML).
+//// kW nominal: informado pelo operador em 30/10/2026, na ordem fisica das chaves. Conferir antes de usar "kW nominal" nos calculos.
+////=====================================
+   VAR
+      cb : Struct
+         ligar : Array[1..32] of Bool;
+      END_STRUCT;
+
+      sb : Struct
+         ligada : Array[1..32] of Bool;
+      END_STRUCT;
+
+      setup : Struct
+         habilitada   : Array[1..32] of Bool;
+         setupOk      : Array[1..32] of Bool;
+         kwReal       : Array[1..32] of Real;
+         rMedidoOhm   : Array[1..32] of Real;
+         rTeoricoOhm  : Array[1..32] of Real;
+         setupData    : Array[1..32] of DTL;
+         nominal      : Array[1..32] of Real;
+         chaveSel     : UInt;
+         salvar       : Bool;
+         usarKwReal   : Bool;
+      END_STRUCT;
+
+      cbBanco : Struct   // DBX916.0
+         ligar : Bool;
+      END_STRUCT;
+
+      sbBanco : Struct   // DBX918.0
+         seletoraAuto : Bool;
+         comEt200Ok : Bool;
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+   setup.nominal[1] := 5.0;
+   setup.nominal[2] := 5.0;
+   setup.nominal[3] := 5.0;
+   setup.nominal[4] := 5.0;
+   setup.nominal[5] := 5.0;
+   setup.nominal[6] := 25.0;
+   setup.nominal[7] := 50.0;
+   setup.nominal[8] := 50.0;
+   setup.nominal[9] := 100.0;
+   setup.nominal[10] := 100.0;
+   setup.nominal[11] := 100.0;
+   setup.nominal[12] := 100.0;
+   // 13..32: reserva, 0.0
+
+END_DATA_BLOCK

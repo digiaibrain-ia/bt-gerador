@@ -1,0 +1,37 @@
+DATA_BLOCK "db3202_BC595_SetupPorTensao"
+TITLE = db3202_BC595_SetupPorTensao (DB3202)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.1
+////====================================
+//// db3202_BC595_SetupPorTensao (DB3202)  -  RASCUNHO v0.1 (03/11/2026) - nao compilado no TIA, nao testado
+//// O QUE FAZ : mesmo papel do db152_BC56_SetupPorTensao v0.2, com 32 chaves por chaveamento (1=220, 2=380, 3=440 V).
+//// INDICES   : [chaveamento, chave]; posicao linear p = (chaveamento-1)*32 + (chave-1)  (0..95)
+//// OFFSETS (calculados; CONFERIR no TIA apos compilar):
+////    setupV.tensaoV[1..3]  DBW0,2,4        kwReal DBD6 + 4p       rMedidoOhm DBD390 + 4p     vMedidaV DBD774 + 4p
+////    baseKw DBD1158 + 4p   setupData DBB1542 + 12p   setupOk DBX2694.0 + p   selV.tensaoSel DBW2706
+//// RETENTIVIDADE : precisa sobreviver a reinicio da CPU; conferir no TIA (propriedades do DB).
+////=====================================
+   VAR
+      setupV : Struct
+         tensaoV     : Array[1..3] of Int;
+         kwReal      : Array[1..3, 1..32] of Real;
+         rMedidoOhm  : Array[1..3, 1..32] of Real;
+         vMedidaV    : Array[1..3, 1..32] of Real;
+         baseKw      : Array[1..3, 1..32] of Real;
+         setupData   : Array[1..3, 1..32] of DTL;
+         setupOk     : Array[1..3, 1..32] of Bool;
+      END_STRUCT;
+      selV : Struct
+         tensaoSel   : Int;
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+   setupV.tensaoV[1] := 220;
+   setupV.tensaoV[2] := 380;
+   setupV.tensaoV[3] := 440;
+   selV.tensaoSel := 0;   // NAO informado ate o operador escolher no HTML
+
+END_DATA_BLOCK

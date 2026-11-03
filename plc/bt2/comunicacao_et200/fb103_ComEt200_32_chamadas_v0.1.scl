@@ -1,0 +1,28 @@
+// ============================================================================
+// fb103_ComEt200_32 (FB103) - CHAMADAS v0.1 (03/11/2026) - RASCUNHO, nao compilado
+// Copiar para o OB1 (ou FC que o OB1 chama), junto das chamadas do FB101, ANTES do FB100/FB102.
+//  Instancia                    Remoto ET200 (SUGESTAO)    DB do banco
+//  db3205i_BC595_ComEt200       DB40 "ComBC595"            db3200_BC595_Chaves
+//  db3305i_BC550_ComEt200       DB41 "ComBC550"            db3300_BC550_Chaves
+// REGRA: ComOk, SeletoraAuto e LigarBanco SEMPRE no MESMO DB do CbLigar.
+// ============================================================================
+
+"db3205i_BC595_ComEt200"(Hab          := TRUE,
+                        ID_Conexao   := W#16#100,
+                        RemotoCmd    := P#DB40.DBX0.0 BYTE 8,   // cmd[1..32] + vida1515 + ligarBanco
+                        RemotoFb     := P#DB40.DBX8.0 BYTE 8,   // fbk[1..32] + vidaET + seletoraAuto
+                        ComOk        => "db3200_BC595_Chaves".sbBanco.comEt200Ok,
+                        SeletoraAuto => "db3200_BC595_Chaves".sbBanco.seletoraAuto,
+                        CbLigar      := "db3200_BC595_Chaves".cb.ligar,
+                        SbLigada     := "db3200_BC595_Chaves".sb.ligada,
+                        LigarBanco   := "db3200_BC595_Chaves".cbBanco.ligar);
+
+"db3305i_BC550_ComEt200"(Hab          := TRUE,
+                        ID_Conexao   := W#16#100,
+                        RemotoCmd    := P#DB41.DBX0.0 BYTE 8,   // cmd[1..32] + vida1515 + ligarBanco
+                        RemotoFb     := P#DB41.DBX8.0 BYTE 8,   // fbk[1..32] + vidaET + seletoraAuto
+                        ComOk        => "db3300_BC550_Chaves".sbBanco.comEt200Ok,
+                        SeletoraAuto => "db3300_BC550_Chaves".sbBanco.seletoraAuto,
+                        CbLigar      := "db3300_BC550_Chaves".cb.ligar,
+                        SbLigada     := "db3300_BC550_Chaves".sb.ligada,
+                        LigarBanco   := "db3300_BC550_Chaves".cbBanco.ligar);
