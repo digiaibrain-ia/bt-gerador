@@ -70,3 +70,4 @@ Gerador: `nodered/gerador/gerar_fluxos_portao4c_v0.1.py` (nao sobrescreve). `con
 
 ## Fase 3, Etapa 5 - estresse
 `concorrencia/estresse.js` gera carga parecida com a do medidor (3 POST simultaneos, GET a cada 1 s) e mede latencias, status, chave ligada com banco desligado e estado final. `e5a` (normal/jitter/degradado), `e5b` (escritas tardias serial e CONCORRENTE, BC595) e `e5c` (queda de leitura e registro). Duracao de cada rodada: `BT2_ESTRESSE_S` (padrao 12 s; `BT2_ESTRESSE_S=600 npm --prefix tests/integracao test` para um soak na bancada). Achados novos como `todo`: P3-E1 e P3-E2. Resumo e numeros em `docs/bt2/fase3/FECHAMENTO_FASE3_v0.1.md`. O PLC simulado agora aborta as escritas pendentes ao fim do teste (`plc.parar()`).
+Suite completa ao fim da Fase 3: 190 testes, 185 passando, 0 falhando, 5 pendentes (F2-1, F4-1, F4-2, P3-E1, P3-E2); leva cerca de 9 min 20 s (rode em segundo plano se o terminal tiver limite de tempo).
