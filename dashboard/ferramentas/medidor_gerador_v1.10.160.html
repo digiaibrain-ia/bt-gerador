@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="1.10.159">
+<meta name="app-version" content="1.10.160">
 <title>Medidor do Gerador</title>
 <style>
   /* v1.9.88: TOKENS DE COR DA INTERFACE (um lugar só). POR QUÊ: verde/vermelho/amarelo são SINAL (ligado, falha, alerta) e não podem ser usados como cor de enfeite;
@@ -385,6 +385,7 @@
   .svbtn:disabled{background:transparent;border-color:var(--line);color:var(--mut);font-weight:400;cursor:default}
   html[data-tema=escuro] .svbtn:not(:disabled){background:#e8e8e4;border-color:#e8e8e4;color:#111}
   .tb tr.sv td{padding-top:3px;padding-bottom:3px}
+  .tb tr.sv.vis td:first-child{font-style:normal}   /* v1.10.160: a linha Salvar aparece também no Registro compacto */
 
   /* ---- janelas flutuantes (estilo supervisório, tom azul) ----
      paleta própria: se gostar, o resto da página pode migrar para ela (ver --jazul) */
@@ -2855,7 +2856,7 @@ function buildTabela(){
   LINHAS.forEach(([k,r,d,v])=>{h+=`<tr${v?' class="vis"':''}><td>${r}</td>`+ETAPAS.map((e,i)=>`<td id="c_${k}_${i}">–</td>`).join('')+'</tr>'});
   h+='<tr><td>Tempo de estabilidade (s)</td>'+ETAPAS.map((e,i)=>`<td id="c_estab_${i}">–</td>`).join('')+'</tr>';
   h+='<tr><td>Cronômetro (meta)</td>'+ETAPAS.map((e,i)=>`<td id="c_cron_${i}">–</td>`).join('')+'</tr>';
-  h+='<tr class="sv"><td>Salvar valores da etapa</td>'+ETAPAS.map((e,i)=>`<td id="c_sv_${i}"><button class="svbtn" data-i="${i}" disabled>Salvar</button></td>`).join('')+'</tr></tbody>';
+  h+='<tr class="sv vis"><td>Salvar valores da etapa</td>'+ETAPAS.map((e,i)=>`<td id="c_sv_${i}"><button class="svbtn" data-i="${i}" disabled>Salvar</button></td>`).join('')+'</tr></tbody>';
   $('tb').innerHTML=h;
   $('tbTit').textContent='Registro do ensaio'; // v1.9.29: título simplificado a pedido do operador (antes incluía "· valor no fim de cada etapa (média dos últimos Xs)")
 }
@@ -3685,8 +3686,11 @@ document.querySelectorAll('dialog.jan').forEach(d=>{
 /* ===== CONTROLE DE VERSÃO =====
    A cada alteração: aumente VERSAO (maior.menor.correção), troque VERSAO_DATA,
    acrescente um item NO TOPO de HISTORICO e atualize <meta name="app-version"> no <head>. */
-const VERSAO='1.10.159', VERSAO_DATA='03/11/2026';
+const VERSAO='1.10.160', VERSAO_DATA='03/11/2026';
 const HISTORICO=[
+  {v:"1.10.160",d:"03/11/2026",i:[
+    'CORRIGIDO (regressão da 1.10.154): no Registro compacto a linha com os botões \"Salvar valores da etapa\" ficava escondida, então o operador não conseguia salvar a etapa pela tabela. Achado pelo Operador secreto: na 1.10.141 o ensaio completo passava (6 etapas) e da 1.10.154 em diante parava na etapa 1. Agora a linha Salvar aparece também no modo compacto.'
+  ]},
   {v:"1.10.159",d:"03/11/2026",i:[
     'FB Sugerir chaves reescrito por PROGRAMAÇÃO DINÂMICA (sem testar todas as 2^n combinações): 4 bancos reais caem de ~150 ms para 2–40 ms e um banco de 32 chaves passa a ser viável (antes: 22 chaves = 1,8 s, 32 = impossível). Resultado de menor custo igual ao anterior (150 casos conferidos). Bancos com kW fora da grade de 0,1 caem no cálculo antigo.',
     'FB mãe: tolerância de confirmação agora = menor entre 0,5 kW e a metade da menor chave habilitada (com chave de 0,5 kW do BC59,5, uma chave que não fecha não passa mais como confirmada); habilitar/desabilitar chaves recalcula a etapa; após FALHA, o 1º clique no chip "Patamar: On" REARMA (só com o DSE respondendo; nunca automático).',
