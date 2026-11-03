@@ -40,3 +40,7 @@ Testes marcados `todo` mostram o comportamento esperado e falham de proposito: *
 
 ## Arquivos que nao vao ao Git
 `tests/integracao/runtime/` (instalacao do Node-RED e pasta temporaria de cada execucao).
+
+## Portao 3 (D3) - guarda de escrita
+`seguranca/s3_portao3.test.js` (13 testes): toda rota de escrita das versoes novas (chaves v3.2/v1.3, registro v1.7, dev-logs v1.2, simulador v7) exige Origin/Referer da mesma origem e `Content-Type: application/json`; origem externa, sem origem ou outro tipo de conteudo -> 403 e nada vai ao PLC. Inclui ataque real no Chromium (pagina de outra origem, POST `text/plain` no-cors).
+O auxiliar `post()` de `ajudas.js` imita a tela (manda `Origin` do servidor); o 4o argumento sobrescreve/remove cabecalhos.

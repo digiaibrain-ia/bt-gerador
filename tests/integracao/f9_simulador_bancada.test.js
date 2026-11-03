@@ -8,7 +8,7 @@ describe('F9 simulador de bancada', () => {
   let h, e;
   before(async () => {
     // o simulador so responde em modo bancada: a aba precisa de BT2_BANCADA=1 (padrao 0 = trava fechada)
-    h = await sobe({ fluxos: ['chaves-56-api-v3.1', 'simulador-dse-demo-v6'], env: ENV_TESTE, envAbas: { BT2_BANCADA: '1' } });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.2', 'simulador-dse-demo-v7'], env: ENV_TESTE, envAbas: { BT2_BANCADA: '1' } });
     e = enderecos('56');
     await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 5000);
   });

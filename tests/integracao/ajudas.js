@@ -8,10 +8,10 @@ const ENV_TESTE = { BT2_AMBIENTE_TESTE: 'local' };
 const FICHA = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'plc', 'bt2', 'gerador', 'bancos_bt2_v0.3.json'), 'utf8'));
 // id do banco na URL -> ficha e fluxo de producao
 const BANCOS = {
-  '56':  { chave: 'BC56',  flow: 'chaves-56-api-v3.1',   db: 3000, dbTens: 3002, n: 13, N: 16 },
-  '400': { chave: 'BC400', flow: 'chaves-400-api-v3.1',  db: 3100, dbTens: 3102, n: 13, N: 16 },
-  '550': { chave: 'BC550', flow: 'chaves-550-api-v1.2',  db: 3300, dbTens: 3302, n: 12, N: 16 },
-  '595': { chave: 'BC595', flow: 'chaves-595-api-v1.2',  db: 3200, dbTens: 3202, n: 18, N: 32 },
+  '56':  { chave: 'BC56',  flow: 'chaves-56-api-v3.2',   db: 3000, dbTens: 3002, n: 13, N: 16 },
+  '400': { chave: 'BC400', flow: 'chaves-400-api-v3.2',  db: 3100, dbTens: 3102, n: 13, N: 16 },
+  '550': { chave: 'BC550', flow: 'chaves-550-api-v1.3',  db: 3300, dbTens: 3302, n: 12, N: 16 },
+  '595': { chave: 'BC595', flow: 'chaves-595-api-v1.3',  db: 3200, dbTens: 3202, n: 18, N: 32 },
 };
 
 // mapa de bits/bytes do DB do banco (layout do gerador: 16 ou 32 chaves)
@@ -38,14 +38,18 @@ async function esperaAte(fn, ms = 5000, passo = 80) {
   return false;
 }
 
-async function chamada(h, metodo, rota, corpo) {
+// Por padrao a chamada imita a TELA (browser na mesma origem): manda Origin = endereco do servidor e Content-Type JSON.
+// 'cabecalhos' sobrescreve/remove (valor undefined remove) - usado pelos testes do Portao 3 para simular origem externa, sem Origin etc.
+async function chamada(h, metodo, rota, corpo, cabecalhos) {
   const opt = { method: metodo, headers: {} };
+  if (metodo !== 'GET') opt.headers['Origin'] = h.url;
   if (corpo !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = typeof corpo === 'string' ? corpo : JSON.stringify(corpo); }
+  for (const [k, v] of Object.entries(cabecalhos || {})) { if (v === undefined) { for (const c of Object.keys(opt.headers)) if (c.toLowerCase() === k.toLowerCase()) delete opt.headers[c]; } else opt.headers[k] = v; }
   const r = await fetch(h.url + rota, opt);
   const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch (e) { /* nao e JSON */ }
   return { status: r.status, j, t };
 }
 const get = (h, rota) => chamada(h, 'GET', rota);
-const post = (h, rota, corpo) => chamada(h, 'POST', rota, corpo);
+const post = (h, rota, corpo, cabecalhos) => chamada(h, 'POST', rota, corpo, cabecalhos);
 
 module.exports = { ENV_TESTE, FICHA, BANCOS, enderecos, espera, esperaAte, get, post, sobe };

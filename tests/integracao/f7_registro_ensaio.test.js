@@ -9,7 +9,7 @@ const VALORES = { cargaReal: 30.1, potencia: 27.5, tempMotor: 35, Va: 221.1, Vb:
 describe('F7 registro do ensaio (DB2100)', () => {
   let h;
   before(async () => {
-    h = await sobe({ fluxos: ['registro-ensaio-db2100-api-v1.6'], env: ENV_TESTE });
+    h = await sobe({ fluxos: ['registro-ensaio-db2100-api-v1.7'], env: ENV_TESTE });
     await esperaAte(async () => (await get(h, '/api/ensaio/modo')).status === 200, 5000);
   });
   after(async () => { if (h) await h.para(); });

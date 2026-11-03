@@ -25,6 +25,15 @@ Achados que os testes da Fase 1 revelaram aparecem como testes **pendentes** (`t
 | D-2 | Baixa | `WD_HTML_S` (tempo do vigia) | O limite é lido da **variável da aba** (Propriedades da aba). Conferir no PC BT2 que a aba tem o valor certo (padrão 30 s). |
 | D-3 | Média | `s7 in` de todos os fluxos | O teste roda com o **Node-RED 5.0.9**. A versão do PC BT2 não foi confirmada; comportamento pode diferir. |
 
+## Fase 2 - Portao 3 (D3): limites registrados
+
+| ID | Gravidade | Onde | Observacao |
+|---|---|---|---|
+| D-4 | Media | rotas de escrita (D3) | A guarda de Origin/Content-Type **nao e login**. Continua dependendo da TI: `adminAuth` no `settings.js` e rede. Confirmar no PC. |
+| D-5 | Baixa | rotas de escrita (D3) | DNS rebinding passa na comparacao Origin = Host. Mitigacao de rede/nome (TI). |
+| D-6 | Baixa | uso do medidor como arquivo local | `Origin: null` e barrado; abrir pelo endereco do servidor. `BT2_ORIGENS_OK=null` existe mas libera paginas isoladas de qualquer site (nao recomendado). |
+| D-7 | Baixa | `dev-logs` e simulador | Rotas de log/simulador estao sob a mesma guarda; o simulador continua so para bancada (D4). |
+
 ## Itens já listados antes (sem mudança nesta fase)
 
 - **Tipo `Remote` em `VAR_INPUT`** nos FBs de comunicação (FB101/FB103): a confirmar no TIA.

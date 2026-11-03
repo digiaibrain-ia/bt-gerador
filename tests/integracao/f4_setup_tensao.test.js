@@ -7,7 +7,7 @@ const { ENV_TESTE, enderecos, esperaAte, get, post, sobe } = require('./ajudas.j
 describe('F4 chaveamento do banco e Setup', () => {
   let h, e;
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.1'], env: ENV_TESTE });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.2'], env: ENV_TESTE });
     e = enderecos('56');
     // o DB por tensao (DB3002) e lido pelo 's7 in' com ciclo de 1 s: espera a primeira leitura
     // so segue quando o GET responde 200 (estado completo: DB3000 + DB3002). Antes disso as rotas de escrita respondem 503 'aguardando a 1a leitura'.
