@@ -67,3 +67,6 @@ Gerador: `nodered/gerador/gerar_fluxos_portao4b_v0.1.py` (parte das versoes da 4
 
 ## Fase 3, Etapa 4c - P3-B1, P3-C1 e P3-C2 corrigidos (registro-ensaio v1.8, dev-logs v1.3)
 Gerador: `nodered/gerador/gerar_fluxos_portao4c_v0.1.py` (nao sobrescreve). `concorrencia/c5_etapa4c.test.js`: preenchimento em duas fases (queda em N=0..24 nunca deixa `preenchValido=TRUE` com dados incompletos), dedup por conjunto de `n` e sinais aditivos `cursorAdiante`/`reiniciado`. Em `c2`, os `todo` B1/C1/C2 viraram testes de invariante. Verificado por mutacao nas versoes anteriores (v1.7 / v1.2).
+
+## Fase 3, Etapa 5 - estresse
+`concorrencia/estresse.js` gera carga parecida com a do medidor (3 POST simultaneos, GET a cada 1 s) e mede latencias, status, chave ligada com banco desligado e estado final. `e5a` (normal/jitter/degradado), `e5b` (escritas tardias serial e CONCORRENTE, BC595) e `e5c` (queda de leitura e registro). Duracao de cada rodada: `BT2_ESTRESSE_S` (padrao 12 s; `BT2_ESTRESSE_S=600 npm --prefix tests/integracao test` para um soak na bancada). Achados novos como `todo`: P3-E1 e P3-E2. Resumo e numeros em `docs/bt2/fase3/FECHAMENTO_FASE3_v0.1.md`. O PLC simulado agora aborta as escritas pendentes ao fim do teste (`plc.parar()`).

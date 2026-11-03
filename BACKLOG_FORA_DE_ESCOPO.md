@@ -70,6 +70,26 @@ Comportamentos **corretos** confirmados (testes verdes): fila FIFO para comandos
 
 **Observacao sobre a `TRAVA_MAX` de 10 s:** o vigia de 8 s libera a fila antes; a trava antiga so seria "roubada" se o vigia falhasse. Nao reproduzido (fora do alcance sem falha do proprio Node-RED).
 
+## Fase 3 - Etapa 5 (estresse): achados novos, observacoes e LIMITES DE ARQUITETURA
+
+| ID | Gravidade | Onde | O que acontece (reproduzido) | O que deveria acontecer |
+|---|---|---|---|---|
+| P3-E1 | Media | `chaves-*`, fila + vigia de 8 s | Com o PLC sem leitura, o 1o comando comum espera o vigia de 8 s (503) e o 2o fica parado ate a leitura voltar (12,1 s no teste) ou ao proprio vigia. O front desiste aos 10 s e o comando ainda executa depois (R9). Teste `todo` em `concorrencia/e5c_estresse_queda_registro.test.js`. | Falha rapida para os comandos da fila quando a leitura esta velha (os de seguranca tentam mesmo assim). |
+| P3-E2 | Baixa/Media (cond.) | `registro-ensaio-db2100-api` | Sem janela de confirmacao (so as chaves tem): `limpar` (42 variaveis) com 80 ms por escrita responde 500 e termina depois. Teste `todo`. | Janela de confirmacao como a das chaves. |
+| P3-E3 | Observacao | `chaves-595`, janela de 2 s | "Desligar banco" do BC595 escreve 33 variaveis; com ~80 ms por variavel passa de 2 s e responde 504. Depende do tempo real do driver S7. | Medir na bancada e ajustar `CONF_JANELA_MS` da aba. |
+| P3-E4 | Observacao | `registro-ensaio v1.8` | Cada chamada leva ~4 s (preenchimento era ~2 s; minha estimativa de ~3 s estava baixa). O front serializa as gravacoes do ensaio (OK); 3 operacoes simultaneas de clientes diferentes chegam a ~12 s (v1.7: ~10 s). | Aceitavel com um cliente; reavaliar se houver dois operadores gravando. |
+
+**Limites de arquitetura (nao resolvidos no Node-RED; dependem de PLC/TI):**
+1. **Driver S7 real:** nao sabemos se aplica escritas em serie ou em paralelo, nem o tempo real de escrita (decide P3-A5, P3-E3). Validar na bancada com a TI.
+2. **FB101 (TIA):** confirmar que `CbLigar` e zerado com o banco desligado (P3-A3). O intertravamento definitivo deve estar no PLC (cb/sb); o Node-RED so mitiga.
+3. **Consumidores do DB2100 (TIA):** confirmar que leem o snapshot **somente** com `preenchValido=TRUE` (P3-B1). Atomicidade total dos dados exigiria mudar o layout do DB (nao feito).
+4. **Reafirmacao** limita (nao elimina) o tempo de chave ligada por escrita tardia: uma escrita ja enviada nao pode ser recolhida.
+5. **Fila, quarentena e reafirmacao so em memoria** (somem se o Node-RED reiniciar).
+6. **PLC simulado:** nao reproduz driver, tempo real do 1515/ET200 nem o Node-RED do PC (versao nao confirmada: D-3).
+7. **Guarda de origem nao e login** (D-4) e **DNS rebinding** (D-5): TI.
+8. **Itens mantidos de proposito:** F2-1, F4-1, F4-2 e a rota `tensao` (mesmo padrao do P3-A4).
+9. `rid`/Idempotency-Key (etapa 4d) **adiado** por decisao: 504 `incerto`, quarentena e reafirmacao cobrem as repeticoes.
+
 ## Itens já listados antes (sem mudança nesta fase)
 
 - **Tipo `Remote` em `VAR_INPUT`** nos FBs de comunicação (FB101/FB103): a confirmar no TIA.

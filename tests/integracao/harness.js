@@ -60,6 +60,7 @@ async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), 
   return {
     url, plc, reescritos, red: RED, logs,
     async para() {
+      if (plc.parar) plc.parar();
       RED.log.removeHandler(capta);
       await RED.stop();
       await new Promise(r => server.close(r));

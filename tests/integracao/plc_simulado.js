@@ -32,6 +32,7 @@ class PlcSimulado {
     this._rand = mulberry32(1); this._cadeia = Promise.resolve();
   }
   semente(n) { this._rand = mulberry32(n); }
+  parar() { this.parado = true; }   // fim do teste: escritas ainda na fila do simulador abortam na hora (senao um atraso grande segura o processo)
   _jitter(base, jit) { return Math.max(0, Math.round(base + (jit ? (this._rand() * 2 - 1) * jit : 0))); }
   atrasoLeitura() { return this._jitter(this.latencia.leituraMs, this.latencia.leituraJitterMs); }
   _atrasoEscrita(addr, valor) {
@@ -46,7 +47,9 @@ class PlcSimulado {
       const reg = { n, addr, valor: JSON.parse(JSON.stringify(valor)), tChegada, tInicio, tAplicada: null, ok: false };
       this.trace.push(reg);
       try {
+        if (this.parado) throw new Error('PLC simulado parado');
         if (ms > 0) await dorme(ms);
+        if (this.parado) throw new Error('PLC simulado parado');
         if (this.falhas.escrita || (this.falhas.escritaApos != null && this.aplicadas >= this.falhas.escritaApos)) throw new Error('escrita recusada pelo PLC (simulado)');
         this.escrever(addr, valor); reg.ok = true; reg.ordem = ++this.aplicadas;   // ordem de APLICACAO (1,2,3...)
       } finally { reg.tAplicada = Date.now(); this.emVoo--; }
