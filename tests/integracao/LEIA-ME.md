@@ -58,3 +58,6 @@ Limite: a escrita **serial** e uma suposicao sobre o driver S7 real (nao confirm
 
 ## Fase 3, Portao 2 - caracterizacao de concorrencia (nenhum fluxo alterado)
 `concorrencia/c2_caracterizacao.test.js` (20 testes: 12 verdes + 8 `todo` = achados P3-A1..A5, P3-B1, P3-C1, P3-C2). Cada `todo` escreve o comportamento ESPERADO; quando o fluxo for corrigido o teste passa a verde e o `todo` sai. Modo de escrita: serial (padrao) e concorrente so onde muda o resultado (P3-A5 e o teste de FIFO). Detalhes e gravidades no `BACKLOG_FORA_DE_ESCOPO.md`.
+
+## Fase 3, Etapa 4a - P3-A1/A2/A3 corrigidos (chaves-56/400 v3.3, 550/595 v1.4)
+Gerador: `nodered/gerador/gerar_fluxos_portao4a_v0.1.py` (versoes novas, sem sobrescrever). `concorrencia/c3_etapa4a.test.js` (25 testes: estatico + 5 cenarios x 4 bancos). Verificado por mutacao: os cenarios A1/A2/A3 FALHAM nas versoes anteriores (v3.2/v1.3) e passam nas novas. Em `c2_caracterizacao`, os `todo` A1/A2/A3 viraram testes de invariante (estado final = ultimo comando aceito, resposta verdadeira).

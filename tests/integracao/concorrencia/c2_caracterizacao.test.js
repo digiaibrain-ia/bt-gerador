@@ -15,7 +15,7 @@ const P = (h, rota, c) => post(h, '/api/chaves/56/' + rota, c);
 
 // BC56 v3.2 pronto, com a comunicacao ET200 e a seletora em Auto (condicao normal para ligar banco)
 async function bc56(opt = {}) {
-  const h = await sobe(Object.assign({ fluxos: ['chaves-56-api-v3.2'], env: ENV_TESTE }, opt)); const e = enderecos('56');
+  const h = await sobe(Object.assign({ fluxos: ['chaves-56-api-v3.3'], env: ENV_TESTE }, opt)); const e = enderecos('56');
   h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true);
   assert.ok(await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 10000), 'BC56 nao ficou pronto');
   return { h, e };
@@ -26,30 +26,38 @@ const veNaLeitura = (h, fn) => esperaAte(async () => fn((await get(h, '/api/chav
 const seguraFila = h => h.plc.atrasosEscrita.push(400);
 
 describe('C2 R1/R5 BC56 - ordem e validacao dos comandos', () => {
-  test('(projeto v2.4) "Desligar banco" tem PRIORIDADE: executa antes de comandos comuns ja na fila', async () => {
+  test('(projeto v2.4, preservado na 4a) "Desligar banco" tem PRIORIDADE: executa antes dos comandos comuns que ja estavam na fila', async () => {
+    const { h, e } = await bc56();
+    try {
+      h.plc.trace.length = 0; seguraFila(h);
+      const a = P(h, 'habilitar', { indice: 10, habilitada: true }); await dorme(60);
+      const b = P(h, 'habilitar', { indice: 2, habilitada: true }); await dorme(40);
+      const c = P(h, 'banco', { ligar: false });
+      const r = await Promise.all([a, b, c]);
+      assert.deepEqual(r.map(x => x.status), [200, 200, 200], r.map(x => x.t).join(' | '));
+      const ord = addr => h.plc.trace.filter(t => t.ok && t.addr === addr).map(t => t.ordem)[0];
+      assert.ok(ord(e.cbBanco) < ord(e.hab(2)), 'o desligar deveria ser aplicado antes do habilitar que estava na fila (ordens ' + ord(e.cbBanco) + ' e ' + ord(e.hab(2)) + ')');
+    } finally { await h.para(); }
+  });
+
+  // --- Etapa 4a (Fase 3): P3-A1/A2/A3 CORRIGIDOS nas versoes v3.3/v1.4. Contrato aprovado: INVARIANTE (estado final = ultimo comando aceito e resposta VERDADEIRA).
+  test('P3-A1 (corrigido): "Ligar banco" aceito antes e "Desligar banco" depois: o banco termina DESLIGADO e cada resposta e verdadeira (o ligar antigo foi executado antes OU cancelado com 409)', async () => {
     const { h, e } = await bc56();
     try {
       h.plc.trace.length = 0; seguraFila(h);
       const a = P(h, 'habilitar', { indice: 10, habilitada: true }); await dorme(60);
       const b = P(h, 'banco', { ligar: true }); await dorme(40); const c = P(h, 'banco', { ligar: false });
-      await Promise.all([a, b, c]);
-      assert.deepEqual(V.valoresAplicados(h.plc.trace, e.cbBanco), [false, true], 'o desligar deveria ter sido aplicado antes do ligar');
-    } finally { await h.para(); }
-  });
-
-  test('ACHADO P3-A1 (Alta): se "Ligar banco" foi aceito ANTES e "Desligar banco" DEPOIS, o ultimo comando aceito deveria prevalecer (banco desligado)', { todo: 'ACHADO P3-A1: o desligar fura a fila e o ligar mais antigo executa depois: banco fica LIGADO com as 3 respostas 200' }, async () => {
-    const { h, e } = await bc56();
-    try {
-      seguraFila(h);
-      const a = P(h, 'habilitar', { indice: 10, habilitada: true }); await dorme(60);
-      const b = P(h, 'banco', { ligar: true }); await dorme(40); const c = P(h, 'banco', { ligar: false });
-      const r = await Promise.all([a, b, c]); await dorme(300);
-      assert.deepEqual(r.map(x => x.status), [200, 200, 200]);
+      const [ra, rb, rc] = await Promise.all([a, b, c]); await dorme(300);
+      assert.equal(ra.status, 200, ra.t); assert.equal(rc.status, 200, rc.t);
       assert.equal(h.plc.ler(e.cbBanco), false, 'ultimo comando aceito foi DESLIGAR, mas o banco ficou ligado');
+      const aplicados = V.valoresAplicados(h.plc.trace, e.cbBanco);
+      if (rb.status === 200) assert.deepEqual(aplicados, [true, false], 'o ligar respondeu 200 mas nao foi executado antes do desligar');
+      else { assert.equal(rb.status, 409, rb.t); assert.equal(rb.j.codigo, 'CANCELADO_POR_DESLIGAR'); assert.ok(!aplicados.includes(true), 'o ligar foi cancelado (409) mas chegou ao PLC'); }
+      assert.equal(V.respostasEmDuplicidade(h.logs).length, 0);
     } finally { await h.para(); }
   });
 
-  test('ACHADO P3-A2 (Media): "selecionar" validado antes de um "habilitar:false" que esta na frente da fila nao deveria deixar ChaveSel numa chave desabilitada', { todo: 'ACHADO P3-A2: validacao fora da fila (R1): ChaveSel=3 com Habilitada3=false' }, async () => {
+  test('P3-A2 (corrigido): "selecionar" aceito antes de um "habilitar:false" na frente da fila: nunca ChaveSel numa chave desabilitada e a resposta e verdadeira', async () => {
     const { h, e } = await bc56();
     try {
       h.plc.escrever(e.cbBanco, true); h.plc.escrever(e.hab(3), true);
@@ -57,12 +65,15 @@ describe('C2 R1/R5 BC56 - ordem e validacao dos comandos', () => {
       seguraFila(h);
       const a = P(h, 'habilitar', { indice: 10, habilitada: true }); await dorme(60);
       const b = P(h, 'habilitar', { indice: 3, habilitada: false }); await dorme(40); const c = P(h, 'selecionar', { indice: 3 });
-      await Promise.all([a, b, c]); await dorme(300);
+      const [, rb, rc] = await Promise.all([a, b, c]); await dorme(300);
+      assert.equal(rb.status, 200, rb.t);
       assert.ok(!(h.plc.ler(e.hab(3)) === false && h.plc.ler(e.chaveSel) === 3), 'ChaveSel=3 numa chave que ficou desabilitada');
+      assert.equal(rc.status === 200, h.plc.ler(e.chaveSel) === 3, 'resposta ' + rc.status + ' nao confere com o estado (ChaveSel=' + h.plc.ler(e.chaveSel) + ')');
+      assert.equal(rc.status, 409, rc.t); assert.equal(rc.j.codigo, 'ESTADO_MUDOU');
     } finally { await h.para(); }
   });
 
-  test('ACHADO P3-A3 (Alta*): "ligar chave" validado com banco ligado nao deveria resultar em CbLigar=TRUE com o banco desligado (*gravidade a confirmar com o FB101 no PLC)', { todo: 'ACHADO P3-A3: validacao fora da fila (R1) + prioridade do desligar banco: CbLigar2=TRUE e LigarBanco=FALSE' }, async () => {
+  test('P3-A3 (corrigido): "ligar chave" aceito antes de um "Desligar banco": nunca CbLigar=TRUE com o banco desligado e a resposta e verdadeira', async () => {
     const { h, e } = await bc56();
     try {
       h.plc.escrever(e.cbBanco, true); h.plc.escrever(e.hab(2), true);
@@ -70,8 +81,11 @@ describe('C2 R1/R5 BC56 - ordem e validacao dos comandos', () => {
       seguraFila(h);
       const a = P(h, 'habilitar', { indice: 10, habilitada: true }); await dorme(60);
       const c = P(h, 'ligar', { indice: 2, ligar: true }); await dorme(40); const b = P(h, 'banco', { ligar: false });
-      await Promise.all([a, c, b]); await dorme(300);
+      const [, rc, rb] = await Promise.all([a, c, b]); await dorme(300);
+      assert.equal(rb.status, 200, rb.t);
       assert.ok(!(h.plc.ler(e.cbBanco) === false && h.plc.ler(e.cb(2)) === true), 'chave ligada (CbLigar2) com o banco desligado');
+      assert.equal(rc.status === 200, h.plc.ler(e.cb(2)) === true, 'resposta ' + rc.status + ' nao confere com CbLigar2');
+      assert.equal(rc.status, 409, rc.t);
     } finally { await h.para(); }
   });
 

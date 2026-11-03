@@ -8,10 +8,10 @@ const ENV_TESTE = { BT2_AMBIENTE_TESTE: 'local' };
 const FICHA = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'plc', 'bt2', 'gerador', 'bancos_bt2_v0.3.json'), 'utf8'));
 // id do banco na URL -> ficha e fluxo de producao
 const BANCOS = {
-  '56':  { chave: 'BC56',  flow: 'chaves-56-api-v3.2',   db: 3000, dbTens: 3002, n: 13, N: 16 },
-  '400': { chave: 'BC400', flow: 'chaves-400-api-v3.2',  db: 3100, dbTens: 3102, n: 13, N: 16 },
-  '550': { chave: 'BC550', flow: 'chaves-550-api-v1.3',  db: 3300, dbTens: 3302, n: 12, N: 16 },
-  '595': { chave: 'BC595', flow: 'chaves-595-api-v1.3',  db: 3200, dbTens: 3202, n: 18, N: 32 },
+  '56':  { chave: 'BC56',  flow: 'chaves-56-api-v3.3',   db: 3000, dbTens: 3002, n: 13, N: 16 },
+  '400': { chave: 'BC400', flow: 'chaves-400-api-v3.3',  db: 3100, dbTens: 3102, n: 13, N: 16 },
+  '550': { chave: 'BC550', flow: 'chaves-550-api-v1.4',  db: 3300, dbTens: 3302, n: 12, N: 16 },
+  '595': { chave: 'BC595', flow: 'chaves-595-api-v1.4',  db: 3200, dbTens: 3202, n: 18, N: 32 },
 };
 
 // mapa de bits/bytes do DB do banco (layout do gerador: 16 ou 32 chaves)

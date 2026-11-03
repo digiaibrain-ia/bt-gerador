@@ -8,7 +8,7 @@ const { ENV_TESTE, enderecos, esperaAte, get, sobe, espera } = require('./ajudas
 describe('F5 vigia "HTML sumiu" do BC56', () => {
   let h, e;
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.2'], env: ENV_TESTE, envAbas: { WD_HTML_S: '2' } });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.3'], env: ENV_TESTE, envAbas: { WD_HTML_S: '2' } });
     e = enderecos('56');
     await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 5000);
   });
