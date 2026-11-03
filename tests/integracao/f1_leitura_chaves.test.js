@@ -8,7 +8,8 @@ describe('F1 leitura do estado dos 4 bancos', () => {
   let h;
   before(async () => {
     h = await sobe({ fluxos: Object.values(BANCOS).map(b => b.flow), env: ENV_TESTE });
-    await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 5000);
+    // so segue quando os QUATRO bancos ja tem leitura (antes de todos, a rota responde 503 'nenhuma leitura desde o deploy')
+    assert.ok(await esperaAte(async () => { for (const id of Object.keys(BANCOS)) if ((await get(h, '/api/chaves/' + id)).status !== 200) return false; return true; }, 10000), 'nem todos os bancos ficaram prontos');
   });
   after(async () => { if (h) await h.para(); });
 

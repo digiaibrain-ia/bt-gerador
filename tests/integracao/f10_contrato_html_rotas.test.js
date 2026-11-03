@@ -8,7 +8,7 @@ const path = require('path');
 const RAIZ = path.join(__dirname, '..', '..');
 const HTML = path.join(RAIZ, 'dashboard', 'ferramentas', 'medidor_gerador_v1.10.167.html');
 const FLUXOS = path.join(RAIZ, 'nodered', 'flows', 'bt2');
-const ARQ_FLUXOS = ['chaves-56-api-v3.0', 'chaves-400-api-v3.0', 'chaves-550-api-v1.1', 'chaves-595-api-v1.1', 'cliente-156-dse-plc-carga-v2', 'cliente-31-seletor-plc-db2000-v3', 'registro-ensaio-db2100-api-v1.5', 'simulador-dse-demo-v5', 'dev-logs-api-v1.1', 'servidor-deepsea-api-gerador-v3_6'];
+const ARQ_FLUXOS = ['chaves-56-api-v3.1', 'chaves-400-api-v3.1', 'chaves-550-api-v1.2', 'chaves-595-api-v1.2', 'cliente-156-dse-plc-carga-v3', 'cliente-31-seletor-plc-db2000-v4', 'registro-ensaio-db2100-api-v1.6', 'simulador-dse-demo-v6', 'dev-logs-api-v1.1', 'servidor-deepsea-api-gerador-v3_7'];
 
 function rotasDosFluxos() {
   const rotas = [];

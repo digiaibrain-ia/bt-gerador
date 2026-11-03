@@ -9,6 +9,8 @@ module.exports = function (RED) {
     this.vartable = Array.isArray(config.vartable) ? config.vartable : [];
     this.cycletime = Math.max(20, +config.cycletime || 200);
     this.enderecoOriginal = config.address || '';
+    // registro de TESTE: o endereco que o runtime entregou ao no (depois da substituicao de variaveis ${...})
+    global.__BT2_ENDERECOS__ = global.__BT2_ENDERECOS__ || {}; global.__BT2_ENDERECOS__[config.id] = config.address;
     this.reescrito = !ehLoopback(this.enderecoOriginal);   // endereco de producao foi trocado pelo simulado
     this.plc = () => global.__BT2_PLC__;
     this.nomeVar = Object.fromEntries(this.vartable.map(v => [v.name, v.addr]));

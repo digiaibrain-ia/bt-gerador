@@ -13,7 +13,7 @@ const FLUXOS = path.join(__dirname, '..', '..', 'nodered', 'flows', 'bt2');
 const RED = require(path.join(RUNTIME, 'node_modules', 'node-red'));
 const express = require(path.join(RUNTIME, 'node_modules', 'express'));
 
-async function sobe({ fluxos, plc = new PlcSimulado(), env = {}, envAbas = {}, servirHtml = false } = {}) {
+async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), env = {}, envAbas = {}, servirHtml = false } = {}) {
   verificaAmbiente(Object.assign({}, process.env, env), {});
   instalaGuardaRede();
   Object.assign(process.env, env);                       // ex.: WD_HTML_S reduzido nos testes do vigia
@@ -23,6 +23,7 @@ async function sobe({ fluxos, plc = new PlcSimulado(), env = {}, envAbas = {}, s
   fs.symlinkSync(path.join(__dirname, 'nos_s7_teste'), path.join(userDir, 'node_modules', 'bt2-nos-s7-teste'), 'dir');
   const flows = [];
   for (const f of fluxos) flows.push(...JSON.parse(fs.readFileSync(path.join(FLUXOS, f + '.json'), 'utf8')));
+  for (const c of fluxosCaminho) flows.push(...JSON.parse(fs.readFileSync(c, 'utf8')));   // caminho explicito (uso de teste/probe)
   // variaveis de ambiente DA ABA (como o operador faz em Propriedades > Variaveis de ambiente), trocadas so na copia em memoria
   for (const aba of flows.filter(n => n.type === 'tab')) {
     aba.env = aba.env || [];
