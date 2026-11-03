@@ -40,3 +40,9 @@ Fase 4: Node-RED parametrizado para os bancos novos (rotas `/api/chaves/{id}` co
 - Rotas: `/api/chaves/595/...` e `/api/chaves/550/...` (`/api/logs/{id}`). **Slug 595 e não "59,5"** para não ter vírgula na URL; o HTML (id `59,5`) ganha um campo `rota` na fase 5.
 - Checado: JSON válido, JS de todos os nós sem erro de sintaxe, ids únicos. **Não testado em PLC/Node-RED.**
 - Ao importar: o mesmo IP do PLC (172.17.209.135) dos fluxos atuais; só funciona depois dos DBs/FBs no 1515 e do ET200.
+
+## Fase 5 — feito em parte: medidor 1.10.155
+- Campo `rota` por banco (`rotaDe(id)`): BC56 → 56, BC400 → 400, BC59,5 → 595, BC550 → 550. Usado no polling, em `rotaCh` (todos os POST) e na janela de Logs.
+- `semPlc` **mantido** nos dois bancos novos: tirar só quando o PLC deles existir (senão ficariam "sem leitura" no PLC real). É a mudança de uma linha por banco.
+- Teste: Playwright (carrega, sem erros de console, mapeamento de rotas conferido). Não foi gerado pacote para o PC nem alterado o catálogo, porque nada muda na tela hoje.
+- Faltam os literais `'56'/'400'` espalhados no HTML (fase 5 completa), que não bloqueiam os bancos novos.
