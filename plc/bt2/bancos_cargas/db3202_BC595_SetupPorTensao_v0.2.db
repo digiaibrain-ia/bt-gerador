@@ -4,7 +4,7 @@ TITLE = db3202_BC595_SetupPorTensao v0.2 (DB3202)
 AUTHOR : 'Reginaldo Lobo'
 VERSION : 0.2
 ////====================================
-//// db3202_BC595_SetupPorTensao (DB3202) - GERADO por plc/bt2/gerador/gerar_banco_v0.1.py (03/11/2026) - nao compilado, nao testado
+//// db3202_BC595_SetupPorTensao (DB3202) - GERADO por plc/bt2/gerador/gerar_banco_v0.2.py (03/11/2026) - nao compilado, nao testado
 //// O QUE FAZ : mesmo papel do db152_BC56_SetupPorTensao v0.2, 32 chaves por chaveamento (1=220, 2=380, 3=440 V). Banco BC59,5.
 //// p = (chaveamento-1)*32 + (chave-1)  (0..95)
 //// OFFSETS (calculados; CONFERIR no TIA): tensaoV W0/2/4 | kwReal D6+4p | rMedidoOhm D390+4p | vMedidaV D774+4p

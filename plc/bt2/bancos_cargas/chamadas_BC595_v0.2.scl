@@ -1,13 +1,13 @@
 // ============================================================================
-// Banco BC59,5 (18 chaves) -> arrays de 32 -> fb102_setupChaves32 / fb103_ComEt200_32. GERADO por gerar_banco_v0.1.py (03/11/2026). Nao compilado.
-// Ordem no OB1: 1) comunicacao (fb103_ComEt200_32) 2) setup (fb102_setupChaves32).
+// Banco BC59,5 (18 chaves) -> arrays de 32 -> fb102_setupChaves32 / fb103_ComEt200_32. GERADO por gerar_banco_v0.2.py (03/11/2026). Nao compilado.
+// Ordem no OB1: 1) comunicacao (fb103_ComEt200_32) 2) setup (fb102_setupChaves32). Instancias = DBs de instancia dos FBs (criar como "fb103_ComEt200_32" e "fb102_setupChaves32" no TIA).
 // ============================================================================
 "db3205i_BC595_ComEt200"(Hab := TRUE, ID_Conexao := W#16#100,
     RemotoCmd := P#DB40.DBX0.0 BYTE 8, RemotoFb := P#DB40.DBX8.0 BYTE 8,
     ComOk => "db3200_BC595_Chaves".sbBanco.comEt200Ok, SeletoraAuto => "db3200_BC595_Chaves".sbBanco.seletoraAuto,
     CbLigar := "db3200_BC595_Chaves".cb.ligar, SbLigada := "db3200_BC595_Chaves".sb.ligada, LigarBanco := "db3200_BC595_Chaves".cbBanco.ligar);
 
-"fb102_setupChaves32"_DB3204(
+"db3204i_BC595_SetupChaves"(
     NumChaves := 18, GeradorOperando := "db52_BancoTeste2_DSE".ledManual, EnsaioAtivo := FALSE,   // TODO: tag real do DB "Dados do ensaio"
     kWMedido := "db52_BancoTeste2_DSE".potenciaKw, VaMedido := "db52_BancoTeste2_DSE".tensaoL1L2,
     VbMedido := "db52_BancoTeste2_DSE".tensaoL2L3, VcMedido := "db52_BancoTeste2_DSE".tensaoL3L1,

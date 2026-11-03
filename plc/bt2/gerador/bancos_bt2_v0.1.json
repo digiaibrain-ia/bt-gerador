@@ -1,9 +1,0 @@
-{
- "_nota": "Ficha dos bancos do BT2. Para um banco novo, acrescente uma entrada e rode: python3 gerar_banco_v0.1.py <id>. O FB e escolhido pelo numero de chaves: ate 16 -> FB100/FB101, ate 32 -> FB102/FB103.",
- "BC595": {"nome": "BC59,5", "slug": "595", "db": 3200, "remoto": 40, "tensoes": [220,380,440],
-           "chaves": [5,5,5,5,5,4,4,4,4,4,4,3,3,2,1,0.5,0.5,0.5]},
- "BC550": {"nome": "BC550", "slug": "550", "db": 3300, "remoto": 41, "tensoes": [220,380,440],
-           "chaves": [5,5,5,5,5,25,50,50,100,100,100,100]},
- "BC400": {"nome": "BC400", "slug": "400", "db": 158, "remoto": 39, "tensoes": [220,380],
-           "chaves": [5,5,10,10,10,10,50,50,50,50,50,50,50], "_existente": true, "_db_tensao": 160}
-}

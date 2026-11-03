@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Gerador de blocos de um banco de carga do BT2 (v0.1, 03/11/2026).
-Uso: python3 gerar_banco_v0.1.py <id> [pasta_saida]
+Uso: python3 gerar_banco_v0.2.py <id> [pasta_saida]
 Escolhe o tamanho N do banco pelo numero de chaves: <=16 -> N=16 (FB100/FB101), <=32 -> N=32 (FB102/FB103).
 Gera: fluxo Node-RED, texto de offsets e chamadas. Os DBs .db dos bancos novos ja foram gerados na mao;
 este script e a fonte unica para os proximos e para conferir offsets (modo --offsets)."""
@@ -67,11 +67,10 @@ def fluxo(b, N, dbc, dbv, modelo):
                     c = c.replace(a, z)
                 c = c.replace('das 16 chaves', 'das %d chaves' % N).replace('1..16', '1..%d' % N)
             c = c.replace('b.indice > 16', 'b.indice > %d' % k).replace('de 1 a 16', 'de 1 a %d' % k).replace('de 0 a 16', 'de 0 a %d' % k)
-            c = c.replace('chaves-v2.5', 'chaves-%s-v1.1' % slug)
             n['func'] = c
         if n['type'] == 'tab':
-            n['label'] = 'Chaves %s (API) v1.1' % nome
-            n['info'] = 'v1.1 (03/11/2026) - gerado por plc/bt2/gerador/gerar_banco_v0.1.py a partir do flow chaves-400 v2.6. Banco %s (%d chaves, arrays de %d): DB%d e DB%d. Rotas /api/chaves/%s/... e /api/logs/%s. Nao testado em PLC.' % (nome, k, N, dbc, dbv, slug, slug)
+            n['label'] = 'Chaves %s (API) v%s' % (nome, b['fluxo_ver'])
+            n['info'] = 'v%s (03/11/2026) - gerado por plc/bt2/gerador/gerar_banco_v0.2.py a partir do flow chaves-400 v2.6 (campo flow = chaves-v2.5, o contrato que o HTML confere). Banco %s (%d chaves, arrays de %d): DB%d e DB%d (numeracao v4). Rotas /api/chaves/%s/... e /api/logs/%s. Nao testado em PLC. ATENCAO AO IMPORTAR: apague a aba antiga do mesmo banco antes do Deploy (rotas iguais).' % (b['fluxo_ver'], nome, k, N, dbc, dbv, slug, slug)
         if n['type'] == 's7 endpoint':
             v, w = vartables(N, dbc, dbv)
             n['vartable'] = v if n['id'].endswith('_ep') else w
@@ -89,7 +88,7 @@ AUTHOR : 'Reginaldo Lobo'
 VERSION : {ver}
 NON_RETAIN
 ////====================================
-//// db{n}_{tag}_Chaves (DB{n}) - GERADO por plc/bt2/gerador/gerar_banco_v0.1.py (03/11/2026) - nao compilado no TIA, nao testado
+//// db{n}_{tag}_Chaves (DB{n}) - GERADO por plc/bt2/gerador/gerar_banco_v0.2.py (03/11/2026) - nao compilado no TIA, nao testado
 //// O QUE FAZ : mesmo papel do db150_BC56_Chaves v0.3, arrays de {N} chaves. Banco {nome}: {k} chaves reais, {N-k} reserva. FB: {'FB100/FB101' if N == 16 else 'FB102/FB103'}.
 //// OFFSETS (calculados; CONFERIR na coluna "Deslocamento" do TIA): cb.ligar X{o['cb']}.0 | sb.ligada X{o['sb']}.0 | habilitada X{o['hab']}.0 | setupOk X{o['setupOk']}.0
 ////    kwReal D{o['kwReal']} | rMedidoOhm D{o['rMed']} | rTeoricoOhm D{o['rTeo']} | setupData B{o['setupData']} (12 bytes cada) | nominal D{o['nominal']}
@@ -144,7 +143,7 @@ TITLE = db{n}_{tag}_SetupPorTensao v{ver} (DB{n})
 AUTHOR : 'Reginaldo Lobo'
 VERSION : {ver}
 ////====================================
-//// db{n}_{tag}_SetupPorTensao (DB{n}) - GERADO por plc/bt2/gerador/gerar_banco_v0.1.py (03/11/2026) - nao compilado, nao testado
+//// db{n}_{tag}_SetupPorTensao (DB{n}) - GERADO por plc/bt2/gerador/gerar_banco_v0.2.py (03/11/2026) - nao compilado, nao testado
 //// O QUE FAZ : mesmo papel do db152_BC56_SetupPorTensao v0.2, {N} chaves por chaveamento (1=220, 2=380, 3=440 V). Banco {nome}.
 //// p = (chaveamento-1)*{N} + (chave-1)  (0..{3*N-1})
 //// OFFSETS (calculados; CONFERIR no TIA): tensaoV W0/2/4 | kwReal D{t['kwReal']}+4p | rMedidoOhm D{t['rMed']}+4p | vMedidaV D{t['vMed']}+4p
@@ -182,15 +181,15 @@ def chamadas(b, N):
     fb, fc = ('fb100_setupChaves', 'fb101_ComEt200') if N == 16 else ('fb102_setupChaves32', 'fb103_ComEt200_32')
     by = 6 if N == 16 else 8; off = 6 if N == 16 else 8
     return f"""// ============================================================================
-// Banco {b['nome']} ({k} chaves) -> arrays de {N} -> {fb} / {fc}. GERADO por gerar_banco_v0.1.py (03/11/2026). Nao compilado.
-// Ordem no OB1: 1) comunicacao ({fc}) 2) setup ({fb}).
+// Banco {b['nome']} ({k} chaves) -> arrays de {N} -> {fb} / {fc}. GERADO por gerar_banco_v0.2.py (03/11/2026). Nao compilado.
+// Ordem no OB1: 1) comunicacao ({fc}) 2) setup ({fb}). Instancias = DBs de instancia dos FBs (criar como "{fc}" e "{fb}" no TIA).
 // ============================================================================
 "db{n+5}i_{tag}_ComEt200"(Hab := TRUE, ID_Conexao := W#16#100,
     RemotoCmd := P#DB{rem}.DBX0.0 BYTE {by}, RemotoFb := P#DB{rem}.DBX{off}.0 BYTE {by},
     ComOk => {d}.sbBanco.comEt200Ok, SeletoraAuto => {d}.sbBanco.seletoraAuto,
     CbLigar := {d}.cb.ligar, SbLigada := {d}.sb.ligada, LigarBanco := {d}.cbBanco.ligar);
 
-"{fb}"_DB{n+4}(
+"db{n+4}i_{tag}_SetupChaves"(
     NumChaves := {k}, GeradorOperando := "db52_BancoTeste2_DSE".ledManual, EnsaioAtivo := FALSE,   // TODO: tag real do DB "Dados do ensaio"
     kWMedido := "db52_BancoTeste2_DSE".potenciaKw, VaMedido := "db52_BancoTeste2_DSE".tensaoL1L2,
     VbMedido := "db52_BancoTeste2_DSE".tensaoL2L3, VcMedido := "db52_BancoTeste2_DSE".tensaoL3L1,
@@ -203,7 +202,7 @@ def chamadas(b, N):
 """
 
 def gera_tudo(idb, ver_db='0.2', ver_flow='1.1'):
-    fic = json.load(open(os.path.join(AQUI, 'bancos_bt2_v0.1.json'))); b = dict(fic[idb]); b['id'] = idb
+    fic = json.load(open(os.path.join(AQUI, 'bancos_bt2_v0.2.json'))); b = dict(fic[idb]); b['id'] = idb
     N = tamanho(len(b['chaves'])); out = os.path.join(RAIZ, 'plc/bt2/bancos_cargas')
     for nome, txt in (('db%d_%s_Chaves_v%s.db' % (b['db'], idb, ver_db), db_chaves(b, N, ver_db)),
                       ('db%d_%s_SetupPorTensao_v%s.db' % (b['db'] + 2, idb, ver_db), db_tensao(b, N, ver_db)),
@@ -214,13 +213,13 @@ if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     if not args: raise SystemExit(__doc__)
     if '--blocos' in sys.argv: gera_tudo(args[0]); raise SystemExit
-    fic = json.load(open(os.path.join(AQUI, 'bancos_bt2_v0.1.json')))
+    fic = json.load(open(os.path.join(AQUI, 'bancos_bt2_v0.2.json')))
     b = fic[args[0]]; N = tamanho(len(b['chaves']))
-    dbc = b['db']; dbv = b.get('_db_tensao', dbc + 2)
+    dbc = b['db']; dbv = dbc + 2
     modelo = json.load(open(os.path.join(RAIZ, 'nodered/flows/bt2/chaves-400-api-v2.6.json')))
     f = fluxo(b, N, dbc, dbv, modelo)
     saida = args[1] if len(args) > 1 else os.path.join(RAIZ, 'nodered/flows/bt2')
-    p = os.path.join(saida, 'chaves-%s-api-v1.1.json' % b['slug'])
+    p = os.path.join(saida, 'chaves-%s-api-v%s.json' % (b['slug'], b['fluxo_ver']))
     json.dump(f, open(p, 'w'), ensure_ascii=False, indent=2)
     o, t = offs(N)
     print('banco', b['nome'], 'chaves', len(b['chaves']), '-> arrays de', N, '-> FB', 'FB100/FB101' if N == 16 else 'FB102/FB103')

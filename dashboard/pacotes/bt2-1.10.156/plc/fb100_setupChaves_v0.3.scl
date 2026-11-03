@@ -1,0 +1,207 @@
+FUNCTION_BLOCK "fb100_setupChaves"
+TITLE = fb100_setupChaves (FB100)
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.3
+////====================================
+//// fb100_setupChaves (FB100)
+//// O QUE FAZ : logica unica/generica do Setup de chaves de um banco de carga (ate 16 chaves). Chamado 1x
+//// por banco, qualquer banco (BC56, BC400, e as reservas futuras) - nao e especifico de BT1/BT2: quem
+//// associa o banco a um BT e o Node-RED (ver claude/PLANO_NUMERACAO_BLOCOS_PLC.md, secao 4).
+//// INSTANCIAS : DB154 = Banco BC56 (db150_BC56_Chaves), DB162 = Banco BC400 (db158_BC400_Chaves).
+//// COMO OPERA : os arrays de cb/sb/setup NAO ficam duplicados aqui - vem por VAR_IN_OUT, ligados direto
+////             aos arrays do DB do banco (db150/db158) na chamada (ver exemplo_chamada_fb100.scl).
+////             DB154/DB162 guardam so a memoria de trabalho propria desta instancia.
+//// REPRODUZ : fluxo ja testado no HTML v1.9.37 (medidor_gerador_v1.9.37.html, IIFE
+////             "v1.9.36: POPUP DAS CHAVES"). Pontos assumidos/a confirmar: ver comentarios "ATENCAO".
+//// v0.2 (21/10/2026): CbLigar nao e mais zerado quando GeradorOperando=FALSE (so por EnsaioAtivo).
+//// v0.3 (25/10/2026): SETUP POR CHAVEAMENTO (220/380/440 V). Nova entrada TensaoSel (1..3, informada pelo HTML/Node-RED)
+////             e 6 novos VAR_IN_OUT 2D (db152/db160). O Salvar grava na linha do chaveamento ativo; a REGION 4
+////             ESPELHA essa linha nos arrays 1D do DB do banco (db150/db158), que continuam sendo o que o Node-RED
+////             v2.4 e o HTML leem - nenhum offset do DB150/DB158 muda. R TEORICO NAO e mais calculado (formula
+////             anterior usava a tensao medida e nao tem sentido; a tensao de referencia V_ref da identificacao em kW
+////             e DESCONHECIDA e sera descoberta na pratica): RteoricoOhm recebe 0.0 = "nao calculado".
+////             Salvar e RECUSADO se TensaoSel <> 1..3 (nao grava nada).
+//// RENOMEADO de fb200_setupChaves/DB200/DB201 conforme claude/PLANO_NUMERACAO_BLOCOS_PLC.md v2
+////             (20/10/2026) - ainda NAO migrado no PLC real, congelado ate apos a janela de teste.
+//// Fonte: claude/ESPECIFICACAO_CARD_CHAVES_DB55_FB200.md + claude/PLANO_NUMERACAO_BLOCOS_PLC.md (projeto "NOde-red")
+////=====================================
+   VAR_INPUT
+      NumChaves        : UInt;                  // quantidade real de chaves ATIVAS deste banco (1..16). Hoje: 13 nos 2 bancos.
+      GeradorOperando  : Bool;                   // CONFIRMADO: db52_BancoTeste2_DSE.ledManual = TRUE
+      EnsaioAtivo      : Bool;                   // PENDENTE: fixo FALSE ate existir o DB "Dados do ensaio" (ver exemplo_chamada_fb100.scl)
+      kWMedido         : Real;                   // db52_BancoTeste2_DSE.potenciaKw
+      VaMedido         : Real;                   // db52_BancoTeste2_DSE.tensaoL1L2
+      VbMedido         : Real;                   // db52_BancoTeste2_DSE.tensaoL2L3
+      VcMedido         : Real;                   // db52_BancoTeste2_DSE.tensaoL3L1
+      TensaoSel        : Int;                    // NOVO v0.3: db152/db160 selV.tensaoSel - chaveamento ativo INFORMADO pelo HTML/Node-RED (0 = nao informado, 1 = 220 V, 2 = 380 V, 3 = 440 V)
+      ChaveSelecionada : UInt;                   // setup.chaveSel do DB do banco - 1..NumChaves; 0 = nenhuma
+      ComandoSalvar    : Bool;                   // setup.salvar do DB do banco - pulso, grava na borda de subida
+      kWNominal        : Array[1..16] of Real;   // setup.nominal do DB do banco (v0.3: nao usado nas contas - mantido para nao mudar a chamada)
+   END_VAR
+
+   VAR_OUTPUT
+      BaseKW : Real;    // "kW sem carga" calculado (media movel) - equivale a BASE do HTML
+      BaseOK : Bool;    // true = BaseKW confiavel (ja teve 1a leitura valida desde o ultimo START)
+      SalvarRecusado : Bool;  // NOVO v0.3: TRUE se o ultimo pedido de Salvar foi recusado por TensaoSel fora de 1..3 (diagnostico; zera no proximo pedido valido)
+   END_VAR
+
+   VAR_IN_OUT
+      CbLigar     : Array[1..16] of Bool;   // <db do banco>.cb.ligar - FB100 escreve
+      SbLigada    : Array[1..16] of Bool;   // <db do banco>.sb.ligada - FB100 so LE (escrito pelo mapeamento de I/O)
+      Habilitada  : Array[1..16] of Bool;   // <db do banco>.setup.habilitada - FB100 so LE (escrito pelo Node-RED/HTML)
+      SetupOk     : Array[1..16] of Bool;   // <db do banco>.setup.setupOk - FB100 escreve
+      KwReal      : Array[1..16] of Real;   // <db do banco>.setup.kwReal - FB100 escreve
+      RmedidoOhm  : Array[1..16] of Real;   // <db do banco>.setup.rMedidoOhm - FB100 escreve
+      RteoricoOhm : Array[1..16] of Real;   // <db do banco>.setup.rTeoricoOhm - FB100 escreve
+      SetupData   : Array[1..16] of DTL;    // <db do banco>.setup.setupData - FB100 escreve
+      // --- NOVO v0.3: valores por chaveamento (db152 BC56 / db160 BC400). 1o indice = chaveamento (1=220, 2=380, 3=440) ---
+      KwRealV     : Array[1..3, 1..16] of Real;  // <db152|db160>.setupV.kwReal - FB100 escreve (kW com a chave - base)
+      RmedidoV    : Array[1..3, 1..16] of Real;  // <db152|db160>.setupV.rMedidoOhm - FB100 escreve (ohm equivalente em estrela por fase)
+      VmedidaV    : Array[1..3, 1..16] of Real;  // <db152|db160>.setupV.vMedidaV - FB100 escreve (tensao media fase-fase no Salvar)
+      BaseKwV     : Array[1..3, 1..16] of Real;  // <db152|db160>.setupV.baseKw - FB100 escreve (BaseKW usado no Salvar)
+      SetupDataV  : Array[1..3, 1..16] of DTL;   // <db152|db160>.setupV.setupData - FB100 escreve
+      SetupOkV    : Array[1..3, 1..16] of Bool;  // <db152|db160>.setupV.setupOk - FB100 escreve
+   END_VAR
+
+   VAR
+      _geradorOperandoAnt : Bool;   // memoria de borda - detecta START novo do gerador
+      _chaveSelAnt         : UInt;  // memoria de borda - detecta troca de chave selecionada
+      _cmdSalvarAnt         : Bool; // memoria de borda - detecta clique em "Salvar esta chave"
+      _algumaLigada          : Bool; // auxiliar: alguma das NumChaves esta fisicamente ligada agora (SbLigada)
+      _vMedio                 : Real; // auxiliar: tensao media das 3 fases no instante do Salvar
+      _agora                   : DTL;  // auxiliar: data/hora lida por RD_SYS_T no instante do Salvar
+      _retRdSysT                : Int;  // retorno de RD_SYS_T (0 = ok; codigo de erro se <> 0) - ainda nao tratado
+      i                        : UInt; // indice de loop
+      _t                       : Int;  // auxiliar v0.3: chaveamento ativo (copia de TensaoSel quando valido)
+   END_VAR
+
+
+BEGIN
+
+   REGION "1) kW sem carga" - media movel continua (equivale a BASE/BASE_OK do HTML)
+
+      // ATENCAO (assumido, nao confirmado com o operador): no HTML, BASE_OK so e resetado pelo botao
+      // "Desligar gerador" do Demo - nao explicitamente no STOP real do gerador. Aqui assumi que um
+      // START novo (borda de subida de GeradorOperando) deve remedir a base do zero. Avisar se nao for
+      // o comportamento desejado.
+      IF NOT #GeradorOperando AND #_geradorOperandoAnt THEN
+         #BaseOK := FALSE;
+         #BaseKW := 0.0;
+      END_IF;
+
+      #_algumaLigada := FALSE;
+      FOR #i := 1 TO #NumChaves DO
+         IF #SbLigada[#i] THEN
+            #_algumaLigada := TRUE;
+         END_IF;
+      END_FOR;
+
+      IF #GeradorOperando AND NOT #_algumaLigada THEN
+         IF NOT #BaseOK THEN
+            #BaseKW := #kWMedido;                        // 1a leitura valida - igual ao HTML (BASE==null -> BASE=MED.kw)
+         ELSE
+            #BaseKW := #BaseKW * 0.8 + #kWMedido * 0.2;   // media movel exponencial - igual ao HTML (BASE=BASE*0.8+kW*0.2)
+         END_IF;
+         #BaseOK := TRUE;
+      END_IF;
+
+      #_geradorOperandoAnt := #GeradorOperando;
+
+   END_REGION
+
+
+   REGION "2) Selecao e acionamento da chave (CbLigar)"
+
+      // "Habilitada" decidido como bit logico simples (sem par CB/SB de campo): e so uma permissao de
+      // operacao (trava manutencao/defeito), sem contator ou confirmacao fisica propria - decisao do
+      // assistente em 20/10/2026, usuario sem objecao. Revisar se no futuro existir uma trava fisica real.
+
+      IF #ChaveSelecionada <> #_chaveSelAnt THEN
+         // desliga o comando de todas, religa so a nova selecionada
+         FOR #i := 1 TO #NumChaves DO
+            #CbLigar[#i] := FALSE;
+         END_FOR;
+
+         IF #ChaveSelecionada >= 1 AND #ChaveSelecionada <= #NumChaves THEN
+            IF #Habilitada[#ChaveSelecionada] THEN
+               #CbLigar[#ChaveSelecionada] := TRUE;
+            END_IF;
+         END_IF;
+
+         #_chaveSelAnt := #ChaveSelecionada;
+      END_IF;
+
+      // trava de seguranca: ensaio em andamento desliga o comando de todas as chaves.
+      // v0.2 (21/10/2026): removida a condicao "OR NOT GeradorOperando". O operador confirmou que as chaves
+      // podem ser operadas com o gerador desligado (bancada e operacao real). GeradorOperando continua sendo
+      // usado so na REGION 1 (kW sem carga) e na validacao do Salvar (BaseOK), onde a medicao exige gerador.
+      IF #EnsaioAtivo THEN
+         FOR #i := 1 TO #NumChaves DO
+            #CbLigar[#i] := FALSE;
+         END_FOR;
+      END_IF;
+
+   END_REGION
+
+
+   REGION "3) Salvar calibracao (borda de subida de ComandoSalvar) - v0.3: por chaveamento"
+
+      IF #ComandoSalvar AND NOT #_cmdSalvarAnt
+         AND #ChaveSelecionada >= 1 AND #ChaveSelecionada <= #NumChaves
+         AND #BaseOK THEN
+
+         IF #TensaoSel >= 1 AND #TensaoSel <= 3 THEN
+            #SalvarRecusado := FALSE;
+            #_t := #TensaoSel;
+            #_vMedio := (#VaMedido + #VbMedido + #VcMedido) / 3.0;
+
+            #KwRealV[#_t, #ChaveSelecionada] := #kWMedido - #BaseKW;
+            #VmedidaV[#_t, #ChaveSelecionada] := #_vMedio;
+            #BaseKwV[#_t, #ChaveSelecionada]  := #BaseKW;
+
+            IF #KwRealV[#_t, #ChaveSelecionada] > 0.05 THEN   // mesma trava de ruido do HTML (real>0.05 antes de calcular R)
+               // Ohm equivalente em ESTRELA por fase = V_fase-fase^2 / P_total (mesma formula do HTML/v0.2).
+               #RmedidoV[#_t, #ChaveSelecionada] := (#_vMedio * #_vMedio) / (#KwRealV[#_t, #ChaveSelecionada] * 1000.0);
+            END_IF;
+
+            // R TEORICO REMOVIDO na v0.3: a formula antiga (V medida^2 / kW nominal) mistura a tensao ao vivo com a
+            // potencia de placa, cuja tensao de referencia (V_ref) e DESCONHECIDA. Sera estimada na pratica pelo Setup.
+
+            // RD_SYS_T e uma FUNCAO com parametro de saida OUT (nao devolve DTL como valor).
+            #_retRdSysT := RD_SYS_T(OUT => #_agora);       // data/hora do CLP no momento da gravacao
+            #SetupDataV[#_t, #ChaveSelecionada] := #_agora;
+            #SetupOkV[#_t, #ChaveSelecionada]   := TRUE;
+         ELSE
+            #SalvarRecusado := TRUE;   // chaveamento nao informado: nao grava nada (evita valor sem tensao de origem)
+         END_IF;
+
+      END_IF;
+
+      #_cmdSalvarAnt := #ComandoSalvar;
+
+   END_REGION
+
+
+   REGION "4) Espelho do chaveamento ativo nos arrays 1D do DB do banco (db150/db158)"
+
+      // Os arrays 1D do DB do banco (o que o Node-RED v2.4 e o HTML leem) passam a mostrar SEMPRE os valores do
+      // chaveamento ativo. ASSUMIDO (a confirmar): com TensaoSel = 0 (nao informado) o espelho fica SEM Setup
+      // (SetupOk = FALSE), para nunca usar kW real de outra tensao em "Usar kW real nos calculos".
+      FOR #i := 1 TO #NumChaves DO
+         IF #TensaoSel >= 1 AND #TensaoSel <= 3 THEN
+            #SetupOk[#i]      := #SetupOkV[#TensaoSel, #i];
+            #KwReal[#i]       := #KwRealV[#TensaoSel, #i];
+            #RmedidoOhm[#i]   := #RmedidoV[#TensaoSel, #i];
+            #SetupData[#i]    := #SetupDataV[#TensaoSel, #i];
+         ELSE
+            #SetupOk[#i]      := FALSE;
+            #KwReal[#i]       := 0.0;
+            #RmedidoOhm[#i]   := 0.0;
+         END_IF;
+         #RteoricoOhm[#i] := 0.0;   // 0.0 = "nao calculado" (V_ref desconhecida)
+      END_FOR;
+
+   END_REGION
+
+END_FUNCTION_BLOCK

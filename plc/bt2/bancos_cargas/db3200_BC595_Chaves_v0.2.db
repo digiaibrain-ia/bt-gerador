@@ -5,7 +5,7 @@ AUTHOR : 'Reginaldo Lobo'
 VERSION : 0.2
 NON_RETAIN
 ////====================================
-//// db3200_BC595_Chaves (DB3200) - GERADO por plc/bt2/gerador/gerar_banco_v0.1.py (03/11/2026) - nao compilado no TIA, nao testado
+//// db3200_BC595_Chaves (DB3200) - GERADO por plc/bt2/gerador/gerar_banco_v0.2.py (03/11/2026) - nao compilado no TIA, nao testado
 //// O QUE FAZ : mesmo papel do db150_BC56_Chaves v0.3, arrays de 32 chaves. Banco BC59,5: 18 chaves reais, 14 reserva. FB: FB102/FB103.
 //// OFFSETS (calculados; CONFERIR na coluna "Deslocamento" do TIA): cb.ligar X0.0 | sb.ligada X4.0 | habilitada X8.0 | setupOk X12.0
 ////    kwReal D16 | rMedidoOhm D144 | rTeoricoOhm D272 | setupData B400 (12 bytes cada) | nominal D784
