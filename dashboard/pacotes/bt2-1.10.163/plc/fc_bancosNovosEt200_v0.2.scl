@@ -1,8 +1,8 @@
 FUNCTION "fc_bancosNovosEt200" : Void
 TITLE = fc_bancosNovosEt200 v0.1
-{ S7_Optimized_Access := 'TRUE' }
 AUTHOR : 'RegLobo'
-VERSION : 0.1
+VERSION : 0.2
+//// v0.2 (03/11/2026, auditoria): sem o atributo S7_Optimized_Access (o ET200 IM151-8 e familia S7-300 e nao tem acesso otimizado). Usar com fb_bancoEt200_16/32 v0.2.
 ////====================================
 //// fc_bancosNovosEt200 v0.1 (03/11/2026) - GERADO por gerar_banco_v0.2.py - RASCUNHO, nao compilado
 //// ONDE RODA : ET200 (Gerador_BC015). Chamar 1x por ciclo no OB1, junto do FC4 atual (que continua cuidando de BC56/BC400).

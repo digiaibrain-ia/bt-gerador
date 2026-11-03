@@ -1,4 +1,6 @@
-# Roteiro de implantação — BT2 (04/11/2026)
+# Roteiro de implantação — BT2 (04/11/2026) — v0.2
+
+> v0.2 (03/11/2026, auditoria): simulador de bancada `simulador-dse-demo-v5` (4 bancos, DBs novos) no lugar do v4; medidor 1.10.163; aviso sobre o número de conexões S7. Substitui a v0.1.
 
 Tudo abaixo foi preparado em 03/11/2026 e **não foi compilado nem testado em PLC/Node-RED real**. Cada etapa é reversível: guarde os arquivos atuais antes.
 
@@ -7,7 +9,7 @@ Tudo abaixo foi preparado em 03/11/2026 e **não foi compilado nem testado em PL
 ## Antes de começar (10 min)
 1. No TIA do 1515: **snapshot** dos valores atuais de DB150, DB152, DB158, DB160 (Setup salvo por chave e por tensão) e DB53. Salve o projeto como cópia.
 2. No Node-RED do PC BT2: Exportar tudo (Menu → Exportar → todos os fluxos) e guardar o JSON.
-3. Copiar `html/` do pacote `bt2-1.10.156` para `public\html\` (não apague as versões antigas).
+3. Copiar `html/` do pacote mais recente (`bt2-1.10.163` ou posterior) para `public\html\` (não apague as versões antigas).
 
 ## Etapa 1 — renumerar o que já funciona (BC56, BC400, DSE, snap)
 Mapa completo: `docs/bt2/plc/MAPA_RENUMERACAO_BT2_v0.1.csv`.
@@ -22,7 +24,7 @@ Mapa completo: `docs/bt2/plc/MAPA_RENUMERACAO_BT2_v0.1.csv`.
 1. TIA: em cada DB, Propriedades → Número → novo número (isso **preserva os valores** e atualiza as chamadas pelo nome simbólico). Se o TIA recusar, importe os `.db` novos de `plc/bt2/bancos_cargas/` e aplique o snapshot como valores iniciais.
 2. Renomear os DBs conforme o CSV (`db3000_BC56_Chaves` …) e compilar tudo. Se houver erro, me mande o texto.
 3. Carregar no 1515 **com o gerador desligado e os bancos desligados**.
-4. Node-RED: apagar as abas antigas de chaves, DSE e registro; importar (Menu → Importar), nesta ordem, os arquivos de `nodered/`: `chaves-56-api-v3.0`, `chaves-400-api-v3.0`, `cliente-156-dse-plc-carga-v2`, `cliente-31-seletor-plc-db2000-v3`, `registro-ensaio-db2100-api-v1.5` e `dev-logs-api-v1.1`. Deploy. (`simulador-dse-demo-v4` só se usar o simulador.)
+4. Node-RED: apagar as abas antigas de chaves, DSE e registro; importar (Menu → Importar), nesta ordem, os arquivos de `nodered/`: `chaves-56-api-v3.0`, `chaves-400-api-v3.0`, `cliente-156-dse-plc-carga-v2`, `cliente-31-seletor-plc-db2000-v3`, `registro-ensaio-db2100-api-v1.5`. Deploy. (`simulador-dse-demo-v5` só se usar o simulador de bancada: ele cobre os 4 bancos com os DBs novos; o v4 lia só o DB150 e **não serve** depois da renumeração.)
 5. Medidor 1.10.156: conferir BC56 e BC400 com leitura ok, DSE ok, Registro ok. Na janela 🧪 Cards x flow tudo deve estar OK.
 6. **Só siga se a etapa 1 estiver igual a antes.** Se algo falhar, volte os DBs aos números antigos e importe o JSON exportado no início.
 
@@ -38,3 +40,6 @@ Igual à etapa 2, trocando: `fb102_setupChaves32_v0.1.scl` e `fb103_ComEt200_32_
 
 ## O que me mandar depois de cada etapa
 Erros do TIA (texto), o que o chip de comunicação mostra e a janela 🧪 Cards x flow. Com isso ajusto e gero nova versão.
+
+## Conexões S7 do Node-RED com o 1515 (achado da auditoria de 03/11/2026)
+Com todos os fluxos importados, o Node-RED abre **11 conexões S7** com o 1515 (2 por banco de chaves × 4, mais DSE, seletor e registro; +1 se usar o simulador de bancada). Os de chaves leem a cada 200 ms. O 1515 suporta bem mais que isso, mas se aparecer lentidão ou "PLC sem leitura recente" nos 4 bancos ao mesmo tempo, o primeiro ajuste é subir o `cycletime` dos endpoints de chaves de 200 para 500 ms (nas propriedades do nó "PLC da Carga" de cada aba).

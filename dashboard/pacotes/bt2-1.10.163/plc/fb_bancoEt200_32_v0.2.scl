@@ -1,10 +1,13 @@
 FUNCTION_BLOCK "fb_bancoEt200_32"
-TITLE = fb_bancoEt200_32 v0.1
-{ S7_Optimized_Access := 'TRUE' }
+TITLE = fb_bancoEt200_32 v0.2
 AUTHOR : 'RegLobo'
-VERSION : 0.1
+VERSION : 0.2
 ////====================================
-//// fb_bancoEt200_32  -  RASCUNHO v0.1 (03/11/2026) GERADO por gerar_banco_v0.2.py - nao compilado, nao testado
+//// fb_bancoEt200_32  -  RASCUNHO v0.2 (03/11/2026, auditoria) a partir da v0.1 gerada por gerar_banco_v0.2.py - nao compilado, nao testado
+//// v0.2: (1) CORRIGE religamento automatico: na v0.1 o bloqueio pos-queda valia so 1 ciclo ((_comOkAnt OR _rearmado) ja era TRUE
+////       no 2o ciclo) e a contatora voltava sozinha com o comando antigo. Agora _bloq[i] trava na queda e so solta com Cmd[i]=FALSE.
+////       Tambem bloqueia no 1o ciclo apos partida da CPU. (2) TON no lugar de TON_TIME (IM151-8 e familia S7-300: TON_TIME nao existe).
+////       (3) sem o atributo S7_Optimized_Access (nao existe no S7-300). (4) NumChaves limitado a 0..32 (fora disso o S7-300 escreve fora do array).
 //// ONDE RODA : ET200 (programa Gerador_BC015). 1 instancia por banco NOVO (BC550, BC59,5). BC56 e BC400 seguem no FC4 atual.
 //// O QUE FAZ : lado ET200 do telegrama PUT/GET do banco (ate 32 chaves, 8+8 bytes):
 ////    1) vidaET incrementa a cada ~100 ms (prova ao 1515 que o ET200 esta vivo).
@@ -33,13 +36,15 @@ VERSION : 0.1
       EntradaContatoAux : Array[1..32] of Bool;   // contatos auxiliares fisicos
    END_VAR
    VAR
-      _tOsc100ms   : TON_TIME;
-      _tPerda      : TON_TIME;
+      _tOsc100ms   : TON;
+      _tPerda      : TON;
       _vida1515Ant : Int;
       _vidaMudou   : Bool;
       _comOkAnt    : Bool;
       _cmdAnt      : Array[1..32] of Bool;
-      _rearmado    : Array[1..32] of Bool;
+      _bloq        : Array[1..32] of Bool;   // v0.2: TRUE = caiu a comunicacao (ou partida); so solta com Cmd[i] = FALSE
+      _partiu      : Bool;                     // v0.2: FALSE no 1o ciclo apos partida
+      _n           : Int;                      // v0.2: NumChaves limitado a 0..32
       i            : Int;
    END_VAR
 
@@ -59,21 +64,26 @@ BEGIN
    #_tPerda(IN := NOT #_vidaMudou, PT := #TempoPerdaMs);   // vida nova reseta; sem vida nova conta
    #ComOk := NOT #_tPerda.Q;
 
-   IF #ComOk AND NOT #_comOkAnt THEN
-      FOR #i := 1 TO #NumChaves DO
-         #_rearmado[#i] := FALSE;
-      END_FOR;
-   END_IF;
+   #_n := #NumChaves;
+   IF #_n < 0 THEN #_n := 0; END_IF;
+   IF #_n > 32 THEN #_n := 32; END_IF;
+
+   // v0.2: queda de comunicacao (ou 1o ciclo) TRAVA todas as chaves; cada uma so solta quando o 1515 manda Cmd = FALSE.
+   FOR #i := 1 TO 32 DO
+      IF NOT #ComOk OR NOT #_partiu THEN
+         #_bloq[#i] := TRUE;
+      ELSIF NOT #Cmd[#i] THEN
+         #_bloq[#i] := FALSE;
+      END_IF;
+   END_FOR;
+   #_partiu := TRUE;
 
    #SeletoraAuto := #SeletoraEntrada;
 
    FOR #i := 1 TO 32 DO
-      IF #i <= #NumChaves THEN
+      IF #i <= #_n THEN
          #Fbk[#i] := #EntradaContatoAux[#i];
-         IF NOT #Cmd[#i] AND #_cmdAnt[#i] THEN
-            #_rearmado[#i] := TRUE;
-         END_IF;
-         IF #ComOk AND #LigarBanco AND #SeletoraEntrada AND (#_comOkAnt OR #_rearmado[#i]) THEN
+         IF #ComOk AND #LigarBanco AND #SeletoraEntrada AND NOT #_bloq[#i] THEN
             #SaidaContatora[#i] := #Cmd[#i];
          ELSE
             #SaidaContatora[#i] := FALSE;

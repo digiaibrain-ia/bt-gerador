@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="1.10.162">
+<meta name="app-version" content="1.10.163">
 <title>Medidor do Gerador</title>
 <style>
   /* v1.9.88: TOKENS DE COR DA INTERFACE (um lugar só). POR QUÊ: verde/vermelho/amarelo são SINAL (ligado, falha, alerta) e não podem ser usados como cor de enfeite;
@@ -35,8 +35,8 @@
   /* v1.9.40: abas por banco no popup Chaves - cada aba troca qual banco aparece nos 2 cards, em vez de empilhar os 2 bancos dentro de cada card */
   /* v1.9.41: abas movidas pra dentro da barra azul (.jt) - estilo "pílula" translúcida sobre o fundo azul, sem o buraco que ficava acima dos cards */
   .jtchaves{flex-wrap:wrap}
-  .jtchaves .chtabs{order:1;flex:1 1 auto}
-  .jtchaves .jx{order:2}
+  .jtchaves .chtabs{order:1;flex:1 1 100%}   /* v1.10.163: abas dos bancos em linha própria, abaixo do título */
+  .jtchaves .jx{order:0}                      /* v1.10.163: ✕ volta ao canto de cima à direita (com 4 bancos ia para a 2ª/3ª linha, à esquerda) */
   .chtabs{display:flex;gap:6px;margin:0;flex-wrap:wrap}
   .chtabs button{flex:none;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;border-radius:7px;padding:5px 12px;font-size:11.5px;font-weight:700;text-transform:none;letter-spacing:normal;cursor:pointer}
   .chtabs button.on{background:#fff;color:var(--jazul);border-color:#fff}
@@ -214,6 +214,7 @@
   .led.na{border-style:dashed;color:#999}
   .gmsg{font-size:13px;font-weight:600;color:#8a1c15;background:#fde7e5;border:1px solid #e3a5a0;border-left:5px solid var(--bad);border-radius:6px;padding:7px 34px 7px 12px;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:60;max-width:min(760px,92vw);box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer}
   .gmsg:empty{display:none}
+  .gmsg.ok{color:#0f3b63;background:#e8f1fb;border-color:#9cc0e6;border-left-color:#1a4a78}   /* v1.10.163: andamento/sucesso (ver MSG_OK) */
   .gmsg::after{content:"✕";position:absolute;right:10px;top:6px;font-weight:400;opacity:.7}
 
   /* ---- cronômetro ---- */
@@ -396,6 +397,9 @@
      então não bloqueiam a tela principal e podem ficar vários abertos ao mesmo tempo. Borda diferenciada pra
      o operador perceber que são "soltos". */
   dialog.jan.livre{border-color:#2f7d3a}
+  /* v1.10.163: em tela que rola (até 1279 px) a janela "livre" abria no TOPO da página (posição dela no HTML) e a tela pulava para cima:
+     quem tocava em ⚙ Chaves / 🛠 Setup / 🔧 Troca / ⤢ Popup lá embaixo perdia o lugar. Agora ela abre presa à tela, onde o operador está. */
+  @media (max-width:1279px){dialog.jan.livre:not(#dlgGuiado){position:fixed;top:8px;bottom:auto;max-height:calc(100vh - 16px)}}
   /* v1.9.78: Setup — tela principal bloqueada enquanto o popup está aberto + popup maior */
   #stBloq{position:fixed;inset:0;z-index:39;background:rgba(10,25,45,.50);cursor:not-allowed}
   #dlgChSetup{width:min(var(--w,1860px),98vw);max-height:96vh}
@@ -501,6 +505,8 @@
   .gd-ap button{min-height:34px}
   #dlgGuiado .gd-row button.on{background:var(--ui-acento-esc);border-color:var(--ui-acento-esc);color:#fff;font-weight:700}
   #dlgGuiado .gd-row button.on:hover{background:var(--ui-acento)}
+  /* v1.10.163: botão do Patamar DESABILITADO (ex.: "▶ Ligar Patamar Guiado" sem modelo/kW) tinha a mesma cor dos habilitados: tocava e nada acontecia */
+  #dlgGuiado .gd-row button:disabled,#dlgGuiado .gd-row button:disabled:hover{opacity:.45;filter:grayscale(.7);cursor:not-allowed}
   .gd-resumo{font-size:12.5px;border-left:4px solid var(--ui-acento);padding:4px 8px;margin:6px 0;background:var(--ui-acento-fraco)}
   .gd-resumo b{font-size:12.5px}
   .gd-g{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-bottom:8px}
@@ -615,6 +621,7 @@
   #bOcor{display:inline-flex;align-items:center;gap:6px;border:0;cursor:pointer;color:#fff}
   #bOcor svg{width:16px;height:15px;display:block;flex:none}
   #bOcor.tem{background:#f5c400;color:#111;font-weight:700}
+  #bOcor.temF{background:#fff;color:#8a1c15;box-shadow:inset 0 0 0 2px #d92d20}   /* v1.10.163: há FALHA ativa (ver desenhaCards) */
   dialog#dlgOcor.jan.livre{border-color:#9a6a00}
   #dlgOcor .jt.livre{background:#9a6a00}
   #dlgOcor .jx:hover{color:#9a6a00}
@@ -706,6 +713,17 @@
   #dlgDados .jbtns{position:sticky;bottom:0;background:var(--jfundo);margin:12px -22px 0;padding:12px 22px 14px;border-top:2px solid var(--jazul);z-index:2}
   #dlgDados .jbtns .bt{padding:12px 22px;font-size:14px}
   @media (max-width:1000px){#dlgDados .dcols{grid-template-columns:1fr}}
+  /* v1.10.163: celular — Monofásico/Trifásico saíam cortados pela direita e a barra fixa de 5 botões ocupava ~30 % da tela (4 linhas).
+     Agora as fases ficam abaixo da tabela, em linha, e os botões em 2 colunas, com "Iniciar ensaio" largo embaixo. */
+  @media (max-width:600px){
+    #dlgDados .jb{padding:12px 12px 0}
+    #dlgDados .jeq{flex-wrap:wrap;gap:6px}
+    #dlgDados .jfase{flex-direction:row;flex-wrap:wrap;padding-top:0;min-width:0;gap:6px 16px}
+    #dlgDados .jbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px -12px 0;padding:10px 12px 12px}
+    #dlgDados .jbtns>span{display:none}
+    #dlgDados .jbtns .bt{padding:10px 6px;font-size:12.5px}
+    #dlgDados .jbtns #dOk{grid-column:1/-1}
+  }
   /* v1.9.63: janela de Logs (padrão jan, não-modal) */
   #dlgLogs .lgb{padding:10px 14px 12px}
   #dlgLogs .lgbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
@@ -784,6 +802,14 @@
   .jan .jtab th:first-child{text-align:left}
   .jan .jtab td{border:1px solid var(--jborda);background:#fff;padding:3px 8px;text-align:center;font-size:13.5px}
   #resTab th{text-transform:none;letter-spacing:0;font-size:12px}
+  /* v1.10.163: no celular a tabela de 12 colunas do Resultado (e a do Registro de aprendizado) era mais larga que a janela e a JANELA INTEIRA
+     rolava de lado (botões e condições juntos). Agora só a tabela rola de lado; as condições ganham largura para o texto. */
+  @media (max-width:760px){
+    #dlgRes #resTab,#dlgReg #rgTab{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+    #dlgRes #resTab td,#dlgRes #resTab th{white-space:nowrap}
+    #dlgRes .jcond td:nth-child(2){width:84px}
+    #dlgRes .jcond td:nth-child(3){width:auto}
+  }
   .jan .jtab td:first-child{text-align:left;color:#1b2a3a}
   .jan .jtab td.sv{font-weight:700}
   .jan .jtab td.vivo{background:#fff4d2;border-color:#d8c58a}
@@ -815,6 +841,14 @@
   .clock .clkbtns .fimbtn{margin:0}
   .clock .salvbtn{background:#fff;color:#1a4a78;border:1px solid #1a4a78;border-radius:8px;padding:6px 8px;font-size:11.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
   .clock .salvbtn:disabled{opacity:.3;cursor:not-allowed}
+  /* v1.10.163: até 1279 px (celular e 2 colunas) o Registro do ensaio fica longe do cronômetro (no celular ~1.700 px abaixo) e o aviso
+     "Etapa N cumprida · SALVAR" não tinha botão por perto. O SALVAR ETAPA volta, empilhado em cima do FINALIZAR, SEMPRE no mesmo lugar
+     (desabilitado quando não há o que salvar = layout estável). Em 1280 px ou mais continua escondido (decisão do operador: redundante). */
+  @media (max-width:1279px){
+    .clock #bSalv{display:inline-block!important}
+    .clock .clkbtns{flex-direction:column;align-items:stretch;gap:5px}
+    .clock .clkbtns button{padding:8px 10px;font-size:12.5px;min-height:34px}
+  }
   .clock .salvbtn:hover:not(:disabled){background:#e8eef5}
   html[data-tema=escuro] .clock .salvbtn{background:#2c2e33;color:#e8e8e4;border-color:#8d97a3}
   @keyframes pede{0%,100%{box-shadow:0 0 0 0 rgba(46,154,95,.6)}50%{box-shadow:0 0 0 6px rgba(46,154,95,0)}}
@@ -1992,12 +2026,15 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
     folgaErroKw: 0,          // diferença de erro (kW) em que o rodízio ainda pode decidir. 0 = só desempata. ASSUMIDO — a confirmar
     rodizio: { criterio: 'ambos', pesoAcion: 1, pesoHoras: 1 }, // 'acion' | 'horas' | 'ambos' (os DOIS existem, como pedido)
     pesoMudanca: 0.01,       // custo de cada chave que muda de estado (menos tempo/menos manobra). ASSUMIDO — a confirmar
+    gradeKw: 0.1,            // v0.6: kW fora da grade (kW real) é arredondado PARA CIMA nesta grade (0,1 ou 0,5 kW). Seguro: nunca passa do alvo/limite. ASSUMIDO — a confirmar
     escalonamento: { degrauMaxKw: null, pausaS: 0, desligaImediato: true, ligaAntes: false, janelaDesligaS: 0 } // null = tudo de uma vez (tempo desconhecido; aprender com operadores). v0.2: ligaAntes=true → liga primeiro e desliga depois de janelaDesligaS segundos
   };
 
   const mescla = (a, b) => Object.assign({}, a, b || {});
   const soma = (kws, sel) => kws.reduce((t, k, i) => t + (sel[i] ? k : 0), 0);
   const arred = x => Math.round(x * 1000) / 1000;
+  /** v0.6: kW utilizável = número finito e > 0. Por quê: o kW REAL do Setup é kW medido − base e pode sair 0, negativo ou vazio se a chave não fechou. */
+  const kwValido = k => typeof k === 'number' && Number.isFinite(k) && k > 0;
 
   /** Custo de desgaste de uma chave (0..~2): quanto MAIS usada, MAIOR o custo.
    *  Por quê normalizar: acionamentos e horas têm escalas diferentes; dividimos pelo maior valor do banco. */
@@ -2018,6 +2055,7 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
   function opcoesDoBanco(b, p) {
     const n = b.kws.length, hab = b.habil || b.kws.map(() => true);
     const idx = []; for (let i = 0; i < n; i++) if (hab[i]) idx.push(i);
+    if (idx.length > 24) throw new Error('oráculo exaustivo: banco grande demais (' + idx.length + ' chaves habilitadas; máx. 24). Use sugere().');   // v0.6: 1 << 31 < 0 em JS
     const cust = custosDesgaste(b.estado, n, p.rodizio), atual = b.atual || b.kws.map(() => false);
     const melhor = new Map();
     for (let m = 0; m < (1 << idx.length); m++) {
@@ -2064,58 +2102,78 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
    *  por uma tabela soma(kW em unidades de 0,5 kW) → melhor custo, O(n × somas). É o mesmo resultado de menor custo da enumeração, porque o custo é
    *  ADITIVO por chave: desgaste da chave (se ligada) + pesoMudanca × (mudou de estado). Chaves desabilitadas ficam fora (como antes).
    *  Em SCL: arrays de tamanho fixo [0..MAX_SOMA] de REAL/INT, 1 laço por chave — cabe no ciclo do PLC.
-   *  Devolve null se algum kW não for múltiplo de 0,1 (aí o chamador usa a enumeração antiga, só viável até ~22 chaves). */
+   *  v0.6: kW fora da grade de 0,5/0,1 kW (kW REAL do Setup) NÃO volta mais à enumeração 2^n: cada chave entra na tabela com o peso ARREDONDADO PARA
+   *  CIMA na grade gradeKw (0,1 kW). A tabela guarda, por soma arredondada, a seleção de MAIOR kW real (empate: menor custo); toda soma é conferida
+   *  com o kW REAL contra o teto, então nunca passa do alvo nem do limite. É aproximado (perde no máx. ~gradeKw por chave), não exato. */
   function escalaKw(kws) { for (const u of [2, 10]) if (kws.every(k => Math.abs(k * u - Math.round(k * u)) < 1e-9)) return u; return null; }
-  function blocoDP(b, p, tetoKw) {
-    const n = b.kws.length, esc = escalaKw(b.kws); if (!esc) return null;
+  /** Bloco de UM banco: lista (em ordem crescente de soma) das melhores seleções por soma. q = soma em décimos de kW (inteiro, chave de combinação). */
+  function blocoDoBanco(b, p, tetoKw) {
+    const n = b.kws.length;
     const hab = b.habil || b.kws.map(() => true), atual = b.atual || b.kws.map(() => false);
     const cust = custosDesgaste(b.estado, n, p.rodizio), pm = p.pesoMudanca;
-    const idx = []; for (let i = 0; i < n; i++) if (hab[i]) idx.push(i);
-    const teto = Number.isFinite(tetoKw) ? Math.floor(tetoKw * esc + 1e-6) : Infinity;
-    let total = 0; for (const i of idx) total += Math.round(b.kws[i] * esc); const S = Math.min(total, teto);
-    // custo constante das chaves desabilitadas que estão ligadas (não podem ser ligadas/mantidas: contam como mudança)
-    let fixo = 0; for (let i = 0; i < n; i++) if (!hab[i] && atual[i]) fixo += pm;
-    const INF = Infinity; let dp = new Array(S + 1).fill(INF); dp[0] = 0;
+    const idx = []; for (let i = 0; i < n; i++) if (hab[i] && kwValido(b.kws[i])) idx.push(i);   // v0.6: kW inválido fica fora, como desabilitada
+    const escExata = escalaKw(idx.map(i => b.kws[i])), exato = !!escExata;
+    const esc = exato ? escExata : (p.gradeKw === 0.5 ? 2 : 10);
+    const peso = idx.map(i => exato ? Math.round(b.kws[i] * esc) : Math.ceil(b.kws[i] * esc - 1e-9));
+    const folga = exato ? 0 : idx.length;                          // cada chave arredondada para cima soma < 1 unidade a mais que o kW real
+    const teto = Number.isFinite(tetoKw) ? Math.floor(tetoKw * esc + 1e-6) + folga : Infinity;
+    let total = 0; for (const w of peso) total += w; const S = Math.min(total, teto);
+    const vazioB = { lista: [], qmax: 0, folga10: folga * (10 / esc) };
+    if (!(S >= 0)) return vazioB;
+    // custo constante das chaves desabilitadas (ou com kW inválido) que estão ligadas (não podem ser ligadas/mantidas: contam como mudança)
+    let fixo = 0; const usa = new Set(idx); for (let i = 0; i < n; i++) if (!usa.has(i) && atual[i]) fixo += pm;
+    const INF = Infinity;
+    let dp = new Float64Array(S + 1).fill(INF), nx = new Float64Array(S + 1), kr = new Float64Array(S + 1), nkr = new Float64Array(S + 1); dp[0] = 0;
     const pega = idx.map(() => new Uint8Array(S + 1));            // pega[j][s] = 1 se a chave j foi LIGADA no melhor caminho até s
+    // melhor(custo, kWreal, custoAnt, kWrealAnt): na grade exata o kW é igual dentro da soma (= regra da v0.5: só custo);
+    // fora da grade vence o MAIOR kW real (erro primeiro: o rodízio só desempata), depois o menor custo.
+    const melhor = exato ? (c, k, cA) => c < cA - 1e-12 : (c, k, cA, kA) => cA === INF || k > kA + 1e-9 || (Math.abs(k - kA) <= 1e-9 && c < cA - 1e-12);
     idx.forEach((i, j) => {
-      const w = Math.round(b.kws[i] * esc), cOn = cust[i] + (atual[i] ? 0 : pm), cOff = atual[i] ? pm : 0;
-      const nx = new Array(S + 1).fill(INF);
+      const w = peso[j], k = b.kws[i], cOn = cust[i] + (atual[i] ? 0 : pm), cOff = atual[i] ? pm : 0;
+      nx.fill(INF);
       for (let s = 0; s <= S; s++) {
         if (dp[s] === INF) continue;
-        const off = dp[s] + cOff; if (off < nx[s] - 1e-12) { nx[s] = off; pega[j][s] = 0; }
-        const t = s + w; if (t <= S) { const on = dp[s] + cOn; if (on < nx[t] - 1e-12) { nx[t] = on; pega[j][t] = 1; } }
+        const off = dp[s] + cOff; if (melhor(off, kr[s], nx[s], nkr[s])) { nx[s] = off; nkr[s] = kr[s]; pega[j][s] = 0; }
+        const t = s + w; if (t <= S) { const on = dp[s] + cOn, kon = kr[s] + k; if (melhor(on, kon, nx[t], nkr[t])) { nx[t] = on; nkr[t] = kon; pega[j][t] = 1; } }
       }
-      dp = nx;
+      let x = dp; dp = nx; nx = x; x = kr; kr = nkr; nkr = x;
     });
-    const m = new Map();
+    const lista = []; let qmax = 0;
     for (let s = 0; s <= S; s++) {
       if (dp[s] === INF) continue;
       const sel = new Array(n).fill(false); let t = s;
-      for (let j = idx.length - 1; j >= 0; j--) if (pega[j][t]) { sel[idx[j]] = true; t -= Math.round(b.kws[idx[j]] * esc); }
-      let mud = 0, cd = 0; for (let i = 0; i < n; i++) { if (sel[i] !== !!atual[i]) mud++; if (sel[i]) cd += cust[i]; }
-      const kw = arred(s / esc), custo = dp[s] + fixo;
-      m.set(kw, { kw, partes: [{ kw, sel, custo, mud, cd }], custo });
+      for (let j = idx.length - 1; j >= 0; j--) if (pega[j][t]) { sel[idx[j]] = true; t -= peso[j]; }
+      let mud = 0, cd = 0, real = 0; for (let i = 0; i < n; i++) { if (sel[i] !== !!atual[i]) mud++; if (sel[i]) { cd += cust[i]; real += b.kws[i]; } }
+      const kw = exato ? arred(s / esc) : arred(real), custo = dp[s] + fixo;
+      if (!exato && kw > tetoKw + 1e-9) continue;                  // v0.6: confere com o kW REAL (o arredondado pode estar na folga acima do teto)
+      const q = s * (10 / esc); qmax = Math.max(qmax, q);
+      lista.push({ kw, q, partes: [{ kw, sel, custo, mud, cd }], custo });
     }
-    return m;
+    return { lista, qmax, folga10: folga * (10 / esc) };
   }
-  /** Bloco de UM banco: mapa soma(kW) → melhor opção daquela soma. Base dos FBs de 3+ bancos.
-   *  Por quê: guardar uma entrada por soma faz o número de estados depender do alvo, não do produto dos bancos (que esgotou a memória). */
-  function blocoDoBanco(b, p, tetoKw) {
-    const dp = blocoDP(b, p, tetoKw); if (dp) return dp;          // v0.5: caminho normal (rápido)
-    const m = new Map();
-    for (const o of opcoesDoBanco(b, p).values()) m.set(o.kw, { kw: o.kw, partes: [o], custo: o.custo });
-    return m;
-  }
-  /** Une dois blocos (soma a soma), descartando o que passa do teto (alvo, ou limite de segurança). Soma kW é sempre crescente, então o corte é seguro. */
+  /** Une dois blocos (soma a soma), descartando o que passa do teto (alvo, ou limite de segurança). Soma kW é sempre crescente, então o corte é seguro.
+   *  v0.6: indexado pela soma em décimos de kW (q) em arrays fixos, sem criar objeto por par (4 bancos com kW real: dezenas de milhões de pares).
+   *  Mesma ordem de visita e mesmo desempate da v0.5 (na grade exata o resultado é idêntico). */
   function combinaBlocos(A, B, teto) {
-    const out = new Map();
-    for (const a of A.values()) for (const b of B.values()) {
-      const kw = arred(a.kw + b.kw); if (kw > teto + 1e-9) continue;
-      const custo = a.custo + b.custo, ant = out.get(kw);
-      if (!ant || custo < ant.custo - 1e-9) out.set(kw, { kw, partes: a.partes.concat(b.partes), custo });
+    const folga10 = A.folga10 + B.folga10;
+    let qmax = A.qmax + B.qmax; if (Number.isFinite(teto)) qmax = Math.min(qmax, Math.floor(teto * 10 + 1e-6) + folga10);
+    if (!(qmax >= 0)) return { lista: [], qmax: 0, folga10 };
+    const LA = A.lista, LB = B.lista, cM = new Float64Array(qmax + 1).fill(Infinity), kM = new Float64Array(qmax + 1), iA = new Int32Array(qmax + 1), iB = new Int32Array(qmax + 1), ordem = [];
+    for (let x = 0; x < LA.length; x++) {
+      const a = LA[x];
+      for (let y = 0; y < LB.length; y++) {
+        const b = LB[y], q = a.q + b.q; if (q > qmax) continue;
+        const kw = arred(a.kw + b.kw); if (kw > teto + 1e-9) continue;
+        const custo = a.custo + b.custo, ant = cM[q];
+        if (ant === Infinity) ordem.push(q);
+        else if (!(kw > kM[q] + 1e-9 || (Math.abs(kw - kM[q]) <= 1e-9 && custo < ant - 1e-9))) continue;
+        cM[q] = custo; kM[q] = kw; iA[q] = x; iB[q] = y;
+      }
     }
-    return out;
+    let qm = 0; const lista = ordem.map(q => { qm = Math.max(qm, q); return { kw: kM[q], q, custo: cM[q], a: LA[iA[q]], b: LB[iB[q]] }; });
+    return { lista, qmax: qm, folga10 };
   }
+  const partesDe = e => e.partes || partesDe(e.a).concat(partesDe(e.b));   // monta a seleção por banco só da opção escolhida
   function preparo(ent) {
     const p = mescla(PADRAO, ent); p.rodizio = mescla(PADRAO.rodizio, ent.rodizio);
     const alvo = ent.alvoKw, lim = limiteKw(ent.kw100, ent.pctLimite);
@@ -2128,14 +2186,19 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
     const valido = c => p.modoAlvo === 'minimo' ? (c.kw >= alvo - 1e-9 && c.kw <= alvo + p.excessoMaxKw + 1e-9) : c.kw <= alvo + 1e-9;
     const erroDe = c => Math.abs(c.kw - alvo);
     const noLimite = c => lim == null || c.kw <= lim + 1e-9;
-    const todos = [...comb.values()];
+    const todos = comb.lista;
     let cand = todos.filter(c => valido(c) && noLimite(c)), aviso = '';
     if (!cand.length) { cand = todos.filter(c => c.kw <= alvo + 1e-9 && noLimite(c)); aviso = 'Não há combinação que atinja o alvo com o excesso permitido; sugerido o mais próximo abaixo.'; }
-    const eMin = Math.min(...cand.map(erroDe));
+    if (!cand.length) throw new Error('nenhuma combinação possível');
+    let eMin = Infinity; for (const c of cand) eMin = Math.min(eMin, erroDe(c));   // v0.6: sem Math.min(...lista) (estourava a pilha com listas grandes)
     const grupo = cand.filter(c => erroDe(c) <= eMin + p.folgaErroKw + 1e-9).sort((a, b) => a.custo - b.custo || erroDe(a) - erroDe(b));
-    const esc = grupo[0], selecao = {};
-    ent.bancos.forEach((b, i) => { selecao[b.id] = esc.partes[i].sel; });
-    return { selecao, total: esc.kw, erro: arred(esc.kw - alvo), dentro: erroDe(esc) <= (p.modoAlvo === 'minimo' ? p.excessoMaxKw : 0) + 1e-9, aviso, candidatos: grupo.length };
+    const esc = grupo[0], partes = partesDe(esc), selecao = {};
+    ent.bancos.forEach((b, i) => { selecao[b.id] = partes[i].sel; });
+    // v0.6: avisa chaves habilitadas com kW inválido (ficaram fora do cálculo) e se o cálculo usou kW fora da grade (aproximado)
+    const ruins = [], aprox = ent.bancos.some(b => !escalaKw((b.kws || []).filter((k, i) => (b.habil ? b.habil[i] : true) && kwValido(k))));
+    ent.bancos.forEach(b => b.kws.forEach((k, i) => { if ((b.habil ? b.habil[i] : true) && !kwValido(k)) ruins.push('BC' + b.id + ' chave ' + (i + 1)); }));
+    if (ruins.length) aviso = (aviso ? aviso + ' ' : '') + 'Chave(s) com kW inválido fora do cálculo: ' + ruins.join(', ') + ' (refazer o Setup ou usar o kW nominal).';
+    return { selecao, total: esc.kw, erro: arred(esc.kw - alvo), dentro: erroDe(esc) <= (p.modoAlvo === 'minimo' ? p.excessoMaxKw : 0) + 1e-9, aviso, candidatos: grupo.length, aproximado: aprox };
   }
   /** FB de 3 bancos: (A+B) depois + C. */
   function sugere3(ent) {
@@ -2160,9 +2223,10 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
   }
   /** SUGERE a seleção: escolhe sozinho o FB pelo número de bancos entrando no cálculo (2, 3, 4 ou 5+). */
   function sugere(ent) {
-    const n = ent.bancos.length;
+    const bancos = ent && Array.isArray(ent.bancos) ? ent.bancos : [], n = bancos.length;
     // v0.4 (03/11/2026): FALHA SEGURA. Alvo invalido (NaN, negativo, infinito) ou nenhuma combinacao possivel nao pode lancar excecao: devolve "nada ligado" + aviso.
-    const vazio = aviso => ({ selecao: Object.fromEntries(ent.bancos.map(b => [b.id, b.kws.map(() => false)])), total: 0, erro: null, dentro: false, aviso, candidatos: 0 });
+    const vazio = aviso => ({ selecao: Object.fromEntries(bancos.map(b => [b.id, (b.kws || []).map(() => false)])), total: 0, erro: null, dentro: false, aviso, candidatos: 0 });
+    if (!n) return vazio('Nenhum banco no cálculo: nada foi sugerido.');
     if (!(typeof ent.alvoKw === 'number' && isFinite(ent.alvoKw) && ent.alvoKw >= 0)) return vazio('Alvo inválido: nada foi sugerido.');
     try { return n === 1 ? sugereN(ent) : n === 2 ? sugereN(ent) : n === 3 ? sugere3(ent) : n === 4 ? sugere4(ent) : sugereN(ent); }   // v0.5: 1 e 2 bancos também por blocos (DP); sugere2 fica como oráculo
     catch (e) { return vazio('Não foi possível calcular a sugestão (' + (e && e.message || 'erro') + '): nada foi sugerido.'); }
@@ -2184,6 +2248,9 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
    *  Desligar: por padrão imediato (aliviar carga é seguro); pode ser escalonado também (desligaImediato:false). */
   function planoEntrada(ent) {
     const e = mescla(PADRAO.escalonamento, ent.escalonamento), passos = [];
+    // v0.6: pausa inválida (NaN, negativa, texto) = 0; degrau inválido (NaN, negativo) = 0 = UMA CHAVE POR PASSO (o mais conservador). null continua = tudo junto.
+    e.pausaS = Number.isFinite(+e.pausaS) && +e.pausaS > 0 ? +e.pausaS : 0;
+    if (e.degrauMaxKw != null && !(Number.isFinite(+e.degrauMaxKw) && +e.degrauMaxKw >= 0)) e.degrauMaxKw = 0;
     const liga = [], desliga = [];
     ent.bancos.forEach(b => b.kws.forEach((kw, i) => {
       const a = !!(ent.atual[b.id] || [])[i], n = !!(ent.selecao[b.id] || [])[i];
@@ -2223,6 +2290,9 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
     const kwDe = (id, i) => { const b = ent.bancos.find(x => x.id === id); return b ? (b.kws[i] || 0) : 0; };
     let tot = ent.bancos.reduce((a, b) => a + soma(b.kws, ent.atual[b.id] || []), 0), pico = tot;
     plano.passos.forEach(p => { p.desliga.forEach(c => { tot -= kwDe(c.banco, c.idx); }); p.liga.forEach(c => { tot += kwDe(c.banco, c.idx); }); pico = Math.max(pico, tot); });
+    // v0.6: kW inválido (NaN/negativo) numa chave ligada ou do plano = pico DESCONHECIDO -> Infinity (quem compara com o limite bloqueia)
+    const ruim = (b, sel) => b.kws.some((k, i) => sel[i] && !kwValido(k));
+    if (!Number.isFinite(pico) || ent.bancos.some(b => ruim(b, ent.atual[b.id] || [])) || plano.passos.some(p => p.liga.some(c => !kwValido(kwDe(c.banco, c.idx))))) return Infinity;
     return arred(pico);
   }
 
@@ -2235,15 +2305,29 @@ dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
    *  Regra do usuário (27/10): carga ABAIXO do alvo é permitida (o operador completa depois); ACIMA do limite é BLOQUEADO com mensagem.
    *  Falha segura: sem limite configurado, nada é liberado. Vale para sugestão, seleção manual, plano e (futuro) automático. */
   function guarda(ent) {
-    const lim = limiteKw(ent.kw100, ent.pctLimite);
-    const total = arred(ent.bancos.reduce((t, b) => t + soma(b.kws, ent.selecao[b.id] || []), 0));
+    const lim = limiteKw(ent.kw100, ent.pctLimite), bancos = ent.bancos || [], sel = ent.selecao || {};
+    // v0.6: só soma kW VÁLIDO; chave selecionada com kW inválido, índice inexistente ou banco fora da lista = BLOQUEIA (antes: total NaN passava)
+    const ruins = [], fora = [], ids = new Set(bancos.map(b => b.id));
+    let soma6 = 0;
+    bancos.forEach(b => { const s = sel[b.id] || [];
+      b.kws.forEach((k, i) => { if (s[i]) { if (kwValido(k)) soma6 += k; else ruins.push('BC' + b.id + ' chave ' + (i + 1)); } });
+      for (let i = b.kws.length; i < s.length; i++) if (s[i]) ruins.push('BC' + b.id + ' chave ' + (i + 1) + ' (não existe)'); });
+    Object.keys(sel).forEach(id => { if (!ids.has(id) && (sel[id] || []).some(Boolean)) fora.push('BC' + id); });
+    const total = arred(soma6);
     if (lim == null) return { ok: false, total, limiteKw: null, excessoKw: null, mensagem: 'Bloqueado: informe a capacidade do gerador (kW a 100 %) e o percentual de segurança.' };
+    if (ruins.length) return { ok: false, total, limiteKw: lim, excessoKw: null, mensagem: 'Bloqueado: chave(s) com kW inválido ou inexistente: ' + ruins.join(', ') + '. Refaça o Setup ou use o kW nominal.' };
+    if (fora.length) return { ok: false, total, limiteKw: lim, excessoKw: null, mensagem: 'Bloqueado: há chave ligada em banco fora do cálculo (' + fora.join(', ') + '): a carga dela não seria contada.' };
     if (total > lim + 1e-9) return { ok: false, total, limiteKw: lim, excessoKw: arred(total - lim), mensagem: 'Bloqueado: ' + total + ' kW passa do limite de segurança de ' + lim + ' kW (' + ent.pctLimite + ' % de ' + ent.kw100 + ' kW). Tire chaves.' };
     return { ok: true, total, limiteKw: lim, excessoKw: 0, mensagem: '' };
   }
   /** Pergunta ANTES de ligar uma chave: "se eu ligar esta, continua dentro do limite?" (usada pelo botão "pôr"). */
   function podeLigar(ent, bancoId, idx) {
-    const sel = {}; ent.bancos.forEach(b => { sel[b.id] = (ent.selecao[b.id] || []).slice(); }); sel[bancoId][idx] = true;
+    // v0.6: banco desconhecido ou índice inválido não lança exceção: a guarda BLOQUEIA (banco fora da lista / chave inexistente)
+    const sel = {}, orig = ent.selecao || {};
+    Object.keys(orig).forEach(k => { sel[k] = (orig[k] || []).slice(); }); (ent.bancos || []).forEach(b => { if (!sel[b.id]) sel[b.id] = []; });
+    if (!(Number.isInteger(idx) && idx >= 0)) return { ok: false, total: null, limiteKw: limiteKw(ent.kw100, ent.pctLimite), excessoKw: null, mensagem: 'Bloqueado: chave inválida.' };
+    if (!sel[bancoId]) sel[bancoId] = [];
+    sel[bancoId][idx] = true;
     return guarda(Object.assign({}, ent, { selecao: sel }));
   }
 
@@ -2385,10 +2469,12 @@ function iniciaCron(){if(T.fim)return;T.run=true;T.started=true;T.last=Date.now(
 $('bPau').onclick=()=>{T.run=false};
 async function pararEnsaio(){ // STOP do ENSAIO (diferente do start/stop do gerador, que é feito no painel do DSE)
   if(!T.started||T.fim)return;
+  // v1.10.163: 1º pergunta SE quer parar. Antes havia uma pergunta só e o "Cancelar" TAMBÉM parava o ensaio: não dava para desistir de um toque errado.
+  if(!confirm('PARAR o ensaio em andamento?\n\nO cronômetro e as etapas da tela voltam ao início.\n\nOK = parar o ensaio\nCancelar = NÃO parar (o ensaio continua)'))return;
   if(RG.ativo)rgParar('ensaio parado pelo operador',true); // o Registro de amostras sempre para junto, nunca fica sozinho gravando
   T.run=false;
   let limpaPlc=false;
-  if(MODO!=='carga')limpaPlc=confirm('Parar o ensaio.\n\nTambém apagar o que já foi gravado no PLC (DB SNAP) e começar do zero na próxima vez?\n\nOK = parar e ZERAR o PLC também\nCancelar = só parar aqui na tela (o que já foi gravado continua no PLC até você gravar por cima ou usar ZERAR depois)');
+  if(MODO!=='carga')limpaPlc=confirm('Ensaio parado.\n\nTambém apagar o que já foi gravado no PLC (DB SNAP) e começar do zero na próxima vez?\n\nOK = apagar o PLC também\nCancelar = manter no PLC (o que já foi gravado continua lá até você gravar por cima ou usar ZERAR depois)');
   /* v1.10.103: PRIMEIRO restabelece a tela (cronômetro, Patamar Guiado, gráfico, chaves), DEPOIS limpa o PLC em segundo plano.
      Por quê (técnico): antes o reset ficava atrás de um "await" do PLC; se o PLC/Node-RED demorava, T não era zerado e o diálogo do Patamar
      Guiado seguia atualizando um ensaio "morto" (parecia congelado até dar F5). Leigo: primeiro a tela volta ao normal; limpar o PLC é um
@@ -2931,6 +3017,7 @@ buildTabela();
 
   function criaMae(h) {
     let previa = null, chaveParam = '', tEstado = 0, armada = false, estado = 'PARADO', msg = '', etAplic = -1, tIni = 0, tConf = 0, planoS = 0, selKw = 0, alvoKw = 0, guarda = null, log = [];
+    let falhaExec = false;   // v0.13: FALHA de EXECUÇÃO (retorno físico / limite confirmado / DSE): só rearma() tira; nada é reaplicado sozinho
     let canal = null; try { canal = new BroadcastChannel(CANAL); } catch (e) { /* sem canal: só localStorage */ }
     const F = {}; for (const k in NOMES) F[k] = { id: +k, nome: NOMES[k], estado: 'idle', txt: '', ent: {}, sai: {} };   // foto dos filhos (para o mapa)
     const set = (id, est, txt) => { F[id].estado = est; F[id].txt = txt || ''; };
@@ -2954,7 +3041,8 @@ buildTabela();
       F[3].ent = { '% do patamar': pct == null ? '—' : pct + ' %', 'kW a 100 %': n1(kw100) }; F[3].sai = { 'kW alvo': n1(alvoKw), 'modo': pct > 100 ? 'mínimo (107 %)' : 'abaixo do alvo' };
       F[4].ent = { 'kW alvo': n1(alvoKw), 'chaves habilitadas': ex.nHabil == null ? '—' : ex.nHabil, 'limite (guarda)': g.limiteKw == null ? '—' : n1(g.limiteKw) };
       F[4].sai = { 'kW sugerido': n1(selKw), 'erro previsto': n1(selKw - alvoKw) + ' kW' };
-      F[5].ent = { 'critério': 'acionamentos + horas' }; F[5].sai = Object.fromEntries(BANCOS.map(b => ['acionamentos BC' + b.id, ex.acion ? ex.acion[b.id] : '—']));
+      const BS = (typeof BANCOS !== 'undefined' && Array.isArray(BANCOS)) ? BANCOS : [];   // v0.13: global do HTML é opcional (núcleo testável fora do medidor)
+      F[5].ent = { 'critério': 'acionamentos + horas' }; F[5].sai = Object.fromEntries(BS.map(b => ['acionamentos BC' + b.id, ex.acion ? ex.acion[b.id] : '—']));
       F[6].ent = { 'passos do escalonador': planoS > 0 ? 'plano de ' + planoS + ' s' : 'tudo de uma vez', 'kW sugerido': n1(selKw) };
       F[6].sai = { 'kW comandado': n1(h.kwComandado()), 'kW confirmado': n1(h.kwConfirmado()), 'divergência': n1(h.kwComandado() - h.kwConfirmado()) + ' kW' };
       F[7].ent = { 'estado da mãe': estado }; F[7].sai = { 'tempo da etapa': Math.round(h.tempoEtapaS()) + ' s', 'tempo neste estado': tEstado ? Math.round((h.agora() - tEstado) / 1000) + ' s' : '—' };
@@ -2967,8 +3055,8 @@ buildTabela();
     }
     function publica() { io(); const f = foto(); try { localStorage.setItem(LS, JSON.stringify(f)); } catch (e) {} if (canal) try { canal.postMessage(f); } catch (e) {} }
 
-    function arma() { armada = true; etAplic = -1; previa = null; vai(h.iniciado() ? 'AGUARDA_ETAPA' : 'AGUARDA_INICIO', h.iniciado() ? '' : 'clique INICIAR (o operador inicia o ensaio)'); publica(); }
-    function desarma(m) { armada = false; etAplic = -1; previa = null; vai('PARADO', m || ''); for (const k in F) set(k, 'idle'); publica(); }
+    function arma() { armada = true; etAplic = -1; previa = null; falhaExec = false; guarda = null; vai(h.iniciado() ? 'AGUARDA_ETAPA' : 'AGUARDA_INICIO', h.iniciado() ? '' : 'clique INICIAR (o operador inicia o ensaio)'); publica(); }
+    function desarma(m) { armada = false; etAplic = -1; previa = null; falhaExec = false; vai('PARADO', m || ''); for (const k in F) set(k, 'idle'); publica(); }
 
     /** Um ciclo (chamar 1x/s). Ordem fixa, como num OB cíclico: 2 -> 8 -> 1 -> 3 -> 7 -> mãe. */
     function ciclo() {
@@ -2980,7 +3068,13 @@ buildTabela();
       if (h.iniciado()) set(7, 'ativo', 'etapa há ' + Math.round(h.tempoEtapaS()) + ' s'); else set(7, 'idle', 'ensaio não iniciado');
       if (!armada) { set(9, 'idle', 'desarmada'); return publica(); }
       // ---- filho 8: supervisor (DSE caiu -> chaves caem) ----
-      if (!h.dseOk()) { set(8, 'falha', 'DSE sem resposta'); h.derruba('FBs virtuais: DSE sem resposta — chaves abertas por segurança.'); armada = false; vai('FALHA', 'DSE sem resposta; chaves abertas'); set(9, 'falha', 'parada segura'); return publica(); }
+      if (!h.dseOk()) { set(8, 'falha', 'DSE sem resposta'); h.derruba('FBs virtuais: DSE sem resposta — chaves abertas por segurança.'); armada = false; falhaExec = true; vai('FALHA', 'DSE sem resposta; chaves abertas'); set(9, 'falha', 'parada segura'); return publica(); }
+      // v0.13: carga CONFIRMADA (retorno físico) acima do limite da guarda (contatora colada, fio trocado) → derruba e FALHA de execução
+      { const lim = guarda && +guarda.limiteKw, conf = +h.kwConfirmado();
+        if (lim > 0 && conf > lim + tolKw(h)) {
+          if (!falhaExec) h.derruba('FBs virtuais: carga confirmada ' + conf.toFixed(1) + ' kW acima do limite de ' + lim.toFixed(1) + ' kW — chaves abertas por segurança.');
+          falhaExec = true; set(8, 'falha', 'carga confirmada acima do limite'); vai('FALHA', 'carga confirmada ' + conf.toFixed(1) + ' kW acima do limite ' + lim.toFixed(1) + ' kW; chaves abertas — rearme pelo operador'); set(9, 'falha', msg); return publica();
+        } }
       set(8, 'ok', 'fontes confiáveis');
       if (!h.iniciado()) { vai('AGUARDA_INICIO', kw100 > 0 ? 'clique INICIAR' : 'escolha o gerador em Dados do ensaio, depois INICIAR'); set(9, 'ativo', estado); set(7, 'idle', 'ensaio não iniciado'); return publica(); }
       if (!(kw100 > 0)) { vai('FALHA', 'informe kW a 100 % em Dados do ensaio'); set(9, 'falha', msg); return publica(); }
@@ -2990,6 +3084,7 @@ buildTabela();
       set(7, 'ativo', 'etapa há ' + Math.round(h.tempoEtapaS()) + ' s');
       // ---- etapa nova: a mãe chama 4 -> 11 -> 10 -> 6 ----
       const exP = (h.extra && h.extra()) || {}, chP = kw100 + '|' + exP.pctLim + '|' + exP.degrauKw + '|' + exP.escSig + '|' + exP.nHabil;   // v0.12: habilitar/desabilitar chaves também recalcula a etapa
+      if (falhaExec) { chaveParam = chP; set(9, 'falha', estado + (msg ? ' — ' + msg : '')); return publica(); }   // v0.13: FALHA de execução: nada é recalculado nem reaplicado até rearma()
       if (etAplic >= 0 && et === etAplic && chP !== chaveParam) { reg('parâmetros mudaram (kW a 100 %/limite/degrau): recalculando a etapa'); etAplic = -1; }   // v0.4
       chaveParam = chP;
       if (et !== etAplic) {   // v0.3: etapa nova SEMPRE tenta de novo (uma falha numa etapa não trava as seguintes)
@@ -3021,16 +3116,20 @@ buildTabela();
       }
       // v0.10: o operador clicou Aplicar → a seleção FINAL (com os ajustes dele) é a que vale
       if (estado === 'AGUARDA_APLICAR' && h.aplicouEt && h.aplicouEt(et)) {
-        const g2 = h.guarda(); selKw = (g2 && g2.total) || selKw; planoS = h.duracaoPlanoS(); tIni = h.agora();
+        const g2 = h.guarda(); if (g2) guarda = g2;
+        if (!g2 || !g2.ok) { set(11, 'falha', g2 ? g2.mensagem : 'guarda sem resposta'); vai('FALHA', 'guarda bloqueou a seleção aplicada: ' + (g2 ? g2.mensagem : 'sem resposta')); set(9, 'falha', msg); return publica(); }   // v0.13
+        selKw = (g2 && g2.total) || selKw; planoS = h.duracaoPlanoS(); tIni = h.agora();
         set(10, 'ativo', planoS > 0 ? 'plano de ' + planoS + ' s' : 'tudo de uma vez'); set(6, 'ativo', 'comandando'); vai('ESCALONANDO', 'operador aplicou: ' + selKw.toFixed(1) + ' kW · plano de ' + planoS + ' s');
       }
       // ---- acompanhamento ----
       const dt = (h.agora() - tIni) / 1000;
       if (estado === 'ESCALONANDO' && dt >= planoS) { vai('CONFIRMANDO', 'aguardando retorno físico'); tConf = h.agora(); set(10, 'ok', 'plano concluído'); }
       if (estado === 'CONFIRMANDO') {
-        const TOL = tolKw(h), d = Math.abs(h.kwConfirmado() - selKw); set(6, d <= TOL ? 'ok' : 'ativo', 'cmd ' + h.kwComandado().toFixed(1) + ' · conf ' + h.kwConfirmado().toFixed(1) + ' kW');
-        if (d <= TOL) vai('NO_PATAMAR', 'confirmado ' + h.kwConfirmado().toFixed(1) + ' kW');
-        else if ((h.agora() - tConf) / 1000 > FOLGA_CONF_S) { vai('FALHA', 'retorno físico não confirmou (cmd × conf divergem)'); set(6, 'falha', msg); }
+        // v0.13: com host.divergentes() a confirmação é POR CHAVE (soma de kW igual não basta: chave A não fechou + chave B fechou sem comando)
+        const TOL = tolKw(h), d = Math.abs(h.kwConfirmado() - selKw), nd = h.divergentes ? +h.divergentes() : 0, okConf = d <= TOL && !(nd > 0);
+        set(6, okConf ? 'ok' : 'ativo', 'cmd ' + h.kwComandado().toFixed(1) + ' · conf ' + h.kwConfirmado().toFixed(1) + ' kW' + (nd > 0 ? ' · ' + nd + ' chave(s) divergente(s)' : ''));
+        if (okConf) vai('NO_PATAMAR', 'confirmado ' + h.kwConfirmado().toFixed(1) + ' kW');
+        else if ((h.agora() - tConf) / 1000 > FOLGA_CONF_S) { falhaExec = true; vai('FALHA', 'retorno físico não confirmou (cmd × conf divergem' + (nd > 0 ? ', ' + nd + ' chave(s)' : '') + ') — rearme pelo operador'); set(6, 'falha', msg); }
       }
       // ---- v0.5: PRÉVIA da próxima etapa (salvamento manual: etapa cumprida, esperando o SALVAR) ----
       const esperaSalvar = !!(h.aguardaSalvar && h.aguardaSalvar()) && et + 1 < h.nEtapas();
@@ -3055,7 +3154,8 @@ buildTabela();
       set(9, estado === 'FALHA' ? 'falha' : (estado === 'NO_PATAMAR' || estado === 'SEM_CARGA' ? 'ok' : 'ativo'), estado + (msg ? ' — ' + msg : ''));
       publica();
     }
-    /** v0.12: REARME explícito pelo operador após FALHA (retorno físico, guarda, sem combinação). Só vale se o DSE responde. Nunca é automático. */
+    /** v0.12: REARME explícito pelo operador após FALHA (retorno físico, guarda, sem combinação). Só vale se o DSE responde. Nunca é automático.
+     *  v0.13: é a ÚNICA saída de uma FALHA de execução (retorno físico, carga confirmada acima do limite, DSE). */
     function rearma() { if (estado !== 'FALHA' || !h.dseOk()) return false; reg('rearme pelo operador'); arma(); return true; }
     return { arma, desarma, rearma, ciclo, foto, get armada() { return armada; }, get estado() { return estado; } };
   }
@@ -3292,7 +3392,7 @@ function bkAtualiza(box){
       :s.sel==='manual'?'Seletora do banco BC'+id+' em Manual (local): gire para Auto (remoto) para poder ligar o banco por aqui.'
       :s.sel==='semcom'&&!s.lig?'Sem comunicação PLC ↔ ET200: o banco BC'+id+' não pode ser ligado agora.'
       :demoLocal?'Simula o comando Ligar banco do BC'+id+' ('+(s.lig?'desliga':'liga')+' o banco). Com o banco ligado as chaves passam a responder.'
-      :'Envia '+(s.lig?'Desligar':'Ligar')+' banco BC'+id+' ao PLC (POST /api/chaves/'+id+'/banco → cbBanco.ligar). '+(s.lig?'Desligar abre todas as chaves do banco.':'Com o banco ligado as chaves passam a responder.'));
+      :'Envia '+(s.lig?'Desligar':'Ligar')+' banco BC'+id+' ao PLC (POST /api/chaves/'+rotaDe(id)+'/banco → cbBanco.ligar). '+(s.lig?'Desligar abre todas as chaves do banco.':'Com o banco ligado as chaves passam a responder.'));
   });
 }
 function drawBanco(B){
@@ -3403,8 +3503,11 @@ function botoesGer(e){ // START/STOP: demo simula o DSE; real só inicia o ensai
 }
 const CMD_URL=''; // endpoint de comando do gerador (POST {acao:'start'|'stop'}); vazio = só funciona no demo
 let msgTimer=null;
+/* v1.10.163: mensagem de SUCESSO/andamento deixa de usar a cor de erro (vermelho só para o que deu errado). Lista FECHADA de inícios de frase
+   conhecidos; qualquer outro texto continua vermelho, como antes (na dúvida, trata como aviso). */
+const MSG_OK=/^(Dados enviados ao PLC|PLC limpo|BC\S+ (ligado|desligado): chaves|BC\S+ (incluído|retirado) do ensaio|Caminho copiado|Relatório gerado automaticamente|Troca de resistência registrada|Patamar rearmado|Simulação passou para MANUAL|Gerador operando — clique em INICIAR)/;
 const msgGer=(t,ms=10000)=>{ // mensagem de aviso: some em 10 s, ao clicar nela, ao ligar o demo/aplicar, ao zerar ou quando o gerador muda de estado
-  const e=$('gmsg');clearTimeout(msgTimer);e.textContent=t||'';
+  const e=$('gmsg');clearTimeout(msgTimer);e.textContent=t||'';e.classList.toggle('ok',!!t&&MSG_OK.test(t));
   if(t&&ms)msgTimer=setTimeout(()=>msgGer(''),ms);
 };
 $('gmsg').onclick=()=>msgGer('');
@@ -3692,8 +3795,12 @@ document.querySelectorAll('dialog.jan').forEach(d=>{
 /* ===== CONTROLE DE VERSÃO =====
    A cada alteração: aumente VERSAO (maior.menor.correção), troque VERSAO_DATA,
    acrescente um item NO TOPO de HISTORICO e atualize <meta name="app-version"> no <head>. */
-const VERSAO='1.10.162', VERSAO_DATA='03/11/2026';
+const VERSAO='1.10.163', VERSAO_DATA='03/11/2026';
 const HISTORICO=[
+  {v:"1.10.163",d:"03/11/2026",i:[
+    'AUDITORIA GERAL (03/11). FBs: (1) a guarda de capacidade passa a BLOQUEAR chave com kW inválido (NaN/vazio/negativo), antes liberava; (2) com \"Usar kW real\" a sugestão travava (até 31 s) ou falhava (pilha estourada; banco de 32 chaves devolvia 0 kW sem aviso) — agora programação dinâmica também com kW real (24–39 ms; nunca passa do alvo nem do limite); (3) FALHA de execução (retorno físico não confirmou) só sai pelo REARME do operador — antes mudar kW a 100 %, limite, degrau ou chaves habilitadas reaplicava as chaves sozinho; (4) se a carga CONFIRMADA passa do limite, o Patamar derruba as chaves; (5) confirmação chave a chave (a soma podia bater com a chave errada); (6) no patamar Manual, o Aplicar confere a guarda da seleção final do operador. Módulos rodizio_chaves v0.6 e fbs_virtuais v0.13 (45 testes automáticos).',
+    'AUDITORIA DE OPERAÇÃO (celular e desktop): (1) a coluna da etapa em andamento rola sozinha para a vista no Registro (o Salvar das etapas finais ficava escondido à direita no celular e em 1280 px); (2) até 1279 px o SALVAR ETAPA aparece ao lado do FINALIZAR; (3) PARAR ENSAIO pergunta primeiro se quer parar (antes o Cancelar também parava); (4) janelas de Chaves, Setup, Troca, Gráfico, Logs e Alertas abrem onde o operador está, sem a tela pular para o topo; (5) Resultado do ensaio: no celular só a tabela rola de lado; (6) botão Alertas/Falhas conta separado e fica com contorno vermelho com falha ativa; (7) botões desabilitados do Patamar ficam esmaecidos; (8) ✕ das janelas de Chaves volta ao canto de cima; (9) mensagens de sucesso em azul (vermelho só para erro); (10) Dados do ensaio no celular: fases sem corte e botões em 2 colunas. Também: dica do \"Ligar banco\" mostra a rota certa (/api/chaves/595).'
+  ]},
   {v:"1.10.162",d:"03/11/2026",i:[
     'CORRIGIDO no resumo do Registro de aprendizado: o \"maior excesso sobre o alvo\" de uma etapa que DESCE (ex.: 0 % final depois de 107 %) mostrava ~106 pt porque contava as amostras ainda em \"estabilizando\" com a carga da etapa anterior. Agora, em etapa que desce, só conta o trecho \"contando\"; em etapa que sobe continua contando tudo (overshoot real). Achado nos seus logs de 03/11.'
   ]},
@@ -5041,6 +5148,15 @@ function drawTabela(){
     else{b.disabled=true;setCls(b,'svbtn');setTxt(b,'Salvar');b.title=''}
   });
   ensDesenhaStrip();
+  /* v1.10.163: a coluna da etapa em andamento fica À VISTA na tabela. POR QUÊ: em tela estreita (celular; 1280 px com 4 bancos) a tabela rola
+     de lado e o "Salvar" das últimas etapas ficava escondido à direita. Só rola quando a etapa MUDA (o operador continua livre para rolar). */
+  const tw=$('tb').parentElement;
+  if(!T.started||T.fim)drawTabela.et=-1;
+  else if(drawTabela.et!==T.et&&tw&&tw.clientWidth>0){
+    drawTabela.et=T.et;
+    const th=$('th'+T.et),c0=$('tb').querySelector('th');
+    if(th&&c0&&tw.scrollWidth>tw.clientWidth+1)tw.scrollLeft=Math.max(0,th.offsetLeft-c0.offsetWidth-4);
+  }
 }
 $('tb').onclick=e=>{
   const b=e.target.closest('.svbtn');
@@ -7415,6 +7531,7 @@ try{const dm=JSON.parse(localStorage.getItem('medidor.modeloEscolhido')||'null')
   const somaKw=f=>bancosAtivos().reduce((s,{b,bi})=>s+b.chaves.reduce((a,_,j)=>a+(f(off(bi)+j)?kwEf(off(bi)+j):0),0),0);
   let ultDseOk=Date.now();
   const mae=window.FBV.criaMae({
+    divergentes:()=>bancosAtivos().reduce((n,{b,bi})=>n+b.chaves.filter((_,j)=>cmdDe(off(bi)+j)!==ligDe(off(bi)+j)).length,0),   // v1.10.163: confirmação chave a chave (FB mãe v0.13, achado M2)
     agora:()=>Date.now(),iniciado:()=>!!T.started,fimEnsaio:()=>!!T.fim,etapa:()=>Math.min(T.et,ETAPAS.length-1),nEtapas:()=>ETAPAS.length,
     alvoPct:i=>ETAPAS[i].alvo,kw100:()=>{sincKw();return +G.kw100},modelo:()=>window.DADOS_MODELO||null,fonte:()=>sidse()?'virtual':'dse',
     dseOk:()=>{const ok=sidse()||dseConectado(),t=Date.now();if(ok)ultDseOk=t;return ok||t-ultDseOk<=(+G.tolDseS)*1000},   // mesma tolerância (tolDseS) da proteção do DSE: não derruba por falha de 1 leitura nem logo após abrir a página
@@ -8099,11 +8216,15 @@ const OCOR=(function(){
         if(cresceu){t.btn.classList.remove('novo');void t.btn.offsetWidth;t.btn.classList.add('novo')}
       }
     });
-    const tot=ativas().length,bt=$('bOcor');
+    const at=ativas(),tot=at.length,nf=at.filter(o=>o.tipo==='f').length,na=tot-nf,bt=$('bOcor');
     if(bt){
       const n=$('ocN');if(n.textContent!==String(tot))n.textContent=tot;
-      bt.classList.toggle('tem',tot>0);n.hidden=tot===0;
-      const tt=tot?tot+(tot===1?' ocorrência ativa':' ocorrências ativas')+' — clique para ver todas':'Sem ocorrências ativas. Clique para ver o histórico desta sessão.';
+      /* v1.10.163: contagem SEPARADA por tipo. Antes: um total só, ao lado da palavra "Falhas" e sempre amarelo (2 falhas pareciam 2 alertas).
+         Agora "Alertas N" e "Falhas N"; com falha ativa o botão ganha contorno vermelho (o texto também diz: cor não é o único sinal). */
+      n.hidden=true;
+      const sp=bt.querySelectorAll(':scope>span');if(sp.length>=2){setTxt(sp[0],'Alertas '+na);setTxt(sp[1],'Falhas '+nf)}
+      bt.classList.toggle('tem',tot>0);bt.classList.toggle('temF',nf>0);
+      const tt=tot?nf+(nf===1?' falha':' falhas')+' e '+na+(na===1?' alerta ativo':' alertas ativos')+' — clique para ver todos':'Sem ocorrências ativas. Clique para ver o histórico desta sessão.';
       if(bt.title!==tt)bt.title=tt;
     }
   }
