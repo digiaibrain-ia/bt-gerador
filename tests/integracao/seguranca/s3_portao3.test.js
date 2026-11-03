@@ -10,7 +10,7 @@ const { chromium } = require('playwright');
 const { ENV_TESTE, enderecos, esperaAte, get, post, sobe } = require('../ajudas.js');
 
 const PASTA = path.join(__dirname, '..', '..', '..', 'nodered', 'flows', 'bt2');
-const PROTEGIDOS = ['chaves-56-api-v3.4', 'chaves-400-api-v3.4', 'chaves-550-api-v1.5', 'chaves-595-api-v1.5', 'registro-ensaio-db2100-api-v1.7', 'dev-logs-api-v1.2', 'simulador-dse-demo-v7'];
+const PROTEGIDOS = ['chaves-56-api-v3.4', 'chaves-400-api-v3.4', 'chaves-550-api-v1.5', 'chaves-595-api-v1.5', 'registro-ensaio-db2100-api-v1.8', 'dev-logs-api-v1.3', 'simulador-dse-demo-v7'];
 const lerFluxo = n => JSON.parse(fs.readFileSync(path.join(PASTA, n + '.json'), 'utf8'));
 const ESCRITA = ['post', 'put', 'patch', 'delete'];
 const rotasEscrita = n => lerFluxo(n).filter(x => x.type === 'http in' && ESCRITA.includes(String(x.method).toLowerCase()));

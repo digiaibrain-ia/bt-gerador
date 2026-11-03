@@ -64,3 +64,6 @@ Gerador: `nodered/gerador/gerar_fluxos_portao4a_v0.1.py` (versoes novas, sem sob
 
 ## Fase 3, Etapa 4b - P3-A4 e P3-A5 corrigidos (chaves-56/400 v3.4, 550/595 v1.5)
 Gerador: `nodered/gerador/gerar_fluxos_portao4b_v0.1.py` (parte das versoes da 4a; nao sobrescreve). `concorrencia/c4_etapa4b.test.js` (estatico + 4 cenarios x 4 bancos). Janela de confirmacao (`CONF_JANELA_MS`, 504 `incerto:true`), quarentena por variavel (`QUARENTENA_MS`, 503 `AGUARDE_CONFIRMACAO` + `Retry-After`), seguranca (desligar chave/banco, ZERAR) passa e e reafirmada. Em `c2`, os `todo` A4 e A5 viraram testes de invariante; os testes usam janela/quarentena reduzidas por variavel da aba (`envAbas`). Verificado por mutacao nas versoes da 4a.
+
+## Fase 3, Etapa 4c - P3-B1, P3-C1 e P3-C2 corrigidos (registro-ensaio v1.8, dev-logs v1.3)
+Gerador: `nodered/gerador/gerar_fluxos_portao4c_v0.1.py` (nao sobrescreve). `concorrencia/c5_etapa4c.test.js`: preenchimento em duas fases (queda em N=0..24 nunca deixa `preenchValido=TRUE` com dados incompletos), dedup por conjunto de `n` e sinais aditivos `cursorAdiante`/`reiniciado`. Em `c2`, os `todo` B1/C1/C2 viraram testes de invariante. Verificado por mutacao nas versoes anteriores (v1.7 / v1.2).

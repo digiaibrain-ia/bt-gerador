@@ -210,22 +210,10 @@ describe('C2 R2/R5 BC56 - modo CONCORRENTE (so onde muda o resultado)', () => {
 
 // ---------- registro de ensaio (DB2100) ----------
 const endVar = (flow, nome) => { for (const n of JSON.parse(fs.readFileSync(path.join(PASTA, flow + '.json'), 'utf8'))) for (const v of (n.vartable || [])) if (v.name === nome) return v.addr; throw new Error('variavel nao encontrada: ' + nome); };
-const REG = 'registro-ensaio-db2100-api-v1.7';
+const REG = 'registro-ensaio-db2100-api-v1.8';
 const PREEN = { campos: { serie: 'SN-1', versao: 'V1', data: '2026-11-03', fase: 'trifasico', frequenciaHz: 60, tensaoV: 380, tempAmbienteC: 25, potenciaKw: 100, equipamentos: { motor: { fabricante: 'M', modelo: 'X', serie: '1' } } } };
 
 describe('C2 R7 registro de ensaio - atomicidade e concorrencia', () => {
-  test('ACHADO P3-B1 (Media): o PLC cai no meio de "preenchimento": o flag preenchValido nao deveria ficar TRUE com os dados incompletos', { todo: 'ACHADO P3-B1: preenchValido e gravado PRIMEIRO; com queda apos 2 escritas ele fica TRUE, serie gravada e o resto vazio (snapshot parcial "valido"). Atomicidade total pode exigir mudanca de layout no PLC (limite)' }, async () => {
-    const h = await sobe({ fluxos: [REG], env: ENV_TESTE });
-    try {
-      assert.ok(await esperaAte(async () => (await get(h, '/api/ensaio/snap')).status === 200, 10000));
-      h.plc.falhas.escritaApos = 2;
-      const r = await post(h, '/api/ensaio/snap/preenchimento', PREEN);
-      assert.notEqual(r.status, 200, 'queda do PLC e a resposta foi 200');
-      const valido = h.plc.ler(endVar(REG, 'preenchValido')), versao = h.plc.ler(endVar(REG, 'versao'));
-      assert.ok(!(valido === true && versao === ''), 'preenchValido=TRUE com versao/data/fase/numeros nao gravados');
-    } finally { await h.para(); }
-  });
-
   test('"etapa": o bit Salva so e gravado DEPOIS dos valores; com queda no meio dos valores o bit continua FALSE (sem etapa salva pela metade)', async () => {
     const h = await sobe({ fluxos: [REG], env: ENV_TESTE });
     try {
@@ -272,7 +260,7 @@ const LOG = '/api/dev/log-evento';
 
 describe('C2 R8 logs de desenvolvedor - concorrencia e idempotencia', () => {
   test('reenvio do MESMO lote nao duplica (dedup sessao+n) e 30 lotes concorrentes de sessoes distintas nao perdem evento (seq contiguo)', async () => {
-    const h = await sobe({ fluxos: ['dev-logs-api-v1.2'], env: ENV_TESTE });
+    const h = await sobe({ fluxos: ['dev-logs-api-v1.3'], env: ENV_TESTE });
     try {
       assert.ok(await esperaAte(async () => (await get(h, '/api/dev/logs')).status === 200, 8000));
       const a = await post(h, LOG, lote('s0', [1, 2, 3])), b = await post(h, LOG, lote('s0', [1, 2, 3]));
@@ -284,28 +272,34 @@ describe('C2 R8 logs de desenvolvedor - concorrencia e idempotencia', () => {
     } finally { await h.para(); }
   });
 
-  test('ACHADO P3-C1 (Baixa): lote MAIS NOVO chegando antes do mais antigo (mesma sessao) nao deveria descartar o antigo como "duplicado"', { todo: 'ACHADO P3-C1: dedup por "maior n ja aceito" perde em silencio os eventos 1-3 quando o lote 4-6 chega primeiro (dois POSTs em voo se ultrapassam)' }, async () => {
-    const h = await sobe({ fluxos: ['dev-logs-api-v1.2'], env: ENV_TESTE });
+  test('P3-C1 (corrigido, 4c): lote MAIS NOVO chegando antes do mais antigo (mesma sessao): os dois sao aceitos; reenvio de qualquer um e descartado', async () => {
+    const h = await sobe({ fluxos: ['dev-logs-api-v1.3'], env: ENV_TESTE });
     try {
       assert.ok(await esperaAte(async () => (await get(h, '/api/dev/logs')).status === 200, 8000));
-      await post(h, LOG, lote('s1', [4, 5, 6])); const velho = await post(h, LOG, lote('s1', [1, 2, 3]));
-      assert.equal(velho.j.aceitos, 3, 'eventos 1-3 foram descartados como duplicados (aceitos=' + velho.j.aceitos + ')');
+      const novo = await post(h, LOG, lote('s1', [4, 5, 6])), velho = await post(h, LOG, lote('s1', [1, 2, 3]));
+      assert.equal(novo.j.aceitos, 3); assert.equal(velho.j.aceitos, 3, 'eventos 1-3 foram descartados como duplicados (aceitos=' + velho.j.aceitos + ')');
+      assert.equal((await post(h, LOG, lote('s1', [1, 2, 3]))).j.aceitos, 0); assert.equal((await post(h, LOG, lote('s1', [4, 5, 6]))).j.aceitos, 0);
+      const g = (await get(h, '/api/dev/logs?limit=2000')).j; assert.equal(g.total, 6);
+      assert.deepEqual(g.eventos.map(x => x.n).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6]);
     } finally { await h.para(); }
   });
 
-  test('ACHADO P3-C2 (Baixa): cursor "desde" a frente do ultimo seq (ex.: apos reinicio do Node-RED) deveria ser sinalizado ao cliente, nao devolver lista vazia em silencio', { todo: 'ACHADO P3-C2: sem sinal (ex.: cursorAdiante) o cliente fica sem receber eventos novos ate o seq alcancar o cursor antigo; hoje so o campo boot permite perceber' }, async () => {
-    const h = await sobe({ fluxos: ['dev-logs-api-v1.2'], env: ENV_TESTE });
+  test('P3-C2 (corrigido, 4c): GET sinaliza cursorAdiante (desde > ultimo seq) e reiniciado (boot diferente), sem alterar os campos antigos', async () => {
+    const h = await sobe({ fluxos: ['dev-logs-api-v1.3'], env: ENV_TESTE });
     try {
       assert.ok(await esperaAte(async () => (await get(h, '/api/dev/logs')).status === 200, 8000));
       await post(h, LOG, lote('s2', [1, 2]));
-      const g = (await get(h, '/api/dev/logs?desde=9999')).j;
-      assert.equal(g.eventos.length, 0);
-      assert.ok(g.cursorAdiante === true || g.reiniciado === true, 'resposta nao sinaliza que o cursor esta a frente: ' + JSON.stringify(Object.keys(g)));
+      const adiante = (await get(h, '/api/dev/logs?desde=9999')).j;
+      assert.equal(adiante.eventos.length, 0); assert.equal(adiante.cursorAdiante, true); assert.equal(adiante.reiniciado, false);
+      const normal = (await get(h, '/api/dev/logs?desde=0&boot=' + adiante.boot)).j;
+      assert.equal(normal.cursorAdiante, false); assert.equal(normal.reiniciado, false); assert.equal(normal.eventos.length, 2);
+      assert.equal((await get(h, '/api/dev/logs?desde=0&boot=outra-execucao')).j.reiniciado, true);
+      for (const k of ['ok', 'flow', 'boot', 'total', 'ultimo', 'descartados', 'perdidos', 'truncado', 'lidoEm', 'eventos']) assert.ok(k in normal, 'campo antigo sumiu: ' + k);
     } finally { await h.para(); }
   });
 
   test('"limpar" entre lotes: o seq continua (nao reinicia), a sessao nao ressuscita o que foi limpo e o cursor "desde" segue valido', async () => {
-    const h = await sobe({ fluxos: ['dev-logs-api-v1.2'], env: ENV_TESTE });
+    const h = await sobe({ fluxos: ['dev-logs-api-v1.3'], env: ENV_TESTE });
     try {
       assert.ok(await esperaAte(async () => (await get(h, '/api/dev/logs')).status === 200, 8000));
       await post(h, LOG, lote('s3', [1, 2, 3]));
