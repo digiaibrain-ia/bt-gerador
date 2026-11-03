@@ -1,5 +1,8 @@
-const {chromium}=require('playwright');const fs=require('fs');
-const R=require('/home/user/bt-gerador/dashboard/modulos-fonte/rodizio_chaves_v0.5.js');
+// Robo do ensaio completo no Demo (gerador ideal, Patamar Auto, 4 bancos). Uso: servir dashboard/ferramentas na porta 8772 e rodar
+//   NODE_PATH=$(npm root -g) node tests/e2e/geradores_ideais.js [indices, ex.: 0,3]   (MEDIDOR=medidor_gerador_v1.10.163.html para trocar a versao)
+const {chromium}=require('playwright');const fs=require('fs');const path=require('path');const RAIZ=path.join(__dirname,'..','..');
+const MEDIDOR=process.env.MEDIDOR||'medidor_gerador_v1.10.163.html';
+const R=require(path.join(RAIZ,'dashboard/modulos-fonte/rodizio_chaves_v0.5.js'));
 const GERS=[['MWM_40KVA_eletr','G4501AMF_MWMe_40KVA_60HZ_380V_12V.dse'],['MWM_150KVA','G4501AMF_MWM_150KVA_60HZ_380V_12V.dse'],['SCA_500KVA','G4501AMF_SCA_500KVA_60HZ_380V_24V.dse'],['SCA_800KVA','G4501AMF_SCA_800KVA_60HZ_380V_24V.dse'],['380V','8660_1250KVA_60HZ_380V_24V_V7.7.dse']];
 const sel=process.argv[2]?process.argv[2].split(',').map(Number):[0,1,2,3,4];
 const BANCOS=[['56',[5,5,5,5,5,4,4,4,4,4,4,4,3]],['400',[5,5,10,10,10,10,50,50,50,50,50,50,50]],['59,5',[5,5,5,5,5,4,4,4,4,4,4,3,3,2,1,.5,.5,.5]],['550',[5,5,5,5,5,25,50,50,100,100,100,100]]];
@@ -28,12 +31,12 @@ const LOOP=async()=>{
 for(const gi of sel){const [pasta,arq]=GERS[gi];const ctx=await b.newContext({viewport:{width:1400,height:900}});const p=await ctx.newPage();const errs=[];
  p.on('pageerror',e=>errs.push(e.message));p.on('dialog',async d=>{await d.accept(d.type()==='prompt'?'mwm':undefined)});
  await p.route('**/api/**',r=>r.fulfill({status:503,contentType:'application/json',body:'{"ok":false}'}));
- await p.goto('http://localhost:8772/medidor_gerador_v1.10.160.html?novos=1');await p.waitForTimeout(1800);
+ await p.goto('http://localhost:8772/'+MEDIDOR+'?novos=1');await p.waitForTimeout(1800);
  await p.click('#bDemo');await p.check('#dmTradicional');await p.waitForTimeout(500);await p.evaluate(()=>document.getElementById('dlgDemo').close());
  await p.click('#mAuto').catch(()=>{});await p.click('#velSeg button[data-v="10"]');await p.waitForTimeout(300);
  const gen=await p.evaluate(()=>SIM.gen);if(gen!=='parado'){await p.click('#bGenStop').catch(()=>{});await p.waitForFunction(()=>SIM.gen==='parado',null,{timeout:40000})}
  await p.click('#bIni');await p.waitForTimeout(500);
- await p.setInputFiles('#dCat input[data-c=f]','/home/user/bt-gerador/catalogo/catalogo_modelos_v0.1.csv');await p.waitForTimeout(1200);
+ await p.setInputFiles('#dCat input[data-c=f]',path.join(RAIZ,'catalogo/catalogo_modelos_v0.1.csv'));await p.waitForTimeout(1200);
  await p.fill('#dCat input[data-c=q]',arq.replace('.dse',''));await p.waitForTimeout(600);
  for(const bt of await p.$$('#dCat .cat-l button')){const t=await bt.textContent();if(t.includes(pasta)&&t.includes(arq)){await bt.click();break}}
  await p.waitForTimeout(500);const kw100=+(await p.inputValue('#dPot'));
@@ -67,4 +70,4 @@ for(const gi of sel){const [pasta,arq]=GERS[gi];const ctx=await b.newContext({vi
  const item={gerador:arq,kw100,limitePct:par.pct,excessoPct:par.exc,parErro:par.erro,patamarLigado:ligado,etapas:linhas,fim:r.fim||r.aguardaFim,falhas,errosJS:errs.slice(0,3)};
  resumo.push(item);console.log(JSON.stringify(item));
  await ctx.close()}
-await b.close();fs.writeFileSync('tests/e2e/resultado_geradores_ideais.json',JSON.stringify(resumo,null,1))})()
+await b.close();fs.writeFileSync(path.join(__dirname,'resultado_geradores_ideais.json'),JSON.stringify(resumo,null,1))})()
