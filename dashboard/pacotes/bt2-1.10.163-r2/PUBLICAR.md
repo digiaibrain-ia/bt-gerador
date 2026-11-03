@@ -21,3 +21,5 @@ Versão 161: o botão ✕ das janelas nunca sai da tela no celular (popup Result
 Versão 162: corrige o "maior excesso sobre o alvo" do resumo de aprendizado em etapas que descem (0 % final).
 
 Versão 163 (auditoria geral de 03/11): FBs corrigidos (guarda, kW real, rearme, carga confirmada acima do limite) e 10 correções de operação no celular/desktop. PLC: FB100 v0.4, FB102 v0.2 e lado ET200 v0.2 (a contatora não religa sozinha após queda de comunicação). Simulador de bancada v5 (4 bancos).
+
+r2 (03/11/2026): ferramentas com títulos/versões corrigidos (gráfico 0.11, mapa 0.15, logs 1.7, amostras 0.7, maquete 0.4; catálogo já aponta para elas) e comentários dos SCL corrigidos (FB103 v0.2, DB41 v0.2, FC de chamadas v0.2).

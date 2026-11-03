@@ -1,10 +1,10 @@
 FUNCTION_BLOCK "fb103_ComEt200_32"
-TITLE = fb103_ComEt200_32 v0.1 (FB103)
+TITLE = fb103_ComEt200_32 v0.2 (FB103)
 { S7_Optimized_Access := 'FALSE' }
 AUTHOR : 'Reginaldo Lobo'
-VERSION : 0.1
+VERSION : 0.2
 ////====================================
-//// fb103_ComEt200_32 (FB103)  -  RASCUNHO v0.1 (03/11/2026) - NAO compilado no TIA, NAO testado
+//// fb103_ComEt200_32 (FB103)  -  RASCUNHO v0.2 (comentarios corrigidos na auditoria; logica igual a v0.1) (03/11/2026) - NAO compilado no TIA, NAO testado
 //// O QUE FAZ : MESMA LOGICA do fb101_ComEt200 v0.7 (PUT/GET 1515 <-> ET200, intertravamento do banco, vida,
 ////             falha segura), mas com 32 chaves. O FB101 NAO foi alterado (BC56 e BC400 continuam nele).
 //// TELEGRAMA : PUT 8 bytes = cmd[1..32] (DBX0.0..3.7) + vida1515 (DBW4) + ligarBanco (DBX6.0) + reserva (DBB7).
@@ -12,8 +12,7 @@ VERSION : 0.1
 ////             Total 16 bytes no remoto (era 12). RemotoCmd = P#DBn.DBX0.0 BYTE 8; RemotoFb = P#DBn.DBX8.0 BYTE 8.
 //// INSTANCIAS: db3205i_BC595_ComEt200 -> remoto DB40 "ComBC595" (so o BC59,5, 18 chaves). Bancos ate 16 chaves usam o FB101. Ver chamadas_BC595_v0.2.scl.
 ////             (numeros dos remotos = sugestao, confirmar no projeto do ET200). Ver chamadas v0.1.
-//// ET200     : exige novos DBs remotos (db40_db41_ComEt200_32_v0.1.scl) e o FC4 do ET200 estendido para 32 bits
-////             de comando/feedback por banco (feito pelo operador no TIA do ET200).
+//// ET200     : exige novos DBs remotos (db40_ComBC595_32_v0.2.scl) e o lado ET200 do BC59,5: fb_bancoEt200_32_v0.2 chamado por fc_bancosNovosEt200_v0.2 (o FC4 atual nao muda).
 //// ATENCAO   : 1) 4 instancias dividindo o mesmo ID_Conexao: cada instancia faz PUT e GET um de cada vez,
 ////             mas as 4 podem pedir juntas. Se aparecer STATUS de "recurso ocupado" (ex. 16#80C3/16#8085), aumentar
 ////             Pausa ou usar uma conexao por par de bancos. Testar no PLC.

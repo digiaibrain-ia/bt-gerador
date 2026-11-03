@@ -1,8 +1,8 @@
 DATA_BLOCK "ComBC550"
-TITLE = ComBC550 v0.1 (DB41)
+TITLE = ComBC550 v0.2 (DB41)
 { S7_Optimized_Access := 'FALSE' }
 AUTHOR : 'RegLobo'
-VERSION : 0.1
+VERSION : 0.2
 NON_RETAIN
 ////====================================
 //// ComBC550 (DB41) - programa "Gerador_BC015"
@@ -12,7 +12,7 @@ NON_RETAIN
 //// POR QUE DB GLOBAL SEM OTIMIZACAO : PUT/GET enderecam por byte/bit absoluto.
 //// ESCRITOR UNICO : DBB0..5 so pelo PUT do 1515; DBB6..11 so pelo FC4 do ET200.
 //// RELACAO COM OUTROS DBs : par do db3305i_BC550_ComEt200 no 1515 (instancia do FB101).
-//// Autor: RegLobo  -  Versao: 0.3  -  Projeto: NOde-red (BT2)
+//// Autor: RegLobo  -  Versao: 0.2  -  Projeto: NOde-red (BT2)
 ////=====================================
    STRUCT
       cmd : Array[1..16] of Bool;   // DBX0.0..1.7 comando das contatoras (PUT do 1515)

@@ -5,7 +5,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="0.10">
+<meta name="app-version" content="0.11">
 <title>Gráfico do ensaio · BT2</title>
 <!--
   grafico_ensaio_v0.9.html · 29/10/2026 — v0.8: usa a API INTERNA DOS CARDS do medidor (canal bt2-api, somente leitura): na fonte "Medidor" mostra ao vivo kW, correntes, rotação, água e bateria (os mesmos cards da tela do medidor), sem ligar de novo no PLC/Node-RED. Nada mais mudou.
@@ -194,7 +194,7 @@
 
 <main>
   <div id="ag"></div>
-  <div class="vazio" id="vazio"><b id="vazioT">Aguardando o medidor</b><span id="vazioX">Abra este gráfico pelo botão “📈 Analisar” do medidor, ou use “Abrir ensaio salvo” para analisar um ensaio que já terminou. Sem o medidor? Troque a “Fonte” para “API direto”.</span><button type="button" id="vazioBtn" hidden>Usar “Direto do gerador”</button></div>
+  <div class="vazio" id="vazio"><b id="vazioT">Aguardando o medidor</b><span id="vazioX">Abra este gráfico pelo botão “📈 Analisar” do medidor, ou use “Abrir ensaio salvo” para analisar um ensaio que já terminou. Sem o medidor? Troque a “Fonte” para “Direto do gerador”.</span><button type="button" id="vazioBtn" hidden>Usar “Direto do gerador”</button></div>
 </main>
 
 <dialog id="dlgAjuda">
@@ -1223,7 +1223,7 @@ const G = AnaliseGrafico.criar({
 function renderTudo() {
   leitura(); condicoes(); extras(); G.atualiza(true); $('vazio').hidden = S.pts.length > 0;
   const d = S.fonte === 'dse'; $('vazioT').textContent = d ? 'Aguardando o início' : 'Aguardando o medidor';
-  $('vazioX').textContent = d ? 'Confira o endereço da API, informe tensão e frequência nominais e aperte “▶ Iniciar acompanhamento” quando o ensaio começar.' : 'Abra este gráfico pelo botão “📈 Analisar” do medidor, ou use “Abrir ensaio salvo” para analisar um ensaio que já terminou. Sem o medidor? Troque a “Fonte” para “API direto”.';
+  $('vazioX').textContent = d ? 'Confira o endereço da API, informe tensão e frequência nominais e aperte “▶ Iniciar acompanhamento” quando o ensaio começar.' : 'Abra este gráfico pelo botão “📈 Analisar” do medidor, ou use “Abrir ensaio salvo” para analisar um ensaio que já terminou. Sem o medidor? Troque a “Fonte” para “Direto do gerador”.';
   sinal();
 }
 function sinal() {

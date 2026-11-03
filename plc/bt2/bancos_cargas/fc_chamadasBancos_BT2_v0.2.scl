@@ -1,14 +1,14 @@
 FUNCTION "fc_chamadasBancos_BT2" : Void
-TITLE = fc_chamadasBancos_BT2 v0.1
+TITLE = fc_chamadasBancos_BT2 v0.2
 { S7_Optimized_Access := 'TRUE' }
 AUTHOR : 'Reginaldo Lobo'
 VERSION : 0.1
 ////====================================
-//// fc_chamadasBancos_BT2 v0.1 (03/11/2026) - GERADO por gerar_banco_v0.2.py - RASCUNHO, nao compilado
+//// fc_chamadasBancos_BT2 v0.1 (03/11/2026) - GERADO por gerar_banco_v0.3.py - RASCUNHO, nao compilado
 //// ONDE RODA : 1515 (BT2). Chamar 1x por ciclo no OB1: "fc_chamadasBancos_BT2"();   (substitui colar chamadas uma a uma)
 //// O QUE FAZ : para cada banco, 1) comunicacao com o ET200 (FB101/FB103) e 2) setup das chaves (FB100/FB102), nessa ordem.
 //// OBS       : todos os bancos usam a MESMA conexao S7 (W#16#100), decisao do operador de 03/11/2026.
-//// ATENCAO   : os DBs de instancia (db30x4i_.../db30x5i_...) precisam existir com esses nomes (criar no TIA como instancia dos FBs).
+//// ATENCAO   : os DBs de instancia (db<base+4>i_<banco>_SetupChaves e db<base+5>i_<banco>_ComEt200, ex.: db3004i_BC56_SetupChaves, db3105i_BC400_ComEt200) precisam existir com esses nomes (criar no TIA como instancia dos FBs).
 ////=====================================
 BEGIN
 
