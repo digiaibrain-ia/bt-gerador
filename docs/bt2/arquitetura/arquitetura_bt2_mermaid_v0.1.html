@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arquitetura BT2</title>
+<style>
+:root{--bg:#F9FAFB;--fg:#1F2937;--muted:#6B7280;--card:#FFFFFF;--line:#E5E7EB}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0F172A;--fg:#E5E7EB;--muted:#9CA3AF;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F172A;--fg:#E5E7EB;--muted:#9CA3AF;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:"Inter","Helvetica Neue",Roboto,Arial,sans-serif;margin:0;
+ padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 36px}
+.page{max-width:1100px;margin:0 auto}
+h1{font-size:clamp(22px,4vw,32px);margin:0 0 4px;text-align:center;font-weight:700;text-wrap:balance}
+.sub{text-align:center;color:var(--muted);margin:0 0 18px}
+/* o diagrama usa cores claras fixas: fica sobre uma folha branca em qualquer tema */
+.folha{background:#FFFFFF;border:1px solid var(--line);border-radius:14px;padding:16px;overflow-x:auto}
+.folha pre.mermaid{margin:0;background:transparent;color:#1F2937;text-align:center}
+.nota{margin-top:14px;font-size:12px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<h1>Arquitetura BT2</h1>
+<p class="sub">Visão geral: tela, Node-RED, PLC 1500, ET200 e campo</p>
+<div class="page"><div class="folha"><pre class="mermaid">
+graph TD
+    %% Configurações Gerais
+    classDef default fill:#FFFFFF,stroke:#D1D5DB,stroke-width:1px,rx:8px,ry:8px;
+    
+    %% --- SEÇÃO 1: OPERAÇÃO ---
+    subgraph S1 [ "🌐 OPERAÇÃO (TELA)" ]
+        A1["📊 Medidor 1.10.167"]
+        A2["📜 Gerenciador de Logs"]
+        A3["📈 Gráfico do Ensaio"]
+    end
+    style S1 fill:#EFF6FF,stroke:#3B82F6,stroke-width:1px,stroke-dasharray: 5 5,rx:12px,ry:12px
+
+    %% --- SEÇÃO 2: PC BT2 ---
+    subgraph S2 [ "💻 PC BT2 (.156) - Node-RED" ]
+        B_Guarda["🔒 Guarda de Escrita"]
+        B1["🎛️ Comando de Chaves"]
+        B2["🗃️ Registro do Ensaio"]
+        B3["📝 Logs"]
+        B4["⚡ Gerador (DSE)"]
+    end
+    style S2 fill:#F5F3FF,stroke:#8B5CF6,stroke-width:1px,stroke-dasharray: 5 5,rx:12px,ry:12px
+
+    %% --- SEÇÃO 3: PLC 1500 ---
+    subgraph S3 [ "⚙️ PLC 1500 DO ENSAIO" ]
+        C1["💾 DB3000 / DB3100"]
+        C2["💾 DB2000 / DB2100"]
+        C3["🧩 FB100 / FB101"]
+    end
+    style S3 fill:#ECFDF5,stroke:#10B981,stroke-width:1px,stroke-dasharray: 5 5,rx:12px,ry:12px
+
+    %% --- SEÇÃO 4: BANCO PROVISÓRIO ---
+    subgraph S4 [ "📦 ET200/1200 - BANCO DE CARGA PROVISÓRIO" ]
+        D1["🔋 BC550"]
+        D2["🔋 BC595"]
+        D3["⏳ Sinais do DSE (Futuro)"]
+    end
+    style S4 fill:#FFFBEB,stroke:#F59E0B,stroke-width:1px,stroke-dasharray: 5 5,rx:12px,ry:12px
+
+    %% --- SEÇÃO 5: CAMPO ---
+    subgraph S5 [ "🏗️ CAMPO" ]
+        E1["🏭 Bancos de Carga"]
+        E2["⚙️ Gerador (Carga Desacoplada)"]
+    end
+    style S5 fill:#FEF2F2,stroke:#EF4444,stroke-width:1px,stroke-dasharray: 5 5,rx:12px,ry:12px
+
+    %% --- SEÇÃO 6: FUTURO ---
+    subgraph S6 [ "🔮 RESERVADO PARA O FUTURO" ]
+        F1["🖥️ Servidor Virtual (.31)"]
+        F2["🛢️ SQL Server"]
+    end
+    style S6 fill:#F9FAFB,stroke:#9CA3AF,stroke-width:1px,stroke-dasharray: 5 5,rx:12px,ry:12px
+
+    %% --- FLUXO DE CONEXÕES (DE CIMA PARA BAIXO) ---
+    A1 &amp; A2 &amp; A3 --&gt; B_Guarda
+    B_Guarda --&gt; B1 &amp; B2 &amp; B3 &amp; B4
+    
+    B1 --&gt; C3
+    B2 &amp; B3 &amp; B4 --&gt; C1 &amp; C2
+    
+    C3 --&gt; D1 &amp; D2
+    C1 &amp; C2 -.-&gt; D3
+    
+    D1 &amp; D2 --&gt; E1
+    D3 -.-&gt; E2
+    
+    E1 &amp; E2 -.-&gt; F1
+    F1 --&gt; F2
+
+    %% --- ESTILIZAÇÃO DOS NÓS ESPECÍFICOS ---
+    %% Destaques centrais/Finais (Roxo e Laranja)
+    style B_Guarda fill:#8B5CF6,stroke:#7C3AED,stroke-width:2px,color:#FFFFFF
+    style D1 fill:#FFF3CD,stroke:#FFC107
+    style D2 fill:#FFF3CD,stroke:#FFC107
+    style E1 fill:#FFEDEB,stroke:#F87171
+    style E2 fill:#FFEDEB,stroke:#F87171
+
+</pre></div>
+<p class="nota">Linhas contínuas: fluxo de comando e leitura. Linhas pontilhadas: ligações futuras ou opcionais.</p></div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,securityLevel:"strict",theme:"base"});</script>
+</body>
+</html>
