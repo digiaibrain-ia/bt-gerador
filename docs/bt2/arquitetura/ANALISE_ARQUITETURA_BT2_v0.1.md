@@ -24,7 +24,7 @@ Gerada a partir do mesmo modelo de dados do HTML `arquitetura_bt2_v0.5_editavel.
 | Registro do ensaio | DB2100 | S7 | em uso | S7: grava o snapshot do ensaio em duas fases. |
 | Ler gerador (.156) | DB2000 | S7 | em uso | S7: escreve os dados do DSE no DB2000. |
 | Node-RED | SQL Server | assíncrono | futuro | Gravação assíncrona e com nova tentativa: a queda do SQL nunca atrasa um comando. |
-| MES Four Elements | PLC 1500 · Ensaio | OPC · a definir | futuro | OPC: dados de ensaio vindos do MES Four Elements. Ponto de entrada a definir. |
+| MES Four Elements | DB2100 | OPC | futuro | OPC: o MES Four Elements preenche os Dados de Ensaio (os mesmos campos do preenchimento do registro, gravados no DB2100). O caminho físico do OPC ainda é a definir. |
 | PLC 1500 · Ensaio | ET200 / 1200 | PUT/GET | em diagnóstico | PUT/GET de 6 bytes: comando das chaves, vida do 1515 e Ligar banco; retorno com feedback, vida do ET200 e seletora em Auto. Hoje o ComOk está falso. |
 | Sinais do DSE | ET200 / 1200 | futuro | futuro | Sinais do DSE para o banco de carga (futuro). |
 | ET200 / 1200 | BC56 | — | em uso | Módulo do BC56. |
@@ -101,7 +101,7 @@ As telas também conversam entre si no mesmo navegador por canais (BroadcastChan
 
 ## 5. Pontos a confirmar
 
-- **Ponto de entrada do OPC / MES Four Elements.** PLC 1500, Node-RED ou DB2100? Desenhado como "a definir".
+- **Caminho físico do OPC (MES Four Elements).** O MES vai preencher os Dados de Ensaio por OPC (hoje digitados no medidor e gravados no DB2100). Falta definir se o OPC entra direto no PLC 1500 ou passa pelo Node-RED.
 - **Comunicação PLC 1500 ↔ ET200.** ComOk falso: a vida do ET200 não chega ao FB101. Diagnóstico no db3005i_BC56_ComEt200 (ComOk, StatusPut, StatusGet, FalhaPut, FalhaGet).
 - **DSE desligado.** O fluxo Deep Sea → REST responde sem dados. Os sinais do DSE para o ET200 são futuros.
 - **Versão do Node-RED e PM2 do PC.** O PM2 não respondeu ao pm2 list nesta sessão do notebook (pasta C:\pm2-home).

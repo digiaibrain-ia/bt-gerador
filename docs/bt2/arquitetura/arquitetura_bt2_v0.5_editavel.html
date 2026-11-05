@@ -157,7 +157,7 @@ var N=[
  {id:'logs',nome:'Logs de desenvolvedor',sub:'v1.3 · /api/dev/*',st:'real',cor:'yellow',gl:'term',fig:'term',g:'G_PC',b:[340,540],in:'b',
   det:'POST /api/dev/log-evento, GET /api/dev/logs, POST /api/dev/logs/limpar. Buffer em memória; sinais cursorAdiante e reiniciado.'},
  {id:'registro',nome:'Registro do ensaio',sub:'v1.8 · /api/ensaio/*',st:'real',cor:'blue',gl:'clip',fig:'reg',g:'G_PC',b:[550,540],in:'b',
-  det:'GET/POST /api/ensaio/modo; POST preenchimento, etapa e limpar; GET snap. O preenchimento é gravado em duas fases (dados e depois o flag de validade).'},
+  det:'GET/POST /api/ensaio/modo; POST preenchimento (Dados de Ensaio), etapa e limpar; GET snap. O preenchimento é gravado em duas fases (dados e depois o flag de validade). No futuro os Dados de Ensaio também virão do MES por OPC.'},
  {id:'cli156',nome:'Ler gerador (.156)',sub:'grava o DB2000 no PLC',st:'real',cor:'pink',gl:'play',fig:'pulse',g:'G_PC',b:[770,540],in:'b',
   det:'Botões Automático (a cada 2 s), Ler agora e Desligar. Lê http://localhost:1880/api/gerador e grava o DB2000 do PLC. Só este fluxo grava o DB2000 (o cliente do servidor .31 não deve rodar junto).'},
  {id:'dse_srv',nome:'Deep Sea → REST',sub:'v3.6 · /api/gerador',st:'diag',cor:'pink',gl:'pulse',fig:'pulse',g:'G_PC',b:[1030,540],in:'b',
@@ -176,8 +176,8 @@ var N=[
   det:'Dados do DSE gravados pelo fluxo Ler gerador (.156).'},
  {id:'plc',nome:'PLC 1500 · Ensaio',sub:'FB100 (setup) · FB101 (ET200)',st:'real',cor:'mint',gl:'cpu',fig:'plc',g:'G_PLC',ga:'A_SIS',b:[460,945],a:[150,830],in:'ba',sz:{blocos:[300,96],ilustrado:[170,120]},
   det:'PLC 1500 do Ensaio (tudo o que foi desenvolvido até agora). Os DBs foram renumerados e carregados sem erro. FB100: setup das chaves. FB101: PUT/GET com o ET200 (vida do 1515 e do ET200, seletora do banco).'},
- {id:'mes',nome:'MES Four Elements',sub:'entrada de dados de ensaio · OPC',st:'fut',cor:'gray',gl:'factory',fig:'mes',g:'G_PLC',ga:'A_FUT',b:[130,945],a:[330,965],in:'ba',
-  det:'Os dados de ensaio virão por OPC, integrados ao MES da empresa. O ponto de entrada (PLC 1500, Node-RED ou DB2100) ainda precisa ser definido.'},
+ {id:'mes',nome:'MES Four Elements',sub:'dados de ensaio · OPC',st:'fut',cor:'gray',gl:'factory',fig:'mes',g:'G_PLC',ga:'A_FUT',b:[130,945],a:[330,965],in:'ba',
+  det:'MES da empresa. Vai preencher os Dados de Ensaio (série, versão, data, fase, frequência, tensão, temperatura ambiente, potência e equipamentos) por OPC. Hoje esses dados são digitados no medidor e gravados no DB2100 pelo registro. O caminho físico do OPC (direto no PLC 1500 ou pelo Node-RED) ainda é a definir.'},
  {id:'sql',nome:'SQL Server',sub:'histórico (futuro)',st:'fut',cor:'gray',gl:'db',fig:'sql',g:'G_PLC',ga:'A_FUT',b:[950,945],a:[560,965],in:'ba',
   det:'Histórico fora do caminho de comando: gravação assíncrona pelo Node-RED (logs, registro do ensaio, auditoria). Ainda não implementado.'},
  {id:'et200',nome:'ET200 / 1200',sub:'provisório · comunicação em diagnóstico',st:'diag',cor:'yellow',gl:'server',fig:'et',g:'G_ET',ga:'A_SIS',b:[590,1110],a:[380,830],in:'ba',sz:{blocos:[250,86],ilustrado:[150,120]},
@@ -195,12 +195,12 @@ var N=[
   det:'Controlador do gerador. Fala Modbus TCP com o Node-RED (unit 10). Está desligado hoje.'},
  {id:'srv31',nome:'Servidor virtual (.31)',sub:'sem uso hoje',st:'fut',cor:'gray',gl:'server',fig:'srv',g:'G_FUT',ga:'A_FUT',b:[130,1545],a:[780,965],in:'ba',det:'Reservado para o futuro. Não roda fluxo nenhum hoje.'},
  /* so no estilo Agentes */
- {id:'ch1',nome:'Fila e revalidação',st:'real',cor:'mint',gl:'list',ga:'A_CH',a:[170,400],in:'a',sz:{agentes:[180,54]},det:'Um comando por vez; revalida o estado ao sair da fila. O Desligar banco tem prioridade e cancela os "ligar" pendentes (409).'},
- {id:'ch2',nome:'Confirma em até 2 s',st:'real',cor:'mint',gl:'clock',ga:'A_CH',a:[170,480],in:'a',sz:{agentes:[180,54]},det:'Lê de volta do PLC. Sem confirmação em 2 s, responde 504 "incerto" (confira o estado antes de repetir).'},
- {id:'ch3',nome:'Quarentena e reafirmação',st:'real',cor:'mint',gl:'shield',ga:'A_CH',a:[170,560],in:'a',sz:{agentes:[180,54]},det:'Depois de um 504 a variável fica em quarentena (503 AGUARDE_CONFIRMACAO). Comandos de segurança passam e são reafirmados.'},
- {id:'rg1',nome:'Fase 1: grava os dados',st:'real',cor:'blue',gl:'edit',ga:'A_RG',a:[450,400],in:'a',sz:{agentes:[180,54]},det:'Grava o preenchimento com o flag de validade em falso.'},
- {id:'rg2',nome:'Confere a leitura',st:'real',cor:'blue',gl:'check',ga:'A_RG',a:[450,480],in:'a',sz:{agentes:[180,54]},det:'Lê de volta e compara com o que foi escrito.'},
- {id:'rg3',nome:'Fase 2: valida o snapshot',st:'real',cor:'blue',gl:'check',ga:'A_RG',a:[450,560],in:'a',sz:{agentes:[180,54]},det:'Só então grava o flag de validade como verdadeiro.'},
+ {id:'ch1',nome:'Fila e revalidação',st:'real',cor:'mint',gl:'list',ga:'A_CH',a:[450,400],in:'a',sz:{agentes:[180,54]},det:'Um comando por vez; revalida o estado ao sair da fila. O Desligar banco tem prioridade e cancela os "ligar" pendentes (409).'},
+ {id:'ch2',nome:'Confirma em até 2 s',st:'real',cor:'mint',gl:'clock',ga:'A_CH',a:[450,480],in:'a',sz:{agentes:[180,54]},det:'Lê de volta do PLC. Sem confirmação em 2 s, responde 504 "incerto" (confira o estado antes de repetir).'},
+ {id:'ch3',nome:'Quarentena e reafirmação',st:'real',cor:'mint',gl:'shield',ga:'A_CH',a:[450,560],in:'a',sz:{agentes:[180,54]},det:'Depois de um 504 a variável fica em quarentena (503 AGUARDE_CONFIRMACAO). Comandos de segurança passam e são reafirmados.'},
+ {id:'rg1',nome:'Fase 1: grava os dados',st:'real',cor:'blue',gl:'edit',ga:'A_RG',a:[170,400],in:'a',sz:{agentes:[180,54]},det:'Grava o preenchimento (Dados de Ensaio) com o flag de validade em falso. Hoje vem do medidor; no futuro, também do MES por OPC.'},
+ {id:'rg2',nome:'Confere a leitura',st:'real',cor:'blue',gl:'check',ga:'A_RG',a:[170,480],in:'a',sz:{agentes:[180,54]},det:'Lê de volta e compara com o que foi escrito.'},
+ {id:'rg3',nome:'Fase 2: valida o snapshot',st:'real',cor:'blue',gl:'check',ga:'A_RG',a:[170,560],in:'a',sz:{agentes:[180,54]},det:'Só então grava o flag de validade como verdadeiro.'},
  {id:'lg1',nome:'Recebe o lote',st:'real',cor:'yellow',gl:'term',ga:'A_LG',a:[730,400],in:'a',sz:{agentes:[180,54]},det:'POST /api/dev/log-evento com até 200 eventos por lote.'},
  {id:'lg2',nome:'Remove duplicados',st:'real',cor:'yellow',gl:'list',ga:'A_LG',a:[730,480],in:'a',sz:{agentes:[180,54]},det:'Descarta só a repetição exata (janela dos últimos 500 números por sessão).'},
  {id:'lg3',nome:'Guarda em memória',st:'real',cor:'yellow',gl:'db',ga:'A_LG',a:[730,560],in:'a',sz:{agentes:[180,54]},det:'Buffer circular de 5000 eventos; some se o Node-RED reiniciar.'},
@@ -242,7 +242,7 @@ var E=[
  {id:'e16',de:'registro',pa:'db2100',rot:'S7',st:'real',sk:'b',det:'S7: grava o snapshot do ensaio em duas fases.'},
  {id:'e17',de:'cli156',pa:'db2000',rot:'S7',st:'real',sk:'b',det:'S7: escreve os dados do DSE no DB2000.'},
  {id:'e18',de:'nodered',pa:'sql',rot:'assíncrono',st:'fut',sk:'b',det:'Gravação assíncrona e com nova tentativa: a queda do SQL nunca atrasa um comando.',o:{sa:'r',sb:'r',via:1210}},
- {id:'e19',de:'mes',pa:'plc',rot:'OPC · a definir',st:'fut',sk:'b',det:'OPC: dados de ensaio vindos do MES Four Elements. Ponto de entrada a definir.'},
+ {id:'e19',de:'mes',pa:'db2100',rot:'OPC',st:'fut',sk:'b',det:'OPC: o MES Four Elements preenche os Dados de Ensaio (os mesmos campos do preenchimento do registro, gravados no DB2100). O caminho físico do OPC ainda é a definir.'},
  {id:'e20',de:'plc',pa:'et200',rot:'PUT/GET',st:'diag',sk:'b',bi:1,det:'PUT/GET de 6 bytes: comando das chaves, vida do 1515 e Ligar banco; retorno com feedback, vida do ET200 e seletora em Auto. Hoje o ComOk está falso.'},
  {id:'e21',de:'dse_sig',pa:'et200',rot:'futuro',st:'fut',sk:'b',det:'Sinais do DSE para o banco de carga (futuro).'},
  {id:'e22',de:'et200',pa:'bc56',rot:'',st:'real',sk:'b',det:'Módulo do BC56.'},{id:'e23',de:'et200',pa:'bc400',rot:'',st:'real',sk:'b',det:'Módulo do BC400.'},
@@ -269,7 +269,7 @@ var E=[
  {id:'a25',de:'et200',pa:'bancos',rot:'contatores',st:'real',sk:'a',det:'Contatores e chaves de potência.'},
  {id:'a26',de:'gerador',pa:'bancos',rot:'potência',st:'real',sk:'a',det:'Alimentação dos bancos de carga.'},
  {id:'a27',de:'res',pa:'sql',rot:'futuro',st:'fut',sk:'a',det:'Histórico no SQL Server (futuro), gravação assíncrona.'},
- {id:'a28',de:'mes',pa:'plc',rot:'OPC · a definir',st:'fut',sk:'a',det:'OPC com o MES Four Elements. Ponto de entrada a definir.'},
+ {id:'a28',de:'mes',pa:'rg1',rot:'OPC',st:'fut',sk:'a',det:'O MES Four Elements preenche os Dados de Ensaio por OPC (hoje digitados no medidor). O caminho físico do OPC ainda é a definir.',o:{sa:'l',sb:'l',via:30}},
  {id:'a29',de:'tia',pa:'plc',rot:'carga dos blocos',st:'real',sk:'a',det:'O TIA Portal programa e carrega o PLC.'}
 ];
 var ROTAS=[
@@ -282,7 +282,7 @@ var ROTAS=[
 ];
 var FERR=[['Node-RED','5.0.9 nos testes; versão do PC a confirmar','PC BT2 (.156)'],['PM2','mantém o Node-RED; pasta C:\\pm2-home','PC BT2'],['TIA Portal','programa o PLC 1500 e o ET200/1200','notebook'],['GitHub','repositório; o PC BT2 não o acessa (pacote .zip)','nuvem'],['Suíte de testes','190 testes (Node.js + Playwright), PLC simulado','repositório'],['Navegador','roda as telas HTML; canais bt2-dev-obs, bt2-grafico, fbv','PC e celular']];
 var PEND=[
- ['Ponto de entrada do OPC / MES Four Elements','PLC 1500, Node-RED ou DB2100? Desenhado como "a definir".'],
+ ['Caminho físico do OPC (MES Four Elements)','O MES vai preencher os Dados de Ensaio por OPC (hoje digitados no medidor e gravados no DB2100). Falta definir se o OPC entra direto no PLC 1500 ou passa pelo Node-RED.'],
  ['Comunicação PLC 1500 ↔ ET200','ComOk falso: a vida do ET200 não chega ao FB101. Diagnóstico no db3005i_BC56_ComEt200 (ComOk, StatusPut, StatusGet, FalhaPut, FalhaGet).'],
  ['DSE desligado','O fluxo Deep Sea → REST responde sem dados. Os sinais do DSE para o ET200 são futuros.'],
  ['Versão do Node-RED e PM2 do PC','O PM2 não respondeu ao pm2 list nesta sessão do notebook (pasta C:\\pm2-home).'],
