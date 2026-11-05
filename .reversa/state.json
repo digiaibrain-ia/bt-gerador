@@ -1,0 +1,26 @@
+{
+  "version": "manual-1.0.0",
+  "project": "bt-gerador",
+  "user_name": "",
+  "chat_language": "pt-br",
+  "doc_language": "Português",
+  "answer_mode": "chat",
+  "doc_level": "completo",
+  "output_folder": "_reversa_sdd",
+  "forward_folder": "_reversa_forward",
+  "phase": null,
+  "completed": [],
+  "pending": ["reconhecimento", "escavacao", "interpretacao", "geracao", "revisao"],
+  "checkpoints": {},
+  "engines": ["claude-code"],
+  "agents": [
+    "reversa-scout",
+    "reversa-archaeologist",
+    "reversa-detective",
+    "reversa-architect",
+    "reversa-writer",
+    "reversa-reviewer",
+    "reversa-data-master"
+  ],
+  "created_files": []
+}

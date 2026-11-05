@@ -30,3 +30,6 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+
+# Reversa: configuração pessoal
+.reversa/config.user.toml

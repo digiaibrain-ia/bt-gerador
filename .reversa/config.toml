@@ -1,0 +1,41 @@
+# Reversa — Configuração do projeto bt-gerador (instalação manual, adaptada).
+# Customizações pessoais: .reversa/config.user.toml (não versionado).
+
+[project]
+name = "bt-gerador"
+version = "1.0.0"
+
+[user]
+name = ""
+chat_language = "pt-br"
+doc_language = "pt-br"
+
+[output]
+folder = "_reversa_sdd"
+
+[agents]
+installed = [
+  "reversa-scout",
+  "reversa-archaeologist",
+  "reversa-detective",
+  "reversa-architect",
+  "reversa-writer",
+  "reversa-reviewer",
+  "reversa-data-master"
+]
+
+[engines]
+installed = ["claude-code"]
+
+[analysis]
+answer_mode = "chat"
+doc_level = "completo"
+
+# Organização das specs: o Reversa pergunta na primeira execução e grava aqui.
+# Sugestão do perfil: granularity = "module" (ver .claude/skills/reversa/references/perfil-bt-gerador.md).
+[specs]
+layout = ""
+granularity = ""
+custom_folders = []
+scout_suggestion = ""
+decided_at = ""

@@ -1,0 +1,97 @@
+; Cheatsheet do navi para o projeto bt-gerador (BT1/BT2, Node-RED, PLC Siemens S7, dashboard HTML).
+; Uso: ver ferramentas/navi/LEIA-ME.md. Rode sempre a partir da raiz do repositório.
+; Regras do projeto refletidas aqui: BT1 e BT2 separados (ADR-0004); o Node-RED é o único cliente
+; Modbus do DSE (ADR-0001), por isso NÃO há comando Modbus direto; sem IPs/segredos no Git.
+
+% bt-gerador, dashboard
+
+# Gerar o HTML único do dashboard (dashboard/dist/)
+node dashboard/build/build.js
+
+# Gerar o dashboard conferindo se a versão bate com a tag medidor-v*
+node dashboard/build/build.js --expect-version <versao>
+
+$ versao: node -p "require('./dashboard/src/versao.json').versao"
+
+# Mostrar a versão atual do dashboard (dashboard/src/versao.json)
+cat dashboard/src/versao.json
+
+# Listar os scripts que o index.html do dashboard carrega (<script src> e marcadores @inline do build)
+grep -noE '<script src="[^"]+"|@inline: [^ ]+' dashboard/src/index.html
+
+% bt-gerador, nodered
+
+# Validar um fluxo Node-RED (JSON) contra os nós core
+python3 .claude/skills/nodered-documentacao/scripts/validate_flow.py <fluxo>
+
+$ fluxo: ls nodered/flows/*.json
+
+# Listar as rotas HTTP (nós http in) de um fluxo
+jq -r '.[] | select(.type=="http in") | "\(.method | ascii_upcase) \(.url)"' <fluxo>
+
+# Conferir se todas as rotas HTTP de todos os fluxos começam com /api/ (padrão PADRAO_ROTAS_API_NODERED)
+jq -r '.[] | select(.type=="http in") | .url' nodered/flows/*.json | grep -v '^/api/' || echo "ok: todas as rotas seguem o padrão /api/"
+
+# Procurar credenciais ou IPs que não podem ir para o Git (fluxos exportados)
+grep -nE '"(password|credentials|user)"|[0-9]{1,3}(\.[0-9]{1,3}){3}' nodered/flows/*.json || echo "ok: nada suspeito"
+
+% bt-gerador, api, nodered
+
+; A URL do Node-RED é digitada no dispositivo e nunca fica no Git (README). Exemplo: http://<host>:1880
+
+# Ler a telemetria do gerador (cache do Node-RED)
+curl -s <url_nodered>/api/gerador | jq .
+
+# Ler o estado das chaves de um banco de carga (56 ou 400)
+curl -s <url_nodered>/api/chaves/<banco> | jq .
+
+# Ler o log da comunicação de um banco de carga (até 1000 eventos)
+curl -s "<url_nodered>/api/logs/<banco>?limit=<limite>" | jq .
+
+# Ler o registro do ensaio (DB53)
+curl -s <url_nodered>/api/ensaio/snap | jq .
+
+# Ler os logs de desenvolvedor (buffer em memória, não toca o PLC)
+curl -s <url_nodered>/api/dev/logs | jq .
+
+$ url_nodered: echo "http://localhost:1880"
+$ banco: echo "56 400" | tr ' ' '\n'
+$ limite: echo "100 500 1000" | tr ' ' '\n'
+
+% bt-gerador, plc, scl
+
+# Validar um bloco SCL contra os anti-patterns mais graves (heurístico, não é o compilador do TIA)
+python3 .claude/skills/siemens-s7-engenharia/scripts/validar_scl.py <bloco_scl>
+
+$ bloco_scl: ls plc/*/*.scl
+
+# Procurar todas as referências a um DB nos blocos e DBs exportados do PLC
+grep -rn "DB<numero_db>" plc/ docs/ nodered/flows/
+
+# Listar os blocos e DBs exportados de uma pasta do PLC
+ls plc/<pasta_plc>
+
+$ pasta_plc: ls plc
+
+% bt-gerador, git
+
+# Criar branch no padrão do projeto (feat, fix, docs, plc, nodered)
+git switch -c <tipo>/<assunto>
+
+$ tipo: echo "feat fix docs plc nodered" | tr ' ' '\n'
+
+# Criar tag do dashboard (dispara o Release; a versão deve ser a de versao.json)
+git tag medidor-v<versao> && echo "publicar com: git push origin medidor-v<versao>"
+
+# Ver o que mudou em uma pasta do projeto desde a main
+git diff --stat main -- <pasta_projeto>
+
+$ pasta_projeto: echo "dashboard nodered plc docs" | tr ' ' '\n'
+
+% bt-gerador, skills
+
+# Listar as skills versionadas no projeto
+ls .claude/skills
+
+# Rodar os testes dos validadores da skill security-audit
+node --test .claude/skills/security-audit/*.test.cjs
