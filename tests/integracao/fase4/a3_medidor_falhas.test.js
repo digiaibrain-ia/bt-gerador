@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 const { ENV_TESTE, BANCOS, enderecos, esperaAte, get, sobe } = require('../ajudas.js');
 const { parseAddr } = require('../plc_simulado.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.171.html';   // a falha CHV-007/008 vale da 1.10.168 em diante
+const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.172.html';   // a falha CHV-007/008 vale da 1.10.168 em diante
 describe('A3 - medidor: falhas do PLC do banco', () => {
   let h, b, p, timer; const e = enderecos('56'), B = BANCOS['56'];
   const bit = (base, i) => 'DB' + B.db + ',X' + (base + Math.floor((i - 1) / 8)) + '.' + ((i - 1) % 8);
