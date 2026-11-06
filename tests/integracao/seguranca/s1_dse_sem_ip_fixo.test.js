@@ -7,7 +7,7 @@ const path = require('path');
 const { chromium } = require('playwright');
 const { ENV_TESTE, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = path.join(__dirname, '..', '..', '..', 'dashboard', 'ferramentas', 'medidor_gerador_v1.10.167.html');
+const HTML = path.join(__dirname, '..', '..', '..', 'dashboard', 'ferramentas', 'medidor_gerador_v1.10.168.html');
 
 describe('S1 DSE sem IP fixo no cliente', () => {
   test('estatico: o HTML nao traz nenhum IP de rede fixo (172.17.* nem http://<numero>:porta)', () => {
@@ -28,7 +28,7 @@ describe('S1 DSE sem IP fixo no cliente', () => {
         if (u.startsWith(h.url)) { pedidos.push(u); return r.continue(); }
         return r.abort();
       });
-      await p.goto(h.url + '/html/medidor_gerador_v1.10.167.html');
+      await p.goto(h.url + '/html/medidor_gerador_v1.10.168.html');
       await esperaAte(async () => pedidos.some(u => u.endsWith('/api/gerador')), 8000, 200);
     });
     after(async () => { if (b) await b.close(); if (h) await h.para(); });
