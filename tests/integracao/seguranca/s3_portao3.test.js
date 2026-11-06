@@ -79,7 +79,7 @@ describe('S3 Portao 3 - guarda de escrita (D3)', () => {
     });
 
     test('sem Origin mas com Referer da mesma origem -> passa; Referer externo -> 403', async () => {
-      limpa(); let r = await hab({ Origin: undefined, Referer: h.url + '/html/medidor_gerador_v1.10.173.html' });
+      limpa(); let r = await hab({ Origin: undefined, Referer: h.url + '/html/medidor_gerador_v1.10.174.html' });
       assert.equal(r.status, 200, r.t); assert.equal(h.plc.ler(e56.hab(5)), true);
       limpa(); r = await hab({ Origin: undefined, Referer: EVIL + '/atacante.html' });
       assert.equal(r.status, 403, r.t); assert.equal(r.j.codigo, 'D3_origem_nao_permitida'); assert.equal(h.plc.ler(e56.hab(5)), false);

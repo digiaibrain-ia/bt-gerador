@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.173.html';
+const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.174.html';
 describe('D - Central de registros', () => {
   let h, b, ctx, p;
   const txt = f => p.evaluate(f);
