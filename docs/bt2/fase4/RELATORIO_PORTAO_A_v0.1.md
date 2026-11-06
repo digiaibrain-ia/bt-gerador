@@ -9,6 +9,9 @@ Regra decidida pelo Reginaldo: **SB some -> CB cai, T = 2 s, falha travada, rear
 | A2 fluxos | `nodered/flows/bt2/chaves-56-api-v3.5.json`, `chaves-400-api-v3.5.json` (gerador `nodered/gerador/gerar_fluxos_fase4a_v0.1.py`) | 24/24 testes passam; 21/24 falham na v3.4 |
 | A3 medidor | `dashboard/ferramentas/medidor_gerador_v1.10.168.html` (gerador `dashboard/gerador/gerar_medidor_v1.10.168_v0.1.py`); `catalogo_ferramentas_v0.7.js` aponta para a 168 | 5/5 testes de front passam; 4/5 falham na 167 |
 
+## Suite completa (06/11/2026)
+219 testes: **214 passam, 0 falham, 5 `todo`** (F2-1, P3-E2 e os achados F4-1, F4-2, P3-E1 que seguem `todo` nos testes das versoes ANTIGAS v3.4, mantidas de proposito; na v3.5 os tres ja passam em `fase4/a2_sbret.test.js`). Os testes de front (f10, f11, s1, s3) passam contra o medidor 1.10.168.
+
 ## O que mudou no comportamento
 - Fluxos v3.5: leem `sbRet` (habResp, falhaRetorno, contatorColado, respEcoOk) e devolvem no GET (campos novos, aditivos).
 - `ligar`: 409 `CONTATOR_COLADO`, 409 `SEM_ECO`, 409 `HAB_NAO_CONFIRMADA`. Falha de retorno travada **nao** recusa: o novo comando e o rearme.
