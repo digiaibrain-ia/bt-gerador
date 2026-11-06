@@ -107,3 +107,9 @@ Codigo congelado no commit `51481df`. **P3-E1 e P3-E2 permanecem abertos de prop
 - O PLC é uma **simulação em memória**, não o driver S7 real nem o tempo real do 1515 ou do ET200.
 - O **F11** (front real contra o Node-RED local, com Playwright) **ainda não foi feito**: fica para depois dos F1–F10.
 - Segurança da senha de testes e rotas sem login são da **Fase 2**, não entram aqui.
+
+## Achados da bancada (06/11/2026) — lições do teste do Setup
+- **BANC-1 · Ventilador do banco sem monitoramento** (gravidade alta, só decisão de projeto): no Setup, uma chave foi ligada com o ventilador desligado e não há sinal do ventilador. Levar à reunião: monitoramentos e intertravamentos (ventilador, temperatura, proteção) têm de ser previstos e tratados no PLC 1200 do banco de cargas, não na tela.
+- **BANC-2 · Comando sem retorno (CB sem SB) reenergiza sozinho** (gravidade alta, proposta em análise): com o SB bloqueado, o CB ficou em 1; ao liberar o SB, a chave voltou sozinha (partida automática). Proposta do Reginaldo: perdeu o SB, derruba o CB, com tempo de verificação. Falha travada, que só rearma com novo clique. Detalhes na análise de 06/11. Depende de mudança no PLC (backup e OK) e no fluxo.
+- **BANC-3 · Chave não aceita mais o clique depois do teste acima** (gravidade média, causa não confirmada): faltam a mensagem da tela, o JSON de `/api/chaves/56` (cb/sb/hab) e o log do momento do clique.
+- **BANC-4 · Tabela de potência do HTML mostra duas potências diferentes na mesma linha** (gravidade baixa): o Reginaldo vai enviar o print da tela. Os valores da `TAB60` já conferem com a foto da tabela da empresa.
