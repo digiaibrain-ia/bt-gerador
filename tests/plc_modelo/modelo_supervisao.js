@@ -42,6 +42,7 @@ class Supervisao {
 class Sistema {
   constructor(opc = {}) {
     this.sup = new Supervisao(opc);
+    this.bloq = arr(false);
     this.cbLigar = arr(false);          // CB no DB do 1515 (db.cb.ligar)
     this.habilitada = arr(true);        // setup.habilitada (pedido)
     this.ligarBanco = true; this.comOk = true; this.seq = 0;
@@ -68,7 +69,9 @@ class Sistema {
       const sup = this.sup;
       sup.scan(10, { comOk: this.comOk, seq: this.seq, cmd: this.cbLigar, habPed: this.habilitada, saidaQ: this.saidaQ, aux: this.aux });
       // driver das saidas (FC4 do usuario ou fb_bancoEt200_16): Saida = Cmd E Permite E (banco ligado)
-      for (let i = 1; i <= N; i++) this.saidaQ[i] = !!(this.cbLigar[i] && sup.permite[i] && this.ligarBanco && this.comOk);
+      // fb_bancoEt200_16 v0.3: queda de comunicacao TRAVA a chave (_bloq); so solta quando o comando cai a FALSE (nao religa sozinha na volta da rede)
+      for (let i = 1; i <= N; i++) { if (!this.comOk) this.bloq[i] = true; else if (!this.cbLigar[i]) this.bloq[i] = false; }
+      for (let i = 1; i <= N; i++) this.saidaQ[i] = !!(this.cbLigar[i] && sup.permite[i] && this.ligarBanco && this.comOk && !this.bloq[i]);
       // planta: contato auxiliar acompanha a saida com atraso, salvo defeito simulado
       for (let i = 1; i <= N; i++) {
         if (this.auxBloqueado[i]) this.aux[i] = false;

@@ -100,4 +100,12 @@ describe('Portao A - perda de comunicacao', () => {
     s.comOk = true; s.passo(3000);
     assert.equal(s.saidaQ[2], false); assert.equal(s.cbLigar[2], false);
   });
+  test('v0.3 do FB do ET200: queda e volta da rede com o CB ainda em 1 NAO religa; so depois de o comando cair e vir de novo', () => {
+    const s = new Sistema(); s.clique(2, true); s.passo(1000); assert.equal(s.saidaQ[2], true);
+    s.comOk = false; s.passo(500); assert.equal(s.saidaQ[2], false);
+    s.comOk = true; s.passo(2000);                         // a rede voltou, o CB do 1515 continua em 1
+    assert.equal(s.saidaQ[2], false, 'religou sozinha na volta da rede');
+    s.clique(2, false); s.passo(100); s.clique(2, true); s.passo(800);
+    assert.equal(s.saidaQ[2], true, 'com novo comando deveria ligar');
+  });
 });
