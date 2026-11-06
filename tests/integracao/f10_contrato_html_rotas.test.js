@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const RAIZ = path.join(__dirname, '..', '..');
-const HTML = path.join(RAIZ, 'dashboard', 'ferramentas', 'medidor_gerador_v1.10.168.html');
+const HTML = path.join(RAIZ, 'dashboard', 'ferramentas', 'medidor_gerador_v1.10.169.html');
 const FLUXOS = path.join(RAIZ, 'nodered', 'flows', 'bt2');
 const ARQ_FLUXOS = ['chaves-56-api-v3.4', 'chaves-400-api-v3.4', 'chaves-550-api-v1.5', 'chaves-595-api-v1.5', 'cliente-156-dse-plc-carga-v3', 'cliente-31-seletor-plc-db2000-v4', 'registro-ensaio-db2100-api-v1.8', 'simulador-dse-demo-v7', 'dev-logs-api-v1.3', 'servidor-deepsea-api-gerador-v3_7'];
 
