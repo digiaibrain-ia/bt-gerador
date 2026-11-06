@@ -50,4 +50,4 @@ Tempo: contagem em ticks de 100 ms (precisao +100 ms): com T = 2 s a falha sai e
 - Checklist de bancada sugerido: (B1) SB bloqueado -> falha em ~2 s e CB cai; (B2) liberar o SB -> a chave NAO liga; (B3) novo clique -> liga; (B4) contator colado simulado; (B5) desabilitar chave -> `habResp` cai; (B6) cabo de rede fora -> saidas caem e a falha trava; (B7) volta da rede sem religar.
 
 ## Pendente deste portao
-A2 (fluxos `chaves-56/400 v3.5` lendo `sbRet`; achados F4-2, F4-1, F2-1, P3-E1), A3 (medidor: `CHV-006`, `CHV-007`, troubleshooter), teste de integracao dos fluxos. Dependem do OK deste desenho (nomes e offsets de `sbRet`).
+A2 (fluxos `chaves-56/400 v3.5` lendo `sbRet`; achados F4-2, F4-1, F2-1, P3-E1), A3 (medidor: `CHV-007`, `CHV-008`, troubleshooter), teste de integracao dos fluxos. Dependem do OK deste desenho (nomes e offsets de `sbRet`).

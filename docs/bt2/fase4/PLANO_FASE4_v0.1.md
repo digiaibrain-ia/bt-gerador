@@ -13,7 +13,7 @@ Causa: com o SB bloqueado o CB ficou em 1; ao voltar o SB a chave ligou sozinha 
   - Falha travada: so rearma com novo comando do operador (borda 0->1 do pedido) e com SB=0 confirmado. Nunca rearma sozinha quando o SB volta.
   - Campos novos no fim do DB (nao muda endereco dos existentes). Exige backup do TIA antes e OK explicito.
 - **A2 Fluxos `chaves-56/400 v3.5` e `chaves-550/595 v1.6`:** GET passa a trazer `falhaRetorno[]` e `contatorColado[]`; em 504 "incerto" o fluxo manda `ligar:false` (camada extra); comando de ligar recusa (409) enquanto houver falha travada ou contator colado.
-- **A3 Medidor:** novas ocorrencias `CHV-006` (sem retorno) e `CHV-007` (contator colado), com texto no troubleshooter.
+- **A3 Medidor:** novas ocorrencias `CHV-007` (sem retorno) e `CHV-008` (contator colado), com texto no troubleshooter.
 - **A4 Testes:** modelo de referencia em JS da logica do bloco + vetores (apoio do especialista de verificacao); testes de integracao do fluxo no PLC simulado.
 - **O que NAO se prova aqui:** o SCL real e o tempo do contator. Isso so a bancada prova (carga DESACOPLADA).
 

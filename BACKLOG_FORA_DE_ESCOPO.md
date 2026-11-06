@@ -113,3 +113,9 @@ Codigo congelado no commit `51481df`. **P3-E1 e P3-E2 permanecem abertos de prop
 - **BANC-2 · Comando sem retorno (CB sem SB) reenergiza sozinho** (gravidade alta, proposta em análise): com o SB bloqueado, o CB ficou em 1; ao liberar o SB, a chave voltou sozinha (partida automática). Proposta do Reginaldo: perdeu o SB, derruba o CB, com tempo de verificação. Falha travada, que só rearma com novo clique. Detalhes na análise de 06/11. Depende de mudança no PLC (backup e OK) e no fluxo.
 - **BANC-3 · Chave não aceita mais o clique depois do teste acima** (gravidade média, causa não confirmada): faltam a mensagem da tela, o JSON de `/api/chaves/56` (cb/sb/hab) e o log do momento do clique.
 - **BANC-4 · Tabela de potência do HTML mostra duas potências diferentes na mesma linha** (gravidade baixa): o Reginaldo vai enviar o print da tela. Os valores da `TAB60` já conferem com a foto da tabela da empresa.
+
+## Fase 4 / Portao A - estado dos achados nos fluxos (06/11/2026)
+- **F4-1, F4-2, P3-E1: corrigidos** em `chaves-56-api-v3.5` e `chaves-400-api-v3.5` (gerador `nodered/gerador/gerar_fluxos_fase4a_v0.1.py`; testes `tests/integracao/fase4/a2_sbret.test.js`, que falham na v3.4). `chaves-550/595` continuam na v1.5 (entram com as Etapas 2 e 3).
+- **F2-1: NAO corrigivel no fluxo.** O no `http in` do Node-RED responde 500 fixo a corpo JSON invalido (errorHandler do proprio no). So muda com `httpNodeMiddleware` no `settings.js`, que nao tocamos. Continua `todo`.
+- **P3-E2 (registro, `limpar`):** continua aberto (opcional).
+- Codigos de ocorrencia: `CHV-006` ja existia (banco sem leitura). A falha de retorno e `CHV-007` e o contator colado `CHV-008` (os documentos da Fase 4 foram corrigidos).
