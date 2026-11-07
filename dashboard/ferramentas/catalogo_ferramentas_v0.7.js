@@ -21,3 +21,9 @@ window.CATALOGO_FERRAMENTAS = {
     { id: 'amostras',    grupo: 'Desenvolvimento', nome: 'Simulador de amostras',        arquivo: 'amostras_simulador_v0.7.html',   desc: 'Registro de aprendizado e simulação de ensaios por modelo.' },
   ]
 };
+/* v0.7.1 (07/11/2026): ESCOLHA PELO INDEX. O index.html tem o botão "Escolher arquivo…" em cada ferramenta; o nome escolhido fica guardado neste navegador
+   (localStorage 'bt2.catalogo.arquivos') e vale aqui, no index e no menu ☰ do medidor (mesma origem). Sem escolha, vale o nome escrito acima. */
+(function () {
+  let m = {}; try { m = JSON.parse(localStorage.getItem('bt2.catalogo.arquivos') || '{}') || {}; } catch (e) {}
+  window.CATALOGO_FERRAMENTAS.itens.forEach(i => { i.padrao = i.arquivo; if (typeof m[i.id] === 'string' && /^[\w.\-]+\.html?$/i.test(m[i.id])) { i.arquivo = m[i.id]; i.escolhido = true; } });
+})();

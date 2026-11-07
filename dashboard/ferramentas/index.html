@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
-<!-- index.html (v0.3) · 07/11/2026 — REVISÃO UNIVERSAL: Ajuda v0.2 (arrasta e fica inteira na tela) e alvos de toque no celular. | index.html (v0.2) · 29/10/2026 — corrige a procura dos arquivos (3 pastas, mostra onde procurou), confere os .js de apoio e traz AJUDA. Nome fixo de propósito. --><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="0.3"><title>Ferramentas · Bancos de teste</title>
+<!-- index.html (v0.4) · 07/11/2026 — botão "Escolher arquivo…" em cada ferramenta (sem editar o catálogo). | index.html (v0.3) · 07/11/2026 — REVISÃO UNIVERSAL: Ajuda v0.2 (arrasta e fica inteira na tela) e alvos de toque no celular. | index.html (v0.2) · 29/10/2026 — corrige a procura dos arquivos (3 pastas, mostra onde procurou), confere os .js de apoio e traz AJUDA. Nome fixo de propósito. --><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.4"><title>Ferramentas · Bancos de teste</title>
 <!-- index.html (v0.1) · 29/10/2026 — PÁGINA DE ENTRADA. Nome fixo de propósito (é o endereço que você guarda nos favoritos); a versão fica neste comentário.
   PARA QUE SERVE (leigo): uma lista com todas as ferramentas do projeto. Abra UMA vez  http://IP:1880/index.html  (o IP do PC do banco), guarde nos favoritos e clique na ferramenta.
   POR QUE: abrir o HTML com duplo clique usa file:///C:/Users/… e o navegador bloqueia as chamadas ao Node-RED; por http tudo funciona (inclusive módulos .js separados).
@@ -18,6 +18,7 @@ a.c{display:flex;gap:12px;align-items:flex-start;background:var(--sf);border:1px
 a.c:hover,a.c:focus-visible{border-color:var(--blue);outline:2px solid var(--blue);outline-offset:-2px}
 a.c b{display:block}a.c small{display:block;color:var(--ink2)}a.c.leg{opacity:.55}a.c .st{margin-left:auto;font-weight:700;min-width:1.2em;text-align:center}
 .w{background:#fde7e5;color:#7a1f1f;border:1px solid var(--red);border-radius:8px;padding:8px 12px;margin:10px 0}
+a.c{flex:1}.lin{display:flex;gap:8px;align-items:stretch;margin:6px 0}.lin .ac{display:flex;flex-direction:column;gap:4px;justify-content:center}.lin .ac button{font:inherit;font-size:12px;padding:5px 10px;border:0;background:var(--sf);color:inherit;border-radius:6px;cursor:pointer;white-space:nowrap}.lin .ac button:hover{outline:2px solid var(--blue)}
 code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0 5px}
 
   /* revisao universal 07/11/2026: alvos de toque (so celular/tablet; o PC nao muda) */
@@ -39,9 +40,15 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
   let g='',h='';
   CAT.itens.forEach(i=>{
     if(i.grupo!==g){g=i.grupo;h+='<h2>'+g+'</h2>'}
-    h+='<a class="c'+(i.legado?' leg':'')+'" id="a-'+i.id+'" href="'+(emFile?'#':pasta+i.arquivo)+'"'+(emFile?'':' target="bt2_'+i.id+'"')+' rel="noopener"><span><b>'+i.nome+'</b><small>'+i.arquivo+' — '+i.desc+(i.aviso?' ('+i.aviso+')':'')+'</small><small class="onde" id="o-'+i.id+'"></small></span><span class="st" id="s-'+i.id+'"></span></a>';
+    h+='<div class="lin"><a class="c'+(i.legado?' leg':'')+'" id="a-'+i.id+'" href="'+(emFile?'#':pasta+i.arquivo)+'"'+(emFile?'':' target="bt2_'+i.id+'"')+' rel="noopener"><span><b>'+i.nome+'</b><small>'+i.arquivo+' — '+i.desc+(i.aviso?' ('+i.aviso+')':'')+'</small><small class="onde" id="o-'+i.id+'"></small></span><span class="st" id="s-'+i.id+'"></span></a><span class="ac"><button type="button" data-esc="'+i.id+'" title="Escolher o arquivo HTML desta ferramenta (ele precisa estar na pasta do servidor)">Escolher arquivo…</button>'+(i.escolhido?'<button type="button" data-pad="'+i.id+'" title="Volta ao nome do catálogo: '+i.padrao+'">Voltar ao padrão</button>':'')+'<input type="file" accept=".html,.htm" hidden data-fi="'+i.id+'"></span></div>';
   });
   $('lista').innerHTML=h;
+  /* v0.4: escolher o arquivo de cada ferramenta sem editar o catálogo (guardado neste navegador) */
+  const LSK='bt2.catalogo.arquivos',lerM=()=>{try{return JSON.parse(localStorage.getItem(LSK)||'{}')||{}}catch(e){return{}}},gravaM=m=>{try{localStorage.setItem(LSK,JSON.stringify(m))}catch(e){}};
+  document.querySelectorAll('[data-esc]').forEach(b=>b.addEventListener('click',()=>document.querySelector('[data-fi="'+b.dataset.esc+'"]').click()));
+  document.querySelectorAll('[data-fi]').forEach(f=>f.addEventListener('change',()=>{const n=f.files[0]&&f.files[0].name;if(!n)return;if(!/^[\w.\-]+\.html?$/i.test(n)){alert('Nome de arquivo não aceito: '+n+' (use letras, números, ponto, hífen e _).');return}const m=lerM();m[f.dataset.fi]=n;gravaM(m);location.reload()}));
+  document.querySelectorAll('[data-pad]').forEach(b=>b.addEventListener('click',()=>{const m=lerM();delete m[b.dataset.pad];gravaM(m);location.reload()}));
+  CAT.itens.forEach(i=>{if(i.escolhido){const o=$('o-'+i.id);if(o)o.textContent='escolhido neste navegador (padrão do catálogo: '+i.padrao+')'}});
   if(emFile){document.querySelectorAll('a.c').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));return}
   const acha=async nome=>{for(const c of cands){try{const r=await fetch(c+nome,{method:'HEAD',cache:'no-store'});if(r.ok)return c}catch(e){return undefined}}return null}; /* undefined = servidor não respondeu */
   let achados=0,total=CAT.itens.length;
