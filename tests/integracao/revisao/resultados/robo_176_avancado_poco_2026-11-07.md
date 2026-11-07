@@ -1,13 +1,13 @@
 # Dev/Operador oculto — relatório
 
-- Versão do HTML: 1.10.175
+- Versão do HTML: 1.10.176
 - Modo: Demo local
-- Duração: 4min 13s
-- Resultado: **152 OK · 1 FALHA · 6 AVISO**
+- Duração: 5min 17s
+- Resultado: **152 OK · 0 FALHA · 120 AVISO**
 
 ## Preparação
 
-- ✔ perfil da tela — `1280×800 px · DPR 1 · mouse · Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.`
+- ✔ perfil da tela — `407×904 px · DPR 3 · toque · Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.`
 
 ## Chaves (⚙)
 
@@ -16,7 +16,120 @@
 
 ## U1 · Varredura da página
 
-- ✖ **FALHA** coberto por outro elemento: [dlgDados] input "digite parte do nome: 40 kva 220 mwm…" — `o clique cairia em div#dErr (em dlgDados) ret=62,569,1155,20 objeto=832,561,375,35 scrollY=0 html=<div class="jerr" id="dErr"></div>`
+- ⚠ alvo de toque muito pequeno: [dlgReg] input#rgAuto "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgReg] input#rgSemDemo "on" — `13×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgCentral] input "pasta" — `15×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgCentral] input "down" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgCentral] input#cenAgr "on" — `19×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgLogs] input#logAuto "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgModo] input#aimpOn "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgModo] input#aimpPrt "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgModo] input#aimpCam "Caminho de destino (referência)" — `258×23 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgDados] input "Monofásico" — `13×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgDados] input "Bifásico" — `13×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgDados] input "Trifásico" — `13×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#bSalv "Salvar os valores da etapa em andament" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#bFim "Só libera ao final do teste (todas as " — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#bPau "PAUSAR" — `0×0 px (mínimo recomendado 44)`
+- ⚠ a faixa de mensagem (#gmsg) fica por cima de botões enquanto aparece — `ex.: h2 "Clique para expandir" — some sozinha em alguns segundos; no celular cobre parte do fim da tela`
+- ⚠ alvo de toque muito pequeno: [dlgGrand] input#gdUsa "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgGrand] input#gdMap "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: h2 "Clique para recolher" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: span#dseOlhos "DSE simulado (ideal): clique para esco" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#mMan "Simulação da CARGA (só no DEMO) — não " — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#mAuto "Simulação da CARGA (só no DEMO) — não " — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: input#simCarga "0" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "1×" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "5×" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "8×" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "10×" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#bGuiado "Assistente que sugere as chaves de cad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgPatDet] input[gd=u] "on" — `13×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#bPlacas "Placas dos bancos de carga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#bTroca "Informe aqui quando trocar a resistênc" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#bChaves "Habilitar/desabilitar cada chave (não " — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button#btSetup "Setup do kW real/resistência, chave a " — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: summary "Banco de 56 kW⇄ Seletora: Auto (remoto" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "Ensaio em andamento: a seletora e o "L" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "Simula o comando Ligar banco do BC56 (" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 1 de 13 · 5 kW · desligad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 2 de 13 · 5 kW · desligad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 3 de 13 · 5 kW · desligad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 4 de 13 · 5 kW · desligad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 5 de 13 · 5 kW · desligad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 6 de 13 · 4 kW · desligad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 7 de 13 · 4 kW · desligad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 8 de 13 · 4 kW · desligad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 9 de 13 · 4 kW · desligad" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 10 de 13 · 4 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 11 de 13 · 4 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 12 de 13 · 4 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC56 · chave 13 de 13 · 3 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: summary "Banco de 400 kW⇄ Seletora: Auto (remot" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "Ensaio em andamento: a seletora e o "L" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "Simula o comando Ligar banco do BC400 " — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 1 de 13 · 5 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 2 de 13 · 5 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 3 de 13 · 10 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 4 de 13 · 10 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 5 de 13 · 10 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 6 de 13 · 10 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 7 de 13 · 50 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 8 de 13 · 50 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 9 de 13 · 50 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 10 de 13 · 50 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 11 de 13 · 50 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 12 de 13 · 50 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC400 · chave 13 de 13 · 50 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: summary "Banco de 59,5 kW⇄ Seletora: Auto (remo" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "Simula o comando Ligar banco do BC59,5" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 1 de 18 · 5 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 2 de 18 · 5 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 3 de 18 · 5 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 4 de 18 · 5 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 5 de 18 · 5 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 6 de 18 · 4 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 7 de 18 · 4 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 8 de 18 · 4 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 9 de 18 · 4 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 10 de 18 · 4 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 11 de 18 · 4 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 12 de 18 · 3 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 13 de 18 · 3 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 14 de 18 · 2 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 15 de 18 · 1 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 16 de 18 · 0,5 kW · des" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 17 de 18 · 0,5 kW · des" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC59,5 · chave 18 de 18 · 0,5 kW · des" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: summary "Banco de 550 kW⇄ Seletora: Auto (remot" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: button "Simula o comando Ligar banco do BC550 " — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 1 de 12 · 5 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 2 de 12 · 5 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 3 de 12 · 5 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 4 de 12 · 5 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 5 de 12 · 5 kW · desliga" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 6 de 12 · 25 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 7 de 12 · 50 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 8 de 12 · 50 kW · deslig" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 9 de 12 · 100 kW · desli" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 10 de 12 · 100 kW · desl" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 11 de 12 · 100 kW · desl" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: div "BC550 · chave 12 de 12 · 100 kW · desl" — `0×0 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgReg] input#rgAuto "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgReg] input#rgSemDemo "on" — `13×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgCentral] input "pasta" — `15×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgCentral] input "down" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgCentral] input#cenAgr "on" — `19×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgLogs] input#logAuto "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgModo] input#aimpOn "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgModo] input#aimpPrt "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgModo] input#aimpCam "Caminho de destino (referência)" — `258×23 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgDados] input "Monofásico" — `13×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgDados] input "Bifásico" — `13×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgDados] input "Trifásico" — `13×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgGrand] input#gdUsa "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgGrand] input#gdMap "on" — `22×22 px (mínimo recomendado 44)`
+- ⚠ alvo de toque muito pequeno: [dlgPatDet] input[gd=u] "on" — `13×22 px (mínimo recomendado 44)`
 
 ## Menu do botão direito
 
@@ -61,16 +174,16 @@
 - ✔ etapa 1 (0%): carga dentro da tolerância do alvo — `carga=0.0% alvo=0% TOL=10`
 - ✔ etapa 1 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 1: SALVAR grava e o ensaio avança — `SNAP=true T.et=2 · `
-- ✔ etapa 2 (30%): carga dentro da tolerância do alvo — `carga=29.5% alvo=30% TOL=10`
+- ✔ etapa 2 (30%): carga dentro da tolerância do alvo — `carga=30.5% alvo=30% TOL=10`
 - ✔ etapa 2 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 2: SALVAR grava e o ensaio avança — `SNAP=true T.et=3 · `
-- ✔ etapa 3 (50%): carga dentro da tolerância do alvo — `carga=51.1% alvo=50% TOL=10`
+- ✔ etapa 3 (50%): carga dentro da tolerância do alvo — `carga=51.3% alvo=50% TOL=10`
 - ✔ etapa 3 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 3: SALVAR grava e o ensaio avança — `SNAP=true T.et=4 · `
 - ✔ etapa 4 (100%): carga dentro da tolerância do alvo — `carga=101.4% alvo=100% TOL=10`
 - ✔ etapa 4 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 4: SALVAR grava e o ensaio avança — `SNAP=true T.et=5 · `
-- ✔ etapa 5 (107%): carga dentro da tolerância do alvo — `carga=108.3% alvo=107% TOL=10`
+- ✔ etapa 5 (107%): carga dentro da tolerância do alvo — `carga=109.5% alvo=107% TOL=10`
 - ✔ etapa 5 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 5: SALVAR grava e o ensaio avança — `SNAP=true T.et=6 · `
 - ✔ etapa 6 (0%): carga dentro da tolerância do alvo — `carga=0.0% alvo=0% TOL=10`
@@ -130,16 +243,16 @@
 - ✔ etapa 1 (0%): carga dentro da tolerância do alvo — `carga=0.0% alvo=0% TOL=10`
 - ✔ etapa 1 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 1: SALVAR grava e o ensaio avança — `SNAP=true T.et=2 · `
-- ✔ etapa 2 (30%): carga dentro da tolerância do alvo — `carga=30.3% alvo=30% TOL=10`
+- ✔ etapa 2 (30%): carga dentro da tolerância do alvo — `carga=30.4% alvo=30% TOL=10`
 - ✔ etapa 2 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 2: SALVAR grava e o ensaio avança — `SNAP=true T.et=3 · `
-- ✔ etapa 3 (50%): carga dentro da tolerância do alvo — `carga=51.2% alvo=50% TOL=10`
+- ✔ etapa 3 (50%): carga dentro da tolerância do alvo — `carga=51.0% alvo=50% TOL=10`
 - ✔ etapa 3 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 3: SALVAR grava e o ensaio avança — `SNAP=true T.et=4 · `
-- ✔ etapa 4 (100%): carga dentro da tolerância do alvo — `carga=103.0% alvo=100% TOL=10`
+- ✔ etapa 4 (100%): carga dentro da tolerância do alvo — `carga=102.7% alvo=100% TOL=10`
 - ✔ etapa 4 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 4: SALVAR grava e o ensaio avança — `SNAP=true T.et=5 · `
-- ✔ etapa 5 (107%): carga dentro da tolerância do alvo — `carga=110.9% alvo=107% TOL=10`
+- ✔ etapa 5 (107%): carga dentro da tolerância do alvo — `carga=108.1% alvo=107% TOL=10`
 - ✔ etapa 5 cumprida: botão Salvar da tabela disponível e piscando — `class=svbtn pede disabled=false texto=Salvar`
 - ✔ etapa 5: SALVAR grava e o ensaio avança — `SNAP=true T.et=6 · `
 - ✔ etapa 6 (0%): carga dentro da tolerância do alvo — `carga=0.0% alvo=0% TOL=10`
@@ -181,11 +294,11 @@
 
 ## Cobertura
 
-- ✔ 148 de 155 objetos acionados (95 %); 88 não acionados
+- ✔ 259 de 280 objetos acionados (93 %); 103 não acionados
 
 ## Caixa de areia
 
-- ✔ efeitos bloqueados/contados — `{"print":1,"janelaNova":4,"alerta":2,"confirmacao":1,"prompt":0,"redeBloqueada":0,"seletor":3,"download":1}`
+- ✔ efeitos bloqueados/contados — `{"print":2,"janelaNova":8,"alerta":4,"confirmacao":3,"prompt":0,"redeBloqueada":0,"seletor":6,"download":3,"navegacao":0}`
 
 ## JavaScript
 
@@ -195,18 +308,18 @@
 ## Cobertura e contexto
 
 - Modo do robô: **avancado** · semente 20261107
-- Tela: 1280×800 px · DPR 1 · mouse
-- Objetos acionados: 148 de 155
-- Caixa de areia (bloqueado/contado): {"print":1,"janelaNova":4,"alerta":2,"confirmacao":1,"prompt":0,"redeBloqueada":0,"seletor":3,"download":1}
+- Tela: 407×904 px · DPR 3 · toque
+- Objetos acionados: 259 de 280
+- Caixa de areia (bloqueado/contado): {"print":2,"janelaNova":8,"alerta":4,"confirmacao":3,"prompt":0,"redeBloqueada":0,"seletor":6,"download":3,"navegacao":0}
 
-### Não acionados (88)
+### Não acionados (103)
 
 - button#bGenStop "■ STOP" [desabilitado]
-- button#bParaEns "Para o ENSAIO (diferente do gerador, q" [desabilitado]
 - [dlgModo] button#ensM_auto "Modo automático: disponível futurament" [desabilitado]
 - [dlgDados] button#sapLer "Ler dados do print" [desabilitado]
 - [dlgDados] button#sapLimpa "Remover imagem" [desabilitado]
-- [dlgDados] input "digite parte do nome: 40 kva 220 mwm…" [coberto por div#dErr (em dlgDados) ret=62,569,1155,20 objeto=832,561,375,35 scrollY=0 html=<div class="jerr" id="dErr"></div>]
+- [dlgDados] input "digite parte do nome: 40 kva 220 mwm…" [escondido agora]
+- button#bSalv "Salvar os valores da etapa em andament" [desabilitado]
 - button#bFim "Só libera ao final do teste (todas as " [desabilitado]
 - button#bPau "PAUSAR" [escondido agora]
 - h2 "Clique para recolher" [escondido agora]
@@ -289,22 +402,39 @@
 - div "BC550 · chave 10 de 12 · 100 kW · desl" [escondido agora]
 - div "BC550 · chave 11 de 12 · 100 kW · desl" [escondido agora]
 - div "BC550 · chave 12 de 12 · 100 kW · desl" [escondido agora]
+- [dlgModo] button "Livre (sem registro)" [desabilitado]
+- [dlgModo] button "Guiado" [desabilitado]
+- [dlgModo] button "Manual" [desabilitado]
+- [dlgModo] button "Automático" [desabilitado]
+- [dlgModo] button "Por patamar" [desabilitado]
+- [dlgModo] button "Completa" [desabilitado]
+- [dlgModo] button "Simples (só INICIAR)" [desabilitado]
+- [dlgModo] button#ensM_manual "Gerador ligado: pare o gerador para tr" [desabilitado]
+- [dlgModo] button#ensM_auto "Modo automático: disponível futurament" [desabilitado]
+- [dlgDados] button#sapLer "Ler dados do print" [desabilitado]
+- [dlgDados] button#sapLimpa "Remover imagem" [desabilitado]
+- button[gd=pat:1] "30% da carga · 1 min" [desabilitado]
+- [dlgEtapa] button#eRes "Salvar · ajuste a carga para 0 % ± 10" [desabilitado]
+- button "Salvar" [desabilitado]
+- button "Salvar" [desabilitado]
 
 ### Onde cada janela abriu
 
-- `dlgReg` em 226,15 (828×679)
-- `dlgCentral` em 346,32 (589×531)
-- `dlgVer` em 382,42 (515×454)
-- `dlgOcor` em 162,0 (957×791)
-- `dlgOcHist` em 162,0 (957×198)
-- `dlgLogs` em 180,0 (920×206)
-- `dlgDemo` em 309,4 (662×791)
-- `dlgModo` em 401,32 (478×537)
-- `dlgDados` em 38,84 (1203×632)
-- `dlgGrafico` em 190,0 (900×113)
-- `dlgGrand` em 200,26 (880×587)
-- `dlgMotor` em 306,23 (669×608)
-- `dlgPatDet` em 357,99 (647×509)
+- `dlgReg` em 12,6 (383×896)
+- `dlgCentral` em 12,16 (383×768)
+- `dlgVer` em 12,47 (383×511)
+- `dlgOcor` em 12,8 (383×770)
+- `dlgOcHist` em 12,8 (383×465)
+- `dlgLogs` em 12,8 (383×441)
+- `dlgDemo` em 12,4 (383×896)
+- `dlgModo` em 12,20 (383×738)
+- `dlgDados` em 12,4 (383×896)
+- `dlgGrafico` em 12,8 (383×213)
+- `dlgGrand` em 12,11 (383×817)
+- `dlgMotor` em 12,6 (383×880)
+- `dlgPatDet` em 8,99 (399×578)
+- `dlgRes` em 12,6 (383×896)
+- `dlgEtapa` em 12,144 (383×616)
 
 ### O que cada objeto abriu
 
@@ -322,3 +452,6 @@
 - button "Todas as grandezas do DSE" → abriu dlgGrand
 - button "Grandezas do motor" → abriu dlgMotor
 - button#bPatDet "Resumo por banco, plano de passos, ope" → abriu dlgPatDet
+- button[gd=dados] "Dados do ensaio" → abriu dlgDados
+- button "Abrir o resultado do ensaio (confira a" → abriu dlgRes
+- button "Ajuste a carga para 0 % ± 10 para salv" → abriu dlgEtapa

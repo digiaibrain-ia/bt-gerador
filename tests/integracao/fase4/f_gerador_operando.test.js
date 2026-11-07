@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.174.html';
+const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.176.html';
 describe('genInfo (gerador operando) com o DSE real', () => {
   let h, b, p;
   const gi = d => p.evaluate(x => genInfo(x), d);

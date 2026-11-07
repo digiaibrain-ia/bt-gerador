@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, enderecos, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.174.html';
+const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.176.html';
 describe('Setup: chaveamento vindo dos Dados do ensaio', () => {
   let h, b, p; const e = enderecos('56'), e4 = enderecos('400');
   const chip = () => p.evaluate(() => document.getElementById('stTensChip').textContent);

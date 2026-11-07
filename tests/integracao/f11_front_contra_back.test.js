@@ -1,5 +1,5 @@
 'use strict';
-// F11 - Front REAL (medidor_gerador_v1.10.174.html, no Chromium/Playwright) operando contra o Node-RED local de teste e o PLC simulado.
+// F11 - Front REAL (medidor_gerador_v1.10.176.html, no Chromium/Playwright) operando contra o Node-RED local de teste e o PLC simulado.
 // O navegador so fala com o Node-RED de teste: qualquer outro endereco e BLOQUEADO (inclusive o DSE real fixo no HTML).
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
@@ -23,7 +23,7 @@ describe('F11 front real contra o Node-RED de teste', () => {
       if (u.startsWith(h.url)) return r.continue();
       bloqueados.push(u); return r.abort();                 // trava no navegador: so o Node-RED de teste
     });
-    await p.goto(h.url + '/html/medidor_gerador_v1.10.174.html');
+    await p.goto(h.url + '/html/medidor_gerador_v1.10.176.html');
     assert.ok(await esperaAte(async () => (await txt('#lkPlc') || '').includes('leitura ok'), 12000), 'o chip do PLC nunca mostrou "leitura ok"');
   });
   after(async () => { if (b) await b.close(); if (h) await h.para(); });

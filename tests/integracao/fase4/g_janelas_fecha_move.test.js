@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.174.html';
+const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.176.html';
 const JANELAS = ['dlgCentral', 'dlgVer', 'dlgReg', 'dlgDemo', 'dlgDevCards', 'dlgPlacas', 'dlgDseSim', 'dlgRes', 'dlgGrand', 'dlgMotor', 'dlgLogs', 'dlgOcor', 'dlgOcHist', 'dlgModo', 'dlgChHD', 'dlgGrafico', 'dlgMapaFBs', 'dlgPatDet', 'dlgTabPot', 'dlgTroca', 'dlgParam'];
 describe('Janelas: fechar pelo X e mover pela barra de titulo (mouse real)', () => {
   let h, b, p;

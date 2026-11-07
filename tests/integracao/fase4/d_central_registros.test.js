@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.174.html';
+const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.176.html';
 describe('D - Central de registros', () => {
   let h, b, ctx, p;
   const txt = f => p.evaluate(f);
@@ -29,11 +29,11 @@ describe('D - Central de registros', () => {
   });
   after(async () => { if (b) await b.close(); if (h) await h.para(); });
 
-  test('o chip "Registros" abre a Central com os 5 itens e caixas de selecao', async () => {
+  test('o chip "Registros" abre a Central com os 6 itens (inclui o relatorio do Dev/Operador oculto) e caixas de selecao', async () => {
     await p.click('#bCentral');
     assert.ok(await esperaAte(() => txt(() => document.getElementById('dlgCentral').open), 3000), 'a janela nao abriu');
     const itens = await txt(() => [...document.querySelectorAll('#cenLista input[data-it]')].map(i => i.dataset.it));
-    assert.deepEqual(itens, ['alertas', 'monit', 'amostras', 'logs', 'dados']);
+    assert.deepEqual(itens, ['alertas', 'monit', 'amostras', 'logs', 'robo', 'dados']);
     assert.equal(await txt(() => document.querySelector('#cenLista input[data-it="amostras"]').disabled), true, 'sem amostras pendentes o item deve ficar desabilitado');
     assert.equal(await txt(() => document.querySelector('#cenLista input[data-it="alertas"]').checked), true);
   });
