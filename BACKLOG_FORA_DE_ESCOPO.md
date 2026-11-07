@@ -129,3 +129,4 @@ Corrigidos na medidor 1.10.176 / maquete v0.5 / mapa v0.16 / gerenciador v1.8 / 
 - **REV-5 · Mapa dos FBs no celular**: o desenho é reduzido para caber na largura (texto pequeno). Uma versão com rolagem horizontal pede decisão de layout.
 - **REV-6 · Robô Dev/Operador oculto**: fase Patamar mostra "Alvo 30 kW" nos chips 50/100/107 % durante o teste sem ensaio iniciado (mostra o mesmo alvo nos 4 chips). Conferir com o Reginaldo se é esperado antes do ensaio.
 - Limite honesto do teste: arrasto/toque reais só em Chromium (Playwright); não substitui o Poco real nem o Safari/Firefox.
+- **REV-7 · Menu do botão direito (toque longo) no celular** (gravidade baixa, decisão do Reginaldo em 07/11/2026): "não ficou legal e não funciona direito". Não será ajustado agora ("bobagem gastar token"); o Dev/Operador oculto continua cobrindo só o menu de clique direito do PC.
