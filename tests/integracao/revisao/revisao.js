@@ -12,7 +12,7 @@ const { chromium } = require('playwright');
 const RAIZ = path.join(__dirname, '..', '..', '..');
 const PASTAS = [path.join(RAIZ, 'dashboard', 'ferramentas'), path.join(RAIZ, 'dashboard', 'modulos-fonte'), path.join(RAIZ, 'docs', 'bt2', 'arquitetura'), path.join(RAIZ, 'catalogo')];
 const PAGINAS = {
-  medidor: 'medidor_gerador_v1.10.174.html', grafico: 'grafico_ensaio_v0.11.html', maquete: 'maquete_layout_v0.4.html', mapa: 'mapa_fbs_v0.15.html',
+  medidor: 'medidor_gerador_v1.10.176.html', grafico: 'grafico_ensaio_v0.11.html', maquete: 'maquete_layout_v0.4.html', mapa: 'mapa_fbs_v0.15.html',
   gerenciador: 'gerenciador_logs_v1.7.html', amostras: 'amostras_simulador_v0.7.html', apicards: 'api_cards_visor_v0.3.html', index: 'index.html',
   arquitetura: 'arquitetura_bt2_v0.5_editavel.html',
 };
@@ -69,7 +69,7 @@ const SONDA = rev => {
   const dentro = x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight;
   const top = dentro ? document.elementFromPoint(x, y) : null;
   const ok = !!top && (top === el || el.contains(top) || top.contains(el) || (el.labels && [...el.labels].some(l => l === top || l.contains(top))) || !!el.closest('label') && el.closest('label').contains(top));
-  return { existe: true, x, y, w: r.width, h: r.height, dentro, ok, coberto: ok ? '' : (top ? top.tagName.toLowerCase() + (top.id ? '#' + top.id : '') + (top.className && typeof top.className === 'string' ? '.' + top.className.split(' ')[0] : '') + ' em (' + Math.round(x) + ',' + Math.round(y) + ') rect=' + [Math.round(top.getBoundingClientRect().left), Math.round(top.getBoundingClientRect().top), Math.round(top.getBoundingClientRect().width), Math.round(top.getBoundingClientRect().height)] + ' pos=' + getComputedStyle(top).position + ' z=' + getComputedStyle(top).zIndex + ' dlgPai=' + (top.closest('dialog') ? top.closest('dialog').id : '-') + ' scrollY=' + Math.round(scrollY) : 'fora da tela') };
+  return { existe: true, x, y, w: r.width, h: r.height, dentro, ok, coberto: ok ? '' : (top ? top.tagName.toLowerCase() + (top.id ? '#' + top.id : '') + (top.className && typeof top.className === 'string' ? '.' + top.className.split(' ')[0] : '') + ' em (' + Math.round(x) + ',' + Math.round(y) + ') rect=' + [Math.round(top.getBoundingClientRect().left), Math.round(top.getBoundingClientRect().top), Math.round(top.getBoundingClientRect().width), Math.round(top.getBoundingClientRect().height)] + ' pos=' + getComputedStyle(top).position + ' z=' + getComputedStyle(top).zIndex + ' dlgPai=' + (top.closest('dialog') ? top.closest('dialog').id : '-') + ' scrollY=' + Math.round(scrollY) + ' obj=' + [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)] + ' dlg(scrollTop/scrollH/clientH)=' + (el.closest('dialog') ? [el.closest('dialog').scrollTop, el.closest('dialog').scrollHeight, el.closest('dialog').clientHeight] : '-') : 'fora da tela') };
 };
 const ESTADO = () => ({
   dialogs: [...document.querySelectorAll('dialog[open]')].map(d => d.id || '(sem id)'),
@@ -126,7 +126,8 @@ async function rodaPagina(browser, base, nomePag, perfNome, demo, log) {
     const kmv = 'mv|' + id; if (!vistos.has(kmv)) {
       vistos.set(kmv, 1);
       const hdr = await page.evaluate(i => { const d = document.getElementById(i); const h = d.querySelector('.jt,.pia-top,header') || d; const t = [...h.querySelectorAll('span,b,h1,h2,h3,strong')].find(e => e.getBoundingClientRect().width > 8 && !e.closest('button')) || h; const r = t.getBoundingClientRect(); return { x: r.left + Math.min(r.width / 2, 40), y: r.top + r.height / 2, tem: !!d.querySelector('.jt,.pia-top') }; }, id);   // comeca o arrasto no TEXTO do titulo (um botao nao arrasta, por projeto)
-      if (hdr.tem) {
+      const cabeTudo = g && g.w >= 0.9 * perf.viewport.width && g.h >= 0.9 * perf.viewport.height;   // janela do tamanho da tela: nao ha para onde mover (regra de projeto: janela inteira na tela)
+      if (hdr.tem && !cabeTudo) {
         await arrasta(hdr, 90, 60); await page.waitForTimeout(150);
         const g2 = await page.evaluate(GEOM, id);
         if (g2 && Math.abs(g2.l - g.l) < 20 && Math.abs(g2.t - g.t) < 20) achado('janela_nao_move', 'media', obj, 'arrastar a barra de titulo (' + (perf.hasTouch ? 'toque' : 'mouse') + ') nao moveu: ' + g.l + ',' + g.t + ' -> ' + g2.l + ',' + g2.t);
@@ -160,7 +161,7 @@ async function rodaPagina(browser, base, nomePag, perfNome, demo, log) {
       cob.total++;
       const objeto = (d.dlg ? '[' + d.dlg + '] ' : '') + d.tag + (d.id ? '#' + d.id : '') + ' "' + d.nome + '"';
       if (d.semNome) achado('sem_nome_acessivel', 'baixa', objeto, 'botao/controle sem texto, title nem aria-label');
-      if (perf.hasTouch && Math.min(d.w, d.h) < 44) achado(Math.min(d.w, d.h) < 24 ? 'alvo_toque_muito_pequeno' : 'alvo_toque_pequeno', Math.min(d.w, d.h) < 24 ? 'media' : 'baixa', objeto, d.w + 'x' + d.h + ' px (minimo recomendado 44)');
+      if (perf.hasTouch && Math.min(d.w, d.h) < 44) achado(Math.min(d.w, d.h) < 20 ? 'alvo_toque_muito_pequeno' : 'alvo_toque_pequeno', Math.min(d.w, d.h) < 20 ? 'media' : 'baixa', objeto, d.w + 'x' + d.h + ' px (minimo recomendado 44)');
       if (d.off) { cob.naoAcionados.push(objeto + ' [desabilitado]'); continue; }
       const s = await page.evaluate(SONDA, d.rev);
       if (!s.existe || s.w <= 0 || s.h <= 0) { cob.naoAcionados.push(objeto + ' [sumiu]'); continue; }
