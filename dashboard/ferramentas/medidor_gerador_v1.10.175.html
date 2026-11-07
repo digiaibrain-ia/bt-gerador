@@ -9957,7 +9957,7 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
      LIMITE (honesto): o robô clica por dentro da página (element.click()); ARRASTAR janela com mouse/dedo de verdade é provado pelo teste externo (Playwright), não por aqui. */
   const AV={cob:{total:0,acionados:0,nao:[]},efeitos:{},semente:20261107,vistos:new Map(),perfil:{},fase:'',janelas:{},achados:0};
   const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-  const NAO_CLICAR=new Set(['demo','dmPlc','demoSenha','bDemoLock','srvUrl','srvLimpa','url','go','opsIni','opsParar','opsCopia','opsEnsaio','opsModo','opsSemente','opsDur','bDevObs','obsAbre']);
+  const NAO_CLICAR=new Set(['demo','dmPlc','demoSenha','bDemoLock','srvUrl','srvLimpa','url','go','opsIni','opsParar','opsCopia','opsEnsaio','opsModo','opsSemente','opsDur','bDevObs','obsAbre','bParaEns']);
   const SEL_INT='button,summary,input:not([type=hidden]),select,textarea,[role=button],[role=tab],.tile[data-i]';
   const dentroDe=(el,sel)=>!!(el.closest&&el.closest(sel));
   const vis=el=>{const r=el.getBoundingClientRect(),cs=getComputedStyle(el);return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0};
@@ -9995,6 +9995,7 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
       if(dlg&&!dlg.open)return;
       if(escopoDlg){if(ido!==escopoDlg)return}else if(ido&&ido!=='dlgGuiado')return;
       if(NAO_CLICAR.has(el.id)||dentroDe(el,'#opsBar,#opsBox,#dlgDemo'))return;
+      {const dt=el.closest('details');if(dt&&!dt.open&&!el.closest('summary'))return}   // dentro de <details> fechado: o operador não vê nem clica (abre-se pelo summary; a 2ª passada pega o que apareceu)
       if(el.type==='file'||el.hasAttribute('data-ops-skip'))return;
       out.push(el);
     });
@@ -10005,6 +10006,7 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
   function sonda(el){ // dá para clicar? (nada cobre o centro do objeto). A barra flutuante do PRÓPRIO robô fica invisível durante a medida (não conta como cobertura).
     try{el.scrollIntoView({block:'center',inline:'center'})}catch(e){}
     const bar=$('opsBar'),vb=bar?bar.style.visibility:'';if(bar)bar.style.visibility='hidden';
+    {const dt=el.closest('details');if(dt&&!dt.open&&!el.closest('summary')){if(bar)bar.style.visibility=vb;return{oculto:true,dentro:true,ok:true}}}   // grupo recolhido: não está na tela
     const r=el.getBoundingClientRect();
     if(r.width<=0||r.height<=0){if(bar)bar.style.visibility=vb;return{oculto:true,dentro:true,ok:true}}   // o objeto sumiu/escondeu (ex.: botão de outro modo): não é cobertura
     const x=r.left+r.width/2,y=r.top+r.height/2,dentro=x>=0&&y>=0&&x<=innerWidth&&y<=innerHeight;
@@ -10088,6 +10090,7 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
       if(!s.dentro){achou(fase,'inalcançável (fora da tela): '+obj,'mesmo rolando, o centro fica fora da tela '+innerWidth+'×'+innerHeight);AV.cob.nao.push(obj+' [fora da tela]');continue}
       if(!s.ok){achou(fase,'coberto por outro elemento: '+obj,'o clique cairia em '+s.cob);AV.cob.nao.push(obj+' [coberto por '+s.cob+']');continue}
       const a0=estadoRapido();let ef='';
+      AV.ultimoObj=obj;
       try{ef=await aciona(el)}catch(e){achou(fase,'erro ao acionar '+obj,String(e&&e.message||e).slice(0,120));ef='erro'}
       AV.cob.acionados++;await pausa(110);
       const a1=estadoRapido();
@@ -10099,6 +10102,7 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
       if(a1.ens==='andamento'&&a0.ens==='parado'){await pararSilencio()}   // um clique iniciou ensaio: encerra para não travar o resto da varredura
       const rest=estadoRapido();if(rest.dlgs.some(x=>!a0.dlgs.includes(x))||rest.pops>0){fecharTudo();await pausa(60)}
     }
+    if(!escopoDlg&&prof===0&&!AV.segunda){AV.segunda=true;try{await varre('',0,null,fase)}finally{AV.segunda=false}}   // 2ª passada: objetos que só apareceram depois de abrir um grupo/lista
   }
   async function pararSilencio(){try{if(typeof pararEnsaioSilencioso==='function')pararEnsaioSilencioso()}catch(e){}await pausa(120)}
 
@@ -10233,6 +10237,7 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
       if(tipo==='avancado'){
         const fa=x=>!opt.fases||String(opt.fases).split(',').includes(x);   // opt.fases ('U1,U2,U3,U4'): roda só estas fases (diagnóstico)
         if(fa('U1')){OPS.fase='U1 · Varredura da página';ui();passo('percorrendo todos os objetos');
+          document.querySelectorAll('#bancos details').forEach(d=>{d.open=true});   // abre os bancos para varrer as chaves de todos (o operador faz o mesmo tocando no cabeçalho)
           await preparaChaves();await estabilizaHabil();
           await varre('',0,null,OPS.fase)}
         if(fa('U2')){OPS.fase='U2 · Menu do botão direito';ui();await faseMenuDireito()}
@@ -10245,7 +10250,7 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
         await faseMonkey(+opt.minutos||3,AV.semente);
       }
     }catch(e){
-      if(e===ABORT)aviso('Dev/Operador oculto','interrompido',OPS.motivoAbort||'pelo desenvolvedor (Parar)');
+      if(e===ABORT)aviso('Dev/Operador oculto','interrompido',(OPS.motivoAbort||'pelo desenvolvedor (Parar)')+(AV.ultimoObj?' · último objeto acionado: '+AV.ultimoObj:''));
       else reg('falha','Dev/Operador oculto','erro inesperado no próprio robô',String(e&&e.stack||e).slice(0,300));
     }
     OPS.fase='D · Restaurando';ui();
