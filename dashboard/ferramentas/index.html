@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
-<!-- index.html (v0.4) · 07/11/2026 — botão "Escolher arquivo…" em cada ferramenta (sem editar o catálogo). | index.html (v0.3) · 07/11/2026 — REVISÃO UNIVERSAL: Ajuda v0.2 (arrasta e fica inteira na tela) e alvos de toque no celular. | index.html (v0.2) · 29/10/2026 — corrige a procura dos arquivos (3 pastas, mostra onde procurou), confere os .js de apoio e traz AJUDA. Nome fixo de propósito. --><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="0.4"><title>Ferramentas · Bancos de teste</title>
+<!-- index.html (v0.5) · 07/11/2026 — botão "Tornar definitivo…" (grava a escolha no catálogo). | index.html (v0.4) · 07/11/2026 — botão "Escolher arquivo…" em cada ferramenta (sem editar o catálogo). | index.html (v0.3) · 07/11/2026 — REVISÃO UNIVERSAL: Ajuda v0.2 (arrasta e fica inteira na tela) e alvos de toque no celular. | index.html (v0.2) · 29/10/2026 — corrige a procura dos arquivos (3 pastas, mostra onde procurou), confere os .js de apoio e traz AJUDA. Nome fixo de propósito. --><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.5"><title>Ferramentas · Bancos de teste</title>
 <!-- index.html (v0.1) · 29/10/2026 — PÁGINA DE ENTRADA. Nome fixo de propósito (é o endereço que você guarda nos favoritos); a versão fica neste comentário.
   PARA QUE SERVE (leigo): uma lista com todas as ferramentas do projeto. Abra UMA vez  http://IP:1880/index.html  (o IP do PC do banco), guarde nos favoritos e clique na ferramenta.
   POR QUE: abrir o HTML com duplo clique usa file:///C:/Users/… e o navegador bloqueia as chamadas ao Node-RED; por http tudo funciona (inclusive módulos .js separados).
@@ -40,7 +40,7 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
   let g='',h='';
   CAT.itens.forEach(i=>{
     if(i.grupo!==g){g=i.grupo;h+='<h2>'+g+'</h2>'}
-    h+='<div class="lin"><a class="c'+(i.legado?' leg':'')+'" id="a-'+i.id+'" href="'+(emFile?'#':pasta+i.arquivo)+'"'+(emFile?'':' target="bt2_'+i.id+'"')+' rel="noopener"><span><b>'+i.nome+'</b><small>'+i.arquivo+' — '+i.desc+(i.aviso?' ('+i.aviso+')':'')+'</small><small class="onde" id="o-'+i.id+'"></small></span><span class="st" id="s-'+i.id+'"></span></a><span class="ac"><button type="button" data-esc="'+i.id+'" title="Escolher o arquivo HTML desta ferramenta (ele precisa estar na pasta do servidor)">Escolher arquivo…</button>'+(i.escolhido?'<button type="button" data-pad="'+i.id+'" title="Volta ao nome do catálogo: '+i.padrao+'">Voltar ao padrão</button>':'')+'<input type="file" accept=".html,.htm" hidden data-fi="'+i.id+'"></span></div>';
+    h+='<div class="lin"><a class="c'+(i.legado?' leg':'')+'" id="a-'+i.id+'" href="'+(emFile?'#':pasta+i.arquivo)+'"'+(emFile?'':' target="bt2_'+i.id+'"')+' rel="noopener"><span><b>'+i.nome+'</b><small>'+i.arquivo+' — '+i.desc+(i.aviso?' ('+i.aviso+')':'')+'</small><small class="onde" id="o-'+i.id+'"></small></span><span class="st" id="s-'+i.id+'"></span></a><span class="ac"><button type="button" data-esc="'+i.id+'" title="Escolher o arquivo HTML desta ferramenta (ele precisa estar na pasta do servidor)">Escolher arquivo…</button>'+(i.escolhido?'<button type="button" data-def="'+i.id+'" title="Grava este nome no catálogo (catalogo_ferramentas_v0.7.js) para valer em todos os navegadores">Tornar definitivo…</button><button type="button" data-pad="'+i.id+'" title="Volta ao nome do catálogo: '+i.padrao+'">Voltar ao padrão</button>':'')+'<input type="file" accept=".html,.htm" hidden data-fi="'+i.id+'"></span></div>';
   });
   $('lista').innerHTML=h;
   /* v0.4: escolher o arquivo de cada ferramenta sem editar o catálogo (guardado neste navegador) */
@@ -48,6 +48,26 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
   document.querySelectorAll('[data-esc]').forEach(b=>b.addEventListener('click',()=>document.querySelector('[data-fi="'+b.dataset.esc+'"]').click()));
   document.querySelectorAll('[data-fi]').forEach(f=>f.addEventListener('change',()=>{const n=f.files[0]&&f.files[0].name;if(!n)return;if(!/^[\w.\-]+\.html?$/i.test(n)){alert('Nome de arquivo não aceito: '+n+' (use letras, números, ponto, hífen e _).');return}const m=lerM();m[f.dataset.fi]=n;gravaM(m);location.reload()}));
   document.querySelectorAll('[data-pad]').forEach(b=>b.addEventListener('click',()=>{const m=lerM();delete m[b.dataset.pad];gravaM(m);location.reload()}));
+  /* Tornar definitivo: reescreve a linha do catálogo. Chrome/Edge: abre o catalogo_ferramentas_v0.7.js, altera e salva no próprio arquivo (você escolhe o arquivo na pasta public\html). Sem essa função: baixa o .js já alterado para você copiar por cima. */
+  document.querySelectorAll('[data-def]').forEach(b=>b.addEventListener('click',async()=>{
+    const id=b.dataset.def,it=CAT.itens.find(x=>x.id===id);if(!it)return;
+    const troca=txt=>{const re=new RegExp("(id:\\s*'"+id+"'[^}]*?arquivo:\\s*')[^']+(')");if(!re.test(txt))return null;return txt.replace(re,"$1"+it.arquivo+"$2")};
+    const limpa=()=>{const m=lerM();delete m[id];gravaM(m);location.reload()};
+    try{
+      if(window.showOpenFilePicker){
+        const [h]=await showOpenFilePicker({multiple:false,types:[{description:'catalogo_ferramentas_v0.7.js',accept:{'text/javascript':['.js']}}]});
+        const f=await h.getFile();if(!/^catalogo_ferramentas.*\.js$/i.test(f.name)){alert('Escolha o arquivo catalogo_ferramentas_v0.7.js (na pasta public\\html).');return}
+        const novo=troca(await f.text());if(novo===null){alert('Não achei a linha de "'+id+'" nesse arquivo. Nada foi alterado.');return}
+        if(!confirm('Gravar no catálogo:\n'+it.padrao+'  →  '+it.arquivo+'\n\nO arquivo antigo do catálogo será substituído. Continuar?'))return;
+        const w=await h.createWritable();await w.write(novo);await w.close();alert('Catálogo salvo. Esta página será recarregada.');limpa();return;
+      }
+    }catch(e){if(e&&e.name==='AbortError')return}
+    /* sem a função de gravar no arquivo: baixa o .js alterado */
+    const r=await fetch('catalogo_ferramentas_v0.7.js',{cache:'no-store'}).then(x=>x.text()).catch(()=>null);
+    const novo=r&&troca(r);if(!novo){alert('Não consegui ler o catálogo do servidor. Nada foi alterado.');return}
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([novo],{type:'text/javascript'}));a.download='catalogo_ferramentas_v0.7.js';a.click();
+    alert('Baixei o catalogo_ferramentas_v0.7.js já alterado. Copie por cima do arquivo da pasta public\\html e recarregue.');
+  }));
   CAT.itens.forEach(i=>{if(i.escolhido){const o=$('o-'+i.id);if(o)o.textContent='escolhido neste navegador (padrão do catálogo: '+i.padrao+')'}});
   if(emFile){document.querySelectorAll('a.c').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));return}
   const acha=async nome=>{for(const c of cands){try{const r=await fetch(c+nome,{method:'HEAD',cache:'no-store'});if(r.ok)return c}catch(e){return undefined}}return null}; /* undefined = servidor não respondeu */
