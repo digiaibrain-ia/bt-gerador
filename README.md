@@ -13,13 +13,18 @@ Detalhes: [docs/arquitetura.md](docs/arquitetura.md).
 ## Pastas
 | Pasta | Conteúdo |
 |---|---|
-| `dashboard/src/` | Fonte do dashboard (HTML base + módulos) |
-| `dashboard/build/` | Script que monta o HTML único |
-| `nodered/flows/bt1`, `bt2` | Fluxos JSON exportados (sem credenciais) |
-| `plc/bt1`, `bt2`, `btg` | Blocos SCL e DB exportados em texto (`btg` = geral/comum aos dois BTs) |
-| `docs/` | Arquitetura, decisões (ADR), contratos HTTP |
-| `catalogo/` | CSV de modelos de gerador |
-| `tests/` | Testes e roteiros de validação |
+| `dashboard/` | App do operador (fonte em `src/`, build em `build/`, módulos, ferramentas, arquivo de versões antigas) — compartilhado pelos BTs |
+| `nodered/flows/bt2/` | Fluxos Node-RED do BT2 (JSON exportado, sem credenciais). `bt1/` reservada |
+| `plc/bt2/` | Blocos SCL e DB do BT2 em texto (`bancos_cargas/`, `comunicacao_et200/`, `variaveis/`, `arquivo/` = versões antigas) |
+| `plc/bt1/` | Reservada (BT1 ainda não está em desenvolvimento) |
+| `docs/geral/` | Arquitetura, glossário, dicionário de dados, processo de sincronização |
+| `docs/padroes/` | Regras de nomes e versões, layout estável, padrão de alertas e falhas, mapa de versões |
+| `docs/bt2/` | Documentos do BT2: `contratos/`, `plc/`, `ensaio/`, `migracao/`, `modulos/`, `diagramas/` |
+| `catalogo/` | CSV de modelos de gerador (lido do `.dse`) |
+
+Critério: o que vale para qualquer BT vai para `geral/` ou `padroes/`; o que é de um BT vai para a pasta dele. Regra do projeto: BT1 e BT2 nunca se misturam.
+
+Os textos de documentos antigos ainda citam caminhos anteriores (ex.: `docs/PLANO_...`). Os caminhos atuais são os desta tabela.
 
 ## Como obter o dashboard (operador)
 Abra a aba **Releases** do repositório e baixe o `.html` da última tag `medidor-v*`.

@@ -1,0 +1,69 @@
+DATA_BLOCK "db3200_BC595_Chaves"
+TITLE = db3200_BC595_Chaves v0.2 (DB3200)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.2
+NON_RETAIN
+////====================================
+//// db3200_BC595_Chaves (DB3200) - GERADO por plc/bt2/gerador/gerar_banco_v0.2.py (03/11/2026) - nao compilado no TIA, nao testado
+//// O QUE FAZ : mesmo papel do db150_BC56_Chaves v0.3, arrays de 32 chaves. Banco BC59,5: 18 chaves reais, 14 reserva. FB: FB102/FB103.
+//// OFFSETS (calculados; CONFERIR na coluna "Deslocamento" do TIA): cb.ligar X0.0 | sb.ligada X4.0 | habilitada X8.0 | setupOk X12.0
+////    kwReal D16 | rMedidoOhm D144 | rTeoricoOhm D272 | setupData B400 (12 bytes cada) | nominal D784
+////    chaveSel W912 | salvar X914.0 | usarKwReal X914.1 | cbBanco.ligar X916.0 | sbBanco.seletoraAuto X918.0 | comEt200Ok X918.1
+//// kW nominal na ordem fisica das chaves (informado pelo operador em 30/10/2026).
+////=====================================
+   VAR
+      cb : Struct
+         ligar : Array[1..32] of Bool;
+      END_STRUCT;
+
+      sb : Struct
+         ligada : Array[1..32] of Bool;
+      END_STRUCT;
+
+      setup : Struct
+         habilitada   : Array[1..32] of Bool;
+         setupOk      : Array[1..32] of Bool;
+         kwReal       : Array[1..32] of Real;
+         rMedidoOhm   : Array[1..32] of Real;
+         rTeoricoOhm  : Array[1..32] of Real;
+         setupData    : Array[1..32] of DTL;
+         nominal      : Array[1..32] of Real;
+         chaveSel     : UInt;
+         salvar       : Bool;
+         usarKwReal   : Bool;
+      END_STRUCT;
+
+      cbBanco : Struct   // DBX916.0
+         ligar : Bool;
+      END_STRUCT;
+
+      sbBanco : Struct   // DBX918.0
+         seletoraAuto : Bool;
+         comEt200Ok : Bool;
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+   setup.nominal[1] := 5.0;
+   setup.nominal[2] := 5.0;
+   setup.nominal[3] := 5.0;
+   setup.nominal[4] := 5.0;
+   setup.nominal[5] := 5.0;
+   setup.nominal[6] := 4.0;
+   setup.nominal[7] := 4.0;
+   setup.nominal[8] := 4.0;
+   setup.nominal[9] := 4.0;
+   setup.nominal[10] := 4.0;
+   setup.nominal[11] := 4.0;
+   setup.nominal[12] := 3.0;
+   setup.nominal[13] := 3.0;
+   setup.nominal[14] := 2.0;
+   setup.nominal[15] := 1.0;
+   setup.nominal[16] := 0.5;
+   setup.nominal[17] := 0.5;
+   setup.nominal[18] := 0.5;
+   // 19..32: reserva, 0.0
+
+END_DATA_BLOCK

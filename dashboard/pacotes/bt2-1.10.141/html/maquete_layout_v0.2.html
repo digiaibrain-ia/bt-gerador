@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<!--
+  maquete_layout_v0.2.html — MAQUETE de layout da tela principal (01/11/2026). Substitui a v0.1.
+  O QUE É: rascunho SEM lógica de PLC/Node-RED/DSE. Blocos = cards da tela real, arrastáveis e redimensionáveis.
+  PARA QUE SERVE: testar arranjos sem risco ao HTML real; tire um print (ou use "Exportar ▾") e mande ao Claude.
+  NOVO NA v0.2 (pedido do operador):
+    • Card MODO incluído (com as caixinhas PLC / Node-RED / HTML e os campos do card real).
+    • Setinha ▾ em cada card (recolhe para a barra de título) e em cada CAIXINHA interna (BC56, BC400, BC59,5, BC550…).
+    • Funções por card: ▾ recolher · 👁 ocultar · 🔒 travar · ⇧ frente · ↺ restaurar este card.
+    • Funções por caixinha: ▾ abrir/fechar · ↑ ↓ mudar a ordem dentro do card.
+    • Recursos da proposta: presets de layout (A empilhado, B lado a lado, C Patamar na linha do banco), grade magnética,
+      alinhar às colunas, mostrar medidas, salvar/restaurar no navegador, Exportar ▾ (TXT, MD, JSON, PDF).
+  ORGANIZAÇÃO (módulos no mesmo arquivo, nesta ordem): CONFIG · ESTADO · PRESETS · BLOCO · CAIXINHAS · BARRA · EXPORTAR · INICIO.
+  NÃO FAZ: não lê PLC, não fala com Node-RED, não tem dado real. Área = 1536×694 px (viewport do notebook).
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquete de layout v0.2</title>
+<style>
+  :root{--bg:#0f1720;--area:#17202b;--card:#1f2a37;--line:#3a4654;--txt:#e8edf2;--sub:#9aa6b5;--acento:#e08a00;--ok:#2e9a5f;--bt:#28333f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,sans-serif}
+  header{padding:8px 14px;background:#0a1017;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  header h1{font-size:15px;margin:0 8px 0 0}
+  header .sep{width:1px;height:22px;background:var(--line)}
+  header label{font-size:12px;color:var(--sub);display:inline-flex;align-items:center;gap:4px}
+  /* botões sem borda: tom acima do fundo (regra do projeto) */
+  button{font:inherit;font-size:12px;padding:5px 10px;border:0;background:var(--bt);color:var(--txt);border-radius:6px;cursor:pointer}
+  button:hover{background:#33414f}
+  button.on{background:var(--acento);color:#111}
+  details.menu{position:relative}
+  details.menu>summary{list-style:none;font-size:12px;padding:5px 10px;background:var(--bt);border-radius:6px;cursor:pointer}
+  details.menu>summary::-webkit-details-marker{display:none}
+  details.menu .lista{position:absolute;z-index:9999;top:30px;left:0;min-width:170px;background:#0a1017;border-radius:8px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  details.menu .lista button{display:block;width:100%;text-align:left;margin:1px 0;background:transparent}
+  details.menu .lista button:hover{background:var(--bt)}
+  #area{position:relative;margin:12px;width:1536px;max-width:calc(100vw - 24px);height:694px;background:var(--area);border:1px dashed var(--line);border-radius:10px;overflow:auto}
+  #area.grade{background-image:linear-gradient(#ffffff0d 1px,transparent 1px),linear-gradient(90deg,#ffffff0d 1px,transparent 1px);background-size:var(--g,8px) var(--g,8px)}
+  .blk{position:absolute;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:8px;min-width:140px;min-height:34px;resize:both;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .blk.fechado{resize:none;height:auto!important;min-height:0}
+  .blk.fechado .bd{display:none}
+  .blk.oculto{display:none}
+  .blk.travado{resize:none;outline:1px dashed #5a6a7a}
+  .blk.travado .bt{cursor:not-allowed}
+  .blk .bt{flex:none;background:var(--bt);padding:5px 8px;font-weight:700;font-size:12px;cursor:move;display:flex;align-items:center;gap:6px;user-select:none}
+  .blk .bt .nome{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .blk .bt small{color:var(--sub);font-weight:400}
+  .blk .bt button{padding:2px 6px;background:transparent;font-size:12px}
+  .blk .bt button:hover{background:#3a4a5a}
+  .blk .bd{flex:1;min-height:0;overflow:auto;padding:8px;color:var(--sub);font-size:12px;display:flex;flex-direction:column;gap:6px}
+  .blk.patamar{border-color:var(--acento)}.blk.patamar .bt{background:#3a2a10;color:var(--acento)}
+  .blk .medidas{position:absolute;right:6px;bottom:3px;font-size:10px;color:var(--sub);pointer-events:none;display:none}
+  body.med .blk .medidas{display:block}
+  .cx{background:#26323f;border-radius:6px}
+  .cx>.ch{display:flex;align-items:center;gap:4px;padding:4px 6px;font-size:12px;color:var(--txt)}
+  .cx>.ch .nome{flex:1}
+  .cx>.ch button{padding:1px 5px;background:transparent}
+  .cx>.cb{padding:4px 8px 8px;font-size:11px;color:var(--sub)}
+  .cx.fechada>.cb{display:none}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .grid .cx{padding:5px 7px;font-size:11px}.grid .cx b{display:block;color:var(--txt)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Maquete de layout — tela principal</h1>
+  <details class="menu"><summary>Layouts ▾</summary><div class="lista" id="mPresets"></div></details>
+  <div class="sep"></div>
+  <label><input type="checkbox" id="cGrade"> grade magnética</label>
+  <label>passo <select id="sPasso"><option>4</option><option selected>8</option><option>16</option></select> px</label>
+  <label><input type="checkbox" id="cMed"> mostrar medidas</label>
+  <button id="bAlinha" title="Encosta cada bloco na coluna mais próxima (x = 8, 448 ou 887)">Alinhar às colunas</button>
+  <button id="bAbreTudo" title="Abre todos os cards e caixinhas">Abrir tudo</button>
+  <button id="bFechaTudo" title="Recolhe todos os cards (só a barra de título)">Recolher tudo</button>
+  <div class="sep"></div>
+  <button id="bSalva" title="Guarda este arranjo no navegador">💾 Salvar</button>
+  <button id="bCarrega" title="Volta ao arranjo salvo neste navegador">Restaurar salvo</button>
+  <details class="menu"><summary>Exportar ▾</summary><div class="lista" id="mExp">
+    <button data-f="txt">TXT — medidas (colar no chat)</button>
+    <button data-f="md">MD — tabela do layout</button>
+    <button data-f="json">JSON — posições (para reabrir)</button>
+    <button data-f="pdf">PDF — imprimir a tela</button>
+  </div></details>
+  <button id="bReset" title="Volta ao layout atual do sistema (versão 1.10.130)">↺ Layout atual</button>
+  <span id="msg" style="font-size:12px;color:var(--ok)"></span>
+</header>
+<div id="area"></div>
+
+<script>
+'use strict';
+/* ============ MÓDULO CONFIG ============
+   Por quê: um só lugar com os blocos e as caixinhas, para ajustar o ponto de partida sem mexer no código.
+   Posições = as do HTML real (medidor 1.10.130) em 1536×694: colunas em x=8, 448 e 887. */
+const CHAVE_LS = 'maquete.layout.v0.2';
+const COLUNAS = [8, 448, 887];
+const BLOCOS = [
+  {id:'modo',      nome:'Modo',                   x:8,   y:8,   w:430, h:148, caixas:[['PLC','não conectado'],['Node-RED','não conectado'],['HTML','ativo']], grade:['Fonte dos dados','Tipo de ensaio','Salvamento','Node-RED (confirmado)','Gráfico','Visão do operador']},
+  {id:'etapas',    nome:'Etapas do ensaio',       x:8,   y:164, w:430, h:410},
+  {id:'grafico',   nome:'Gráfico do ensaio',      x:8,   y:582, w:430, h:96},
+  {id:'grandezas', nome:'Leitura das grandezas',  x:448, y:8,   w:430, h:670},
+  {id:'patamar',   nome:'Patamar',                x:887, y:8,   w:640, h:48,  cls:'patamar'},
+  {id:'bco',       nome:'Banco de Cargas',        x:887, y:64,  w:640, h:262, caixas:[['BC56 · 56 kW','13 chaves'],['BC400 · 400 kW','13 chaves'],['BC59,5 · só consulta','18 chaves'],['BC550 · só consulta','12 chaves']]},
+  {id:'registro',  nome:'Registro do ensaio',     x:887, y:334, w:640, h:344},
+];
+/* ============ MÓDULO ESTADO ============ */
+const area = document.getElementById('area');
+let zTopo = 1;
+const msg = t => { const m = document.getElementById('msg'); m.textContent = t; clearTimeout(msg.t); msg.t = setTimeout(() => m.textContent = '', 2500); };
+const passo = () => document.getElementById('cGrade').checked ? +document.getElementById('sPasso').value : 1;
+const snap = v => Math.round(v / passo()) * passo();
+const blocos = () => [...area.querySelectorAll('.blk')];
+
+/* ============ MÓDULO PRESETS ============
+   Por quê: as 3 variações discutidas para o Patamar. Cada preset só muda x/y/w/h de alguns blocos. */
+const PRESETS = {
+  'A · Patamar empilhado acima do Banco (atual)': {patamar:{x:887,y:8,w:640,h:48}, bco:{x:887,y:64,w:640,h:262}, registro:{x:887,y:334,w:640,h:344}},
+  'B · Patamar ao lado do Banco':                 {patamar:{x:887,y:8,w:200,h:318}, bco:{x:1095,y:8,w:432,h:318}, registro:{x:887,y:334,w:640,h:344}},
+  'C · Patamar na faixa do topo (sobre as 3 colunas)': {patamar:{x:8,y:8,w:1519,h:44}, modo:{x:8,y:60,w:430,h:130}, etapas:{x:8,y:198,w:430,h:376}, grafico:{x:8,y:582,w:430,h:96}, grandezas:{x:448,y:60,w:430,h:618}, bco:{x:887,y:60,w:640,h:266}, registro:{x:887,y:334,w:640,h:344}},
+};
+function aplicaPreset(p){ Object.entries(p).forEach(([id,g]) => { const b = document.getElementById('blk-'+id); if (!b) return; b.style.left=g.x+'px'; b.style.top=g.y+'px'; b.style.width=g.w+'px'; b.style.height=g.h+'px'; }); atualizaTodasMedidas(); }
+
+/* ============ MÓDULO CAIXINHAS ============
+   Por quê: os cards reais têm sub-cards com setinha (BC56, BC400…) e caixinhas (PLC/Node-RED/HTML). Cada uma abre/fecha e reordena. */
+function criaCaixinha(txt, sub){
+  const c = document.createElement('div'); c.className = 'cx fechada';
+  c.innerHTML = '<div class="ch"><button data-a="seta" title="Abrir/fechar">▸</button><span class="nome"><b>'+txt+'</b> <small>'+sub+'</small></span><button data-a="sobe" title="Subir">↑</button><button data-a="desce" title="Descer">↓</button></div><div class="cb">conteúdo da caixinha (representação)</div>';
+  c.addEventListener('click', e => {
+    const a = e.target.closest('button'); if (!a) return;
+    if (a.dataset.a === 'seta') { c.classList.toggle('fechada'); a.textContent = c.classList.contains('fechada') ? '▸' : '▾'; }
+    if (a.dataset.a === 'sobe' && c.previousElementSibling && c.previousElementSibling.classList.contains('cx')) c.parentNode.insertBefore(c, c.previousElementSibling);
+    if (a.dataset.a === 'desce' && c.nextElementSibling && c.nextElementSibling.classList.contains('cx')) c.parentNode.insertBefore(c.nextElementSibling, c);
+  });
+  return c;
+}
+
+/* ============ MÓDULO BLOCO ============ */
+function criaBloco(def){
+  const b = document.createElement('div');
+  b.className = 'blk' + (def.cls ? ' '+def.cls : ''); b.id = 'blk-'+def.id; b.dataset.id = def.id;
+  b.style.left = def.x+'px'; b.style.top = def.y+'px'; b.style.width = def.w+'px'; b.style.height = def.h+'px';
+  b.innerHTML = '<div class="bt"><button data-a="seta" title="Recolher / abrir o card">▾</button><span class="nome">'+def.nome+' <small>#'+def.id+'</small></span>'+
+    '<button data-a="frente" title="Trazer para a frente">⇧</button><button data-a="trava" title="Travar posição e tamanho">🔓</button><button data-a="oculta" title="Ocultar (volta por Layouts ▾ › Mostrar todos)">👁</button><button data-a="rest" title="Restaurar este card">↺</button></div>'+
+    '<div class="bd"></div><div class="medidas"></div>';
+  const bd = b.querySelector('.bd');
+  if (def.grade) { const g = document.createElement('div'); g.className = 'grid'; def.grade.forEach(t => { const x = document.createElement('div'); x.className='cx'; x.innerHTML='<b>'+t+'</b>—'; g.appendChild(x); }); bd.appendChild(g); }
+  if (def.caixas) def.caixas.forEach(([t, s]) => bd.appendChild(criaCaixinha(t, s)));
+  if (!def.grade && !def.caixas) bd.textContent = 'bloco de representação — sem dados reais';
+  area.appendChild(b);
+  const bt = b.querySelector('.bt'), med = b.querySelector('.medidas');
+  b._med = () => { med.textContent = Math.round(b.offsetWidth)+'×'+Math.round(b.offsetHeight)+' px · x '+Math.round(b.offsetLeft)+' y '+Math.round(b.offsetTop); };
+  b._med(); new ResizeObserver(b._med).observe(b);
+  b.addEventListener('pointerdown', () => { b.style.zIndex = ++zTopo; });
+  // ações dos botões da barra de título
+  bt.addEventListener('click', e => {
+    const a = e.target.closest('button'); if (!a) return;
+    const k = a.dataset.a;
+    if (k === 'seta') { const f = b.classList.toggle('fechado'); a.textContent = f ? '▸' : '▾'; if (f) { b._h = b.style.height; } else if (b._h) b.style.height = b._h; }
+    if (k === 'frente') b.style.zIndex = ++zTopo;
+    if (k === 'trava') { const t = b.classList.toggle('travado'); a.textContent = t ? '🔒' : '🔓'; }
+    if (k === 'oculta') b.classList.add('oculto');
+    if (k === 'rest') { b.style.left=def.x+'px'; b.style.top=def.y+'px'; b.style.width=def.w+'px'; b.style.height=def.h+'px'; b.classList.remove('fechado','oculto'); b._med(); }
+  });
+  // arrastar pela barra (com grade magnética, limitado à área; bloco travado não move)
+  let ax = 0, ay = 0, bx = 0, by = 0, arr = false;
+  bt.addEventListener('pointerdown', e => { if (e.target.closest('button') || b.classList.contains('travado')) return; arr = true; ax = e.clientX; ay = e.clientY; bx = b.offsetLeft; by = b.offsetTop; bt.setPointerCapture(e.pointerId); });
+  bt.addEventListener('pointermove', e => { if (!arr) return; b.style.left = Math.max(0, snap(bx + e.clientX - ax)) + 'px'; b.style.top = Math.max(0, snap(by + e.clientY - ay)) + 'px'; b._med(); });
+  const fim = () => { arr = false; }; bt.addEventListener('pointerup', fim); bt.addEventListener('pointercancel', fim);
+  return b;
+}
+function atualizaTodasMedidas(){ blocos().forEach(b => b._med && b._med()); }
+function monta(){ area.innerHTML = ''; BLOCOS.forEach(criaBloco); }
+
+/* ============ MÓDULO BARRA ============ */
+function ligaBarra(){
+  const mp = document.getElementById('mPresets');
+  Object.keys(PRESETS).forEach(n => { const x = document.createElement('button'); x.textContent = n; x.onclick = () => { aplicaPreset(PRESETS[n]); msg('Layout aplicado: ' + n.split(' ·')[0]); }; mp.appendChild(x); });
+  const m = document.createElement('button'); m.textContent = 'Mostrar todos os cards ocultos'; m.onclick = () => blocos().forEach(b => b.classList.remove('oculto')); mp.appendChild(m);
+  document.getElementById('cGrade').onchange = e => { area.classList.toggle('grade', e.target.checked); area.style.setProperty('--g', passo()+'px'); };
+  document.getElementById('sPasso').onchange = () => area.style.setProperty('--g', passo()+'px');
+  document.getElementById('cMed').onchange = e => document.body.classList.toggle('med', e.target.checked);
+  document.getElementById('bAlinha').onclick = () => { blocos().forEach(b => { const x = b.offsetLeft, c = COLUNAS.reduce((p, q) => Math.abs(q - x) < Math.abs(p - x) ? q : p); b.style.left = c + 'px'; b._med(); }); msg('Alinhado às colunas'); };
+  document.getElementById('bAbreTudo').onclick = () => { blocos().forEach(b => { b.classList.remove('fechado'); b.querySelector('[data-a=seta]').textContent = '▾'; }); area.querySelectorAll('.cx.fechada').forEach(c => { c.classList.remove('fechada'); const s = c.querySelector('[data-a=seta]'); if (s) s.textContent = '▾'; }); };
+  document.getElementById('bFechaTudo').onclick = () => blocos().forEach(b => { b._h = b.style.height; b.classList.add('fechado'); b.querySelector('[data-a=seta]').textContent = '▸'; });
+  document.getElementById('bSalva').onclick = () => { try { localStorage.setItem(CHAVE_LS, JSON.stringify(estado())); msg('Salvo neste navegador'); } catch (e) { msg('Não foi possível salvar'); } };
+  document.getElementById('bCarrega').onclick = () => { try { const s = JSON.parse(localStorage.getItem(CHAVE_LS) || 'null'); if (s) { restaura(s); msg('Restaurado'); } else msg('Nada salvo ainda'); } catch (e) { msg('Falha ao restaurar'); } };
+  document.getElementById('bReset').onclick = () => { monta(); msg('Layout atual do sistema'); };
+  document.getElementById('mExp').onclick = e => { const f = e.target.closest('button'); if (f) exporta(f.dataset.f); };
+}
+
+/* ============ MÓDULO EXPORTAR ============ */
+function estado(){ return blocos().map(b => ({id:b.dataset.id, x:b.offsetLeft, y:b.offsetTop, w:b.offsetWidth, h:b.offsetHeight, fechado:b.classList.contains('fechado'), oculto:b.classList.contains('oculto'), travado:b.classList.contains('travado')})); }
+function restaura(lista){ lista.forEach(s => { const b = document.getElementById('blk-'+s.id); if (!b) return; b.style.left=s.x+'px'; b.style.top=s.y+'px'; b.style.width=s.w+'px'; b.style.height=s.h+'px'; b.classList.toggle('fechado', !!s.fechado); b.classList.toggle('oculto', !!s.oculto); b.classList.toggle('travado', !!s.travado); b._med(); }); }
+function baixa(nome, texto, tipo){ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([texto], {type:tipo})); a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1500); }
+function exporta(f){
+  const e = estado(), nome = n => (BLOCOS.find(b => b.id === n) || {}).nome || n;
+  if (f === 'json') return baixa('layout_maquete_v0.2.json', JSON.stringify(e, null, 2), 'application/json');
+  if (f === 'txt') { const t = 'Maquete v0.2 — área 1536×694\n' + e.map(s => nome(s.id)+': largura='+s.w+'px altura='+s.h+'px esquerda='+s.x+'px topo='+s.y+'px'+(s.fechado?' (recolhido)':'')+(s.oculto?' (oculto)':'')).join('\n'); try { navigator.clipboard.writeText(t); msg('Copiado — cole no chat'); } catch (x) {} return baixa('layout_maquete_v0.2.txt', t, 'text/plain'); }
+  if (f === 'md') return baixa('layout_maquete_v0.2.md', '# Layout da maquete v0.2\n\n| Card | Esq. | Topo | Larg. | Alt. | Obs. |\n|---|---|---|---|---|---|\n' + e.map(s => '| '+nome(s.id)+' | '+s.x+' | '+s.y+' | '+s.w+' | '+s.h+' | '+(s.fechado?'recolhido ':'')+(s.oculto?'oculto':'')+' |').join('\n') + '\n', 'text/markdown');
+  if (f === 'pdf') window.print();
+}
+/* ============ MÓDULO INICIO ============ */
+monta(); ligaBarra();
+</script>
+</body>
+</html>

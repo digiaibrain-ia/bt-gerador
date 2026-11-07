@@ -1,0 +1,99 @@
+FUNCTION_BLOCK "fb_bancoEt200_16"
+TITLE = fb_bancoEt200_16 v0.2
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+////====================================
+//// fb_bancoEt200_16  -  RASCUNHO v0.2 (03/11/2026, auditoria) a partir da v0.1 gerada por gerar_banco_v0.2.py - nao compilado, nao testado
+//// v0.2: (1) CORRIGE religamento automatico: na v0.1 o bloqueio pos-queda valia so 1 ciclo ((_comOkAnt OR _rearmado) ja era TRUE
+////       no 2o ciclo) e a contatora voltava sozinha com o comando antigo. Agora _bloq[i] trava na queda e so solta com Cmd[i]=FALSE.
+////       Tambem bloqueia no 1o ciclo apos partida da CPU. (2) TON no lugar de TON_TIME (IM151-8 e familia S7-300: TON_TIME nao existe).
+////       (3) sem o atributo S7_Optimized_Access (nao existe no S7-300). (4) NumChaves limitado a 0..16 (fora disso o S7-300 escreve fora do array).
+//// ONDE RODA : ET200 (programa Gerador_BC015). 1 instancia por banco NOVO (BC550, BC59,5). BC56 e BC400 seguem no FC4 atual.
+//// O QUE FAZ : lado ET200 do telegrama PUT/GET do banco (ate 16 chaves, 6+6 bytes):
+////    1) vidaET incrementa a cada ~100 ms (prova ao 1515 que o ET200 esta vivo).
+////    2) vida1515 parou de mudar por TempoPerdaMs -> ComOk=FALSE e TODAS as saidas vao a FALSE.
+////    3) apos queda, a chave so religa depois de o comando cair a FALSE e ser recomandado (nao religa sozinha).
+////    4) saida da contatora so liga com ComOk E LigarBanco E seletora em Auto (defesa extra; o 1515 ja zera o comando).
+////    5) fbk[n] = contato auxiliar REAL; seletoraAuto = entrada fisica da seletora do banco (1 = Auto).
+//// COMO CHAMAR: ver fc_bancosNovosEt200 (gerado). Entradas/saidas fisicas entram pelas tags da tabela tags_ET200_bancos.
+////=====================================
+   VAR_INPUT
+      NumChaves        : Int;                       // chaves reais deste banco (1..16)
+      SeletoraEntrada  : Bool;                      // entrada fisica: seletora do banco em Auto (1 = Auto)
+      TempoPerdaMs     : Time := T#2S;              // menor que o TempoVida do 1515 (3 s)
+   END_VAR
+   VAR_OUTPUT
+      ComOk : Bool;
+   END_VAR
+   VAR_IN_OUT
+      Cmd               : Array[1..16] of Bool;   // <DB remoto>.cmd       (PUT do 1515; so le)
+      Vida1515          : Int;                     // <DB remoto>.vida1515  (so le)
+      LigarBanco        : Bool;                    // <DB remoto>.ligarBanco (so le)
+      VidaET            : Int;                     // <DB remoto>.vidaET    (escreve)
+      Fbk               : Array[1..16] of Bool;   // <DB remoto>.fbk       (escreve)
+      SeletoraAuto      : Bool;                    // <DB remoto>.seletoraAuto (escreve)
+      SaidaContatora    : Array[1..16] of Bool;   // saidas fisicas (copiadas pelo fc_bancosNovosEt200)
+      EntradaContatoAux : Array[1..16] of Bool;   // contatos auxiliares fisicos
+   END_VAR
+   VAR
+      _tOsc100ms   : TON;
+      _tPerda      : TON;
+      _vida1515Ant : Int;
+      _vidaMudou   : Bool;
+      _comOkAnt    : Bool;
+      _cmdAnt      : Array[1..16] of Bool;
+      _bloq        : Array[1..16] of Bool;   // v0.2: TRUE = caiu a comunicacao (ou partida); so solta com Cmd[i] = FALSE
+      _partiu      : Bool;                     // v0.2: FALSE no 1o ciclo apos partida
+      _n           : Int;                      // v0.2: NumChaves limitado a 0..16
+      i            : Int;
+   END_VAR
+
+BEGIN
+   #_tOsc100ms(IN := NOT #_tOsc100ms.Q, PT := T#100MS);
+   IF #_tOsc100ms.Q THEN
+      #VidaET := #VidaET + 1;
+      IF #VidaET >= 32767 THEN #VidaET := 0; END_IF;
+   END_IF;
+
+   IF #Vida1515 <> #_vida1515Ant THEN
+      #_vida1515Ant := #Vida1515;
+      #_vidaMudou := TRUE;
+   ELSE
+      #_vidaMudou := FALSE;
+   END_IF;
+   #_tPerda(IN := NOT #_vidaMudou, PT := #TempoPerdaMs);   // vida nova reseta; sem vida nova conta
+   #ComOk := NOT #_tPerda.Q;
+
+   #_n := #NumChaves;
+   IF #_n < 0 THEN #_n := 0; END_IF;
+   IF #_n > 16 THEN #_n := 16; END_IF;
+
+   // v0.2: queda de comunicacao (ou 1o ciclo) TRAVA todas as chaves; cada uma so solta quando o 1515 manda Cmd = FALSE.
+   FOR #i := 1 TO 16 DO
+      IF NOT #ComOk OR NOT #_partiu THEN
+         #_bloq[#i] := TRUE;
+      ELSIF NOT #Cmd[#i] THEN
+         #_bloq[#i] := FALSE;
+      END_IF;
+   END_FOR;
+   #_partiu := TRUE;
+
+   #SeletoraAuto := #SeletoraEntrada;
+
+   FOR #i := 1 TO 16 DO
+      IF #i <= #_n THEN
+         #Fbk[#i] := #EntradaContatoAux[#i];
+         IF #ComOk AND #LigarBanco AND #SeletoraEntrada AND NOT #_bloq[#i] THEN
+            #SaidaContatora[#i] := #Cmd[#i];
+         ELSE
+            #SaidaContatora[#i] := FALSE;
+         END_IF;
+         #_cmdAnt[#i] := #Cmd[#i];
+      ELSE
+         #Fbk[#i] := FALSE;
+         #SaidaContatora[#i] := FALSE;
+      END_IF;
+   END_FOR;
+
+   #_comOkAnt := #ComOk;
+END_FUNCTION_BLOCK

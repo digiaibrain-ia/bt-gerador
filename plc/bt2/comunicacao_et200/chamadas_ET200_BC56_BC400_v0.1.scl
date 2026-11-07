@@ -1,0 +1,23 @@
+// ============================================================================
+// ET200 (IM151-8 PN/DP CPU, programa Gerador_BC015) - CHAMADAS v0.1 (06/11/2026, Fase 4) - RASCUNHO, nao compilado.
+// PARA O TESTE DOS BANCOS 56 E 400. Usa fb_bancoEt200_16 v0.3 + fb_supervisaoChaves16 v0.1 (multi-instancia) + db38_db39_ComEt200 v0.4 (24 bytes).
+// ORDEM NO OB1: 1) fc_vidaET (vida do ET200)  2) estas chamadas.  O FC4 antigo NAO pode escrever as mesmas saidas ao mesmo tempo (escritor unico).
+// ATENCAO: as saidas/entradas fisicas (SaidaContatora / EntradaContatoAux / SeletoraEntrada) vem da tabela de tags do FC4 do Reginaldo, que NAO esta no
+//          repositorio. Os nomes abaixo (#TODO_...) sao marcadores: trocar pelos arrays/tags reais antes de compilar.
+// TEMPO DE VERIFICACAO: TempoRetornoMs := 2000 (decisao do Reginaldo). TempoPerdaMs := T#2S (menor que o TempoVida de 3 s do 1515).
+// ============================================================================
+
+"ibc56_fb_bancoEt200_16"(NumChaves := 13, SeletoraEntrada := "TODO_BC56_SELETORA_AUTO", TempoPerdaMs := T#2S, TempoRetornoMs := 2000,
+    Cmd := "ComBC56".cmd, Vida1515 := "ComBC56".vida1515, LigarBanco := "ComBC56".ligarBanco, HabPed := "ComBC56".habPed, Seq := "ComBC56".seq,
+    VidaET := "ComBC56".vidaET, Fbk := "ComBC56".fbk, SeletoraAuto := "ComBC56".seletoraAuto, HabResp := "ComBC56".habResp, Eco := "ComBC56".eco,
+    FalhaRetorno := "ComBC56".falhaRetorno, ContatorColado := "ComBC56".contatorColado,
+    SaidaContatora := "TODO_BC56_SAIDAS_16", EntradaContatoAux := "TODO_BC56_AUX_16");
+
+"ibc400_fb_bancoEt200_16"(NumChaves := 13, SeletoraEntrada := "TODO_BC400_SELETORA_AUTO", TempoPerdaMs := T#2S, TempoRetornoMs := 2000,
+    Cmd := "ComBC400".cmd, Vida1515 := "ComBC400".vida1515, LigarBanco := "ComBC400".ligarBanco, HabPed := "ComBC400".habPed, Seq := "ComBC400".seq,
+    VidaET := "ComBC400".vidaET, Fbk := "ComBC400".fbk, SeletoraAuto := "ComBC400".seletoraAuto, HabResp := "ComBC400".habResp, Eco := "ComBC400".eco,
+    FalhaRetorno := "ComBC400".falhaRetorno, ContatorColado := "ComBC400".contatorColado,
+    SaidaContatora := "TODO_BC400_SAIDAS_16", EntradaContatoAux := "TODO_BC400_AUX_16");
+
+// IMPORTANTE: o fb_bancoEt200_16 v0.2 tambem tinha a vida (VidaET) incrementada DENTRO do FB. Se o fc_vidaET continuar ligado, tirar o incremento de um dos dois
+// (escritor unico do VidaET). Mesma observacao do cabecalho do fc_vidaET v0.2.

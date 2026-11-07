@@ -1,0 +1,630 @@
+[
+  {
+    "id": "sdd5_tab",
+    "type": "tab",
+    "label": "Simulador DSE (Demo) v5",
+    "disabled": false,
+    "info": "Simula o DSE + a realimentacao das chaves dos 4 bancos (BC56 DB3000, BC400 DB3100, BC59,5 DB3200, BC550 DB3300) no PLC da Carga, para teste em bancada SEM DSE real. v5 (03/11/2026), gerado por nodered/gerador/gerar_simulador_dse_v0.1.py a partir do v4 (que so tinha o BC56 no DB150).\n\nPOST /api/simulador/dse {ligado:true|false}: liga/desliga o gerador simulado (DB2000 ledManual, tensoes ~221 V). Ligado: potenciaKw = kW sem carga + soma dos kW das chaves com cb.ligar=true em todos os bancos; sb.ligada = cb.ligar (feedback simulado).\n\nUSO SOMENTE EM BANCADA. Nao deixar ligado junto com o DSE real nem com o FB101/FB103 ativo (eles tambem escrevem sb.ligada a partir do ET200). Encerrar: Desligar gerador (Demo) no HTML, ou desabilitar esta aba. ATENCAO AO IMPORTAR: apague a aba do v4 (mesma rota).",
+    "env": [
+      {
+        "name": "BT2_BANCADA",
+        "value": "0",
+        "type": "str"
+      },
+      {
+        "name": "BT2_ORIGENS_OK",
+        "value": "",
+        "type": "str"
+      }
+    ]
+  },
+  {
+    "id": "sdd5_ep",
+    "type": "s7 endpoint",
+    "transport": "iso-on-tcp",
+    "address": "${PLC_IP}",
+    "port": "102",
+    "rack": "0",
+    "slot": "1",
+    "localtsaphi": "01",
+    "localtsaplo": "00",
+    "remotetsaphi": "01",
+    "remotetsaplo": "00",
+    "connmode": "rack-slot",
+    "adapter": "",
+    "busaddr": "2",
+    "cycletime": "200",
+    "timeout": "2000",
+    "name": "PLC da Carga (Simulador DSE)",
+    "vartable": [
+      {
+        "name": "ledManual",
+        "addr": "DB2000,X2.1"
+      },
+      {
+        "name": "tensaoL1L2",
+        "addr": "DB2000,REAL28"
+      },
+      {
+        "name": "tensaoL2L3",
+        "addr": "DB2000,REAL32"
+      },
+      {
+        "name": "tensaoL3L1",
+        "addr": "DB2000,REAL36"
+      },
+      {
+        "name": "potenciaKw",
+        "addr": "DB2000,REAL84"
+      },
+      {
+        "name": "BC56_Cb1",
+        "addr": "DB3000,X0.0"
+      },
+      {
+        "name": "BC56_Lig1",
+        "addr": "DB3000,X2.0"
+      },
+      {
+        "name": "BC56_Cb2",
+        "addr": "DB3000,X0.1"
+      },
+      {
+        "name": "BC56_Lig2",
+        "addr": "DB3000,X2.1"
+      },
+      {
+        "name": "BC56_Cb3",
+        "addr": "DB3000,X0.2"
+      },
+      {
+        "name": "BC56_Lig3",
+        "addr": "DB3000,X2.2"
+      },
+      {
+        "name": "BC56_Cb4",
+        "addr": "DB3000,X0.3"
+      },
+      {
+        "name": "BC56_Lig4",
+        "addr": "DB3000,X2.3"
+      },
+      {
+        "name": "BC56_Cb5",
+        "addr": "DB3000,X0.4"
+      },
+      {
+        "name": "BC56_Lig5",
+        "addr": "DB3000,X2.4"
+      },
+      {
+        "name": "BC56_Cb6",
+        "addr": "DB3000,X0.5"
+      },
+      {
+        "name": "BC56_Lig6",
+        "addr": "DB3000,X2.5"
+      },
+      {
+        "name": "BC56_Cb7",
+        "addr": "DB3000,X0.6"
+      },
+      {
+        "name": "BC56_Lig7",
+        "addr": "DB3000,X2.6"
+      },
+      {
+        "name": "BC56_Cb8",
+        "addr": "DB3000,X0.7"
+      },
+      {
+        "name": "BC56_Lig8",
+        "addr": "DB3000,X2.7"
+      },
+      {
+        "name": "BC56_Cb9",
+        "addr": "DB3000,X1.0"
+      },
+      {
+        "name": "BC56_Lig9",
+        "addr": "DB3000,X3.0"
+      },
+      {
+        "name": "BC56_Cb10",
+        "addr": "DB3000,X1.1"
+      },
+      {
+        "name": "BC56_Lig10",
+        "addr": "DB3000,X3.1"
+      },
+      {
+        "name": "BC56_Cb11",
+        "addr": "DB3000,X1.2"
+      },
+      {
+        "name": "BC56_Lig11",
+        "addr": "DB3000,X3.2"
+      },
+      {
+        "name": "BC56_Cb12",
+        "addr": "DB3000,X1.3"
+      },
+      {
+        "name": "BC56_Lig12",
+        "addr": "DB3000,X3.3"
+      },
+      {
+        "name": "BC56_Cb13",
+        "addr": "DB3000,X1.4"
+      },
+      {
+        "name": "BC56_Lig13",
+        "addr": "DB3000,X3.4"
+      },
+      {
+        "name": "BC400_Cb1",
+        "addr": "DB3100,X0.0"
+      },
+      {
+        "name": "BC400_Lig1",
+        "addr": "DB3100,X2.0"
+      },
+      {
+        "name": "BC400_Cb2",
+        "addr": "DB3100,X0.1"
+      },
+      {
+        "name": "BC400_Lig2",
+        "addr": "DB3100,X2.1"
+      },
+      {
+        "name": "BC400_Cb3",
+        "addr": "DB3100,X0.2"
+      },
+      {
+        "name": "BC400_Lig3",
+        "addr": "DB3100,X2.2"
+      },
+      {
+        "name": "BC400_Cb4",
+        "addr": "DB3100,X0.3"
+      },
+      {
+        "name": "BC400_Lig4",
+        "addr": "DB3100,X2.3"
+      },
+      {
+        "name": "BC400_Cb5",
+        "addr": "DB3100,X0.4"
+      },
+      {
+        "name": "BC400_Lig5",
+        "addr": "DB3100,X2.4"
+      },
+      {
+        "name": "BC400_Cb6",
+        "addr": "DB3100,X0.5"
+      },
+      {
+        "name": "BC400_Lig6",
+        "addr": "DB3100,X2.5"
+      },
+      {
+        "name": "BC400_Cb7",
+        "addr": "DB3100,X0.6"
+      },
+      {
+        "name": "BC400_Lig7",
+        "addr": "DB3100,X2.6"
+      },
+      {
+        "name": "BC400_Cb8",
+        "addr": "DB3100,X0.7"
+      },
+      {
+        "name": "BC400_Lig8",
+        "addr": "DB3100,X2.7"
+      },
+      {
+        "name": "BC400_Cb9",
+        "addr": "DB3100,X1.0"
+      },
+      {
+        "name": "BC400_Lig9",
+        "addr": "DB3100,X3.0"
+      },
+      {
+        "name": "BC400_Cb10",
+        "addr": "DB3100,X1.1"
+      },
+      {
+        "name": "BC400_Lig10",
+        "addr": "DB3100,X3.1"
+      },
+      {
+        "name": "BC400_Cb11",
+        "addr": "DB3100,X1.2"
+      },
+      {
+        "name": "BC400_Lig11",
+        "addr": "DB3100,X3.2"
+      },
+      {
+        "name": "BC400_Cb12",
+        "addr": "DB3100,X1.3"
+      },
+      {
+        "name": "BC400_Lig12",
+        "addr": "DB3100,X3.3"
+      },
+      {
+        "name": "BC400_Cb13",
+        "addr": "DB3100,X1.4"
+      },
+      {
+        "name": "BC400_Lig13",
+        "addr": "DB3100,X3.4"
+      },
+      {
+        "name": "BC595_Cb1",
+        "addr": "DB3200,X0.0"
+      },
+      {
+        "name": "BC595_Lig1",
+        "addr": "DB3200,X4.0"
+      },
+      {
+        "name": "BC595_Cb2",
+        "addr": "DB3200,X0.1"
+      },
+      {
+        "name": "BC595_Lig2",
+        "addr": "DB3200,X4.1"
+      },
+      {
+        "name": "BC595_Cb3",
+        "addr": "DB3200,X0.2"
+      },
+      {
+        "name": "BC595_Lig3",
+        "addr": "DB3200,X4.2"
+      },
+      {
+        "name": "BC595_Cb4",
+        "addr": "DB3200,X0.3"
+      },
+      {
+        "name": "BC595_Lig4",
+        "addr": "DB3200,X4.3"
+      },
+      {
+        "name": "BC595_Cb5",
+        "addr": "DB3200,X0.4"
+      },
+      {
+        "name": "BC595_Lig5",
+        "addr": "DB3200,X4.4"
+      },
+      {
+        "name": "BC595_Cb6",
+        "addr": "DB3200,X0.5"
+      },
+      {
+        "name": "BC595_Lig6",
+        "addr": "DB3200,X4.5"
+      },
+      {
+        "name": "BC595_Cb7",
+        "addr": "DB3200,X0.6"
+      },
+      {
+        "name": "BC595_Lig7",
+        "addr": "DB3200,X4.6"
+      },
+      {
+        "name": "BC595_Cb8",
+        "addr": "DB3200,X0.7"
+      },
+      {
+        "name": "BC595_Lig8",
+        "addr": "DB3200,X4.7"
+      },
+      {
+        "name": "BC595_Cb9",
+        "addr": "DB3200,X1.0"
+      },
+      {
+        "name": "BC595_Lig9",
+        "addr": "DB3200,X5.0"
+      },
+      {
+        "name": "BC595_Cb10",
+        "addr": "DB3200,X1.1"
+      },
+      {
+        "name": "BC595_Lig10",
+        "addr": "DB3200,X5.1"
+      },
+      {
+        "name": "BC595_Cb11",
+        "addr": "DB3200,X1.2"
+      },
+      {
+        "name": "BC595_Lig11",
+        "addr": "DB3200,X5.2"
+      },
+      {
+        "name": "BC595_Cb12",
+        "addr": "DB3200,X1.3"
+      },
+      {
+        "name": "BC595_Lig12",
+        "addr": "DB3200,X5.3"
+      },
+      {
+        "name": "BC595_Cb13",
+        "addr": "DB3200,X1.4"
+      },
+      {
+        "name": "BC595_Lig13",
+        "addr": "DB3200,X5.4"
+      },
+      {
+        "name": "BC595_Cb14",
+        "addr": "DB3200,X1.5"
+      },
+      {
+        "name": "BC595_Lig14",
+        "addr": "DB3200,X5.5"
+      },
+      {
+        "name": "BC595_Cb15",
+        "addr": "DB3200,X1.6"
+      },
+      {
+        "name": "BC595_Lig15",
+        "addr": "DB3200,X5.6"
+      },
+      {
+        "name": "BC595_Cb16",
+        "addr": "DB3200,X1.7"
+      },
+      {
+        "name": "BC595_Lig16",
+        "addr": "DB3200,X5.7"
+      },
+      {
+        "name": "BC595_Cb17",
+        "addr": "DB3200,X2.0"
+      },
+      {
+        "name": "BC595_Lig17",
+        "addr": "DB3200,X6.0"
+      },
+      {
+        "name": "BC595_Cb18",
+        "addr": "DB3200,X2.1"
+      },
+      {
+        "name": "BC595_Lig18",
+        "addr": "DB3200,X6.1"
+      },
+      {
+        "name": "BC550_Cb1",
+        "addr": "DB3300,X0.0"
+      },
+      {
+        "name": "BC550_Lig1",
+        "addr": "DB3300,X2.0"
+      },
+      {
+        "name": "BC550_Cb2",
+        "addr": "DB3300,X0.1"
+      },
+      {
+        "name": "BC550_Lig2",
+        "addr": "DB3300,X2.1"
+      },
+      {
+        "name": "BC550_Cb3",
+        "addr": "DB3300,X0.2"
+      },
+      {
+        "name": "BC550_Lig3",
+        "addr": "DB3300,X2.2"
+      },
+      {
+        "name": "BC550_Cb4",
+        "addr": "DB3300,X0.3"
+      },
+      {
+        "name": "BC550_Lig4",
+        "addr": "DB3300,X2.3"
+      },
+      {
+        "name": "BC550_Cb5",
+        "addr": "DB3300,X0.4"
+      },
+      {
+        "name": "BC550_Lig5",
+        "addr": "DB3300,X2.4"
+      },
+      {
+        "name": "BC550_Cb6",
+        "addr": "DB3300,X0.5"
+      },
+      {
+        "name": "BC550_Lig6",
+        "addr": "DB3300,X2.5"
+      },
+      {
+        "name": "BC550_Cb7",
+        "addr": "DB3300,X0.6"
+      },
+      {
+        "name": "BC550_Lig7",
+        "addr": "DB3300,X2.6"
+      },
+      {
+        "name": "BC550_Cb8",
+        "addr": "DB3300,X0.7"
+      },
+      {
+        "name": "BC550_Lig8",
+        "addr": "DB3300,X2.7"
+      },
+      {
+        "name": "BC550_Cb9",
+        "addr": "DB3300,X1.0"
+      },
+      {
+        "name": "BC550_Lig9",
+        "addr": "DB3300,X3.0"
+      },
+      {
+        "name": "BC550_Cb10",
+        "addr": "DB3300,X1.1"
+      },
+      {
+        "name": "BC550_Lig10",
+        "addr": "DB3300,X3.1"
+      },
+      {
+        "name": "BC550_Cb11",
+        "addr": "DB3300,X1.2"
+      },
+      {
+        "name": "BC550_Lig11",
+        "addr": "DB3300,X3.2"
+      },
+      {
+        "name": "BC550_Cb12",
+        "addr": "DB3300,X1.3"
+      },
+      {
+        "name": "BC550_Lig12",
+        "addr": "DB3300,X3.3"
+      }
+    ]
+  },
+  {
+    "id": "sdd5_in",
+    "type": "http in",
+    "z": "sdd5_tab",
+    "name": "POST /api/simulador/dse",
+    "url": "/api/simulador/dse",
+    "method": "post",
+    "upload": false,
+    "wires": [
+      [
+        "sdd5_in_d3"
+      ]
+    ],
+    "x": 150,
+    "y": 100
+  },
+  {
+    "id": "sdd5_liga",
+    "type": "function",
+    "z": "sdd5_tab",
+    "name": "liga/desliga DSE simulado",
+    "func": "// PORTAO 2 (trava de bancada): sem BT2_BANCADA='1' na aba, o simulador NAO liga nem comanda o PLC.\nif (String(env.get('BT2_BANCADA') || '0') !== '1') { msg.statusCode = 404; msg.payload = { ok: false, erro: 'simulador de bancada desligado (BT2_BANCADA != 1 na aba)' }; return [null, msg]; }\n// Entrada: POST /simulador/dse  body {ligado:true|false}   (chamado pelo botao \"Ligar/Desligar gerador (Demo)\" do HTML)\n// Saida 1 -> s7 out (escritas no PLC)   Saida 2 -> HTTP response\nconst b = msg.payload || {};\nif (typeof b.ligado !== 'boolean') {\n  msg.statusCode = 400;\n  msg.payload = { ok: false, erro: 'ligado deve ser true/false' };\n  return [null, msg];\n}\nflow.set('simLigado', b.ligado);\nlet w;\nif (b.ligado) {\n  w = [\n    { variable: 'ledManual',  payload: true },   // DB2000 ledManual = gerador em START/operando\n    { variable: 'tensaoL1L2', payload: 221.1 },  // mesmos valores padrao do Demo do HTML\n    { variable: 'tensaoL2L3', payload: 220.8 },\n    { variable: 'tensaoL3L1', payload: 221.3 }\n  ];\n} else {\n  w = [\n    { variable: 'ledManual',  payload: false },\n    { variable: 'tensaoL1L2', payload: 0 },\n    { variable: 'tensaoL2L3', payload: 0 },\n    { variable: 'tensaoL3L1', payload: 0 },\n    { variable: 'potenciaKw', payload: 0 }\n  ];\n  const TAB = {\"BC56\": [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 3], \"BC400\": [5, 5, 10, 10, 10, 10, 50, 50, 50, 50, 50, 50, 50], \"BC595\": [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 3, 3, 2, 1, 0.5, 0.5, 0.5], \"BC550\": [5, 5, 5, 5, 5, 25, 50, 50, 100, 100, 100, 100]};\n  for (const k in TAB) for (let i = 1; i <= TAB[k].length; i++) w.push({ variable: k + '_Lig' + i, payload: false }); // v5: limpa o feedback simulado dos 4 bancos\n}\nmsg.statusCode = 200;\nmsg.payload = { ok: true, ligado: b.ligado };\nreturn [w, msg];\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "sdd5_w"
+      ],
+      [
+        "sdd5_out"
+      ]
+    ],
+    "x": 380,
+    "y": 100
+  },
+  {
+    "id": "sdd5_out",
+    "type": "http response",
+    "z": "sdd5_tab",
+    "name": "HTTP response",
+    "statusCode": "",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "x": 650,
+    "y": 160
+  },
+  {
+    "id": "sdd5_w",
+    "type": "s7 out",
+    "z": "sdd5_tab",
+    "endpoint": "sdd5_ep",
+    "variable": "",
+    "name": "grava DB2000/DB3x00 (simulador)",
+    "wires": [],
+    "x": 680,
+    "y": 60
+  },
+  {
+    "id": "sdd5_r",
+    "type": "s7 in",
+    "z": "sdd5_tab",
+    "endpoint": "sdd5_ep",
+    "mode": "all",
+    "variable": "",
+    "diff": false,
+    "name": "le cb.ligar/sb.ligada dos 4 bancos (ciclico 200 ms)",
+    "wires": [
+      [
+        "sdd5_calc"
+      ]
+    ],
+    "x": 170,
+    "y": 240
+  },
+  {
+    "id": "sdd5_calc",
+    "type": "function",
+    "z": "sdd5_tab",
+    "name": "calcula potencia + feedback simulado",
+    "func": "// PORTAO 2: so age com a trava de bancada ligada\nif (String(env.get('BT2_BANCADA') || '0') !== '1') return null;\n// v5 (03/11/2026): os 4 bancos. Entrada: leitura ciclica (s7 in 'all', 200 ms). So age com o gerador SIMULADO ligado (flow 'simLigado').\n// 1) <banco>_Lig<i> (sb.ligada) = <banco>_Cb<i> (cb.ligar) -> simula a realimentacao fisica; escreve so quando muda\n// 2) potenciaKw = kW sem carga + soma dos kW nominais das chaves comandadas (todos os bancos); escrita no maximo 1x por segundo\nif (!flow.get('simLigado')) return null;\nconst p = msg.payload;\nif (!p || typeof p !== 'object') return null;\nconst TAB = {\"BC56\": [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 3], \"BC400\": [5, 5, 10, 10, 10, 10, 50, 50, 50, 50, 50, 50, 50], \"BC595\": [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 3, 3, 2, 1, 0.5, 0.5, 0.5], \"BC550\": [5, 5, 5, 5, 5, 25, 50, 50, 100, 100, 100, 100]};   // kW por chave, ordem fisica (plc/bt2/gerador/bancos_bt2_v0.2.json)\nconst BASE = 0.8;   // kW sem carga SIMULADO\nconst out = [];\nlet carga = 0;\nfor (const k in TAB) for (let i = 1; i <= TAB[k].length; i++) {\n  const cmd = (p[k + '_Cb' + i] === true);\n  if (cmd) carga += TAB[k][i - 1];\n  if (p[k + '_Lig' + i] !== cmd) out.push({ variable: k + '_Lig' + i, payload: cmd });\n}\nconst agora = Date.now();\nif (agora - (flow.get('simUltPot') || 0) >= 1000) {\n  flow.set('simUltPot', agora);\n  out.push({ variable: 'potenciaKw', payload: Math.round((BASE + carga + (Math.random() - 0.5) * 0.1) * 100) / 100 });\n}\nreturn out.length ? [out] : null;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "wires": [
+      [
+        "sdd5_w"
+      ]
+    ],
+    "x": 440,
+    "y": 240
+  },
+  {
+    "id": "sdd5_in_d3",
+    "type": "function",
+    "z": "sdd5_tab",
+    "name": "guarda escrita (D3)",
+    "func": "// PORTAO 3 (D3) - \"Nunca confie no cliente\": rota de ESCRITA so aceita pedido que veio da PROPRIA tela e em JSON.\n// CORS sozinho NAO protege (o browser envia o POST mesmo assim); por isso o servidor confere Origin/Referer e Content-Type.\n// Origem permitida = mesmo host da pagina (cabecalho Host) ou item de BT2_ORIGENS_OK (variavel da ABA, ex.: http://servidor:1880,null).\nconst h = (msg.req && msg.req.headers) || {};\nconst host = String(h.host || '').toLowerCase();\nconst extras = String(env.get('BT2_ORIGENS_OK') || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);\nconst hostDe = u => { try { return new URL(String(u)).host.toLowerCase(); } catch (e) { return null; } };\nconst origemDe = u => { try { return new URL(String(u)).origin.toLowerCase(); } catch (e) { return null; } };\nlet motivo = null;\nif (h.origin !== undefined) {\n  const o = String(h.origin).toLowerCase();\n  if (!((host && hostDe(o) === host) || extras.includes(o))) motivo = 'origem_nao_permitida';\n} else if (h.referer !== undefined) {\n  const r = origemDe(h.referer);\n  if (!((host && hostDe(h.referer) === host) || (r && extras.includes(r)))) motivo = 'origem_nao_permitida';\n} else {\n  motivo = 'sem_origem';\n}\nif (!motivo && !/^application\\/json\\s*(;|$)/i.test(String(h['content-type'] || ''))) motivo = 'content_type_invalido';\nif (motivo) {\n  node.warn('D3 bloqueado: ' + motivo + ' | ' + String((msg.req && msg.req.method) || '') + ' ' + String((msg.req && msg.req.url) || '').slice(0, 80) + ' | origin=' + String(h.origin || h.referer || '-').slice(0, 80));\n  msg.statusCode = 403;\n  msg.payload = { ok: false, codigo: 'D3_' + motivo, erro: 'pedido recusado: so e aceito da propria tela do medidor, em JSON (' + motivo + ')' };\n  return [null, msg];\n}\nreturn [msg, null];\n",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 240,
+    "y": 134,
+    "wires": [
+      [
+        "sdd5_liga"
+      ],
+      [
+        "sdd5_out"
+      ]
+    ]
+  }
+]

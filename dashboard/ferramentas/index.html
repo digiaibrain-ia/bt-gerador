@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="pt-BR">
-<!-- index.html (v0.2) · 29/10/2026 — corrige a procura dos arquivos (3 pastas, mostra onde procurou), confere os .js de apoio e traz AJUDA. Nome fixo de propósito. --><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="0.2"><title>Ferramentas · Bancos de teste</title>
+<!-- index.html (v0.4) · 07/11/2026 — botão "Escolher arquivo…" em cada ferramenta (sem editar o catálogo). | index.html (v0.3) · 07/11/2026 — REVISÃO UNIVERSAL: Ajuda v0.2 (arrasta e fica inteira na tela) e alvos de toque no celular. | index.html (v0.2) · 29/10/2026 — corrige a procura dos arquivos (3 pastas, mostra onde procurou), confere os .js de apoio e traz AJUDA. Nome fixo de propósito. --><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.4"><title>Ferramentas · Bancos de teste</title>
 <!-- index.html (v0.1) · 29/10/2026 — PÁGINA DE ENTRADA. Nome fixo de propósito (é o endereço que você guarda nos favoritos); a versão fica neste comentário.
   PARA QUE SERVE (leigo): uma lista com todas as ferramentas do projeto. Abra UMA vez  http://IP:1880/index.html  (o IP do PC do banco), guarde nos favoritos e clique na ferramenta.
   POR QUE: abrir o HTML com duplo clique usa file:///C:/Users/… e o navegador bloqueia as chamadas ao Node-RED; por http tudo funciona (inclusive módulos .js separados).
-  DE ONDE VEM A LISTA: catalogo_ferramentas_v0.2.js (mesma pasta). Para trocar a versão de uma ferramenta edita-se SÓ lá. Os dois arquivos .js ficam na mesma pasta public.
+  DE ONDE VEM A LISTA: catalogo_ferramentas_v0.7.js (mesma pasta). Para trocar a versão de uma ferramenta edita-se SÓ lá. Os dois arquivos .js ficam na mesma pasta public.
   O QUE FAZ AUTOMATICAMENTE: pergunta ao servidor (HEAD, sem baixar) se cada arquivo existe e marca ✓ (achou) ou ✗ (falta copiar para a pasta public).
   NÃO FAZ: não lê PLC/DSE/Node-RED, não grava nada. Em file:// avisa e não oferece links que não funcionam. -->
 <style>
@@ -18,10 +18,14 @@ a.c{display:flex;gap:12px;align-items:flex-start;background:var(--sf);border:1px
 a.c:hover,a.c:focus-visible{border-color:var(--blue);outline:2px solid var(--blue);outline-offset:-2px}
 a.c b{display:block}a.c small{display:block;color:var(--ink2)}a.c.leg{opacity:.55}a.c .st{margin-left:auto;font-weight:700;min-width:1.2em;text-align:center}
 .w{background:#fde7e5;color:#7a1f1f;border:1px solid var(--red);border-radius:8px;padding:8px 12px;margin:10px 0}
+a.c{flex:1}.lin{display:flex;gap:8px;align-items:stretch;margin:6px 0}.lin .ac{display:flex;flex-direction:column;gap:4px;justify-content:center}.lin .ac button{font:inherit;font-size:12px;padding:5px 10px;border:0;background:var(--sf);color:inherit;border-radius:6px;cursor:pointer;white-space:nowrap}.lin .ac button:hover{outline:2px solid var(--blue)}
 code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0 5px}
+
+  /* revisao universal 07/11/2026: alvos de toque (so celular/tablet; o PC nao muda) */
+  @media (pointer:coarse){button,summary,select,.bt{min-height:40px}input[type=checkbox],input[type=radio]{width:22px;height:22px}}
 </style></head><body>
 <h1>Ferramentas · Bancos de teste</h1><div class="sub" id="sub">—</div><div id="aviso"></div><div id="lista"></div>
-<script src="catalogo_ferramentas_v0.2.js"></script>
+<script src="catalogo_ferramentas_v0.7.js"></script>
 <script>
 (function(){
   'use strict';
@@ -29,16 +33,22 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
      Agora procura em 3 lugares (a pasta deste index, a raiz do servidor e /html/), abre o arquivo no lugar onde o achou e,
      se não achar, diz exatamente QUAIS endereços tentou. Também confere os arquivos de apoio (.js) que o medidor carrega. */
   const CAT=window.CATALOGO_FERRAMENTAS,$=i=>document.getElementById(i),emFile=location.protocol==='file:';
-  if(!CAT){$('aviso').innerHTML='<div class="w"><b>catalogo_ferramentas_v0.2.js não foi encontrado.</b> Copie o arquivo para a MESMA pasta deste index.html (pasta public do Node-RED). Veja o botão Ajuda.</div>';return}
+  if(!CAT){$('aviso').innerHTML='<div class="w"><b>catalogo_ferramentas_v0.7.js não foi encontrado.</b> Copie o arquivo para a MESMA pasta deste index.html (pasta public do Node-RED). Veja o botão Ajuda.</div>';return}
   const pasta=emFile?'':new URL('.',location.href).href,cands=emFile?[]:[...new Set([pasta,location.origin+'/',location.origin+'/html/'])];
   $('sub').textContent='Catálogo de '+CAT.atualizado+(emFile?'':' · pasta deste index: '+pasta);
   if(emFile)$('aviso').innerHTML='<div class="w"><b>Página aberta como arquivo (file://).</b> As ferramentas só funcionam abertas pelo Node-RED. Abra <code>http://IP:1880/index.html</code> (IP do PC do banco) e guarde nos favoritos.</div>';
   let g='',h='';
   CAT.itens.forEach(i=>{
     if(i.grupo!==g){g=i.grupo;h+='<h2>'+g+'</h2>'}
-    h+='<a class="c'+(i.legado?' leg':'')+'" id="a-'+i.id+'" href="'+(emFile?'#':pasta+i.arquivo)+'"'+(emFile?'':' target="bt2_'+i.id+'"')+' rel="noopener"><span><b>'+i.nome+'</b><small>'+i.arquivo+' — '+i.desc+(i.aviso?' ('+i.aviso+')':'')+'</small><small class="onde" id="o-'+i.id+'"></small></span><span class="st" id="s-'+i.id+'"></span></a>';
+    h+='<div class="lin"><a class="c'+(i.legado?' leg':'')+'" id="a-'+i.id+'" href="'+(emFile?'#':pasta+i.arquivo)+'"'+(emFile?'':' target="bt2_'+i.id+'"')+' rel="noopener"><span><b>'+i.nome+'</b><small>'+i.arquivo+' — '+i.desc+(i.aviso?' ('+i.aviso+')':'')+'</small><small class="onde" id="o-'+i.id+'"></small></span><span class="st" id="s-'+i.id+'"></span></a><span class="ac"><button type="button" data-esc="'+i.id+'" title="Escolher o arquivo HTML desta ferramenta (ele precisa estar na pasta do servidor)">Escolher arquivo…</button>'+(i.escolhido?'<button type="button" data-pad="'+i.id+'" title="Volta ao nome do catálogo: '+i.padrao+'">Voltar ao padrão</button>':'')+'<input type="file" accept=".html,.htm" hidden data-fi="'+i.id+'"></span></div>';
   });
   $('lista').innerHTML=h;
+  /* v0.4: escolher o arquivo de cada ferramenta sem editar o catálogo (guardado neste navegador) */
+  const LSK='bt2.catalogo.arquivos',lerM=()=>{try{return JSON.parse(localStorage.getItem(LSK)||'{}')||{}}catch(e){return{}}},gravaM=m=>{try{localStorage.setItem(LSK,JSON.stringify(m))}catch(e){}};
+  document.querySelectorAll('[data-esc]').forEach(b=>b.addEventListener('click',()=>document.querySelector('[data-fi="'+b.dataset.esc+'"]').click()));
+  document.querySelectorAll('[data-fi]').forEach(f=>f.addEventListener('change',()=>{const n=f.files[0]&&f.files[0].name;if(!n)return;if(!/^[\w.\-]+\.html?$/i.test(n)){alert('Nome de arquivo não aceito: '+n+' (use letras, números, ponto, hífen e _).');return}const m=lerM();m[f.dataset.fi]=n;gravaM(m);location.reload()}));
+  document.querySelectorAll('[data-pad]').forEach(b=>b.addEventListener('click',()=>{const m=lerM();delete m[b.dataset.pad];gravaM(m);location.reload()}));
+  CAT.itens.forEach(i=>{if(i.escolhido){const o=$('o-'+i.id);if(o)o.textContent='escolhido neste navegador (padrão do catálogo: '+i.padrao+')'}});
   if(emFile){document.querySelectorAll('a.c').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));return}
   const acha=async nome=>{for(const c of cands){try{const r=await fetch(c+nome,{method:'HEAD',cache:'no-store'});if(r.ok)return c}catch(e){return undefined}}return null}; /* undefined = servidor não respondeu */
   let achados=0,total=CAT.itens.length;
@@ -210,9 +220,9 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
 </script>
 <script>
 /* =====================================================================================================================
-   ajuda_v0.1.js — BOTÃO "AJUDA" PADRÃO + JANELA DE AJUDA, igual em todo HTML do projeto · 29/10/2026
-   Colado (inline) em: mapa_fbs_v0.11, gerenciador_logs_v1.6, api_cards_visor_v0.3, index.html v0.2 (o medidor, o gráfico e o simulador de amostras
-   já têm a própria Ajuda). Documento: modulos/AJUDA_v0.1.md.
+   ajuda_v0.2.js — BOTÃO "AJUDA" PADRÃO + JANELA DE AJUDA, igual em todo HTML do projeto · v0.2 07/11/2026 (v0.1: 29/10/2026)
+   v0.2 (revisão universal, 07/11/2026): a janela agora ARRASTA pelo título (mouse e TOQUE), fica sempre inteira na tela (o ✕ nunca some) e no celular os botões têm tamanho de toque.
+   Colado (inline) em: mapa_fbs, gerenciador_logs, api_cards_visor, index.html (o medidor, o gráfico e o simulador de amostras já têm a própria Ajuda). Documento: modulos/AJUDA_v0.1.md.
 
    REGRA DO PROJETO (decisão do operador, 29/10/2026): "toda HTML tem que vir com AJUDA". Este módulo é o jeito mais barato de cumprir a regra:
    cada página só informa o TEXTO (AJUDA.inicia({...})); o botão, a janela, o fechar (✕ no canto direito, Esc) e a seção padrão da
@@ -234,10 +244,10 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
   let dlg = null;
   const css = document.createElement('style');
   css.textContent = `
-  #dlgAjuda{position:fixed;top:8vh;left:50%;transform:translateX(-50%);margin:0;width:min(640px,94vw);max-height:84vh;overflow:auto;resize:both;padding:0;
+  #dlgAjuda{position:fixed;top:8vh;left:50%;transform:translateX(-50%);margin:0;width:min(640px,94vw);max-height:calc(100dvh - 16px);overflow:auto;resize:both;padding:0;
     border:1px solid #7a8794;border-radius:10px;background:#fff;color:#16222e;font:14px/1.45 system-ui,"Segoe UI",sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:2147482000}
   @media (prefers-color-scheme:dark){#dlgAjuda{background:#1b2229;color:#e8edf2;border-color:#4d5964}}
-  #dlgAjuda .jt{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid rgba(128,128,128,.4);position:sticky;top:0;background:inherit}
+  #dlgAjuda .jt{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid rgba(128,128,128,.4);position:sticky;top:0;background:inherit;cursor:move;touch-action:none;user-select:none}
   #dlgAjuda .jt b{flex:1;font-size:15px}
   #dlgAjuda .jx{width:28px;height:28px;border:1px solid rgba(128,128,128,.55);border-radius:6px;background:transparent;color:inherit;cursor:pointer;font:700 14px/1 system-ui}
   #dlgAjuda .jx:hover{background:rgba(128,128,128,.25)}
@@ -249,6 +259,7 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
   #dlgAjuda kbd{border:1px solid rgba(128,128,128,.6);border-bottom-width:2px;border-radius:4px;padding:0 5px;font:12px system-ui}
   #bAjudaPadrao{font:600 13px system-ui,sans-serif;padding:5px 12px;border:1px solid #7a8794;border-radius:7px;background:transparent;color:inherit;cursor:pointer}
   #bAjudaPadrao:hover{background:rgba(128,128,128,.22)}
+  @media (pointer:coarse){#dlgAjuda .jx{width:40px;height:40px}#bAjudaPadrao{min-height:40px;padding:6px 14px}}
   #bAjudaPadrao.fixo{position:fixed;top:8px;right:10px;z-index:2147481000;background:#fff;color:#16222e}
   @media (prefers-color-scheme:dark){#bAjudaPadrao.fixo{background:#1b2229;color:#e8edf2}}`;
   (document.head || document.documentElement).appendChild(css);
@@ -263,16 +274,42 @@ code{background:var(--sf);border:1px solid var(--ln);border-radius:5px;padding:0
     dlg.innerHTML = '<div class="jt"><b>Ajuda · ' + esc(c.titulo || document.title) + '</b><button type="button" class="jx" data-fecha aria-label="Fechar">✕</button></div><div class="cp">' + corpo + '</div>';
     document.body.appendChild(dlg);
     dlg.querySelector('.jx').onclick = fecha;
+    arrasta(dlg, dlg.querySelector('.jt'));
+    addEventListener('resize', () => { if (dlg.open && dlg.style.left) cabe(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && dlg.open) fecha(); });
     const b = document.createElement('button'); b.type = 'button'; b.id = 'bAjudaPadrao'; b.textContent = 'Ajuda'; b.setAttribute('aria-haspopup', 'dialog');
     b.title = 'Para que serve esta tela e como usar'; b.onclick = () => (dlg.open ? fecha() : abre());
     const onde = c.onde && document.querySelector(c.onde);
     if (onde) onde.appendChild(b); else { b.classList.add('fixo'); document.body.appendChild(b); }
   }
+  // v0.2: arrastar pelo título (mouse e toque). A janela inteira fica na tela (se for maior que a tela, alcança as duas bordas). Duplo clique no título volta ao centro.
+  function cabe() {
+    const r = dlg.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+    const l = Math.min(Math.max(r.left, Math.min(0, W - r.width)), Math.max(0, W - r.width));
+    const t = Math.min(Math.max(r.top, Math.min(0, H - r.height)), Math.max(0, H - r.height));
+    dlg.style.left = l + 'px'; dlg.style.top = t + 'px';
+  }
+  function arrasta(d, h) {
+    h.title = 'Arraste para mover (duplo clique volta ao centro)';
+    h.addEventListener('dblclick', e => { if (e.target.closest('button')) return; d.style.left = ''; d.style.top = ''; d.style.transform = ''; });
+    h.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || e.target.closest('button,a,input')) return;
+      const r = d.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY;
+      d.style.transform = 'none'; d.style.left = r.left + 'px'; d.style.top = r.top + 'px';
+      try { h.setPointerCapture(e.pointerId); } catch (x) {}
+      const mv = ev => {
+        const W = innerWidth, H = innerHeight, w = d.offsetWidth, hh = d.offsetHeight;
+        d.style.left = Math.min(Math.max(r.left + ev.clientX - x0, Math.min(0, W - w)), Math.max(0, W - w)) + 'px';
+        d.style.top = Math.min(Math.max(r.top + ev.clientY - y0, Math.min(0, H - hh)), Math.max(0, H - hh)) + 'px';
+      };
+      const up = () => { h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); };
+      h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+    });
+  }
   const abre = () => { if (dlg && !dlg.open) dlg.show(); };
   const fecha = () => { if (dlg && dlg.open) dlg.close(); };
   global.AJUDA = { inicia, abre, fecha };
 })(window);
-AJUDA.inicia({"titulo": "Ferramentas · Bancos de teste", "resumo": "Lista com todas as ferramentas do projeto. Clique numa para abri-la em outra aba. O símbolo à direita mostra se o arquivo foi encontrado no servidor: ✓ encontrado, ✗ não encontrado (o texto abaixo diz onde procurei), ? o servidor não respondeu.", "secoes": [{"t": "Como usar", "l": ["Abra <code>http://IP:1880/…/index.html</code> (IP do PC do banco), pela pasta onde o index está, e guarde nos favoritos.", "Todos os arquivos da lista (e os <b>.js de apoio</b>: catalogo_ferramentas_v0.2.js, menu_dev_v0.1.js) ficam na <b>mesma pasta</b>. No PC do banco, a pasta public do Node-RED é <code>C:\\Users\\b02raf\\.node-red\\public</code> (settings.js, httpStatic); a pasta <code>html</code> dentro dela aparece no endereço como <code>/html/</code>.", "Este index procura cada arquivo na pasta dele, na raiz do servidor e em <code>/html/</code>, e abre onde achar."]}, {"t": "Se aparecer ✗", "l": ["Copie o arquivo indicado para a pasta do index (ou para a raiz public) e recarregue a página (F5).", "Teste direto no navegador: <code>http://IP:1880/html/nome_do_arquivo.html</code>. Se der \"Cannot GET\", o arquivo não está nessa pasta.", "Depois de trocar uma versão, atualize o nome na linha correspondente do <code>catalogo_ferramentas_v0.2.js</code>."]}], "glossario": [["public / httpStatic", "pasta que o Node-RED publica como site; tudo que está nela abre por http://IP:1880/"], ["Catálogo", "o arquivo catalogo_ferramentas_v0.2.js: a agenda com nome e versão de cada ferramenta"]]});
+AJUDA.inicia({"titulo": "Ferramentas · Bancos de teste", "resumo": "Lista com todas as ferramentas do projeto. Clique numa para abri-la em outra aba. O símbolo à direita mostra se o arquivo foi encontrado no servidor: ✓ encontrado, ✗ não encontrado (o texto abaixo diz onde procurei), ? o servidor não respondeu.", "secoes": [{"t": "Como usar", "l": ["Abra <code>http://IP:1880/…/index.html</code> (IP do PC do banco), pela pasta onde o index está, e guarde nos favoritos.", "Todos os arquivos da lista (e os <b>.js de apoio</b>: catalogo_ferramentas_v0.7.js, menu_dev_v0.1.js) ficam na <b>mesma pasta</b>. No PC do banco, a pasta public do Node-RED é <code>C:\\Users\\b02raf\\.node-red\\public</code> (settings.js, httpStatic); a pasta <code>html</code> dentro dela aparece no endereço como <code>/html/</code>.", "Este index procura cada arquivo na pasta dele, na raiz do servidor e em <code>/html/</code>, e abre onde achar."]}, {"t": "Se aparecer ✗", "l": ["Copie o arquivo indicado para a pasta do index (ou para a raiz public) e recarregue a página (F5).", "Teste direto no navegador: <code>http://IP:1880/html/nome_do_arquivo.html</code>. Se der \"Cannot GET\", o arquivo não está nessa pasta.", "Depois de trocar uma versão, atualize o nome na linha correspondente do <code>catalogo_ferramentas_v0.7.js</code>."]}], "glossario": [["public / httpStatic", "pasta que o Node-RED publica como site; tudo que está nela abre por http://IP:1880/"], ["Catálogo", "o arquivo catalogo_ferramentas_v0.7.js: a agenda com nome e versão de cada ferramenta"]]});
 </script>
 </body></html>
