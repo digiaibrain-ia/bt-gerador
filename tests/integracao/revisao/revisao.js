@@ -12,8 +12,8 @@ const { chromium } = require('playwright');
 const RAIZ = path.join(__dirname, '..', '..', '..');
 const PASTAS = [path.join(RAIZ, 'dashboard', 'ferramentas'), path.join(RAIZ, 'dashboard', 'modulos-fonte'), path.join(RAIZ, 'docs', 'bt2', 'arquitetura'), path.join(RAIZ, 'catalogo')];
 const PAGINAS = {
-  medidor: 'medidor_gerador_v1.10.176.html', grafico: 'grafico_ensaio_v0.11.html', maquete: 'maquete_layout_v0.4.html', mapa: 'mapa_fbs_v0.15.html',
-  gerenciador: 'gerenciador_logs_v1.7.html', amostras: 'amostras_simulador_v0.7.html', apicards: 'api_cards_visor_v0.3.html', index: 'index.html',
+  medidor: 'medidor_gerador_v1.10.176.html', grafico: 'grafico_ensaio_v0.12.html', maquete: 'maquete_layout_v0.5.html', mapa: 'mapa_fbs_v0.16.html',
+  gerenciador: 'gerenciador_logs_v1.8.html', amostras: 'amostras_simulador_v0.7.html', apicards: 'api_cards_visor_v0.4.html', index: 'index.html',
   arquitetura: 'arquitetura_bt2_v0.5_editavel.html',
 };
 const UA_POCO = 'Mozilla/5.0 (Linux; Android 14; 23122PC0G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
@@ -56,6 +56,7 @@ const ENUM = () => {
     const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden' || r.width <= 0 || r.height <= 0) return;
     const dlg = el.closest('dialog'); if (dlg && !dlg.open) return;
+    { const dt = el.closest('details'); if (dt && !dt.open && !el.closest('summary')) return; }   // dentro de <details> fechado: ninguem ve nem clica (o Chrome mantem o tamanho da caixa)
     if (!el.dataset.rev) el.dataset.rev = String(++n);
     const nome = (el.getAttribute('aria-label') || el.title || el.textContent || el.value || el.placeholder || el.id || '').replace(/\s+/g, ' ').trim().slice(0, 40);
     out.push({ rev: el.dataset.rev, tag: el.tagName.toLowerCase(), tipo: el.type || '', id: el.id || '', nome, w: Math.round(r.width), h: Math.round(r.height), dlg: dlg ? dlg.id : '', off: !!el.disabled, semNome: !(el.getAttribute('aria-label') || el.title || (el.textContent || '').trim() || el.value || el.placeholder) });

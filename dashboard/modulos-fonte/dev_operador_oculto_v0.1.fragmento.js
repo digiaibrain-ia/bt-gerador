@@ -14,7 +14,9 @@
   const vis=el=>{const r=el.getBoundingClientRect(),cs=getComputedStyle(el);return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0};
 
   /* ---------- caixa de areia ---------- */
-  const SB={ativo:false,orig:{},c:{print:0,janelaNova:0,alerta:0,confirmacao:0,prompt:0,redeBloqueada:0,seletor:0,download:0}};
+  const SB={ativo:false,orig:{},c:{print:0,janelaNova:0,alerta:0,confirmacao:0,prompt:0,redeBloqueada:0,seletor:0,download:0,navegacao:0}};
+  const sbClique=e=>{const a=e.target&&e.target.closest&&e.target.closest('a[href]');if(a&&!/^#/.test(a.getAttribute('href')||'')&&!a.hasAttribute('download')&&a.target!=='_blank'){e.preventDefault();SB.c.navegacao++}};   // link que sairia da página
+  const sbSai=e=>{SB.c.navegacao++;e.preventDefault();e.returnValue=''};   // reload/location: pede para ficar
   function sandboxLiga(){
     if(SB.ativo)return;SB.ativo=true;Object.keys(SB.c).forEach(k=>SB.c[k]=0);const o=SB.orig;
     o.print=window.print;o.open=window.open;o.alert=window.alert;o.confirm=window.confirm;o.prompt=window.prompt;o.fetch=window.fetch;o.xo=XMLHttpRequest.prototype.open;o.xs=XMLHttpRequest.prototype.send;o.ac=HTMLAnchorElement.prototype.click;o.pk={};
@@ -23,12 +25,14 @@
     XMLHttpRequest.prototype.open=function(m){this.__m=String(m).toUpperCase();return o.xo.apply(this,arguments)};
     XMLHttpRequest.prototype.send=function(){if(this.__m&&this.__m!=='GET'&&this.__m!=='HEAD'){SB.c.redeBloqueada++;try{this.abort()}catch(e){}return}return o.xs.apply(this,arguments)};
     HTMLAnchorElement.prototype.click=function(){if(this.hasAttribute&&this.hasAttribute('download')){SB.c.download++;return}return o.ac.apply(this,arguments)};
+    document.addEventListener('click',sbClique,true);window.addEventListener('beforeunload',sbSai);
     ['showDirectoryPicker','showOpenFilePicker','showSaveFilePicker'].forEach(k=>{if(window[k]){o.pk[k]=window[k];window[k]=async()=>{SB.c.seletor++;throw new DOMException('cancelado pela caixa de areia','AbortError')}}});
   }
   function sandboxDesliga(){
     if(!SB.ativo)return;SB.ativo=false;const o=SB.orig;
     window.print=o.print;window.open=o.open;window.alert=o.alert;window.confirm=o.confirm;window.prompt=o.prompt;window.fetch=o.fetch;XMLHttpRequest.prototype.open=o.xo;XMLHttpRequest.prototype.send=o.xs;HTMLAnchorElement.prototype.click=o.ac;
     Object.keys(o.pk).forEach(k=>{window[k]=o.pk[k]});
+    document.removeEventListener('click',sbClique,true);window.removeEventListener('beforeunload',sbSai);
   }
 
   /* ---------- leitura da tela ---------- */

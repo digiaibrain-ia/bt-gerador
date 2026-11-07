@@ -119,3 +119,13 @@ Codigo congelado no commit `51481df`. **P3-E1 e P3-E2 permanecem abertos de prop
 - **F2-1: NAO corrigivel no fluxo.** O no `http in` do Node-RED responde 500 fixo a corpo JSON invalido (errorHandler do proprio no). So muda com `httpNodeMiddleware` no `settings.js`, que nao tocamos. Continua `todo`.
 - **P3-E2 (registro, `limpar`):** continua aberto (opcional).
 - Codigos de ocorrencia: `CHV-006` ja existia (banco sem leitura). A falha de retorno e `CHV-007` e o contator colado `CHV-008` (os documentos da Fase 4 foram corrigidos).
+
+## Revisão universal de HTML (07/11/2026) — itens abertos (desktop 1280×800 e celular Poco X6 Pro; viewport CSS do Poco ainda não confirmado: hipóteses 407×904 e 444×986)
+Corrigidos na medidor 1.10.176 / maquete v0.5 / mapa v0.16 / gerenciador v1.8 / api_cards_visor v0.4 / gráfico v0.12 / index v0.3: janela saía da tela ao arrastar (✕ inalcançável), arrasto por toque, faixa de erro vazia por cima de campo, menu Exportar da maquete aberto cobrindo botões, cópia (clipboard) com erro, ícone "i" do mapa com 7 px, Ajuda sem arrastar/sem ✕. Relatórios: `tests/integracao/revisao/resultados/`.
+- **REV-1 · Dados do ensaio (PC): campo do catálogo coberto pelo rodapé fixo** (gravidade média, causa não confirmada): só aparece depois de a revisão mexer no tamanho/zoom da janela pelo painel ⤢ (a janela fica com a altura menor que o conteúdo e o rodapé `.jbtns` sobrepõe o último campo). Janela recém-aberta está certa. Teste: `revisao.js --paginas medidor --perfis desktop --demo`.
+- **REV-2 · Visor da API (celular): ✕ da Ajuda não fechou em um teste de toque** (gravidade média, não reproduzido isolado): isolado funciona; só falha dentro da sequência da revisão. Teste: `revisao.js --paginas apicards --perfis pocoA`.
+- **REV-3 · Balão "ⓘ" do modo (medidor) só fecha com toque fora** (gravidade baixa, UX): enquanto aberto cobre o botão "Alterar"; o primeiro toque fora fecha o balão mas não aciona o botão de baixo.
+- **REV-4 · Alvos de toque ainda abaixo de 44 px** (gravidade baixa): botões do cabeçalho do medidor (40 px, não 44) e caixas de marcar (22 px). Decisão de layout (ficaria apertado), não aplicada.
+- **REV-5 · Mapa dos FBs no celular**: o desenho é reduzido para caber na largura (texto pequeno). Uma versão com rolagem horizontal pede decisão de layout.
+- **REV-6 · Robô Dev/Operador oculto**: fase Patamar mostra "Alvo 30 kW" nos chips 50/100/107 % durante o teste sem ensaio iniciado (mostra o mesmo alvo nos 4 chips). Conferir com o Reginaldo se é esperado antes do ensaio.
+- Limite honesto do teste: arrasto/toque reais só em Chromium (Playwright); não substitui o Poco real nem o Safari/Firefox.
