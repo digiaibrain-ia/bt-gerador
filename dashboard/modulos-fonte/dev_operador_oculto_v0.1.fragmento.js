@@ -136,7 +136,9 @@
       const obj=(escopoDlg?'['+escopoDlg+'] ':'')+idEl(el)+' "'+nomeEl(el)+'"';
       if(AV.perfil.toque){const r=el.getBoundingClientRect(),m=Math.min(r.width,r.height);if(m<24)aviso(fase,'alvo de toque muito pequeno: '+obj,Math.round(r.width)+'×'+Math.round(r.height)+' px (mínimo recomendado 44)');}
       if(el.disabled){AV.cob.nao.push(obj+' [desabilitado]');continue}
-      const s=sonda(el);
+      if(!escopoDlg&&document.querySelector('dialog[open]:not(#dlgGuiado)')){fecharTudo();await pausa(70)}   // sobrou janela aberta de um passo anterior: fecha antes de medir (senão ela 'cobre' a tela)
+      let s=sonda(el);
+      if(!s.ok&&/gmsg/.test(String(s.cob))){AV.toast=(AV.toast||0)+1;if(AV.toast===1)aviso(fase,'a faixa de mensagem (#gmsg) fica por cima de botões enquanto aparece','ex.: '+obj+' — some sozinha em alguns segundos; no celular cobre parte do fim da tela');try{msgGer('')}catch(e){}await pausa(150);s=sonda(el)}   // aviso transitório: limpa e mede de novo
       if(s.oculto){AV.cob.nao.push(obj+' [escondido agora]');AV.cob.total--;continue}
       if(!s.dentro){achou(fase,'inalcançável (fora da tela): '+obj,'mesmo rolando, o centro fica fora da tela '+innerWidth+'×'+innerHeight);AV.cob.nao.push(obj+' [fora da tela]');continue}
       if(!s.ok){achou(fase,'coberto por outro elemento: '+obj,'o clique cairia em '+s.cob);AV.cob.nao.push(obj+' [coberto por '+s.cob+']');continue}
@@ -149,6 +151,7 @@
       const novas=a1.dlgs.filter(x=>!a0.dlgs.includes(x));
       if(novas.length){AV.efeitos[obj]='abriu '+novas.join(',');const gat=()=>document.contains(el)?el:null;await testaJanela(novas[0],gat,prof,fase)}
       if(a1.pops&&!a0.pops){esc_();await pausa(80)}
+      {const ip=document.getElementById('ensInfoPop');if(ip&&getComputedStyle(ip).display!=='none'&&document.contains(el)&&el.id==='ensInfo'){el.click();await pausa(70)}}   // balão de informação do modo: toca de novo para fechar (liga/desliga)
       if(/^Clique para (expandir|recolher)/.test(el.title||'')&&document.contains(el)){el.click();await pausa(90)}   // cabeçalho recolhível: devolve ao estado de antes (senão esconde o resto da tela)
       if(a1.ens==='andamento'&&a0.ens==='parado'){await pararSilencio()}   // um clique iniciou ensaio: encerra para não travar o resto da varredura
       const rest=estadoRapido();if(rest.dlgs.some(x=>!a0.dlgs.includes(x))||rest.pops>0){fecharTudo();await pausa(60)}
