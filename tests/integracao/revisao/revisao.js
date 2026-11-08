@@ -12,7 +12,7 @@ const { chromium } = require('playwright');
 const RAIZ = path.join(__dirname, '..', '..', '..');
 const PASTAS = [path.join(RAIZ, 'dashboard', 'ferramentas'), path.join(RAIZ, 'dashboard', 'modulos-fonte'), path.join(RAIZ, 'docs', 'bt2', 'arquitetura'), path.join(RAIZ, 'catalogo')];
 const PAGINAS = {
-  medidor: 'medidor_gerador_v1.10.184.html', grafico: 'grafico_ensaio_v0.12.html', maquete: 'maquete_layout_v0.5.html', mapa: 'mapa_fbs_v0.16.html',
+  medidor: 'medidor_gerador_v1.10.185.html', grafico: 'grafico_ensaio_v0.12.html', maquete: 'maquete_layout_v0.5.html', mapa: 'mapa_fbs_v0.16.html',
   gerenciador: 'gerenciador_logs_v1.8.html', amostras: 'amostras_simulador_v0.7.html', apicards: 'api_cards_visor_v0.4.html', index: 'index.html',
   arquitetura: 'arquitetura_bt2_v0.5_editavel.html',
 };
