@@ -127,6 +127,6 @@ Corrigidos na medidor 1.10.176 / maquete v0.5 / mapa v0.16 / gerenciador v1.8 / 
 - **REV-3 · Balão "ⓘ" do modo (medidor) só fecha com toque fora** (gravidade baixa, UX): enquanto aberto cobre o botão "Alterar"; o primeiro toque fora fecha o balão mas não aciona o botão de baixo.
 - **REV-4 · Alvos de toque ainda abaixo de 44 px** (gravidade baixa): botões do cabeçalho do medidor (40 px, não 44) e caixas de marcar (22 px). Decisão de layout (ficaria apertado), não aplicada.
 - **REV-5 · Mapa dos FBs no celular**: o desenho é reduzido para caber na largura (texto pequeno). Uma versão com rolagem horizontal pede decisão de layout.
-- **REV-6 · Robô Dev/Operador oculto**: fase Patamar mostra "Alvo 30 kW" nos chips 50/100/107 % durante o teste sem ensaio iniciado (mostra o mesmo alvo nos 4 chips). Conferir com o Reginaldo se é esperado antes do ensaio.
+- **REV-6 · (FECHADO em 08/11/2026, medidor 1.10.190 — era defeito do robô, não do card)**: fase Patamar mostrava "Alvo 30 kW" nos chips 50/100/107 % durante o teste sem ensaio iniciado (mostra o mesmo alvo nos 4 chips). Conferir com o Reginaldo se é esperado antes do ensaio.
 - Limite honesto do teste: arrasto/toque reais só em Chromium (Playwright); não substitui o Poco real nem o Safari/Firefox.
 - **REV-7 · Menu do botão direito (toque longo) no celular** (gravidade baixa, decisão do Reginaldo em 07/11/2026): "não ficou legal e não funciona direito". Não será ajustado agora ("bobagem gastar token"); o Dev/Operador oculto continua cobrindo só o menu de clique direito do PC.
