@@ -15,3 +15,17 @@
 - "Todas as possibilidades" = todos os objetos visíveis + menus + sequências + monkey com semente; não é combinação exaustiva (explosão combinatória).
 - Nada foi aplicado no PC BT2, no PLC ou no Node-RED de produção. Os HTML novos só entram por pacote .zip, com OK do Reginaldo.
 - No Monkey pode aparecer o aviso do navegador "Sair do site?": clicar em **Cancelar** (a caixa de areia pede para ficar na página).
+
+## Atualização final (08/11/2026) — versão entregue: medidor 1.10.190
+Desde a 1.10.176 o teste em desktop, Poco X6 Pro (Chrome/WebView, arquivo aberto de Downloads) e a foto do tablet acharam e corrigiram:
+- 177: menu do botão direito fora da tela com zoom do body (tela larga).
+- 178/179: relatório identifica o dispositivo; barra do robô com cronômetro, arrastar, redimensionar, recolher; visão simples sem card Patamar.
+- 180: robô força salvamento Manual no ensaio e devolve o anterior.
+- 181: botão Copiar relatório não mente mais (campo de cópia dentro do popup modal; texto na tela; Compartilhar).
+- 182/183/187: barra do robô fica no fim (concluído/interrompido), cabe no celular, fica acima de popups (inclusive modais, com Parar tocável); bloco do robô cabe no celular.
+- 184/186: Dica Alt+I não nasce ligada nem aparece no celular; robô devolve a preferência.
+- 185: caixa chkPlcNovos recarregava a página no Monkey — bloqueada na caixa de areia.
+- 188: armazenamento do navegador bloqueado (content:///WebView) não gera erro.
+- 189: o robô não abre aba, não baixa e não imprime sozinho, em nenhum modo.
+- 190: fase Patamar conferida (o card estava certo; o defeito era do robô). REV-6 fechado.
+Resultado final no Poco: Avançado 153 OK/0 falha; Monkey (1015 ações) 6 OK/0 falha, 0 erro de JavaScript. Layout (alvos 44 px, mapa no celular) e menu de toque longo: decisão do Reginaldo de não alterar.
