@@ -1,0 +1,20 @@
+---
+name: bt2-licoes-html
+description: Licoes aprendidas do projeto BT2 sobre os HTML (medidor, janelas, celular/tablet, armazenamento, copia, zoom, Ajuda). Use ao criar ou revisar qualquer HTML do projeto.
+---
+
+# Lições BT2 — HTML / medidor
+Fonte: `docs/licoes/REGISTRO_LICOES_v0.1.md` (LL-020 a LL-029) e `docs/licoes/INVENTARIO_DEMO_X_REAL_v0.1.md`.
+
+## Regras
+- **Janela sempre inteira na tela**; título e ✕ nunca fora. Todo diálogo novo liga o próprio ✕. LL-020/021
+- Elemento posicionado dentro de `body` com zoom (tela ≥ 2400 px) **compensa o zoom**. LL-022
+- **Nunca dizer "copiado" sem poder provar**; o campo temporário da cópia nasce dentro do popup modal; mostrar o texto na tela e oferecer Compartilhar. LL-023
+- **Todo acesso a storage em try/catch**; a tela funciona sem storage (arquivo aberto de Downloads/WebView). LL-024
+- Controle que recarrega a página (`location.reload`) não entra em teste automático. LL-025
+- **Recurso que precisa de teclado (Alt+I) não vale em aparelho de toque.** LL-026
+- Elemento vazio não ocupa lugar nem captura clique. LL-027
+- Alvos de toque: mínimo só em `pointer:coarse`; 44 px não aplicado por decisão do Reginaldo. LL-028
+- Para teste longo no celular, preferir página servida pelo Node-RED (arquivo de Downloads não recarrega). LL-029
+- Bifurcação Demo × Real: ler o inventário antes de mexer no Setup, chaves, INICIAR/STOP e leitura dos bancos. LL-040
+- Mudança = versão nova gerada por script em `dashboard/gerador/`; Ajuda e comentários em PT-BR.
