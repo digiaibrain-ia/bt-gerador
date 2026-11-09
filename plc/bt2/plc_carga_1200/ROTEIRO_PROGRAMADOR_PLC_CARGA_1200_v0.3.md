@@ -36,3 +36,7 @@ Provado (script `verifica_offsets_*`): offsets e tamanhos coerentes entre tipos,
 
 ## Ajuste v0.3 (09/11/2026)
 Tensao de chaveamento SAIU do pacote (decisao do Reginaldo: futuro). DB de competencia continua com 8 B; o DBW2 virou `reservaW2` (ninguem le nem escreve). Arquivos `*_v0.3` (tipos, fb_bancoCarga16/32, fc_chamadas, tags) substituem os v0.1/v0.2 correspondentes.
+
+## Ajuste v0.4 - DB_ANY (09/11/2026)
+`fb_bancoCarga16_v0.4` e `fb_bancoCarga32_v0.4` recebem **so o numero do DB** (`DbCom`, `DbCompet` : DB_ANY) e tratam os campos por offset (PEEK/POKE) dentro. O PEDIDO e lido para um buffer no inicio do ciclo; so a faixa da RESPOSTA e escrita no fim (escritor unico). DB invalido (0) = nada liga. Chamadas: `fc_chamadasBancosCarga_v0.4`, `fc_chamadasBanco595_v0.4`. Logica, supervisao e 1515 nao mudaram.
+**Nao provado:** nomes/parametros de PEEK/POKE e suporte na CPU (firmware nao confirmado) - conferir no TIA; reacao da CPU a DB inexistente.
