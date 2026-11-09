@@ -27,3 +27,6 @@ Ocorrências nas linhas acima de ~9000 (módulo do robô, Central, Ocorrências)
 2. Conferir com o Reginaldo as condições reais do **Setup/Salvar** e o 91 kW fixo; só então fechar LL-040.
 3. Repetir a varredura a cada versão nova (o gerador pode contar as bifurcações e avisar se o número mudou).
 **Não prova:** o comportamento do PLC e do DSE reais — isso continua sendo da bancada.
+
+## Atualização (08/11/2026): o inventário agora é gerado por script
+`node scripts/inventario/inventario_demo_x_real_v0.1.js <medidor.html> --baseline docs/licoes/inventario_base.json` — conta as bifurcações (134 na v1.10.190: ALTO 51 · MÉDIO 66 · BAIXO 17), compara com a base e **avisa (saída 2) se aparecer ponto ALTO novo**. Relatório gerado: `INVENTARIO_AUTO_v1.10.190.md`; base: `inventario_base.json`. A lista manual acima continua valendo como leitura comentada. Limite: classificação por heurística de texto (ex.: a linha 3590 saiu como MÉDIO); não executa o HTML.
