@@ -29,3 +29,7 @@ Desde a 1.10.176 o teste em desktop, Poco X6 Pro (Chrome/WebView, arquivo aberto
 - 189: o robô não abre aba, não baixa e não imprime sozinho, em nenhum modo.
 - 190: fase Patamar conferida (o card estava certo; o defeito era do robô). REV-6 fechado.
 Resultado final no Poco: Avançado 153 OK/0 falha; Monkey (1015 ações) 6 OK/0 falha, 0 erro de JavaScript. Layout (alvos 44 px, mapa no celular) e menu de toque longo: decisão do Reginaldo de não alterar.
+
+## Fase 5 (08/11/2026) — Demo × Real e dois aparelhos, com decisões autônomas
+- Regressão completa contra o medidor 1.10.190: **274 testes, 268 passam, 0 falham, 6 `todo`** (P3-E1, P3-E2, F2-1, DR-1 e os já conhecidos). Nada em produção foi alterado.
+- Achado principal (provado no simulador, **não na bancada**): no modo REAL o Setup só informa o chaveamento ao PLC com os Dados do ensaio **confirmados**; no Demo vem sozinho. Detalhes, pontuação das decisões e propostas: `docs/licoes/DECISOES_AUTONOMAS_2026-11-08.md`.
