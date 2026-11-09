@@ -33,3 +33,6 @@ Espelho do DB3200 (392 B, bytes 8..399): PUT1 8..143 (136 B), PUT2 144..271 (128
 ## Provado x nao provado
 Provado (script `verifica_offsets_*`): offsets e tamanhos coerentes entre tipos, DBs, FB103 e chamadas; fluxos `chaves-550/595-api-v1.6` com teste (24/24; a v1.5 falha 20).
 **Nao provado:** compilacao no TIA, ponteiros absolutos como VARIANT, tempos reais, comportamento no PLC e na bancada (carga de potencia DESACOPLADA).
+
+## Ajuste v0.3 (09/11/2026)
+Tensao de chaveamento SAIU do pacote (decisao do Reginaldo: futuro). DB de competencia continua com 8 B; o DBW2 virou `reservaW2` (ninguem le nem escreve). Arquivos `*_v0.3` (tipos, fb_bancoCarga16/32, fc_chamadas, tags) substituem os v0.1/v0.2 correspondentes.
