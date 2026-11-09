@@ -1,0 +1,168 @@
+FUNCTION "fc_bancosCarga1200" : Void
+TITLE = fc_bancosCarga1200 v0.5
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+////====================================
+//// fc_bancosCarga1200 v0.5 (09/11/2026) - RASCUNHO, nao compilado. Equivalente do fc_bancosNovosEt200, agora com os 4 bancos no 1200. Chamar 1x por ciclo (OB1 ou OB de tempo fixo).
+//// Tags fisicos (<BANCO>_I01.., <BANCO>_Q01.., <BANCO>_SEL_AUTO) sao NOMES PROPOSTOS; o programador cria/ajusta. Instancias: "db<base+6>_<banco>_BancoCarga".
+////====================================
+   VAR_TEMP
+      saidaBC56 : Array[1..16] of Bool;
+      auxBC56 : Array[1..16] of Bool;
+      saidaBC400 : Array[1..16] of Bool;
+      auxBC400 : Array[1..16] of Bool;
+      saidaBC550 : Array[1..16] of Bool;
+      auxBC550 : Array[1..16] of Bool;
+      saidaBC595 : Array[1..32] of Bool;
+      auxBC595 : Array[1..32] of Bool;
+   END_VAR
+BEGIN
+
+   // ---------------- BC56 (13 chaves, telegrama DB3007) ----------------
+   #auxBC56[1] := "BC56_I01";
+   #auxBC56[2] := "BC56_I02";
+   #auxBC56[3] := "BC56_I03";
+   #auxBC56[4] := "BC56_I04";
+   #auxBC56[5] := "BC56_I05";
+   #auxBC56[6] := "BC56_I06";
+   #auxBC56[7] := "BC56_I07";
+   #auxBC56[8] := "BC56_I08";
+   #auxBC56[9] := "BC56_I09";
+   #auxBC56[10] := "BC56_I10";
+   #auxBC56[11] := "BC56_I11";
+   #auxBC56[12] := "BC56_I12";
+   #auxBC56[13] := "BC56_I13";
+   #auxBC56[14] := FALSE;
+   #auxBC56[15] := FALSE;
+   #auxBC56[16] := FALSE;
+   "db3006_BC56_BancoCarga"(DbCom := "db3007_BC56_Com", NumChaves := 13, SeletoraEntrada := "BC56_SEL_AUTO", SaidaContatora := #saidaBC56, EntradaContatoAux := #auxBC56);
+   "BC56_Q01" := #saidaBC56[1];
+   "BC56_Q02" := #saidaBC56[2];
+   "BC56_Q03" := #saidaBC56[3];
+   "BC56_Q04" := #saidaBC56[4];
+   "BC56_Q05" := #saidaBC56[5];
+   "BC56_Q06" := #saidaBC56[6];
+   "BC56_Q07" := #saidaBC56[7];
+   "BC56_Q08" := #saidaBC56[8];
+   "BC56_Q09" := #saidaBC56[9];
+   "BC56_Q10" := #saidaBC56[10];
+   "BC56_Q11" := #saidaBC56[11];
+   "BC56_Q12" := #saidaBC56[12];
+   "BC56_Q13" := #saidaBC56[13];
+
+   // ---------------- BC400 (13 chaves, telegrama DB3107) ----------------
+   #auxBC400[1] := "BC400_I01";
+   #auxBC400[2] := "BC400_I02";
+   #auxBC400[3] := "BC400_I03";
+   #auxBC400[4] := "BC400_I04";
+   #auxBC400[5] := "BC400_I05";
+   #auxBC400[6] := "BC400_I06";
+   #auxBC400[7] := "BC400_I07";
+   #auxBC400[8] := "BC400_I08";
+   #auxBC400[9] := "BC400_I09";
+   #auxBC400[10] := "BC400_I10";
+   #auxBC400[11] := "BC400_I11";
+   #auxBC400[12] := "BC400_I12";
+   #auxBC400[13] := "BC400_I13";
+   #auxBC400[14] := FALSE;
+   #auxBC400[15] := FALSE;
+   #auxBC400[16] := FALSE;
+   "db3106_BC400_BancoCarga"(DbCom := "db3107_BC400_Com", NumChaves := 13, SeletoraEntrada := "BC400_SEL_AUTO", SaidaContatora := #saidaBC400, EntradaContatoAux := #auxBC400);
+   "BC400_Q01" := #saidaBC400[1];
+   "BC400_Q02" := #saidaBC400[2];
+   "BC400_Q03" := #saidaBC400[3];
+   "BC400_Q04" := #saidaBC400[4];
+   "BC400_Q05" := #saidaBC400[5];
+   "BC400_Q06" := #saidaBC400[6];
+   "BC400_Q07" := #saidaBC400[7];
+   "BC400_Q08" := #saidaBC400[8];
+   "BC400_Q09" := #saidaBC400[9];
+   "BC400_Q10" := #saidaBC400[10];
+   "BC400_Q11" := #saidaBC400[11];
+   "BC400_Q12" := #saidaBC400[12];
+   "BC400_Q13" := #saidaBC400[13];
+
+   // ---------------- BC550 (12 chaves, telegrama DB3307) ----------------
+   #auxBC550[1] := "BC550_I01";
+   #auxBC550[2] := "BC550_I02";
+   #auxBC550[3] := "BC550_I03";
+   #auxBC550[4] := "BC550_I04";
+   #auxBC550[5] := "BC550_I05";
+   #auxBC550[6] := "BC550_I06";
+   #auxBC550[7] := "BC550_I07";
+   #auxBC550[8] := "BC550_I08";
+   #auxBC550[9] := "BC550_I09";
+   #auxBC550[10] := "BC550_I10";
+   #auxBC550[11] := "BC550_I11";
+   #auxBC550[12] := "BC550_I12";
+   #auxBC550[13] := FALSE;
+   #auxBC550[14] := FALSE;
+   #auxBC550[15] := FALSE;
+   #auxBC550[16] := FALSE;
+   "db3306_BC550_BancoCarga"(DbCom := "db3307_BC550_Com", NumChaves := 12, SeletoraEntrada := "BC550_SEL_AUTO", SaidaContatora := #saidaBC550, EntradaContatoAux := #auxBC550);
+   "BC550_Q01" := #saidaBC550[1];
+   "BC550_Q02" := #saidaBC550[2];
+   "BC550_Q03" := #saidaBC550[3];
+   "BC550_Q04" := #saidaBC550[4];
+   "BC550_Q05" := #saidaBC550[5];
+   "BC550_Q06" := #saidaBC550[6];
+   "BC550_Q07" := #saidaBC550[7];
+   "BC550_Q08" := #saidaBC550[8];
+   "BC550_Q09" := #saidaBC550[9];
+   "BC550_Q10" := #saidaBC550[10];
+   "BC550_Q11" := #saidaBC550[11];
+   "BC550_Q12" := #saidaBC550[12];
+
+   // ---------------- BC595 (18 chaves, telegrama DB3207) ----------------
+   #auxBC595[1] := "BC595_I01";
+   #auxBC595[2] := "BC595_I02";
+   #auxBC595[3] := "BC595_I03";
+   #auxBC595[4] := "BC595_I04";
+   #auxBC595[5] := "BC595_I05";
+   #auxBC595[6] := "BC595_I06";
+   #auxBC595[7] := "BC595_I07";
+   #auxBC595[8] := "BC595_I08";
+   #auxBC595[9] := "BC595_I09";
+   #auxBC595[10] := "BC595_I10";
+   #auxBC595[11] := "BC595_I11";
+   #auxBC595[12] := "BC595_I12";
+   #auxBC595[13] := "BC595_I13";
+   #auxBC595[14] := "BC595_I14";
+   #auxBC595[15] := "BC595_I15";
+   #auxBC595[16] := "BC595_I16";
+   #auxBC595[17] := "BC595_I17";
+   #auxBC595[18] := "BC595_I18";
+   #auxBC595[19] := FALSE;
+   #auxBC595[20] := FALSE;
+   #auxBC595[21] := FALSE;
+   #auxBC595[22] := FALSE;
+   #auxBC595[23] := FALSE;
+   #auxBC595[24] := FALSE;
+   #auxBC595[25] := FALSE;
+   #auxBC595[26] := FALSE;
+   #auxBC595[27] := FALSE;
+   #auxBC595[28] := FALSE;
+   #auxBC595[29] := FALSE;
+   #auxBC595[30] := FALSE;
+   #auxBC595[31] := FALSE;
+   #auxBC595[32] := FALSE;
+   "db3206_BC595_BancoCarga"(DbCom := "db3207_BC595_Com", NumChaves := 18, SeletoraEntrada := "BC595_SEL_AUTO", SaidaContatora := #saidaBC595, EntradaContatoAux := #auxBC595);
+   "BC595_Q01" := #saidaBC595[1];
+   "BC595_Q02" := #saidaBC595[2];
+   "BC595_Q03" := #saidaBC595[3];
+   "BC595_Q04" := #saidaBC595[4];
+   "BC595_Q05" := #saidaBC595[5];
+   "BC595_Q06" := #saidaBC595[6];
+   "BC595_Q07" := #saidaBC595[7];
+   "BC595_Q08" := #saidaBC595[8];
+   "BC595_Q09" := #saidaBC595[9];
+   "BC595_Q10" := #saidaBC595[10];
+   "BC595_Q11" := #saidaBC595[11];
+   "BC595_Q12" := #saidaBC595[12];
+   "BC595_Q13" := #saidaBC595[13];
+   "BC595_Q14" := #saidaBC595[14];
+   "BC595_Q15" := #saidaBC595[15];
+   "BC595_Q16" := #saidaBC595[16];
+   "BC595_Q17" := #saidaBC595[17];
+   "BC595_Q18" := #saidaBC595[18];
+END_FUNCTION
