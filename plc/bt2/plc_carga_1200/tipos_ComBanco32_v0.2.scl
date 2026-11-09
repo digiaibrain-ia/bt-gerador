@@ -1,0 +1,26 @@
+TYPE "typeComBanco32"
+TITLE = typeComBanco32 v0.2
+VERSION : 0.2
+////====================================
+//// typeComBanco32 v0.2 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Pacote plc_carga_1200 (S7-1200 real), BC59,5.
+//// O QUE E : telegrama PEDIDO/RESPOSTA do BC59,5 (ate 32 chaves), 36 bytes. Mesmo desenho do typeComBanco16, so maior.
+//// PUT do 1515 : DBX0.0 BYTE 14 (PEDIDO)    GET do 1515 : DBX14.0 BYTE 22 (RESPOSTA)   -> fb103_ComEt200_32 v0.3 do 1515.
+//// ESCRITOR UNICO : PEDIDO so pelo PUT do 1515; RESPOSTA so pelo fb_bancoCarga32 (este PLC).
+////====================================
+   STRUCT
+      cmd : Array[1..32] of Bool;            // DBX0.0..3.7   PEDIDO
+      vida1515 : Int;                         // DBW4
+      ligarBanco : Bool;                      // DBX6.0
+      resPut : Byte;                          // DBB7
+      habPed : Array[1..32] of Bool;         // DBX8.0..11.7
+      seq : Int;                              // DBW12
+      fbk : Array[1..32] of Bool;            // DBX14.0..17.7 RESPOSTA
+      vidaET : Int;                           // DBW18
+      seletoraAuto : Bool;                    // DBX20.0
+      resGet : Byte;                          // DBB21
+      habResp : Array[1..32] of Bool;        // DBX22.0..25.7
+      eco : Int;                              // DBW26
+      falhaRetorno : Array[1..32] of Bool;   // DBX28.0..31.7
+      contatorColado : Array[1..32] of Bool; // DBX32.0..35.7
+   END_STRUCT;
+END_TYPE

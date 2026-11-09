@@ -1,0 +1,131 @@
+//// [v0.2 09/11/2026] Versao de 32 chaves (BC59,5) do fb_bancoCarga16. Logica igual; VENTILADOR NAO MONITORADO (decisao Reginaldo 09/11): deixar UsaVentilador = FALSE.
+FUNCTION_BLOCK "fb_bancoCarga32"
+TITLE = fb_bancoCarga32 v0.2
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+////====================================
+//// fb_bancoCarga32 v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// ONDE RODA : PLC de cargas (S7-1200 real). 1 INSTANCIA POR BANCO (um FB para cada banco), 1x por ciclo, de preferencia em OB de tempo fixo.
+//// O QUE FAZ (lado do banco do telegrama PUT/GET de ate 32 chaves):
+////    1) vidaET sobe a cada ~100 ms (prova ao 1515 que este PLC esta vivo).
+////    2) vida1515 parou por TempoPerdaMs (2 s < 3 s do 1515) -> ComOk=FALSE e TODAS as saidas vao a FALSE; cada chave so volta com novo comando (FALSE e TRUE).
+////    3) regra SB some -> CB cai (T = TempoRetornoMs = 2 s), falha TRAVADA, rearme so por novo comando; contator colado travado (fb_supervisaoChaves32).
+////    4) saida da contatora = Cmd E banco liberado E nao bloqueada E Permite. fbk = contato auxiliar REAL, nunca copia do comando.
+////    5) preenche o DB de competencia (liberado, contator geral, intertravamento, ventilador, chaveamento fisico, alarmes, vida).
+//// ESCRITOR UNICO : le o PEDIDO (Com.cmd, vida1515, ligarBanco, habPed, seq); escreve a RESPOSTA e o DB de competencia. Nunca escreve o PEDIDO.
+//// FALHA/SEGURANCA : sem comunicacao, intertravamento aberto ou 1o ciclo apos partida da CPU = nada liga. IntertravamentoOk nasce FALSE (estado seguro):
+////    ligar ao sinal REAL de emergencia/protecoes; em bancada sem esse sinal, ligar TRUE de forma explicita e consciente (carga de potencia DESACOPLADA).
+//// ASSUMIDO - A CONFIRMAR: UsaVentilador (decisao de projeto, BANC-1), tempos (2 s / 3 s), tipo da instancia de temporizador no firmware.
+////====================================
+   VAR_INPUT
+      NumChaves          : Int;                 // chaves reais do banco (1..32)
+      SeletoraEntrada    : Bool;                // entrada fisica: seletora do banco em Auto (1 = Auto)
+      IntertravamentoOk  : Bool := FALSE;       // emergencia/protecoes do banco OK. Nasce FALSE = nada liga (estado seguro)
+      UsaVentilador      : Bool := FALSE;       // TRUE = so libera com ventilador ok (BANC-1, decisao de projeto pendente)
+      VentiladorOk       : Bool;                // entrada do ventilador (so vale se UsaVentilador)
+      ContatorGeralAux   : Bool;                // retorno REAL do contator geral do banco (A PREENCHER; se nao existir, deixar FALSE)
+      ChaveamentoFisicoV : Int;                 // 0 = nao sabe, 220, 380 ou 440 (A CONFIRMAR se existe sinal)
+      TempoPerdaMs       : Time := T#2S;        // sem vida nova do 1515 por este tempo = comunicacao perdida (menor que os 3 s do 1515)
+      TempoRetornoMs     : Int := 2000;         // T de verificacao do retorno SB (decisao do Reginaldo: 2 s)
+   END_VAR
+   VAR_OUTPUT
+      ComOk              : Bool;
+      BancoLiberado      : Bool;
+   END_VAR
+   VAR_IN_OUT
+      Com                : "typeComBanco32";
+      Compet             : "typeCompetenciaBanco";
+      SaidaContatora     : Array[1..32] of Bool;   // saidas fisicas (copiadas pelo fc_chamadasBancosCarga)
+      EntradaContatoAux  : Array[1..32] of Bool;   // contatos auxiliares fisicos
+   END_VAR
+   VAR
+      _tOsc100ms   : TON_TIME;
+      _tPerda      : TON_TIME;
+      _sup         : "fb_supervisaoChaves32";      // supervisao do retorno SB (multi-instancia)
+      _vida1515Ant : Int;
+      _vidaMudou   : Bool;
+      _bloq        : Array[1..32] of Bool;          // TRUE = caiu a comunicacao (ou partida); so solta com Cmd[i] = FALSE
+      _partiu      : Bool;                            // FALSE no 1o ciclo apos partida
+      _liberado    : Bool;
+      _n           : Int;
+      _algumaFalhaRet : Bool;
+      _algumColado : Bool;
+      i            : Int;
+   END_VAR
+
+BEGIN
+   // 1) vida do PLC de cargas e do bloco de competencia (a cada ~100 ms)
+   #_tOsc100ms(IN := NOT #_tOsc100ms.Q, PT := T#100MS);
+   IF #_tOsc100ms.Q THEN
+      #Com.vidaET := #Com.vidaET + 1;
+      IF #Com.vidaET >= 32767 THEN #Com.vidaET := 0; END_IF;
+      #Compet.vidaCompet := #Compet.vidaCompet + 1;
+      IF #Compet.vidaCompet >= 32767 THEN #Compet.vidaCompet := 0; END_IF;
+   END_IF;
+
+   // 2) deteccao de perda de comunicacao: vida do 1515 parada por TempoPerdaMs
+   IF #Com.vida1515 <> #_vida1515Ant THEN
+      #_vida1515Ant := #Com.vida1515;
+      #_vidaMudou := TRUE;
+   ELSE
+      #_vidaMudou := FALSE;
+   END_IF;
+   #_tPerda(IN := NOT #_vidaMudou, PT := #TempoPerdaMs);
+   #ComOk := NOT #_tPerda.Q;
+
+   #_n := #NumChaves;
+   IF #_n < 0 THEN #_n := 0; END_IF;
+   IF #_n > 32 THEN #_n := 32; END_IF;
+
+   // 3) queda de comunicacao (ou 1o ciclo) TRAVA todas as chaves; cada uma so solta quando o 1515 manda Cmd = FALSE
+   FOR #i := 1 TO 32 DO
+      IF NOT #ComOk OR NOT #_partiu THEN
+         #_bloq[#i] := TRUE;
+      ELSIF NOT #Com.cmd[#i] THEN
+         #_bloq[#i] := FALSE;
+      END_IF;
+   END_FOR;
+   #_partiu := TRUE;
+
+   // 4) banco liberado
+   #_liberado := #ComOk AND #Com.ligarBanco AND #SeletoraEntrada AND #IntertravamentoOk AND (NOT #UsaVentilador OR #VentiladorOk);
+   #BancoLiberado := #_liberado;
+   #Com.seletoraAuto := #SeletoraEntrada;
+
+   // 5) supervisao do retorno SB (SB some -> CB cai, T = 2 s) e habilitar/desabilitar com resposta e eco do seq
+   #_sup(NumChaves := #_n, TempoRetornoMs := #TempoRetornoMs, ComOk := #ComOk, Seq := #Com.seq,
+         Cmd := #Com.cmd, HabPed := #Com.habPed, SaidaQ := #SaidaContatora, AuxIn := #EntradaContatoAux,
+         HabResp := #Com.habResp, FalhaRetorno := #Com.falhaRetorno, ContatorColado := #Com.contatorColado);
+   #Com.eco := #_sup.Eco;
+
+   // 6) saidas das contatoras e feedback REAL
+   #_algumaFalhaRet := FALSE;
+   #_algumColado := FALSE;
+   FOR #i := 1 TO 32 DO
+      IF #i <= #_n THEN
+         #Com.fbk[#i] := #EntradaContatoAux[#i];
+         IF #_liberado AND NOT #_bloq[#i] AND #_sup.Permite[#i] THEN
+            #SaidaContatora[#i] := #Com.cmd[#i];
+         ELSE
+            #SaidaContatora[#i] := FALSE;
+         END_IF;
+         IF #Com.falhaRetorno[#i] THEN #_algumaFalhaRet := TRUE; END_IF;
+         IF #Com.contatorColado[#i] THEN #_algumColado := TRUE; END_IF;
+      ELSE
+         #Com.fbk[#i] := FALSE;
+         #SaidaContatora[#i] := FALSE;
+      END_IF;
+   END_FOR;
+
+   // 7) DB de competencia (sinais do banco para o 1515)
+   #Compet.bancoLiberado := #_liberado;
+   #Compet.bancoLigadoFbk := #ContatorGeralAux;
+   #Compet.intertravamentoOk := #IntertravamentoOk;
+   #Compet.ventiladorOk := #VentiladorOk;
+   #Compet.chaveamentoFisicoV := #ChaveamentoFisicoV;
+   #Compet.alarmes.%X0 := NOT #ComOk;
+   #Compet.alarmes.%X1 := #_algumaFalhaRet;
+   #Compet.alarmes.%X2 := #_algumColado;
+   #Compet.alarmes.%X3 := NOT #IntertravamentoOk;
+   #Compet.alarmes.%X4 := #UsaVentilador AND NOT #VentiladorOk;
+END_FUNCTION_BLOCK
