@@ -37,3 +37,15 @@ Principios acordados: o SQL fica **fora do caminho de comando** (o PLC e a fonte
 
 ## Comunicacao
 Portugues claro, tabelas curtas, sem jargao desnecessario. O usuario (Reginaldo) e tecnico em PLC; explicar passos de Node-RED/Git/Windows com o caminho exato. Estado atual do projeto e pendencias: `references/estado_projeto.md` (releia e confirme com o usuario, o estado muda).
+
+## Regras acrescentadas em 09–10/11/2026 (método consolidado com o Reginaldo)
+Nasceram de correções dele durante o trabalho dos blocos do PLC de cargas 1200. Valem junto com as regras de ouro acima.
+9. **Responder só o que foi perguntado.** Não ampliar escopo nem trabalhar "achismo" ("o negócio é pra ser fácil e fica complicando"; "você está gastando muito token com coisa que eu não estou pedindo"). Se o pedido for ambíguo, dizer a leitura em uma linha e agir; perguntar só o que muda o resultado, sempre com uma recomendação.
+10. **Proposta → decisão → execução.** Trazer a melhor opção, esperar a decisão, só então executar (exceto o que ele já autorizou: "pode seguir", "pode fazer"). Autorizado ≠ vale para o próximo assunto.
+11. **Espelhar o que já existe e funciona antes de inventar.** Ler os blocos reais do repositório (ex.: os do ET200) e portar com a menor mudança ("o 1200 é o mesmo, com o código acertado"). Arquitetura própria só se ele pedir.
+12. **Escopo = o que existe hoje.** Hoje só há BC56 e BC400; os testes com gerador ligado são só neles. Não gerar blocos para bancos inexistentes, nem sinais "do futuro" (competência, chaveamento, ventilador) sem pedido.
+13. **Entregar só o que ele vai usar:** sem versões anteriores, sem arquivos de texto extras, zip só quando pedido; um guia único e atual quando pedido (nunca vários roteiros em paralelo).
+14. **Bloco de PLC:** DB entra por DB_ANY (só o número) e o bloco trata por offset (PEEK/POKE); PUT/GET continua com ponteiro absoluto; escritor único por campo (PEDIDO só pelo PUT do 1515, RESPOSTA só pelo bloco do banco). Todo bloco gerado por script e conferido por script de offsets. Compilação no TIA e PEEK/POKE na CPU: sempre dito como NÃO provado.
+15. **Documentos:** versão nova, nunca sobrescrever; superado vai para `docs/arquivo/` (git mv, reversível) e entra no `docs/INDICE_DOCUMENTOS.md`. CSV que abre no Excel leva BOM UTF-8. IP real nunca em documento novo (marcadores [IP_1515], [IP_ET200], [IP_PC_BT2]).
+16. **Sessões do Project:** o extrato usa `docs/criatividade/PROMPT_EXTRATO_v1.0.md`; cada linha do rastreio leva nível de evidência A/B/C; extrato é relato do assistente, não prova. Teoria de "previsibilidade criativa" só depois de padrão provado.
+17. **Teste do método:** `python3 scripts/metodo/verifica_metodo_v0.1.py [AAAA-MM-DD]` confere no Git, sem opinião: arquivo com versão no nome não alterado (R1), sem IP em arquivo novo (R2), gerador para todo medidor/fluxo novo (R3), nenhum .zip commitado (R4). Exceções ficam escritas no próprio script, com motivo. Verificado por mutação (3 violações injetadas foram pegas).

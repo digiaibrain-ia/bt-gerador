@@ -10,3 +10,6 @@
 - Pendente: bancada com carga desacoplada; Etapas 2 e 3 (BC550/BC595 com `sbRet`); FB por banco no 1200; decisao 208/480 V; texto do troubleshooter a validar; tabela de potencia (print); diagramas v0.2/v0.4 (MES ligado ao PLC, errado); valores do TIA (`ComOk` etc.) so depois da bancada.
 - O processo de aprovacao com o Gemini foi encerrado; nao enviar mais perguntas a ele. O interlocutor e o Reginaldo.
 - Futuro: SQL Server (o usuario e o administrador), via Node-RED; nada a fazer agora.
+
+## Estado em 10/11/2026
+Regressão: 300 testes, 294 passam, 0 falham, 6 `todo` (P3-E1, P3-E2, F2-1, DR-1 e 2 do mesmo tipo). Medidor 1.10.191; `gerenciador_logs` v1.9 e `grafico_ensaio` v0.13 (sem IP). Só existem os bancos BC56 e BC400. PLC de cargas 1200: entrega v0.8 em `plc/bt2/entrega_1200_v0.8/` (4 blocos do 1200 com DB_ANY + 6 do 1515, inclui FB100 v0.4; FB102 não sobe), não compilada. Pacote da TI v1.2 gerado por `scripts/pacote/gerar_pacote_ti_v1.2.py` (fora do Git). O ET200 é testado pelo próprio Reginaldo. Aberto: modelo da CPU do banco (1214FC ou 1215 FC) e do 1515 (FN03 ou FM02); bancada; HTML antigos com IP. Mapa dos documentos: `docs/INDICE_DOCUMENTOS.md`; onde estamos: `docs/bt2/ANALISE_CONCLUSAO_2026-11-10.md`.

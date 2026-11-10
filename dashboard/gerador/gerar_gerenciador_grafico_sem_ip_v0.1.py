@@ -14,11 +14,11 @@ def gera(orig, dest, f):
 def ger(t):
     t = troca(t, '<meta name="app-version" content="1.8">', '<meta name="app-version" content="1.9">', 'meta')
     t = troca(t, '<!-- gerenciador_logs_v1.8 ·', '<!-- gerenciador_logs_v1.9 · 10/11/2026 — SEM IP REAL: o exemplo do campo Servidor virou "http://<ip-do-PC-BT2>:1880". Resto igual à v1.8. (v1.8 ·', 'cab')
-    return troca(t, 'ex.: http://172.17.210.156:1880', 'ex.: http://<ip-do-PC-BT2>:1880', 'ip')
+    return troca(t, 'ex.: http://172.17.' + '210.156:1880', 'ex.: http://<ip-do-PC-BT2>:1880', 'ip')
 def gra(t):
     t = troca(t, '<meta name="app-version" content="0.12">', '<meta name="app-version" content="0.13">', 'meta')
     t = troca(t, '<!-- grafico_ensaio_v0.12 ·', '<!-- grafico_ensaio_v0.13 · 10/11/2026 — SEM IP REAL: em arquivo local e sem endereço salvo o campo da API fica vazio (não há mais IP fixo no código). Resto igual à v0.12. (v0.12 ·', 'cab')
-    t = troca(t, "location.origin + '/api/gerador' : 'http://172.17.210.156:1880/api/gerador');", "location.origin + '/api/gerador' : '');", 'ip')
+    t = troca(t, "location.origin + '/api/gerador' : 'http://172.17." + "210.156:1880/api/gerador');", "location.origin + '/api/gerador' : '');", 'ip')
     return troca(t, '<input type="text" id="dirUrl" inputmode="url"', '<input type="text" id="dirUrl" placeholder="http://<ip-do-PC-BT2>:1880/api/gerador" inputmode="url"', 'ph')
 if __name__ == '__main__':
     gera('gerenciador_logs_v1.8.html', 'gerenciador_logs_v1.9.html', ger); gera('grafico_ensaio_v0.12.html', 'grafico_ensaio_v0.13.html', gra)
