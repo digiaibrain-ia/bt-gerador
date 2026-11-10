@@ -20,5 +20,5 @@ O extrato é relato do assistente. Quem confere é o Reginaldo.
 ## Pendências conhecidas
 - Categoria "OUTRA-IA" não existe na lista de fontes do prompt (decisão do Reginaldo).
 - S06 (Start/Stop do DSE): endereço dos LEDs (Page 14 x 190) é inferência do assistente; teste não visível. Segurança: nada em produção sem OK.
-- CPU do banco de carga: 1214FC ou 1215 FC? (documentos do repositório dizem 1214FC).
+- CPU do banco de carga: **1214FC** (decidido pelo Reginaldo em 10/11/2026). Falta só o modelo do 1515 (FN03 ou FM02).
 - `extratos/`: extratos guardados em texto (hoje só o S07, desta sessão). Os extratos S01 a S06 estão só no chat; colar aqui se quiser guardá-los.

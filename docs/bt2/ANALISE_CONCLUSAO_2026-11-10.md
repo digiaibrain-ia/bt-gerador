@@ -27,7 +27,7 @@
 6. **Controle remoto Start/Stop do DSE:** fluxos e documento de arquitetura estão só no Project (sessão S06), não no repositório; teste não visível; endereço dos LEDs (Page 14 × 190) não confirmado. Comando de gerador: segurança, nada em produção sem OK.
 
 ## 5. Decisões e confirmações do Reginaldo que travam o fechamento
-- CPU do banco de carga: **1214FC ou 1215 FC?** (documentos dizem 1214FC; o pacote 1200 foi feito para 1215 FC).
+- CPU do banco de carga: **1214FC** (decidido pelo Reginaldo em 10/11/2026, depois desta análise; o rascunho do 1200 foi escrito sem depender do modelo exato, mas PEEK/POKE e `TON_TIME` ainda precisam ser conferidos no TIA para a 1214FC).
 - Modelo do 1515: `6ES7 515-2FN03-0AB0` (passo a passo) ou `6ES7 515-2FM02-0AB0` (1515F-2 PN, informado)?
 - BANC-1 (ventilador sem monitoramento): decidido "futuro, não trava agora"; manter registrado como risco.
 - Conexões S7 livres, ID da conexão e proteção de acesso da CPU do banco: "depois".
