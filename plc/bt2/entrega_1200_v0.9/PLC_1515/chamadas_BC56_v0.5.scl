@@ -1,0 +1,22 @@
+// chamadas_BC56 v0.5 (10/11/2026) - RASCUNHO, nao compilado. Lado do 1515 para o PLC de CARGA (1214FC): fb101_ComCarga v0.9 + fb100_setupChaves v0.4.
+// Banco BC56 (13 chaves) -> arrays de 16. Remoto no PLC de Carga: DB3007 (PUT BYTE 10 / GET BYTE 14). ID_Conexao: a PREENCHER (conexao S7 do 1515 com o PLC de Carga).
+// Ordem no OB1: 1) comunicacao (fb101_ComCarga) 2) setup (fb100_setupChaves). Instancias: criar como "fb101_ComCarga" (DB3005) e "fb100_setupChaves" (DB3004).
+// "db2000_BancoTeste2_DSE" = o antigo db52 renumerado (plano de numeracao v7.1): CONFERIR o nome do DB e os campos ledManual, potenciaKw, tensaoL1L2/L2L3/L3L1 no TIA.
+// Campo "comEt200Ok" do DB de chaves: nome mantido (so simbolico; renomear quebraria as referencias do FC100/card); significa "comunicacao com o PLC de Carga ok".
+"db3005i_BC56_ComCarga"(Hab := TRUE, ID_Conexao := W#16#0,   /* A PREENCHER: ID da conexao S7 com o PLC de cargas (1200) */
+    RemotoCmd := P#DB3007.DBX0.0 BYTE 10, RemotoFb := P#DB3007.DBX10.0 BYTE 14,   // v0.8: PEDIDO 10 B / RESPOSTA 14 B
+    ComOk => "db3000_BC56_Chaves".sbBanco.comEt200Ok, SeletoraAuto => "db3000_BC56_Chaves".sbBanco.seletoraAuto, RespEcoOk => "db3000_BC56_Chaves".sbRet.respEcoOk,
+    CbLigar := "db3000_BC56_Chaves".cb.ligar, SbLigada := "db3000_BC56_Chaves".sb.ligada, LigarBanco := "db3000_BC56_Chaves".cbBanco.ligar,
+    HabilitadaPed := "db3000_BC56_Chaves".setup.habilitada, HabResp := "db3000_BC56_Chaves".sbRet.habResp,
+    FalhaRetorno := "db3000_BC56_Chaves".sbRet.falhaRetorno, ContatorColado := "db3000_BC56_Chaves".sbRet.contatorColado);
+
+"db3004i_BC56_SetupChaves"(
+    NumChaves := 13, GeradorOperando := "db2000_BancoTeste2_DSE".ledManual, EnsaioAtivo := FALSE,   // TODO: tag real do DB "Dados do ensaio"
+    kWMedido := "db2000_BancoTeste2_DSE".potenciaKw, VaMedido := "db2000_BancoTeste2_DSE".tensaoL1L2,
+    VbMedido := "db2000_BancoTeste2_DSE".tensaoL2L3, VcMedido := "db2000_BancoTeste2_DSE".tensaoL3L1,
+    TensaoSel := "db3002_BC56_SetupPorTensao".selV.tensaoSel, ChaveSelecionada := "db3000_BC56_Chaves".setup.chaveSel, ComandoSalvar := "db3000_BC56_Chaves".setup.salvar,
+    kWNominal := "db3000_BC56_Chaves".setup.nominal, CbLigar := "db3000_BC56_Chaves".cb.ligar, SbLigada := "db3000_BC56_Chaves".sb.ligada, Habilitada := "db3000_BC56_Chaves".setup.habilitada,
+    SetupOk := "db3000_BC56_Chaves".setup.setupOk, KwReal := "db3000_BC56_Chaves".setup.kwReal, RmedidoOhm := "db3000_BC56_Chaves".setup.rMedidoOhm,
+    RteoricoOhm := "db3000_BC56_Chaves".setup.rTeoricoOhm, SetupData := "db3000_BC56_Chaves".setup.setupData,
+    KwRealV := "db3002_BC56_SetupPorTensao".setupV.kwReal, RmedidoV := "db3002_BC56_SetupPorTensao".setupV.rMedidoOhm, VmedidaV := "db3002_BC56_SetupPorTensao".setupV.vMedidaV,
+    BaseKwV := "db3002_BC56_SetupPorTensao".setupV.baseKw, SetupDataV := "db3002_BC56_SetupPorTensao".setupV.setupData, SetupOkV := "db3002_BC56_SetupPorTensao".setupV.setupOk);
