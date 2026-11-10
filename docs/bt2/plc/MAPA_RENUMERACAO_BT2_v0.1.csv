@@ -1,4 +1,4 @@
-banco;bloco;numero_atual;numero_novo;nome_novo;observacao
+﻿banco;bloco;numero_atual;numero_novo;nome_novo;observacao
 BC56;DB chaves;150;3000;db3000_BC56_Chaves;"mudar o número em Propriedades preserva os valores; senão snapshot"
 BC56;DB setup por tensão;152;3002;db3002_BC56_SetupPorTensao;idem (retentivo)
 BC56;DB instância FB100;154;3004;db3004i_BC56_SetupChaves;sem dados a preservar
