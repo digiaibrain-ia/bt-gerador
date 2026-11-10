@@ -22,3 +22,7 @@ O extrato é relato do assistente. Quem confere é o Reginaldo.
 - S06 (Start/Stop do DSE): endereço dos LEDs (Page 14 x 190) é inferência do assistente; teste não visível. Segurança: nada em produção sem OK.
 - CPU do banco de carga: **1214FC** (decidido pelo Reginaldo em 10/11/2026). Falta só o modelo do 1515 (FN03 ou FM02).
 - `extratos/`: extratos guardados em texto (hoje só o S07, desta sessão). Os extratos S01 a S06 estão só no chat; colar aqui se quiser guardá-los.
+
+## Coluna TIPO DO PEDIDO (v0.3) — classificação do assistente, a revisar pelo Reginaldo
+ACRESCENTA (pede algo novo ou mais) · CORTA (reduz escopo, remove, limita, adia para o futuro) · CONSOLIDA (junta, unifica, organiza, sincroniza, sem tirar função) · CORRIGE (aponta erro, defeito ou retrabalho) · PERGUNTA (pede informação, análise ou decisão) · OUTRO (aprovação, contexto, ambíguo).
+**Hipótese a testar (NÃO provada):** os pedidos do Reginaldo tendem a CORTAR/CONSOLIDAR. Primeira leitura (só evidência A, 16 pedidos dele): 6 CORTA + 2 CONSOLIDA (50%), 3 ACRESCENTA (19%), 4 PERGUNTA, 1 OUTRO. Amostra pequena. A outra metade da hipótese (o assistente tende a ACRESCENTAR) **não aparece nesta planilha**, porque ela só tem os pedidos do Reginaldo; o acréscimo do assistente está nas entregas, não nos pedidos (precisaria de uma coluna/aba nova para medir).
