@@ -14,7 +14,7 @@ Complementa/substitui a "Regra de numeração" de 19/10 (`claude/REGRA_NUMERACAO
 
 **(a) Confirmado (dito pelo usuário ou lido em arquivo real)**
 - PLC dos Bancos de Carga recebe DB DSE próprio **do BT1 e do BT2**; o JSON do Node-RED é o mesmo nos dois, muda só o IP; o direcionamento é feito pelo Node-RED.
-- IP .156 = PC do BT2; .135 = PLC (172.17.209.135, rack 0, slot 1).
+- IP .156 = PC do BT2; .135 = PLC ([IP_1515], rack 0, slot 1).
 - CPU de produção = **S7-1200F 1214FC** (ainda não comprada). Hoje roda numa **1515 provisória**; tudo que for testado migra depois para a 1214.
 - Datasheet 1214FC (`A700000006981255.pdf`): memória de trabalho 200 kB; carga 4 MB; área retentiva 14 kB; blocos (DB+FC+FB+contadores+temporizadores) endereçáveis de 1 a 65535; OB limitado só pela RAM; S7: 8 conexões reservadas / 14 máx.
 - DBs acessados por Node-RED (node-red-contrib-s7) = `S7_Optimized_Access := FALSE` (DB52, DB53, DB55 reais). DB52 = DSE BT2, DB53 = SNAP MANUAL BT2, DB55 = chaves.

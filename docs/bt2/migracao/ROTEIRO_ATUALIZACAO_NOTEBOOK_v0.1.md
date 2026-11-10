@@ -17,7 +17,7 @@ Nada deste material foi compilado ou testado em PLC/Node-RED reais. **Carga de p
 ## B. Antes de mexer em qualquer coisa (obrigatorio)
 1. **TIA:** salvar uma copia do projeto do 1515 e anotar/exportar os valores salvos de DB150, DB152, DB158, DB160 (Setup por chave e por tensao) e DB53. Descobrir **como o PLC esta hoje**: os DBs de chaves estao como `DB150/158` (antigos) ou ja como `DB3000/3100`? (Se ja estiverem em DB3000/3002/3100/3102/2000/2100, pule a Etapa 1.)
 2. **PC BT2:** Node-RED > Menu > Exportar > todos os fluxos (guardar o JSON); copiar `settings.js`, `flows_cred.json` e a pasta `public\html`.
-3. **Variaveis do PM2 (os JSON novos NAO tem mais IP fixo):** `PLC_IP` e `DSE_URL`, e reiniciar o Node-RED. Valores que estavam fixos nos fluxos antigos: `PLC_IP=172.17.209.135` e `DSE_URL=http://172.17.210.156:1880/api/gerador` (**confirme com a TI se continuam esses**). Exemplo em `04_config/pc-bt2.env.example`. Sem isso os fluxos novos nao conectam.
+3. **Variaveis do PM2 (os JSON novos NAO tem mais IP fixo):** `PLC_IP` e `DSE_URL`, e reiniciar o Node-RED. Valores que estavam fixos nos fluxos antigos: `PLC_IP=[IP_1515]` e `DSE_URL=http://[IP_PC_BT2]:1880/api/gerador` (**confirme com a TI se continuam esses**). Exemplo em `04_config/pc-bt2.env.example`. Sem isso os fluxos novos nao conectam.
 4. Conferir que **nao existe** a aba "Simulador DSE (Demo)" no editor.
 
 ## C. Sequencia (PLC e Node-RED mudam juntos: um DB novo no PLC pede o fluxo novo na hora)

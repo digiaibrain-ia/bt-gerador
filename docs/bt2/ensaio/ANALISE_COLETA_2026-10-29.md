@@ -27,7 +27,7 @@
 |---|---|---|---|
 | 1 | Leitura A/B a cada 2 s | mudar para 1 s | **Feito** no fluxo **v3.5** (`servidor-deepsea-api-gerador-v3_5.json`): A e B `per:1` + tolerância 100 ms no agendador. O inject já era de 1 s; o 2 s vinha do `per` dos blocos. Falta testar no Node-RED real (ver `falhas` em `diag.blocos`). |
 | 2 | Base do `percCarga` | vai imprimir "Grandeza online" amanhã e enviar | **Pendente** (dado do operador) — não assumir base. |
-| 3 | Sem CORS | enviou `settings.js` | `httpNodeCors` **comentado**; `httpStatic` = `C:\Users\b02raf\.node-red\public` **ativo**. Caminho sem CORS: copiar os HTML para essa pasta e abrir em `http://IP:1880/<arquivo>.html`. Habilitar CORS fica como decisão (TI). |
+| 3 | Sem CORS | enviou `settings.js` | `httpNodeCors` **comentado**; `httpStatic` = `C:\Users\[USUARIO_WINDOWS]\.node-red\public` **ativo**. Caminho sem CORS: copiar os HTML para essa pasta e abrir em `http://IP:1880/<arquivo>.html`. Habilitar CORS fica como decisão (TI). |
 | 4 | Nome das instâncias | acrescentar regra "i" no MD | **Feito**: `REGRAS_NOMES_E_VERSOES_v0.3.md` §6. **Novo achado:** a `chamadas_v0.6` tem os nomes do banco trocados (`db155i_BC400`, `db163i_BC56`); o TIA tem `db155i_BC56` / `db163i_BC400` → gerei `fb101_ComEt200_chamadas_v0.7.scl` e `fb101_ComEt200_v0.7.scl` (só nomes/comentários). |
 | 5 | FC4 × FC100 | confirmado | FC4 = ET200; 1515 = `fc100_cardBancoCargas_BT2` (REGRAS §7). |
 | 6 | `versaoApi` "3.2" | atualizar + melhorar comentários do fluxo | **Feito** (`"3.5"`; info da aba e do agendador). Comentários dos demais nós: melhorar nas próximas revisões. |

@@ -168,9 +168,9 @@ Chamada de referência (nomes dos DBs a confirmar no TIA):
 
 | Campo | Valor | Origem |
 |---|---|---|
-| Interface local | a que tem **172.17.209.135** e está ligada à rede PN/IE (não a de fábrica 192.168.0.1 sem sub-rede) | usuário (IP do 1515) + inferência |
+| Interface local | a que tem **[IP_1515]** e está ligada à rede PN/IE (não a de fábrica 192.168.0.1 sem sub-rede) | usuário (IP do 1515) + inferência |
 | Parceiro | Não especificado | print |
-| IP do parceiro | 172.17.209.158 | usuário (ET200) |
+| IP do parceiro | [IP_ET200] | usuário (ET200) |
 | Conexão ativa | ☑ "Estabelecer conexão ativa" (1515 = cliente) | arquitetura do passo a passo v3 |
 | TSAP do parceiro | rack/slot do "Gerador_BC015": **ler no hardware dele**; referência a confirmar: S7-300 rack 0 slot 2 → `03.02` | **a confirmar** |
 | TSAP local | o que o TIA propõe | — |

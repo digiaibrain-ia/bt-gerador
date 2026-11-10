@@ -9,11 +9,11 @@
 # (histórico v3, 22/10/2026)
 
 **Substitui** a v2 e `claude/PASSO_A_PASSO_PUT_1515_ET200SP_BC56.md` (v1, com erros — ver seção 1).
-**O que a v3 muda (respostas do usuário, 22/10):** (1) o ET200 é **IM 151-8 PN/DP CPU** (família ET 200**S**, CPU tipo S7-300; programa próprio "Gerador_BC015", IP 172.17.209.158); (2) o **BC400 usa o mesmo ET200**; (3) 1515 = **6ES7 515-2FN03-0AB0, firmware V3.1, TIA Portal V19**; (4) **aprovados** FB101, DB155, DB163 (e DB58 para o batimento), seguindo a regra da planilha — nomes ajustados para o padrão `fb###_NomePascalCase` (`fb101_ComEt200`, `db155_BC56_ComEt200`, `db163_BC400_ComEt200`); (5) todos os blocos novos agora são registrados na aba **`Blocos_novos`** de `PLANO_NUMERACAO_BLOCOS_PLC_v3.xlsx`.
+**O que a v3 muda (respostas do usuário, 22/10):** (1) o ET200 é **IM 151-8 PN/DP CPU** (família ET 200**S**, CPU tipo S7-300; programa próprio "Gerador_BC015", IP [IP_ET200]); (2) o **BC400 usa o mesmo ET200**; (3) 1515 = **6ES7 515-2FN03-0AB0, firmware V3.1, TIA Portal V19**; (4) **aprovados** FB101, DB155, DB163 (e DB58 para o batimento), seguindo a regra da planilha — nomes ajustados para o padrão `fb###_NomePascalCase` (`fb101_ComEt200`, `db155_BC56_ComEt200`, `db163_BC400_ComEt200`); (5) todos os blocos novos agora são registrados na aba **`Blocos_novos`** de `PLANO_NUMERACAO_BLOCOS_PLC_v3.xlsx`.
 **Escopo:** comando das contatoras (1515 → ET200) e feedback das contatoras (ET200 → 1515), BC56 e BC400.
 **Não altera:** Node-RED, HTML, DB150/DB158 (endereços lidos de `nodered/chaves-56-api-v2.2.json`).
 
-> **Resumo.** O 1515 (172.17.209.135) é o cliente: a cada ~200 ms ele envia por **PUT** o comando `cb.ligar[1..16]` + um contador de vida ao ET200 (172.17.209.158) e lê por **GET** o feedback `sb.ligada[1..16]` + o contador de vida do ET200. Se o contador de vida parar, os dois lados vão para estado seguro (ET200 derruba as saídas; 1515 zera `sb.ligada`). O código SCL abaixo **não foi compilado** (não tenho TIA aqui) — a seção 7 lista onde o TIA pode reclamar.
+> **Resumo.** O 1515 ([IP_1515]) é o cliente: a cada ~200 ms ele envia por **PUT** o comando `cb.ligar[1..16]` + um contador de vida ao ET200 ([IP_ET200]) e lê por **GET** o feedback `sb.ligada[1..16]` + o contador de vida do ET200. Se o contador de vida parar, os dois lados vão para estado seguro (ET200 derruba as saídas; 1515 zera `sb.ligada`). O código SCL abaixo **não foi compilado** (não tenho TIA aqui) — a seção 7 lista onde o TIA pode reclamar.
 
 ---
 
@@ -35,11 +35,11 @@
 ## 2. Situação do projeto (regra 4)
 
 **(a) Confirmado nos arquivos**
-- DB150: `cb.ligar[1..16]` = `DBX0.0…DBX1.7`; `sb.ligada[1..16]` = `DBX2.0…DBX3.7` (flow `chaves-56-api-v2.2.json`, endpoint "PLC da Carga" 172.17.209.135, rack 0 slot 1). BC400 = mesmo layout no DB158 (flow `chaves-400-api-v2.2.json`).
+- DB150: `cb.ligar[1..16]` = `DBX0.0…DBX1.7`; `sb.ligada[1..16]` = `DBX2.0…DBX3.7` (flow `chaves-56-api-v2.2.json`, endpoint "PLC da Carga" [IP_1515], rack 0 slot 1). BC400 = mesmo layout no DB158 (flow `chaves-400-api-v2.2.json`).
 - Arrays declarados `Array[1..16] of Bool`; `SbLigada` "escrito pelo mapeamento de I/O" (`fb100_setupChaves_v0.2.scl`).
 - Instância do FB100: DB154 (BC56) / DB162 (BC400); FB lógica do banco = 100 + f (`PLANO_NUMERACAO_BLOCOS_PLC_v2.xlsx`, aba Regras).
-- ET200 em 172.17.209.158 (v1 do passo a passo) e **modelo = IM 151-8 PN/DP CPU**, com o programa "Gerador_BC015" (resposta do usuário, 22/10). O **BC400 usa o mesmo ET200**.
-- 1515: artigo 6ES7 515-2FN03-0AB0, firmware V3.1, TIA Portal V19 (usuário, 22/10). IP 172.17.209.135 responde a ping (0–1 ms); 172.17.209.158 responde (2–6 ms, TTL 29 — o TTL baixo **sugere** (inferência minha) que o caminho até o ET200 passa por outro equipamento de rede; não afeta o PUT/GET, mas vale lembrar ao diagnosticar).
+- ET200 em [IP_ET200] (v1 do passo a passo) e **modelo = IM 151-8 PN/DP CPU**, com o programa "Gerador_BC015" (resposta do usuário, 22/10). O **BC400 usa o mesmo ET200**.
+- 1515: artigo 6ES7 515-2FN03-0AB0, firmware V3.1, TIA Portal V19 (usuário, 22/10). IP [IP_1515] responde a ping (0–1 ms); [IP_ET200] responde (2–6 ms, TTL 29 — o TTL baixo **sugere** (inferência minha) que o caminho até o ET200 passa por outro equipamento de rede; não afeta o PUT/GET, mas vale lembrar ao diagnosticar).
 - **Aprovados em 22/10 (usuário):** `FB101`, `DB155`, `DB163` para o PUT/GET (e `DB58` para o batimento).
 
 **(b) Assumido / proposto por mim (precisa do seu OK)**
@@ -65,7 +65,7 @@ Bit n−1 ↔ chave n (chave 1 = `X0.0`, chave 9 = `X1.0`), igual ao DB150. Cont
 
 ---
 
-## 4. Lado ET200 (172.17.209.158)
+## 4. Lado ET200 ([IP_ET200])
 
 ### 4.1 DB38 `ComBC56` (padrão, **não otimizado**)
 
@@ -98,12 +98,12 @@ END_DATA_BLOCK
 
 ---
 
-## 5. Lado 1515 (172.17.209.135)
+## 5. Lado 1515 ([IP_1515])
 
 ### 5.1 Conexão S7 (uma só para os dois bancos, se o parceiro for o mesmo ET200)
 1. TIA Portal → projeto do 1515 → **Dispositivos e redes** → aba **Conexões** → tipo **Conexão S7**.
 2. Clique direito na CPU 1515 → **Adicionar nova conexão** → parceiro **Não especificado** se o "Gerador_BC015" for **outro projeto**; se estiver **no mesmo projeto TIA** do 1515 (pergunta nova, seção 9), escolha a CPU do ET200 como parceiro (a conexão fica configurada nos dois lados).
-3. Propriedades da conexão → Geral/Endereços: **IP do parceiro = 172.17.209.158**; **TSAP/rack-slot do parceiro: ler na configuração de hardware do ET200** (referência: CPU 1200/1500 = rack 0 slot 1 → TSAP `03.01`; CPU tipo S7-300, como a IM151-8, costuma ser rack 0 slot 2 → `03.02` — **confirme na configuração de hardware do "Gerador_BC015"**). **Não adivinhe**: se o TSAP estiver errado a conexão nunca estabelece (Q1).
+3. Propriedades da conexão → Geral/Endereços: **IP do parceiro = [IP_ET200]**; **TSAP/rack-slot do parceiro: ler na configuração de hardware do ET200** (referência: CPU 1200/1500 = rack 0 slot 1 → TSAP `03.01`; CPU tipo S7-300, como a IM151-8, costuma ser rack 0 slot 2 → `03.02` — **confirme na configuração de hardware do "Gerador_BC015"**). **Não adivinhe**: se o TSAP estiver errado a conexão nunca estabelece (Q1).
 4. Anote o **ID local** (hex) da conexão, ex. `W#16#100` → entra em `ID_Conexao`.
 5. Compile e carregue. Em *Diagnóstico de conexão* (online) a conexão deve ficar **Estabelecida**.
 
@@ -271,7 +271,7 @@ END_FUNCTION_BLOCK
 
 ## 6. Ordem de teste (nada de carga real até o passo 7)
 
-1. **Rede:** ping 172.17.209.135 ↔ .158 a partir do PC; as duas CPUs em RUN.
+1. **Rede:** ping [IP_1515] ↔ .158 a partir do PC; as duas CPUs em RUN.
 2. **ET200:** DB38 criado/carregado, vida do ET200 incrementando (tabela de monitoração).
 3. **1515:** conexão S7 **Estabelecida** (diagnóstico online). Se não: TSAP/IP/permissão PUT/GET (seção 7).
 4. **Contatoras desenergizadas** (circuito de potência aberto/seccionado). `Hab := TRUE`.
@@ -313,4 +313,4 @@ Critério de aceite: passos 5–8 sem intervenção manual; nenhum bit "preso" a
 - **Q7 (nova).** Confirma os nomes `fb101_ComEt200`, `db155_BC56_ComEt200`, `db163_BC400_ComEt200`?
 
 ## 10. Ao trocar o 1515 pela 1214FC
-Reconfirmar: conexão S7 (ID/TSAP), permissão PUT/GET do **servidor** (continua o ET200), conexões S7 disponíveis (14 / 8 reservadas), memória de trabalho (200 kB) e o IP do endpoint "PLC da Carga" no Node-RED (hoje 172.17.209.135).
+Reconfirmar: conexão S7 (ID/TSAP), permissão PUT/GET do **servidor** (continua o ET200), conexões S7 disponíveis (14 / 8 reservadas), memória de trabalho (200 kB) e o IP do endpoint "PLC da Carga" no Node-RED (hoje [IP_1515]).

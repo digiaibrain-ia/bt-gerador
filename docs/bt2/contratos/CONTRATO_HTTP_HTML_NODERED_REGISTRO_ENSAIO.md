@@ -8,7 +8,7 @@
 ## 1. O que está confirmado / assumido / a desenvolver
 
 **Confirmado** (arquivos `selecao-ensaio-v1.3.json` ×2 enviados em 22/10 — são **idênticos**; o `_2` é só o mesmo flow importado duas vezes)
-- Endpoint S7 do flow: 172.17.209.135, rack 0, slot 1, ciclo 1000 ms. Variáveis do DB53 (vartable): `preenchValido X0.0`, `serie S2.20`, `versao S24.12`, `data S38.10`, `fase S50.12`, `preenchNums REAL64.4`, `equip* S80…S454`, `etapaNSalva/Perc/Vals` em 476/532/588/644/700/756…
+- Endpoint S7 do flow: [IP_1515], rack 0, slot 1, ciclo 1000 ms. Variáveis do DB53 (vartable): `preenchValido X0.0`, `serie S2.20`, `versao S24.12`, `data S38.10`, `fase S50.12`, `preenchNums REAL64.4`, `equip* S80…S454`, `etapaNSalva/Perc/Vals` em 476/532/588/644/700/756…
 - Gravação: fila → escrita → espera 1500 ms → leitura de volta → comparação; etapa grava de novo o bit "Salva" depois de conferir; vigia de 8 s → HTTP 503.
 
 **Assumido por mim**

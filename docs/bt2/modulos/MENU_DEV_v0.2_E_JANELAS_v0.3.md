@@ -4,7 +4,7 @@
 - **Atualizar:** o navegador não lista pastas; o botão testa (HEAD) os próximos números de versão de cada arquivo do catálogo (patch +1…+8, minor +1, major +1) e lembra o mais novo em `localStorage 'medidor.dev.menu.arq'`. O clique no menu abre esse arquivo. **Esquecer** apaga a memória.
 - Limite: só acha versões "próximas" ao nome do catálogo. Para listar a pasta de verdade seria preciso uma rota nova no Node-RED (a decidir).
 - Botões Popup/Analisar e Mapa em janela (medidor 1.10.118) abrem o arquivo real; a cópia embutida (EMB) é só reserva.
-- Arquivos em `C:\Users\b02raf\.node-red\public\html`: `catalogo_ferramentas_v0.1.js` + `menu_dev_v0.2.js` ao lado do medidor.
+- Arquivos em `C:\Users\[USUARIO_WINDOWS]\.node-red\public\html`: `catalogo_ferramentas_v0.1.js` + `menu_dev_v0.2.js` ao lado do medidor.
 
 ## Janelas v0.3 (janelas_v0.3.js)
 - O balão do ⤢ não fecha mais ao clicar fora (✕, Esc ou ⤢). Atualiza a cada 200 ms (largura, altura, x, y). x/y editáveis.

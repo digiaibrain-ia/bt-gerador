@@ -23,17 +23,17 @@
 ```
 DSE 4520 (junto ao gerador)
   └── Modbus TCP
-        └── Node-RED (PC BT2, IP 172.17.210.156, porta 1880)
+        └── Node-RED (PC BT2, IP [IP_PC_BT2], porta 1880)
               ├── /api/gerador  →  HTML medidor (leitura ao vivo)
               ├── Fluxo S7 "cliente 31"  →  DB52 no PLC (escrita contínua DSE)
               └── Rotas de API para chaves/seleção  →  PLC dos BC (DB150+)
 
 PLC dos Bancos de Carga (hoje: S7-1515 provisória; produção: S7-1214FC)
-  IP: 172.17.209.135, rack 0, slot 1
+  IP: [IP_1515], rack 0, slot 1
   DBs não-otimizados (S7_Optimized_Access := FALSE) para acesso S7 contrib
   Contem: DB52 (DSE BT2), DB53 (SNAP MANUAL), DB150 (Chaves BC56)
 
-ET200SP (CPU IM151-8 PN/DP, IP 172.17.209.158)
+ET200SP (CPU IM151-8 PN/DP, IP [IP_ET200])
   — contém a parte elétrica (chaves físicas/contatoras) dos bancos de carga
   — já na mesma rede PROFINET que o 1515, cabo físico puxado
   — sem blocos próprios ainda; vai receber os bits CB do DB do 1515
@@ -48,7 +48,7 @@ ET200SP (CPU IM151-8 PN/DP, IP 172.17.209.158)
 ### Versão atual
 `medidor_gerador_v1.9.51.html` — entregue em 21/10/2026.
 Localização no servidor: `/home/claude/sap-ocr/medidor_gerador_v1.9.51.html`
-Servido pelo Node-RED via `httpStatic` → `C:\Users\b02raf\.node-red\public`
+Servido pelo Node-RED via `httpStatic` → `C:\Users\[USUARIO_WINDOWS]\.node-red\public`
 
 ### Histórico recente
 | Versão | Data | O que mudou |
@@ -110,7 +110,7 @@ console.log('Blocos ok, erros:', erros);
 ## 4. PLC dos Bancos de Carga — estado atual
 
 ### CPU
-- **Hoje (provisória):** S7-1515 2PN, IP 172.17.209.135
+- **Hoje (provisória):** S7-1515 2PN, IP [IP_1515]
 - **Produção (futura):** S7-1214FC (ainda não comprada)
 - DB não-otimizados para S7 contrib; requer "Permitir acesso PUT/GET" na CPU
 
@@ -168,7 +168,7 @@ Offset interno de cada banco: `+0` = Chaves (cb/sb/setup), `+1` = status/mediç�
 
 ## 5. Node-RED — estado atual
 
-- **PC:** 172.17.210.156, porta 1880. Usuário Windows: `b02raf`. Node-RED não é serviço — processo manual.
+- **PC:** [IP_PC_BT2], porta 1880. Usuário Windows: `[USUARIO_WINDOWS]`. Node-RED não é serviço — processo manual.
 - **Fluxo DSE → /api/gerador v3.1** (Modbus → REST): em produção.
 - **Fluxo S7 "cliente 31"** (Node-RED → DB52 PLC): em produção, escrita contínua.
 - **Rotas HTTP para chaves (DB150/BC56):** em produção — ver `claude/CONTRATO_HTTP_HTML_NODERED_CHAVES.md`

@@ -38,7 +38,7 @@
 >
 > **FB100 v0.2:** a trava de `CbLigar` é **só por `EnsaioAtivo`** — chaves podem ser operadas com o gerador desligado (decisão do operador, 21/10/2026).
 >
-> **Terminologia**: estas são **rotas HTTP** (nós `http in`), não "endpoints S7". O *S7 endpoint* é o nó de configuração do PLC (IP/rack/slot + variáveis) usado por `s7 in`/`s7 out` (hoje "PLC da Carga", 172.17.209.135, rack 0, slot 1, ciclo 200 ms).
+> **Terminologia**: estas são **rotas HTTP** (nós `http in`), não "endpoints S7". O *S7 endpoint* é o nó de configuração do PLC (IP/rack/slot + variáveis) usado por `s7 in`/`s7 out` (hoje "PLC da Carga", [IP_1515], rack 0, slot 1, ciclo 200 ms).
 
 Modelo: mesmo padrão de `claude/CONTRATO_HTTP_HTML_NODERED_SELECAO.md` (POST só vale com HTTP 2xx e `ok:true`; leitura de volta confirma). Complementa `claude/ESPECIFICACAO_CARD_CHAVES_DB55_FB200.md` e `claude/PLANO_NUMERACAO_BLOCOS_PLC.md`.
 

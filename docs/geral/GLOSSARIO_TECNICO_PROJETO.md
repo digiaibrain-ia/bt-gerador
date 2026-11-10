@@ -127,7 +127,7 @@ Tempo de espera programado.
 
 ### **Endpoint (S7)**
 Nó de configuração no Node-RED que guarda as informações do PLC:
-- IP: `172.17.209.135`
+- IP: `[IP_1515]`
 - Rack/Slot: `0/1`
 - Ciclo: `200ms` (quanto tempo leva pra ler/escrever todas as variáveis)
 
@@ -520,7 +520,7 @@ Tempo que a tela espera, depois de aberta, antes de acusar "não conectado" — 
 Regra do navegador: uma página só pode chamar outro endereço se esse endereço permitir. Se o HTML **não** for servido pelo próprio Node-RED (ou for aberto como arquivo), o Node-RED precisa liberar CORS no `settings.js`. Sem isso o navegador bloqueia e a tela mostra "Failed to fetch".
 
 ### **ET200 / IM 151-8 PN/DP CPU**
-Módulo da família ET 200**S** (periferia descentralizada) que tem uma CPU tipo S7-300 dentro. No projeto guarda o programa "Gerador_BC015" e as contatoras do BC56 e do BC400 (IP 172.17.209.158). Atua como **servidor** do PUT/GET.
+Módulo da família ET 200**S** (periferia descentralizada) que tem uma CPU tipo S7-300 dentro. No projeto guarda o programa "Gerador_BC015" e as contatoras do BC56 e do BC400 (IP [IP_ET200]). Atua como **servidor** do PUT/GET.
 
 ### **Failed to fetch**
 Mensagem genérica do navegador quando o pedido HTTP nem chega a ter resposta: Node-RED fora do ar, endereço errado, rede, **CORS** ou página aberta como arquivo (`file://`). Não diz qual — por isso a v1.9.64 mostra o endereço usado e o motivo provável.

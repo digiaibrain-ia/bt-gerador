@@ -39,7 +39,7 @@ Fase 4: Node-RED parametrizado para os bancos novos (rotas `/api/chaves/{id}` co
 - Gerados do `chaves-400-api-v2.6` (mesma lógica de fila, vigia "HTML sumiu", conferência de releitura e Setup por tensão), trocando só DBs, offsets, tamanho (32) e prefixo dos nós (`chv595_`, `chv550_`).
 - Rotas: `/api/chaves/595/...` e `/api/chaves/550/...` (`/api/logs/{id}`). **Slug 595 e não "59,5"** para não ter vírgula na URL; o HTML (id `59,5`) ganha um campo `rota` na fase 5.
 - Checado: JSON válido, JS de todos os nós sem erro de sintaxe, ids únicos. **Não testado em PLC/Node-RED.**
-- Ao importar: o mesmo IP do PLC (172.17.209.135) dos fluxos atuais; só funciona depois dos DBs/FBs no 1515 e do ET200.
+- Ao importar: o mesmo IP do PLC ([IP_1515]) dos fluxos atuais; só funciona depois dos DBs/FBs no 1515 e do ET200.
 
 ## Fase 5 — feito em parte: medidor 1.10.155
 - Campo `rota` por banco (`rotaDe(id)`): BC56 → 56, BC400 → 400, BC59,5 → 595, BC550 → 550. Usado no polling, em `rotaCh` (todos os POST) e na janela de Logs.

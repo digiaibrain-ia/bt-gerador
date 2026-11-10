@@ -7,7 +7,7 @@
 
 | Item | Estado |
 |---|---|
-| Medidor | **1.10.154** — rodando no PC do BT2 (`http://172.17.210.156:1880/html/`), 4 bancos funcionando no **Demo local** |
+| Medidor | **1.10.154** — rodando no PC do BT2 (`http://[IP_PC_BT2]:1880/html/`), 4 bancos funcionando no **Demo local** |
 | Backup da etapa de 2 bancos | branch `backup/etapa-bc56-bc400` (commit `fd3a81b`) |
 | Backup da etapa 1.10.154 | branch `backup/medidor-1.10.154` |
 | Pacote de entrega | `dashboard/pacotes/bt2-1.10.154/` (html + PUBLICAR.md) |

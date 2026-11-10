@@ -15,7 +15,7 @@ Achados que os testes da Fase 1 revelaram aparecem como testes **pendentes** (`t
 
 | ID | Gravidade | Onde | Observação |
 |---|---|---|---|
-| F2-3 | ~~Média~~ **resolvido no Portão 1 (medidor 1.10.167)** | `medidor_gerador_v1.10.166.html` (antes) | O HTML traz **fixo o endereco real do DSE** (`172.17.210.156:1880`) e tenta falar com ele a cada consulta. Durante o teste o navegador foi bloqueado (a trava funcionou), mas o cliente conhece um endereco de producao. Tema da Fase 2 (nunca confiar no cliente). |
+| F2-3 | ~~Média~~ **resolvido no Portão 1 (medidor 1.10.167)** | `medidor_gerador_v1.10.166.html` (antes) | O HTML traz **fixo o endereco real do DSE** (`[IP_PC_BT2]:1880`) e tenta falar com ele a cada consulta. Durante o teste o navegador foi bloqueado (a trava funcionou), mas o cliente conhece um endereco de producao. Tema da Fase 2 (nunca confiar no cliente). |
 
 ## Outros achados (anotados, sem teste ainda)
 
@@ -130,3 +130,10 @@ Corrigidos na medidor 1.10.176 / maquete v0.5 / mapa v0.16 / gerenciador v1.8 / 
 - **REV-6 · (FECHADO em 08/11/2026, medidor 1.10.190 — era defeito do robô, não do card)**: fase Patamar mostrava "Alvo 30 kW" nos chips 50/100/107 % durante o teste sem ensaio iniciado (mostra o mesmo alvo nos 4 chips). Conferir com o Reginaldo se é esperado antes do ensaio.
 - Limite honesto do teste: arrasto/toque reais só em Chromium (Playwright); não substitui o Poco real nem o Safari/Firefox.
 - **REV-7 · Menu do botão direito (toque longo) no celular** (gravidade baixa, decisão do Reginaldo em 07/11/2026): "não ficou legal e não funciona direito". Não será ajustado agora ("bobagem gastar token"); o Dev/Operador oculto continua cobrindo só o menu de clique direito do PC.
+
+## BKL — IP real ainda no Git (10/11/2026)
+Documentos (.md/.scl) foram limpos: IPs viraram [IP_1515], [IP_ET200], [IP_PC_BT2]; usuário do Windows virou [USUARIO_WINDOWS]. **Continuam com IP real, de propósito, por precisarem dele ou serem histórico:**
+- `tests/integracao/t0_trava_producao.test.js` (lista de bloqueio dos endereços de produção: sem o IP a trava não funciona).
+- `nodered/flows/bt2/cliente-31-*.json`, `chaves-56-api-v2.6.json`, `chaves-400-api-v2.6.json` e outros fluxos antigos (IP dentro da configuração do nó). Regra do projeto: endereço vem de variável do PM2 (`PLC_IP`, `DSE_URL`). Trocar exige fluxo novo e **OK do Reginaldo** (produção).
+- `dashboard/src/index.html` e HTML/pacotes antigos (`dashboard/arquivo`, `dashboard/pacotes`, `medidor_gerador_v1.10.1xx`): versões entregues, não alterar. O medidor atual (1.10.191) não tem IP.
+- O histórico do Git ainda contém os IPs antigos. Reescrever histórico exige OK explícito.

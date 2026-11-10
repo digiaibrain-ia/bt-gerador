@@ -26,7 +26,7 @@ Todos os offsets abaixo são os que você mandou (coluna Offset do DB150 não ot
 
 Endereçamento por bit individual (`X<byte>.<bit>`) e array de REAL em bloco (`REAL<offset>.<contagem>`) seguem exatamente o padrão já confirmado funcionando no seu `selecao-ensaio-v1.3.json` (`DB53,X0.0`, `DB53,REAL480.13` etc.) — não é uma sintaxe nova, só apliquei nos offsets do DB150.
 
-IP/rack/slot do endpoint: copiei do `cliente-31-seletor-plc-db52-v2.json` (172.17.209.135, rack 0, slot 1) — mesmo PLC "da Carga" provisório (1515) que já falamos. **Confira se ainda é esse IP antes de testar.**
+IP/rack/slot do endpoint: copiei do `cliente-31-seletor-plc-db52-v2.json` ([IP_1515], rack 0, slot 1) — mesmo PLC "da Carga" provisório (1515) que já falamos. **Confira se ainda é esse IP antes de testar.**
 
 ## (b) Rotas implementadas (6, iguais ao contrato pra banco=56)
 

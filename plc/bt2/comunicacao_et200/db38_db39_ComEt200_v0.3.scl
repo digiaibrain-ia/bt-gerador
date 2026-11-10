@@ -8,7 +8,7 @@ NON_RETAIN
 //// ComBC56 (DB38) - programa "Gerador_BC015"
 //// VERSAO    : 0.3 (27/10/2026) - so versao/autor/comentarios; layout IDENTICO ao v0.2 (12 bytes). Autor RegLobo: no ET200 o campo
 ////             AUTHOR aceita no maximo 8 caracteres. A versao fica AQUI porque o nome do bloco no TIA nao leva versao.
-//// (ET200 IM151-8 PN/DP CPU, 172.17.209.158)
+//// (ET200 IM151-8 PN/DP CPU, [IP_ET200])
 //// O QUE FAZ : area de troca PUT/GET com o 1515 para o banco BC56 (12 bytes).
 ////             PUT do 1515 escreve DBB0..5; GET do 1515 le DBB6..11.
 //// POR QUE DB GLOBAL SEM OTIMIZACAO : PUT/GET enderecam por byte/bit absoluto.
