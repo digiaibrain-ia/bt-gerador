@@ -4,7 +4,7 @@
   "type": "tab",
   "label": "Ler gerador (.31) - seletor",
   "disabled": false,
-  "info": "## Ler gerador (.31) - seletor\nCliente que le a API do servidor DSE e grava os dados no **DB52** (`db52_BancoTeste2_DSE`) do PLC 1515F do **Banco de Teste 2**.\n\n**Caminho:** botao -> `msg.url` -> GET `http://172.17.210.156:1880/api/gerador` -> mapeamento -> S7 (`172.17.209.135`, rack 0, slot 1).\n\n| Botao | Efeito |\n|---|---|\n| AUTOMATICO | le e grava a cada 2 s |\n| LER AGORA | uma leitura |\n| DESLIGAR | para a leitura (PLC ve seletor = 0) |\n\n**Comeca DESLIGADO** apos deploy ou restart e grava seletor = 0 no DB52 5 s depois (inject \"inicio = DESLIGADO\", item C3), para o PLC nao achar que a leitura continua ligada.\n\n**Falha** (servidor fora, timeout 1,5 s, HTTP diferente de 200, dado com mais de 10 s): grava so status, erros e heartbeat; as medidas ficam com o ultimo valor bom.\n\n`statusServidorOnline` (DBX0.4, v2, item C4) = servidor respondeu (mesmo 503). Com `statusLeituraOk` = 0 ele separa \"DSE sem dado\" (0.4 = 1) de \"servidor ou rede fora\" (0.4 = 0).\n\nRequisitos no PLC: DB52 nao otimizado e PUT/GET liberado na CPU.\nPacote: `node-red-contrib-s7`. Autor: Reginaldo Lobo."
+  "info": "## Ler gerador (.31) - seletor\nCliente que le a API do servidor DSE e grava os dados no **DB52** (`db52_BancoTeste2_DSE`) do PLC 1515F do **Banco de Teste 2**.\n\n**Caminho:** botao -> `msg.url` -> GET `http://${IP_PC_BT2}:1880/api/gerador` -> mapeamento -> S7 (`${PLC_IP}`, rack 0, slot 1).\n\n| Botao | Efeito |\n|---|---|\n| AUTOMATICO | le e grava a cada 2 s |\n| LER AGORA | uma leitura |\n| DESLIGAR | para a leitura (PLC ve seletor = 0) |\n\n**Comeca DESLIGADO** apos deploy ou restart e grava seletor = 0 no DB52 5 s depois (inject \"inicio = DESLIGADO\", item C3), para o PLC nao achar que a leitura continua ligada.\n\n**Falha** (servidor fora, timeout 1,5 s, HTTP diferente de 200, dado com mais de 10 s): grava so status, erros e heartbeat; as medidas ficam com o ultimo valor bom.\n\n`statusServidorOnline` (DBX0.4, v2, item C4) = servidor respondeu (mesmo 503). Com `statusLeituraOk` = 0 ele separa \"DSE sem dado\" (0.4 = 1) de \"servidor ou rede fora\" (0.4 = 0).\n\nRequisitos no PLC: DB52 nao otimizado e PUT/GET liberado na CPU.\nPacote: `node-red-contrib-s7`. Autor: Reginaldo Lobo."
  },
  {
   "id": "s31_c",
@@ -179,7 +179,7 @@
     "t": "set",
     "p": "url",
     "pt": "msg",
-    "to": "http://172.17.210.156:1880/api/gerador",
+    "to": "http://${IP_PC_BT2}:1880/api/gerador",
     "tot": "str"
    },
    {
@@ -353,7 +353,7 @@
   "id": "s31_ep",
   "type": "s7 endpoint",
   "transport": "iso-on-tcp",
-  "address": "172.17.209.135",
+  "address": "${PLC_IP}",
   "port": "102",
   "rack": "0",
   "slot": "1",

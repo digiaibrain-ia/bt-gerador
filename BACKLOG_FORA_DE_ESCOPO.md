@@ -137,3 +137,8 @@ Documentos (.md/.scl) foram limpos: IPs viraram [IP_1515], [IP_ET200], [IP_PC_BT
 - `nodered/flows/bt2/cliente-31-*.json`, `chaves-56-api-v2.6.json`, `chaves-400-api-v2.6.json` e outros fluxos antigos (IP dentro da configuração do nó). Regra do projeto: endereço vem de variável do PM2 (`PLC_IP`, `DSE_URL`). Trocar exige fluxo novo e **OK do Reginaldo** (produção).
 - `dashboard/src/index.html` e HTML/pacotes antigos (`dashboard/arquivo`, `dashboard/pacotes`, `medidor_gerador_v1.10.1xx`): versões entregues, não alterar. O medidor atual (1.10.191) não tem IP.
 - O histórico do Git ainda contém os IPs antigos. Reescrever histórico exige OK explícito.
+
+## Decisões do Reginaldo (10/11/2026) — IP em fluxos antigos e FB100/FB102
+- **IP em fluxos antigos (opção A):** 3 fluxos sem uso foram movidos para `nodered/flows/arquivo/` com o IP trocado por `${PLC_IP}`/`${IP_PC_BT2}`: `chaves-56-api-v2.6`, `cliente-156-dse-plc-carga-v1`, `cliente-31-seletor-plc-db52-v2`. **NÃO foram movidos** (geradores e testes ainda os leem como base; mover quebraria a regressão): `chaves-400-api-v2.6` (gerar_banco v0.2/v0.3), `chaves-56/400-api-v3.0`, `chaves-550/595-api-v1.1`, `cliente-156-...-v2`, `cliente-31-...-db2000-v3` (gerar_fluxos_portao2; teste `s1_dse_sem_ip_fixo`). Para tirá-los seria preciso mudar esses geradores/testes (passo próprio). O histórico do Git continua com os IPs.
+- **HTML com IP** (`gerenciador_logs` v1.7/v1.8, `grafico_ensaio` v0.11/v0.12, `dashboard/src/index.html`, `medidor` ≤ 1.10.166): pendente, precisa de versão nova sem o IP.
+- **FB100 v0.4: SIM** (entra no 1515, entrega 1200 v0.8, pacote da TI v1.2). **FB102 v0.2: NÃO** (só BC59,5, que não existe; fica no repositório).
