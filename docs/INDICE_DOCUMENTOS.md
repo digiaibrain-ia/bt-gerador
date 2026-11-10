@@ -6,16 +6,16 @@ Gerado por `scripts/docs/gerar_indice_documentos_v0.1.py`. **Nada foi apagado:**
 | O que | Arquivo |
 |---|---|
 | Onde estamos e o que falta | `docs/bt2/ANALISE_CONCLUSAO_2026-11-10.md` |
-| Como implantar (ordem, rollback) | `docs/bt2/migracao/IMPLANTACAO_ROTEIRO_v0.8.md` |
-| Checklist de bancada | `docs/bt2/migracao/CHECKLIST_BANCADA_v0.5.md` |
-| Consolidação para a TI | `docs/bt2/migracao/HANDOFF_TI_v0.4.md` |
+| Como implantar (ordem, rollback) | `docs/bt2/migracao/IMPLANTACAO_ROTEIRO_v0.9.md` |
+| Checklist de bancada | `docs/bt2/migracao/CHECKLIST_BANCADA_v0.6.md` |
+| Consolidação para a TI | `docs/bt2/migracao/HANDOFF_TI_v0.5.md` |
 | Numeração de blocos e DBs (inclui o PLC de cargas 1200) | `docs/bt2/plc/PLANO_NUMERACAO_BLOCOS_PLC_v7.xlsx` |
 | Pendências e achados | `BACKLOG_FORA_DE_ESCOPO.md` |
 | Regras do projeto | `CLAUDE.md` |
 | Criatividade (rastreio de ideias) | `docs/criatividade/LEIA-ME.md` |
 
 ## Versões atuais fora de `docs/`
-- Medidor: `dashboard/ferramentas/medidor_gerador_v1.10.191.html` (+ `catalogo_ferramentas_v0.7.js`, `dashboard/modulos-fonte/menu_dev_v0.2.js`).
+- Medidor: `dashboard/ferramentas/medidor_gerador_v1.10.192.html` (+ `catalogo_ferramentas_v0.8.js`, `dashboard/modulos-fonte/menu_dev_v0.2.js`).
 - Fluxos: `nodered/flows/bt2/` — `chaves-56/400-api-v3.5`, `chaves-550/595-api-v1.6`, `registro-ensaio-db2100-api-v1.8`, `dev-logs-api-v1.3`, `cliente-156-...-v3`, `cliente-31-...-db2000-v4`, `servidor-deepsea-api-gerador-v3_7`.
 - PLC (rascunhos, não compilados): `plc/bt2/entrega_1200_v0.8/` (BC56 e BC400: 1515 + PLC de cargas 1200).
 
@@ -107,12 +107,12 @@ Gerado por `scripts/docs/gerar_indice_documentos_v0.1.py`. **Nada foi apagado:**
 | Arquivo | Assunto | Observação |
 |---|---|---|
 | `ANALISE_4_BANCOS_VISUAL_PLC_v0.2.md` | Análise: 4 Bancos de Carga — visual + blocos PLC (flexível) — v0.2 (01/11/2026) |  |
-| `CHECKLIST_BANCADA_v0.5.md` | Checklist de validação de bancada — v0.3 (10/11/2026) |  |
+| `CHECKLIST_BANCADA_v0.6.md` | Checklist de validação de bancada — v0.3 (10/11/2026) |  |
 | `CONTEXTO_MEDIDOR_GERADOR.md` | Contexto para continuar — Projeto Bancada de Testes (BT2) |  |
 | `ET200_PREVISIBILIDADE_v0.1.md` | ET200 — previsibilidade (03/11/2026) |  |
-| `HANDOFF_TI_v0.4.md` | Consolidação do repositório para a TI (handoff) — v0.2 (10/11/2026) |  |
+| `HANDOFF_TI_v0.5.md` | Consolidação do repositório para a TI (handoff) — v0.2 (10/11/2026) |  |
 | `IMPLANTACAO_ROTEIRO_v0.2.md` | Roteiro de implantação — BT2 (04/11/2026) — v0.2 | SUPERADO, mantido: citado dentro de dashboard/pacotes/bt2-1.10.166.zip (pacote ja entregue) |
-| `IMPLANTACAO_ROTEIRO_v0.8.md` | Roteiro de implantação BT2 — v0.6 (10/11/2026) |  |
+| `IMPLANTACAO_ROTEIRO_v0.9.md` | Roteiro de implantação BT2 — v0.6 (10/11/2026) |  |
 | `LEIA-ME_ENTREGA_TI_v1.0.txt` |  |  |
 | `MIGRACAO_PLANO_v0.5.md` | Migração BT2 — plano v0.5 (03/11/2026) |  |
 | `REVISAO_GERAL_HTML_NODERED_PLC_2026-10-24.md` | Revisão geral HTML × Node-RED × PLC — BT2 — 24/10/2026 |  |
@@ -254,3 +254,6 @@ Roteiro v0.7, checklist v0.4 e handoff v0.3 substituem os v0.6, v0.3 e v0.2 (que
 
 ## Nota de 10/11/2026 (pacote da TI v1.2)
 Roteiro v0.8, checklist v0.5 e handoff v0.4 substituem os v0.7, v0.4 e v0.3. Entra o `fb100_setupChaves` v0.4 no 1515. Fluxos antigos com IP: ver `BACKLOG_FORA_DE_ESCOPO.md`.
+
+## Nota de 10/11/2026 (pacote da TI v1.3)
+Roteiro v0.9, checklist v0.6 e handoff v0.5. O front da operação é só `03_front_operacao` (medidor + catálogo de modelos); `06_front_desenvolvimento` (index, catálogo de ferramentas, menu ☰ e ferramentas) não vai para o PC de operação.
