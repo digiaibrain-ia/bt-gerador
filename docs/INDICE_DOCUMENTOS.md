@@ -8,7 +8,7 @@ Gerado por `scripts/docs/gerar_indice_documentos_v0.1.py`. **Nada foi apagado:**
 | Onde estamos e o que falta | `docs/bt2/ANALISE_CONCLUSAO_2026-11-10.md` |
 | Como implantar (ordem, rollback) | `docs/bt2/migracao/IMPLANTACAO_ROTEIRO_v0.9.md` |
 | Checklist de bancada | `docs/bt2/migracao/CHECKLIST_BANCADA_v0.6.md` |
-| Consolidação para a TI | `docs/bt2/migracao/HANDOFF_TI_v0.5.md` |
+| Consolidação para a implantação (handoff) | `docs/bt2/migracao/HANDOFF_IMPLANTACAO_v0.6.md` |
 | Numeração de blocos e DBs (inclui o PLC de cargas 1200) | `docs/bt2/plc/PLANO_NUMERACAO_BLOCOS_PLC_v7.xlsx` |
 | Pendências e achados | `BACKLOG_FORA_DE_ESCOPO.md` |
 | Regras do projeto | `CLAUDE.md` |
@@ -110,7 +110,7 @@ Gerado por `scripts/docs/gerar_indice_documentos_v0.1.py`. **Nada foi apagado:**
 | `CHECKLIST_BANCADA_v0.6.md` | Checklist de validação de bancada — v0.3 (10/11/2026) |  |
 | `CONTEXTO_MEDIDOR_GERADOR.md` | Contexto para continuar — Projeto Bancada de Testes (BT2) |  |
 | `ET200_PREVISIBILIDADE_v0.1.md` | ET200 — previsibilidade (03/11/2026) |  |
-| `HANDOFF_TI_v0.5.md` | Consolidação do repositório para a TI (handoff) — v0.2 (10/11/2026) |  |
+| `HANDOFF_IMPLANTACAO_v0.6.md` | Consolidação do repositório para a TI (handoff) — v0.2 (10/11/2026) |  |
 | `IMPLANTACAO_ROTEIRO_v0.2.md` | Roteiro de implantação — BT2 (04/11/2026) — v0.2 | SUPERADO, mantido: citado dentro de dashboard/pacotes/bt2-1.10.166.zip (pacote ja entregue) |
 | `IMPLANTACAO_ROTEIRO_v0.9.md` | Roteiro de implantação BT2 — v0.6 (10/11/2026) |  |
 | `LEIA-ME_ENTREGA_TI_v1.0.txt` |  |  |
@@ -257,3 +257,6 @@ Roteiro v0.8, checklist v0.5 e handoff v0.4 substituem os v0.7, v0.4 e v0.3. Ent
 
 ## Nota de 10/11/2026 (pacote da TI v1.3)
 Roteiro v0.9, checklist v0.6 e handoff v0.5. O front da operação é só `03_front_operacao` (medidor + catálogo de modelos); `06_front_desenvolvimento` (index, catálogo de ferramentas, menu ☰ e ferramentas) não vai para o PC de operação.
+
+## Nota de 10/11/2026 (pacote de implantação v1.4)
+O "pacote da TI" passou a se chamar **pacote de implantação** (`entrega_implantacao_bt2_v1.4.zip`, gerado por `scripts/pacote/gerar_pacote_implantacao_v1.4.py`). O handoff virou `HANDOFF_IMPLANTACAO_v0.6.md`. Conteúdo igual ao da v1.3 (medidor 1.10.192). Os arquivos antigos "TI" ficam como histórico.
