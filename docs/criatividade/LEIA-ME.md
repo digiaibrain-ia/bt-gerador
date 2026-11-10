@@ -4,7 +4,7 @@
 
 ## Arquivos
 - `PROMPT_EXTRATO_v1.0.md`: o prompt (10 regras) que se cola numa sessão do Project para gerar o extrato dela.
-- `RASTREIO_IDEIAS_v0.1.xlsx`: uma linha por pedido do Reginaldo (abas Sessoes, Rastreio, Resumo). Gerado por `gerar_rastreio_v0.1.py` (não sobrescreve; versão nova = arquivo novo).
+- `RASTREIO_IDEIAS_v0.2.xlsx`: uma linha por pedido do Reginaldo (abas Sessoes, Rastreio, Resumo), v0.1 + S07. Gerado por `gerar_rastreio_v0.2.py` (a v0.1 e seu gerador ficam como histórico) (não sobrescreve; versão nova = arquivo novo).
 
 ## Níveis de evidência (coluna "Evidência")
 - **A**: mensagem original visível + prompt final (com FONTE DA IDEIA).
@@ -21,3 +21,4 @@ O extrato é relato do assistente. Quem confere é o Reginaldo.
 - Categoria "OUTRA-IA" não existe na lista de fontes do prompt (decisão do Reginaldo).
 - S06 (Start/Stop do DSE): endereço dos LEDs (Page 14 x 190) é inferência do assistente; teste não visível. Segurança: nada em produção sem OK.
 - CPU do banco de carga: 1214FC ou 1215 FC? (documentos do repositório dizem 1214FC).
+- `extratos/`: extratos guardados em texto (hoje só o S07, desta sessão). Os extratos S01 a S06 estão só no chat; colar aqui se quiser guardá-los.
