@@ -1,0 +1,115 @@
+FUNCTION_BLOCK "fb_watchdogComCarga"
+TITLE = fb_watchdogComCarga v0.6 (1200)
+AUTHOR : 'RegLobo'
+VERSION : 0.6
+////====================================
+//// fb_watchdogComCarga v0.6 (10/11/2026) - RASCUNHO, nao compilado, nao testado. PORTE para o S7-1200 do fb_watchdogComEt200 v0.1 (rascunho do ET200).
+//// CORRECAO vs o rascunho do ET200: o rascunho religava SOZINHO apos a queda ((comOkAnt OU rearmado) ja era TRUE no 2o ciclo; defeito achado na auditoria do fb_bancoEt200 v0.2).
+////   Aqui vale a regra corrigida: queda de comunicacao (ou 1o ciclo apos a partida) trava a chave; so solta quando o comando cai a FALSE e e recomandado.
+//// O QUE FAZ: (1) vidaET sobe a cada ~100 ms; (2) vida do 1515 parada por TempoPerdaMs (2 s) = ComOk FALSE e todas as saidas FALSE; (3) rearme so por novo comando;
+////   (4) fbk = contato auxiliar REAL, nunca copia do comando.
+//// ATENCAO: NAO chamar junto com o fb_bancoCarga16 do MESMO banco: o fb_bancoCarga16 ja contem estas funcoes (mais seletora Auto, Ligar banco e supervisao do retorno SB).
+////   Este bloco e o watchdog "puro" (sem seletora, sem Ligar banco, sem supervisao do retorno). Usar so se o banco for chamado sem o fb_bancoCarga16.
+//// DB_ANY: recebe so o numero do DB do telegrama (DbCom) e trata por offset (PEEK/POKE). Le cmd e vida1515; escreve so vidaET e fbk (escritor unico).
+//// CONFERIR no TIA: parametros de PEEK/POKE na CPU; DB do telegrama nao otimizado.
+////====================================
+   VAR_INPUT
+      DbCom : DB_ANY;               // NUMERO do DB do telegrama (ex.: DB3007)
+      NumChaves : Int;              // chaves reais do banco (1..16)
+      TempoPerdaMs : Time := T#2S;  // menor que o TempoVida do 1515 (3 s)
+   END_VAR
+   VAR_OUTPUT
+      ComOk : Bool;
+   END_VAR
+   VAR_IN_OUT
+      SaidaContatora    : Array[1..16] of Bool;   // saidas fisicas das contatoras
+      EntradaContatoAux : Array[1..16] of Bool;   // contatos auxiliares fisicos
+   END_VAR
+   VAR
+      _tOsc100ms : TON_TIME;
+      _tPerda : TON_TIME;
+      _vida1515Ant : Int;
+      _vidaMudou : Bool;
+      _bloq : Array[1..16] of Bool;   // TRUE = caiu a comunicacao (ou partida); so solta com Cmd[i] = FALSE
+      _partiu : Bool;
+      _n : Int;
+      i : Int;
+      _k : Int;
+      _dbCom : UInt;
+      Cmd : Array[1..16] of Bool;
+      Vida1515 : Int;
+      VidaET : Int;
+      Fbk : Array[1..16] of Bool;
+   END_VAR
+   VAR CONSTANT
+      AREA_DB : Byte := 16#84;
+      OFS_CMD : UInt := 0;
+      OFS_VIDA : UInt := 2;
+      OFS_FBK : UInt := 10;
+      OFS_VIDAET : UInt := 12;
+   END_VAR
+
+BEGIN
+   #_dbCom := DB_ANY_TO_UINT(#DbCom);
+   IF #_dbCom = 0 THEN
+      #ComOk := FALSE;
+      FOR #i := 1 TO 16 DO #SaidaContatora[#i] := FALSE; END_FOR;
+      RETURN;
+   END_IF;
+   // le o PEDIDO (so leitura)
+   FOR #_k := 1 TO 16 DO
+      #Cmd[#_k] := PEEK_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_CMD + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8);
+   END_FOR;
+   #Vida1515 := WORD_TO_INT(PEEK_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_VIDA));
+
+   // 1) vidaET a cada ~100 ms
+   #_tOsc100ms(IN := NOT #_tOsc100ms.Q, PT := T#100MS);
+   IF #_tOsc100ms.Q THEN
+      #VidaET := #VidaET + 1;
+      IF #VidaET >= 32767 THEN #VidaET := 0; END_IF;
+   END_IF;
+
+   // 2) watchdog: vida do 1515 parada por TempoPerdaMs
+   IF #Vida1515 <> #_vida1515Ant THEN
+      #_vida1515Ant := #Vida1515;
+      #_vidaMudou := TRUE;
+   ELSE
+      #_vidaMudou := FALSE;
+   END_IF;
+   #_tPerda(IN := NOT #_vidaMudou, PT := #TempoPerdaMs);
+   #ComOk := NOT #_tPerda.Q;
+   #_n := #NumChaves;
+   IF #_n < 0 THEN #_n := 0; END_IF;
+   IF #_n > 16 THEN #_n := 16; END_IF;
+
+   // 3) queda (ou 1o ciclo) trava; cada chave so solta com Cmd = FALSE (rearme so por novo comando)
+   FOR #i := 1 TO 16 DO
+      IF NOT #ComOk OR NOT #_partiu THEN
+         #_bloq[#i] := TRUE;
+      ELSIF NOT #Cmd[#i] THEN
+         #_bloq[#i] := FALSE;
+      END_IF;
+   END_FOR;
+   #_partiu := TRUE;
+
+   // 4) feedback = contato auxiliar REAL; saida so com comunicacao viva e chave nao travada
+   FOR #i := 1 TO 16 DO
+      IF #i <= #_n THEN
+         #Fbk[#i] := #EntradaContatoAux[#i];
+         IF #ComOk AND NOT #_bloq[#i] THEN
+            #SaidaContatora[#i] := #Cmd[#i];
+         ELSE
+            #SaidaContatora[#i] := FALSE;
+         END_IF;
+      ELSE
+         #Fbk[#i] := FALSE;
+         #SaidaContatora[#i] := FALSE;
+      END_IF;
+   END_FOR;
+
+   // escreve so a faixa da RESPOSTA (vidaET e fbk)
+   FOR #_k := 1 TO 16 DO
+      POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_FBK + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8, value := #Fbk[#_k]);
+   END_FOR;
+   POKE_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_VIDAET, value := INT_TO_WORD(#VidaET));
+END_FUNCTION_BLOCK
