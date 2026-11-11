@@ -8,7 +8,7 @@ window.CATALOGO_FERRAMENTAS = {
   atualizado: '10/11/2026 (gerado)',
   apoio: ['catalogo_ferramentas.js', 'menu_dev_v0.2.js'],   // .js que o medidor carrega da MESMA pasta; o index confere se estao la
   itens: [
-    { id: 'medidor', grupo: 'Operação', nome: 'Medidor do Gerador (ensaio)', arquivo: 'medidor_gerador_v1.10.199.html', desc: 'Tela principal: leitura do DSE, ensaio, registro, chaves e Patamar Guiado.' },
+    { id: 'medidor', grupo: 'Operação', nome: 'Medidor do Gerador (ensaio)', arquivo: 'medidor_gerador_v1.10.200.html', desc: 'Tela principal: leitura do DSE, ensaio, registro, chaves e Patamar Guiado.' },
     { id: 'grafico', grupo: 'Operação', nome: 'Gráfico do ensaio', arquivo: 'grafico_ensaio_v0.13.html', desc: 'Ensaio ao vivo em tela cheia (2º monitor) ou ensaio salvo para análise.' },
     { id: 'apivisor', grupo: 'Desenvolvimento', nome: 'Visor da API dos cards', arquivo: 'api_cards_visor_v0.4.html', desc: 'Mostra tudo o que o medidor publica (cards, ensaio, etapas, gerador) — somente leitura.' },
     { id: 'maquete', grupo: 'Desenvolvimento', nome: 'Maquete de layout', arquivo: 'maquete_layout_v0.5.html', desc: 'Blocos arrastáveis dos cards da tela principal (com setinha, travar, presets) para testar arranjos e mandar o print.' },
