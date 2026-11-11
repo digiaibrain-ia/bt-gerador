@@ -1,5 +1,7 @@
 # Critérios de aprovação do ensaio × ISO 8528 / ISO 3046 · v0.1 · 24/10/2026
 
+> **Atualização 11/11/2026:** conferido contra o texto oficial das normas (pasta ISO do Drive) em [ALINHAMENTO_PROJETO_vs_ISO8528_v0.1.md](ALINHAMENTO_PROJETO_vs_ISO8528_v0.1.md). Correção importante: os 5 % de frequência batem com a **queda de frequência δfst da G2** (Tab. 4 da ISO 8528-5), não com a faixa de regime constante.
+
 **Escopo:** só a seção "CONDIÇÕES DE APROVAÇÃO" do relatório (botão gerar relatório do `medidor_gerador_v1.9.76.html`). Os "dados de ensaio" (tabela) estão fora deste documento — o usuário já os corrige no HTML.
 **Status:** comparação de análise. **Nada foi alterado no HTML.** Os valores da ISO vêm de fontes secundárias (fabricantes); **não tenho o texto oficial da ISO 8528/3046** — confirmar na edição da norma usada pela fábrica.
 
