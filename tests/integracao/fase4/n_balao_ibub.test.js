@@ -1,5 +1,5 @@
 'use strict';
-// 10/11/2026 - medidor 1.10.197: balao do icone "i" (Patamar e dialogos). Prova: (1) o balao aparece com o texto do data-tip e NAO muda a posicao dos cards (layout igual antes e durante);
+// 10/11/2026 - medidor 1.10.197/198: baloes de ULTIMA CAMADA (icone "i" e chips do card Modo; nunca mexem no layout) (Patamar e dialogos). Prova: (1) o balao aparece com o texto do data-tip e NAO muda a posicao dos cards (layout igual antes e durante);
 // (2) o mouse pode ir ate o balao sem ele sumir e o texto pode ser SELECIONADO (getSelection) e continua aberto com a selecao; (3) dentro de um dialogo MODAL (⚙ Modo) o balao fica por cima (elementFromPoint);
 // (4) Esc fecha. A mesma bateria na 1.10.196 (BT2_MED) tem que FALHAR.
 const { test, before, after } = require('node:test');
@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const http = require('http'), fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
 const FER = path.join(__dirname, '..', '..', '..', 'dashboard', 'ferramentas'), CAT = path.join(__dirname, '..', '..', '..', 'catalogo');
-const MED = process.env.BT2_MED || 'medidor_gerador_v1.10.197.html';
+const MED = process.env.BT2_MED || 'medidor_gerador_v1.10.198.html';
 let srv, port, b, p;
 before(async () => {
   srv = http.createServer((q, r) => { const u = q.url.split('?')[0].replace(/^\//, ''); const f = fs.existsSync(path.join(FER, u)) ? path.join(FER, u) : path.join(CAT, u); if (fs.existsSync(f) && fs.statSync(f).isFile()) { r.writeHead(200, { 'content-type': f.endsWith('.js') ? 'text/javascript' : f.endsWith('.csv') ? 'text/csv; charset=utf-8' : 'text/html; charset=utf-8' }); r.end(fs.readFileSync(f)); } else { r.writeHead(404); r.end(); } });
@@ -30,6 +30,18 @@ test('balao do Patamar: aparece, nao muda o layout, deixa selecionar o texto e f
   await p.mouse.move(5, 5); await p.waitForTimeout(700); assert.equal(await p.evaluate(() => getComputedStyle(document.getElementById('ibubTip')).display), 'block', 'o balao fechou com texto selecionado');
   await p.evaluate(() => getSelection().removeAllRanges()); await p.keyboard.press('Escape'); await p.waitForTimeout(200);
   assert.equal(await p.evaluate(() => getComputedStyle(document.getElementById('ibubTip')).display), 'none', 'Esc nao fechou o balao');
+});
+test('layout estavel no viewport do notebook (1536x694): o hover no icone i e nos chips do card Modo nao muda o layout', async () => {
+  await p.setViewportSize({ width: 1536, height: 694 }); await p.waitForTimeout(500);
+  const snap = () => p.evaluate(() => [...document.querySelectorAll('section.panel, .col, .card, .hrow')].filter(e => e.offsetParent).map(e => { const r = e.getBoundingClientRect(); return Math.round(r.top) + ',' + Math.round(r.left) + ',' + Math.round(r.width) + ',' + Math.round(r.height); }).join(';') + '|' + document.documentElement.scrollWidth + 'x' + document.documentElement.scrollHeight);
+  const alvos = await p.evaluate(() => [...document.querySelectorAll('.ibub, #modoCard .lk')].filter(e => e.offsetParent && e.getBoundingClientRect().width > 2 && (e.getAttribute('data-tip') || '').trim()).map((e, i) => { e.setAttribute('data-hvb', i); return i; }));
+  assert.ok(alvos.length >= 3, 'esperava ao menos 3 icones/chips com balao visiveis, achei ' + alvos.length);
+  for (const i of alvos) {
+    await p.evaluate(k => document.querySelector('[data-hvb="' + k + '"]').scrollIntoView({ block: 'center' }), i); await p.mouse.move(2, 2); await p.waitForTimeout(150); const s0 = await snap();
+    const r = await p.evaluate(k => { const q = document.querySelector('[data-hvb="' + k + '"]').getBoundingClientRect(); return { x: q.left + q.width / 2, y: q.top + q.height / 2 }; }, i); await p.mouse.move(r.x, r.y); await p.waitForTimeout(300);
+    assert.equal(await snap(), s0, 'o hover no alvo ' + i + ' mudou o layout'); const vis = await p.evaluate(() => { const t = document.getElementById('ibubTip'); return !!t && getComputedStyle(t).display === 'block'; }); assert.ok(vis, 'o balao do alvo ' + i + ' nao apareceu');
+  }
+  await p.mouse.move(2, 2); await p.setViewportSize({ width: 1400, height: 900 }); await p.waitForTimeout(300);
 });
 test('balao dentro de dialogo modal fica por cima', async () => {
   await p.evaluate(() => document.getElementById('bModo').click()); await p.waitForTimeout(500);
