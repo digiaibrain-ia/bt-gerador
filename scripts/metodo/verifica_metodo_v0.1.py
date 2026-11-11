@@ -12,6 +12,7 @@ EXCECOES = {  # arquivo -> motivo (revisar a cada uso)
  'docs/bt2/plc/MAPA_RENUMERACAO_BT2_v0.1.csv': 'correcao de codificacao (BOM UTF-8 para o Excel), sem mudar conteudo; pedido do Reginaldo',
  'plc/bt2/plc_carga_1200/ROTEIRO_PROGRAMADOR_PLC_CARGA_1200_v0.3.md': 'VIOLACAO ASSUMIDA: recebeu notas de v0.4 no fim em vez de arquivo novo; pacote antigo (nao entregue)',
  'tests/integracao/t0_trava_producao.test.js': 'a trava de producao precisa do IP real (lista de bloqueio)',
+ 'scripts/metodo/verifica_metodo_v0.1.py': 'o proprio verificador: a lista de EXCECOES cresce com motivo escrito (nao e logica nova)',
  'docs/licoes/INVENTARIO_DEMO_X_REAL_v0.1.md': 'arquivo GERADO por scripts/inventario/inventario_demo_x_real_v0.1.js (regenerado de proposito a cada medidor; o nome v0.1 e a versao do script)',
  'docs/bt2/migracao/ROTEIRO_ATUALIZACAO_NOTEBOOK_v0.1.md': 'limpeza de IP/usuario do Windows (10/11), pedido do Reginaldo: IP nao fica no Git',
  'docs/bt2/modulos/INDEX_v0.2.md': 'limpeza de IP/usuario do Windows (10/11)',

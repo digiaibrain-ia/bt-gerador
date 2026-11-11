@@ -18,3 +18,7 @@ Fonte: `docs/licoes/REGISTRO_LICOES_v0.1.md` (LL-020 a LL-029) e `docs/licoes/IN
 - Para teste longo no celular, preferir página servida pelo Node-RED (arquivo de Downloads não recarrega). LL-029
 - Bifurcação Demo × Real: ler o inventário antes de mexer no Setup, chaves, INICIAR/STOP e leitura dos bancos. LL-040
 - Mudança = versão nova gerada por script em `dashboard/gerador/`; Ajuda e comentários em PT-BR.
+- Balão/dica = "última camada": fora do fluxo (`position:fixed`/popover), nunca `::after` absoluto dentro de card; texto selecionável. LL-046
+- Toda tela: passar o mouse/focar NÃO muda posição nem tamanho de nada; testar em 1536×694 (notebook do Reginaldo). LL-047
+- "Em curso" é calculado (iniciado e não gravado), nunca uma flag solta; depois de gravar nada fica travado. LL-048
+

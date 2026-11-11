@@ -21,6 +21,7 @@ const PERFIS = {
   desktop: { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false },
   pocoA: { viewport: { width: 407, height: 904 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, userAgent: UA_POCO },
   pocoB: { viewport: { width: 444, height: 986 }, deviceScaleFactor: 2.75, isMobile: true, hasTouch: true, userAgent: UA_POCO },
+  notebook: { viewport: { width: 1536, height: 694 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false },   // 11/11/2026: tela do notebook do Reginaldo (LL-047)
 };
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > -1 ? (process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : true) : d; };
 const MAX = +arg('max', 600), PROF = +arg('prof', 2), SAIDA = arg('saida', path.join(RAIZ, 'tests', 'integracao', 'revisao', 'saida'));
