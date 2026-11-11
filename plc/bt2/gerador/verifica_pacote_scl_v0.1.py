@@ -26,6 +26,11 @@ def main():
     for n, fs in sorted(usos.items()):
         if n in defs: continue
         (erros if BLOCO.match(n) else avisos).append('%s  (usado em %s)' % (n, ', '.join(sorted(fs))))
+    # DB de INSTANCIA (DATA_BLOCK "x" seguido do nome de um FB) deve ter o "i" depois do numero (padrao do projeto: db3005i_...)
+    for f in arqs:
+        c = sem_comentarios(open(os.path.join(pasta, f), encoding='utf-8').read())
+        for nome, fb in re.findall(r'DATA_BLOCK\s+"([^"]+)"[^\n]*\n(?:[^\n]*\n){0,6}?\s*"([^"]+)"\s*\n\s*BEGIN', c):
+            if fb in defs and defs[fb][0] == 'FUNCTION_BLOCK' and not re.match(r'^db\d+i_', nome): erros.append('DB de instancia sem o "i" no nome (padrao db<numero>i_...): %s (instancia de %s, em %s)' % (nome, fb, f))
     # ordem: quem usa depois de quem e usado
     ordem = []
     for f in arqs:

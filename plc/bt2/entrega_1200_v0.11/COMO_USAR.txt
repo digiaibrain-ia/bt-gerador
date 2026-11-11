@@ -1,0 +1,12 @@
+COMO USAR - PLC de Carga (S7-1214FC) - entrega v0.11   [rascunho: nao compilado]
+
+1) No TIA do PLC de Carga, importe como FONTE EXTERNA (Gerar blocos), NESTA ORDEM (pasta PLC_CARGA_1200):
+   db_ComBancos > fb_supervisaoChaves16 > fb_bancoCarga16 > db_InstanciasBancoCarga > fc_bancosCarga1200
+2) Cada banco tem 2 DBs:  telegrama (DB3007 BC56, DB3107 BC400)  e  instancia do FB (DB3006 BC56, DB3106 BC400; o "i" no nome = instancia).
+   Se o TIA trocar o numero, corrija em Propriedades do bloco.
+3) Crie os TAGS que o fc_bancosCarga1200 usa (ou troque pelos seus enderecos): BC56_I01..I13 (retorno das contatoras), BC56_Q01..Q13 (saidas),
+   BC56_SEL_AUTO (seletora em Auto); o mesmo com BC400_.
+4) Chame o fc_bancosCarga1200 1 vez por ciclo (OB1).
+5) Habilite PUT/GET na CPU e crie a conexao S7 com o 1515 (o ID vai no 1515, em ID_Conexao).
+6) Compile. Se der erro, mande a lista das mensagens.
+Pasta PLC_1515 = blocos do 1515 (quem carrega e o Reginaldo).
