@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""12/11/2026 - entrega 1200 v0.14 = v0.13 SEM os arquivos dos DBs de instancia (decisao do Reginaldo): o DB de instancia nao e importado; o programador cria ao chamar o FB
+(digita o numero e o nome). No fc_bancosCarga1200 as 2 chamadas do FB ficam COMENTADAS (importar chamada para DB inexistente da erro); o COMO_USAR traz o texto para colar. Nao sobrescreve. RASCUNHO, nao compilado."""
+import os, shutil, re
+R = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')); V13, V14 = os.path.join(R, 'entrega_1200_v0.13'), os.path.join(R, 'entrega_1200_v0.14')
+assert os.path.exists(V13) and not os.path.exists(V14)
+shutil.copytree(V13, V14); d = os.path.join(V14, 'PLC_CARGA_1200')
+for f in os.listdir(d):
+    if f.startswith(('db3006i', 'db3106i')): os.remove(os.path.join(d, f))
+old = os.path.join(d, 'fc_bancosCarga1200_v0.11.scl'); t = open(old, encoding='utf-8').read(); os.remove(old)
+n = 0
+def com(m):
+    global n; n += 1; return '   // [CHAMADA A INSERIR NO TIA - ver COMO_USAR.txt] ' + m.group(0).strip()
+t = re.sub(r'^\s*"db3[01]06i_[^"]+"\(DbCom.*$', com, t, flags=re.M); assert n == 2, n
+t = t.replace('Instancias: "db<base+6>_<banco>_BancoCarga".', 'Os DBs de instancia NAO vem no pacote: o programador cria ao inserir a chamada do FB (nome/numero no COMO_USAR.txt); as 2 chamadas estao comentadas.')
+open(os.path.join(d, 'fc_bancosCarga1200_v0.14.scl'), 'w', encoding='utf-8').write(t)
+open(os.path.join(V14, 'COMO_USAR.txt'), 'w', encoding='utf-8').write("""COMO USAR - PLC de Carga (S7-1214FC) - entrega v0.14   [rascunho: nao compilado]
+
+O QUE E: o 1515 manda o comando de cada chave (PUT) e le o retorno (GET). Estes blocos, no 1214FC, ligam a contatora de verdade
+e devolvem o contato auxiliar real. Sao 2 bancos: BC56 e BC400 (13 chaves cada).
+
+BLOCOS (pasta PLC_CARGA_1200, 1 DB por arquivo)
+  db3007_BC56_Com / db3107_BC400_Com   DB de TELEGRAMA (24 bytes). O 1515 escreve o pedido e le a resposta. Voce NAO escreve nele.
+  fb_supervisaoChaves16                regra "contato auxiliar some -> a chave cai em 2 s". Usado dentro do fb_bancoCarga16.
+  fb_bancoCarga16                      a logica do banco (1 por banco). Recebe o numero do DB de telegrama.
+  fc_bancosCarga1200                   liga as ENTRADAS/SAIDAS FISICAS aos 2 bancos. E o unico lugar que voce edita.
+  DBs de INSTANCIA do fb_bancoCarga16: NAO vem em arquivo. Voce cria ao chamar o FB (passo 4).
+
+PASSO A PASSO
+ 1. Importe, um arquivo por vez, como FONTE EXTERNA, nesta ordem: db3007, db3107, fb_supervisaoChaves16, fb_bancoCarga16, fc_bancosCarga1200.
+ 2. NUMERO DOS DBs de telegrama (o TIA numera sozinho DB1, DB2...): botao direito no DB > Propriedades > Geral > Numero (manual):
+      db3007_BC56_Com = 3007 | db3107_BC400_Com = 3107
+    Tem que ser esses: o 1515 acessa por P#DB3007 e P#DB3107. Sem "Acesso otimizado".
+ 3. Tabela de tags: crie estes tags (Bool) e coloque o endereco fisico real de cada um:
+      BC56_I01..I13   entrada: contato auxiliar (retorno) da contatora 1..13     BC400_I01..I13  idem
+      BC56_Q01..Q13   saida: bobina da contatora 1..13                           BC400_Q01..Q13  idem
+      BC56_SEL_AUTO   entrada: seletora do BC56 em Auto (1 = Auto)               BC400_SEL_AUTO  idem
+    Se ja existirem tags com outro nome, troque o nome dentro do fc_bancosCarga1200.
+ 4. DB DE INSTANCIA: no fc_bancosCarga1200 ha 2 linhas comentadas "[CHAMADA A INSERIR NO TIA]". Em cada uma, insira a chamada do fb_bancoCarga16
+    (arraste o FB). Na janela do DB de instancia digite NUMERO MANUAL e NOME:
+      BC56 : nome  db3006i_BC56_BancoCarga   numero 3006
+      BC400: nome  db3106i_BC400_BancoCarga  numero 3106
+    Parametros de cada chamada (BC56 como exemplo; BC400 troca BC56 por BC400 e 3007 por 3107):
+      DbCom := "db3007_BC56_Com", NumChaves := 13, SeletoraEntrada := "BC56_SEL_AUTO", SaidaContatora := #saidaBC56, EntradaContatoAux := #auxBC56
+    A chamada fica depois do trecho que copia #auxBC56 e antes do que copia #saidaBC56 (ja estao no arquivo). Apague a linha comentada.
+ 5. SAIDAS: depois disto, so o fc_bancosCarga1200 pode escrever nas saidas Q das contatoras. Se o FC7 (Resistencias) ou o FC8 (Saidas Digitais)
+    atuais escrevem nas mesmas saidas, tire essa escrita (senao ha 2 escritores e a contatora pode ser acionada fora do comando do 1515).
+ 6. Chame o fc_bancosCarga1200 1 vez por ciclo no OB1 (ele ja chama os 2 bancos).
+ 7. Na CPU: Protecao e seguranca > Mecanismos de conexao > marque "Permitir acesso via PUT/GET". A conexao S7 com o 1515 e criada no 1515 (o ID vai la, em ID_Conexao).
+ 8. Compile. Se der erro, mande a lista das mensagens (e o nome do bloco).
+
+TESTE (carga de potencia DESACOPLADA): no 1515 com o PLC em Run, ComOk deve ficar TRUE e a vida (vidaET) mudando; comando de uma chave liga a saida;
+se o contato auxiliar nao voltar em 2 s a chave cai e trava; se o 1515 ficar mais de 2 s sem vida, todas as saidas caem.
+
+Pasta PLC_1515 = blocos do 1515 (quem carrega e o Reginaldo).
+""")
+print('ok', V14)

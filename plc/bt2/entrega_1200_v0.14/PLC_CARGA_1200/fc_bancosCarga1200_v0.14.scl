@@ -1,0 +1,80 @@
+FUNCTION "fc_bancosCarga1200" : Void
+TITLE = fc_bancosCarga1200 v0.8
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+////====================================
+//// fc_bancosCarga1200 v0.8 (09/11/2026) - RASCUNHO, nao compilado. Equivalente do fc_bancosNovosEt200, agora com os 4 bancos no 1200. Chamar 1x por ciclo (OB1 ou OB de tempo fixo).
+//// Tags fisicos (<BANCO>_I01.., <BANCO>_Q01.., <BANCO>_SEL_AUTO) sao NOMES PROPOSTOS; o programador cria/ajusta. Os DBs de instancia NAO vem no pacote: o programador cria ao inserir a chamada do FB (nome/numero no COMO_USAR.txt); as 2 chamadas estao comentadas.
+////====================================
+   VAR_TEMP
+      saidaBC56 : Array[1..16] of Bool;
+      auxBC56 : Array[1..16] of Bool;
+      saidaBC400 : Array[1..16] of Bool;
+      auxBC400 : Array[1..16] of Bool;
+   END_VAR
+BEGIN
+
+   // ---------------- BC56 (13 chaves, telegrama DB3007) ----------------
+   #auxBC56[1] := "BC56_I01";
+   #auxBC56[2] := "BC56_I02";
+   #auxBC56[3] := "BC56_I03";
+   #auxBC56[4] := "BC56_I04";
+   #auxBC56[5] := "BC56_I05";
+   #auxBC56[6] := "BC56_I06";
+   #auxBC56[7] := "BC56_I07";
+   #auxBC56[8] := "BC56_I08";
+   #auxBC56[9] := "BC56_I09";
+   #auxBC56[10] := "BC56_I10";
+   #auxBC56[11] := "BC56_I11";
+   #auxBC56[12] := "BC56_I12";
+   #auxBC56[13] := "BC56_I13";
+   #auxBC56[14] := FALSE;
+   #auxBC56[15] := FALSE;
+   #auxBC56[16] := FALSE;
+   // [CHAMADA A INSERIR NO TIA - ver COMO_USAR.txt] "db3006i_BC56_BancoCarga"(DbCom := "db3007_BC56_Com", NumChaves := 13, SeletoraEntrada := "BC56_SEL_AUTO", SaidaContatora := #saidaBC56, EntradaContatoAux := #auxBC56);
+   "BC56_Q01" := #saidaBC56[1];
+   "BC56_Q02" := #saidaBC56[2];
+   "BC56_Q03" := #saidaBC56[3];
+   "BC56_Q04" := #saidaBC56[4];
+   "BC56_Q05" := #saidaBC56[5];
+   "BC56_Q06" := #saidaBC56[6];
+   "BC56_Q07" := #saidaBC56[7];
+   "BC56_Q08" := #saidaBC56[8];
+   "BC56_Q09" := #saidaBC56[9];
+   "BC56_Q10" := #saidaBC56[10];
+   "BC56_Q11" := #saidaBC56[11];
+   "BC56_Q12" := #saidaBC56[12];
+   "BC56_Q13" := #saidaBC56[13];
+
+   // ---------------- BC400 (13 chaves, telegrama DB3107) ----------------
+   #auxBC400[1] := "BC400_I01";
+   #auxBC400[2] := "BC400_I02";
+   #auxBC400[3] := "BC400_I03";
+   #auxBC400[4] := "BC400_I04";
+   #auxBC400[5] := "BC400_I05";
+   #auxBC400[6] := "BC400_I06";
+   #auxBC400[7] := "BC400_I07";
+   #auxBC400[8] := "BC400_I08";
+   #auxBC400[9] := "BC400_I09";
+   #auxBC400[10] := "BC400_I10";
+   #auxBC400[11] := "BC400_I11";
+   #auxBC400[12] := "BC400_I12";
+   #auxBC400[13] := "BC400_I13";
+   #auxBC400[14] := FALSE;
+   #auxBC400[15] := FALSE;
+   #auxBC400[16] := FALSE;
+   // [CHAMADA A INSERIR NO TIA - ver COMO_USAR.txt] "db3106i_BC400_BancoCarga"(DbCom := "db3107_BC400_Com", NumChaves := 13, SeletoraEntrada := "BC400_SEL_AUTO", SaidaContatora := #saidaBC400, EntradaContatoAux := #auxBC400);
+   "BC400_Q01" := #saidaBC400[1];
+   "BC400_Q02" := #saidaBC400[2];
+   "BC400_Q03" := #saidaBC400[3];
+   "BC400_Q04" := #saidaBC400[4];
+   "BC400_Q05" := #saidaBC400[5];
+   "BC400_Q06" := #saidaBC400[6];
+   "BC400_Q07" := #saidaBC400[7];
+   "BC400_Q08" := #saidaBC400[8];
+   "BC400_Q09" := #saidaBC400[9];
+   "BC400_Q10" := #saidaBC400[10];
+   "BC400_Q11" := #saidaBC400[11];
+   "BC400_Q12" := #saidaBC400[12];
+   "BC400_Q13" := #saidaBC400[13];
+END_FUNCTION
