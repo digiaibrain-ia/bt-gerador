@@ -1,0 +1,55 @@
+DATA_BLOCK "db2000_BancoTeste2_DSE"
+TITLE = db2000_BancoTeste2_DSE v0.1 (DB2000) - copia no PLC de Carga
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db2000_BancoTeste2_DSE (DB2000) v0.1 - RASCUNHO. COPIA SO DE LEITURA das grandezas do DSE para a tela (WinCC) do PLC de Carga. 136 bytes (DBB0..DBB135).
+//// MESMO numero e MESMOS offsets do DB2000 do 1515 (o Node-RED grava so la; o 1515 repassa por PUT P#DB2000.DBX0.0 BYTE 136). Escritor unico: o PUT do 1515. NAO escreva neste DB.
+//// Dado desatualizado: se "heartbeat" parar de mudar (ex.: 5 s), a tela deve avisar. Grandezas do card do operador: percCarga, tensaoL1L2/L2L3/L3L1, correnteL1/L2/L3, kw, tempAguaC, rpm, bateria.
+////====================================
+   STRUCT
+      bitsStatus : Byte;   // DBB0 - bit0 leituraOk, bit1 http200, bit2 automatico, bit3 dadosAntigos, bit4 servidorOnline
+      bitsAlarmes : Byte;   // DBB1 - bit0 temAlarme, bit1 aviso, bit2 desligamento, bit3 tripEletrico, bit4 desligamentoControlado
+      bitsLeds : Byte;   // DBB2 - bit0 STOP, bit1 MANUAL, bit2 TESTE, bit3 AUTO, bit4 disjuntorGerador, bit5 geradorDisponivel
+      bitsSaidas : Byte;   // DBB3 - bit0 saidaCombustivel, bit1 saidaPartida, bit2 falhaEcu
+      modoCodigo : Int;   // DBB4
+      idadeSegundos : Int;   // DBB6 - idade do dado do DSE [s]
+      seletor : Int;   // DBB8
+      errosConsecutivos : Int;   // DBB10
+      heartbeat : DInt;   // DBB12 - soma 1 a cada resposta processada pelo Node-RED; se PARAR de mudar, o dado esta desatualizado
+      horasMotorSegundos : DInt;   // DBB16 - [s]
+      partidas : DInt;   // DBB20
+      qtdNulos : Int;   // DBB24
+      qtdAlarmes : Int;   // DBB26
+      tensaoL1L2 : Real;   // DBB28
+      tensaoL2L3 : Real;   // DBB32
+      tensaoL3L1 : Real;   // DBB36
+      tensaoFFMedia : Real;   // DBB40
+      tensaoL1N : Real;   // DBB44
+      tensaoL2N : Real;   // DBB48
+      tensaoL3N : Real;   // DBB52
+      tensaoFNMedia : Real;   // DBB56
+      correnteL1 : Real;   // DBB60
+      correnteL2 : Real;   // DBB64
+      correnteL3 : Real;   // DBB68
+      corrente : Real;   // DBB72
+      frequencia : Real;   // DBB76
+      rpm : Real;   // DBB80
+      kw : Real;   // DBB84
+      kva : Real;   // DBB88
+      kvar : Real;   // DBB92
+      fp : Real;   // DBB96
+      percCarga : Real;   // DBB100
+      kwL1 : Real;   // DBB104
+      kwL2 : Real;   // DBB108
+      kwL3 : Real;   // DBB112
+      fpL1 : Real;   // DBB116
+      fpL2 : Real;   // DBB120
+      fpL3 : Real;   // DBB124
+      tempAguaC : Real;   // DBB128
+      bateria : Real;   // DBB132
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK
