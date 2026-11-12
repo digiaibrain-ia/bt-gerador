@@ -1,0 +1,33 @@
+COMO USAR - PLC de Carga (S7-1214FC) - entrega v0.15   [rascunho: nao compilado]
+
+O QUE E: o 1515 manda o comando de cada chave (PUT) e le o retorno (GET). Estes blocos, no 1214FC, ligam a contatora de verdade
+e devolvem o contato auxiliar real. Sao 2 bancos: BC56 e BC400 (13 chaves cada).
+
+BLOCOS (pasta PLC_CARGA_1200, 1 DB por arquivo)
+  db3007_BC56_Com / db3107_BC400_Com   DB de TELEGRAMA (24 bytes). O 1515 escreve o pedido e le a resposta. Voce NAO escreve nele.
+  fb_supervisaoChaves16                regra "contato auxiliar some -> a chave cai em 2 s". Usado dentro do fb_bancoCarga16.
+  fb_bancoCarga16                      a logica do banco (1 por banco). Recebe o numero do DB de telegrama.
+  fc_bancosCarga1200                   onde voce liga os SEUS tags (resistencias, contatoras, seletora). E o unico bloco que voce edita.
+  DBs de INSTANCIA do fb_bancoCarga16: NAO vem em arquivo. Voce cria ao chamar o FB (passo 4).
+
+PASSO A PASSO
+ 1. Importe, um arquivo por vez, como FONTE EXTERNA, nesta ordem: db3007, db3107, fb_supervisaoChaves16, fb_bancoCarga16, fc_bancosCarga1200.
+ 2. NUMERO DOS DBs de telegrama (o TIA numera sozinho DB1, DB2...): botao direito no DB > Propriedades > Geral > Numero (manual):
+      db3007_BC56_Com = 3007 | db3107_BC400_Com = 3107
+    Tem que ser esses: o 1515 acessa por P#DB3007 e P#DB3107. Sem "Acesso otimizado".
+ 3. TAGS: nao ha nomes sugeridos. Abra o fc_bancosCarga1200: cada banco tem 3 REGIONs (titulo "1 de 3", "2 de 3", "3 de 3"). Siga o comentario de cada uma
+    e escreva os SEUS tags ja existentes: retorno (contato auxiliar) de cada resistencia, saida de cada contatora e a seletora em Auto.
+ 4. DB DE INSTANCIA: na REGION "2 de 3" de cada banco, insira a chamada do fb_bancoCarga16 (arraste o FB). Na janela do DB de instancia digite NUMERO MANUAL e NOME:
+      BC56 : nome  db3006i_BC56_BancoCarga   numero 3006
+      BC400: nome  db3106i_BC400_BancoCarga  numero 3106
+    Os parametros estao no comentario da REGION (DbCom, NumChaves := 13, SeletoraEntrada com o seu tag, SaidaContatora, EntradaContatoAux).
+ 5. SAIDAS: depois disto, so o fc_bancosCarga1200 pode escrever nas saidas das contatoras. Se o FC7 (Resistencias) ou o FC8 (Saidas Digitais)
+    atuais escrevem nas mesmas saidas, tire essa escrita (senao ha 2 escritores e a contatora pode ser acionada fora do comando do 1515).
+ 6. Chame o fc_bancosCarga1200 1 vez por ciclo no OB1 (ele ja chama os 2 bancos).
+ 7. Na CPU: Protecao e seguranca > Mecanismos de conexao > marque "Permitir acesso via PUT/GET". A conexao S7 com o 1515 e criada no 1515 (o ID vai la, em ID_Conexao).
+ 8. Compile. Se der erro, mande a lista das mensagens (e o nome do bloco).
+
+TESTE (carga de potencia DESACOPLADA): no 1515 com o PLC em Run, ComOk deve ficar TRUE e a vida (vidaET) mudando; comando de uma chave liga a saida;
+se o contato auxiliar nao voltar em 2 s a chave cai e trava; se o 1515 ficar mais de 2 s sem vida, todas as saidas caem.
+
+Pasta PLC_1515 = blocos do 1515 (quem carrega e o Reginaldo).
