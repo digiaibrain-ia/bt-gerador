@@ -1,5 +1,7 @@
 # Relatório do piloto · RNC e retrabalho do gerador — v0.1 (13/11/2026)
 
+> **Atualização (13/11/2026, revisão de código antes da bancada):** 9 achados confirmados e corrigidos em versões novas — medidor **v1.10.204**, Registro **v0.2**, Reparo **v0.3**, script de bancada **v0.2**, pacote de bancada **v0.3**. Detalhes e provas em `REVISAO_CODIGO_RNC_v0.1.md`. A tabela da seção 3 abaixo mostra as versões anteriores. Segue **sem resultado de bancada**.
+
 Branch `ccr-69b3bd0c-yhr48g` (sem PR). Documentos de apoio: `RNC_RETRABALHO_v0.2.md` (contrato e instalação) e `RNC_CHECKLIST_BANCADA_v0.1.md` (roteiro de bancada).
 
 ## 1. Resumo
