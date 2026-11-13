@@ -5,7 +5,7 @@ import hashlib, os, re, sys, zipfile
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FL = 'nodered/flows/bt2/'
 ARQ = [(FL + n + '.json', '01_fluxos_importar/' + n + '.json') for n in (
-    'chaves-56-api-v3.5', 'chaves-400-api-v3.5', 'chaves-550-api-v1.6', 'chaves-595-api-v1.6', 'registro-ensaio-db2100-api-v1.9', 'dev-logs-api-v1.3',
+    'chaves-56-api-v3.5', 'chaves-400-api-v3.5', 'chaves-550-api-v1.6', 'chaves-595-api-v1.6', 'registro-ensaio-db2100-api-v1.8', 'dev-logs-api-v1.3',
     'cliente-156-dse-plc-carga-v3', 'cliente-31-seletor-plc-db2000-v4', 'servidor-deepsea-api-gerador-v3_7')]
 ARQ += [(FL + 'simulador-dse-demo-v7.json', '02_somente_bancada/simulador-dse-demo-v7.json'),
         ('dashboard/ferramentas/medidor_gerador_v1.10.201.html', '03_front_operacao/medidor_gerador_v1.10.201.html'),
