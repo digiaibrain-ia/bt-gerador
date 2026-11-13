@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.2">
+<title>RNC · Registro de defeito</title>
+<!--
+  rnc_registro_v0.2.html — REGISTRO de defeito (RNC) durante o ensaio.  Versão 0.2 · 13/11/2026.
+  v0.2 (revisão de código): a chave que evita registrar duas vezes o mesmo defeito passa a valer só para aquele conteúdo (série, modelo, banco, tipo, descrição). Antes, depois de uma resposta perdida,
+  registrar OUTRO defeito reaproveitava a chave e o servidor devolvia a RNC antiga: a tela mostrava "Salvo" sem gravar o novo. Resto igual à v0.1.
+  v0.1: criação.
+  PARA QUE SERVE (leigo): o operador aponta aqui o defeito ou erro de montagem de um gerador (pelo número de série). A partir daí o gerador
+  fica BLOQUEADO para expedição até ser consertado e passar no reteste. Quem conserta usa a tela "RNC · Reparo" (outra página).
+  COMO FUNCIONA (técnico): fala só com o Node-RED (rotas /api/rnc/*, fluxo rnc-api-v1.0). NADA é guardado neste navegador, exceto o NOME de quem
+  digita (conveniência, localStorage). O "Salvo" só aparece depois que o Node-RED confirma que gravou no disco. Se a rede cair, o formulário
+  continua preenchido e o reenvio usa a mesma chave (idempotência) — não duplica.
+  NÃO FAZ: não lê nem comanda PLC, chave ou DSE. Só informativo. O bloqueio de expedição depende do processo da fábrica (ex.: etiqueta BLOQUEADO).
+  Servidor: se a página for aberta pelo próprio Node-RED (pasta public), usa o mesmo endereço; senão digite no campo "Servidor" (ou ?srv=http://...).
+  Banco: ?banco=BT1 ou BT2 na URL define o padrão do seletor (ex.: atalho de cada PC).
+  Fora desta versão: botão no medidor (anexa grandezas/alarmes do DSE), indicadores, CSV. Ver docs/modulos/RNC_RETRABALHO_v0.1.md.
+-->
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--tx:#1b1f24;--mut:#5b6672;--bd:#d5dae0;--pri:#0b5cad;--ok:#1a7f37;--bad:#c62828;--warn:#9a6700;--warnbg:#fff4d6}
+@media (prefers-color-scheme:dark){:root{--bg:#14171a;--card:#1d2227;--tx:#e8ecef;--mut:#9aa6b2;--bd:#343c44;--pri:#5aa9ff;--ok:#4cc26a;--bad:#ff7b72;--warn:#e3b341;--warnbg:#3a2f12}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,Segoe UI,Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:12px 16px 40px}
+h1{font-size:1.25rem;margin:8px 0 2px}
+.sub{color:var(--mut);font-size:.9rem;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin:12px 0}
+label{display:block;font-weight:600;margin:12px 0 4px}
+label small{font-weight:400;color:var(--mut)}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg)}
+textarea{min-height:90px;resize:vertical}
+input[name=serial]{text-transform:uppercase;letter-spacing:.04em;font-family:ui-monospace,Consolas,monospace}
+.row{display:flex;gap:10px}.row>div{flex:1}
+button{cursor:pointer;border:1px solid var(--bd);background:var(--card);border-radius:8px;padding:12px 16px;min-height:44px}
+button.pri{background:var(--pri);color:#fff;border-color:var(--pri);font-weight:700;width:100%;margin-top:14px}
+button:disabled{opacity:.55;cursor:not-allowed}
+.msg{border-radius:8px;padding:10px 12px;margin:10px 0;font-size:.95rem}
+.msg.ok{background:rgba(26,127,55,.12);border:1px solid var(--ok)}
+.msg.bad{background:rgba(198,40,40,.12);border:1px solid var(--bad)}
+.msg.warn{background:var(--warnbg);border:1px solid var(--warn)}
+.hint{color:var(--mut);font-size:.85rem;margin-top:3px}
+.tag{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.78rem;font-weight:700;border:1px solid var(--bd)}
+.tag.BLOQUEADO{color:var(--bad);border-color:var(--bad)}.tag.LIBERADO{color:var(--ok);border-color:var(--ok)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--bd)}
+details summary{cursor:pointer;color:var(--pri);margin:6px 0}
+#prev{max-width:100%;max-height:160px;border-radius:8px;margin-top:6px;display:none}
+.srv{display:flex;gap:8px;align-items:center;font-size:.85rem;color:var(--mut)}.srv input{padding:6px 8px}
+#dot{width:10px;height:10px;border-radius:50%;background:var(--mut);flex:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>Registrar defeito (RNC)</h1>
+  <p class="sub">Aponte o defeito ou erro de montagem. O gerador fica <b>bloqueado para expedição</b> até ser consertado e aprovado no reteste.</p>
+
+  <div class="srv"><span id="dot" title="conexão"></span><span>Servidor</span><input id="srv" aria-label="Servidor Node-RED" placeholder="http://… (vazio = este endereço)"><span id="srvst"></span></div>
+
+  <form id="f" class="card" autocomplete="off" novalidate>
+    <label for="serial">Número de série <small>(digite ou use o leitor)</small></label>
+    <input id="serial" name="serial" inputmode="text" autocapitalize="characters" required>
+    <div id="aviso"></div>
+
+    <div class="row">
+      <div><label for="modelo">Modelo</label><input id="modelo" name="modelo" required maxlength="60"></div>
+      <div><label for="banco">Banco</label><select id="banco" name="banco"><option>BT1</option><option>BT2</option></select></div>
+    </div>
+
+    <label for="tipo">Tipo</label>
+    <select id="tipo" name="tipo_nc">
+      <option value="DEFEITO">Defeito</option><option value="ERRO_MONTAGEM">Erro de montagem</option>
+      <option value="FALHA_ENSAIO">Falha no ensaio</option><option value="OUTRO">Outro</option>
+    </select>
+
+    <label for="desc">O que aconteceu? <small>(5 a 1000 caracteres)</small></label>
+    <textarea id="desc" name="descricao" required maxlength="1000"></textarea>
+
+    <label for="foto">Foto <small>(opcional)</small></label>
+    <input id="foto" type="file" accept="image/*" capture="environment"><img id="prev" alt="pré-visualização">
+
+    <label for="nome">Seu nome</label>
+    <input id="nome" name="actor" required maxlength="60" placeholder="quem está registrando">
+
+    <button class="pri" id="enviar" type="submit">Registrar e bloquear gerador</button>
+    <div id="res" role="status" aria-live="polite"></div>
+  </form>
+
+  <section class="card">
+    <b>Últimas RNCs não encerradas</b> <span class="hint">(de todos os bancos)</span>
+    <div id="lista" class="hint">carregando…</div>
+  </section>
+
+  <details class="card"><summary>Ajuda</summary>
+    <p><b>Para que serve:</b> registrar o defeito na hora, ligado ao número de série. Quem conserta vê o que foi apontado na tela <i>RNC · Reparo</i>.</p>
+    <p><b>Depois de registrar:</b> o gerador sai do banco para o reparo e volta para <b>reteste</b> (novo ensaio do mesmo número de série). Só é liberado se passar.</p>
+    <p><b>Importante:</b> este sistema é só informativo. Ele não impede a expedição por si só — coloque a etiqueta <b>BLOQUEADO</b> no gerador e confira o sistema antes de expedir.</p>
+    <p><b>Caiu a rede?</b> Não feche a página. O formulário continua preenchido: toque em registrar de novo (não duplica).</p>
+  </details>
+</main>
+
+<script>
+/* ---------------- módulo: servidor ---------------- */
+const $=id=>document.getElementById(id);
+const P=new URLSearchParams(location.search);
+function srvBase(){const v=($('srv').value||'').trim().replace(/\/+$/,'');return v||(location.protocol.startsWith('http')?location.origin:'');}
+async function api(caminho,opc){
+  const base=srvBase();
+  if(!base)throw new Error('Informe o endereço do servidor (Node-RED).');
+  const r=await fetch(base+caminho,Object.assign({cache:'no-store'},opc||{}));
+  let j=null;try{j=await r.json();}catch(e){}
+  if(!r.ok||!j||j.ok===false){const e=new Error((j&&j.erro)||('HTTP '+r.status));e.status=r.status;e.corpo=j;throw e;}
+  return j;
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function aviso(el,cls,html){el.innerHTML=html?'<div class="msg '+cls+'">'+html+'</div>':'';}
+
+/* ---------------- módulo: preferências (só conveniência; nenhum dado de RNC fica aqui) ---------------- */
+const pref={
+  ler(k){try{return localStorage.getItem(k)||'';}catch(e){return '';}},
+  gravar(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+};
+$('srv').value=P.get('srv')||pref.ler('rnc_srv');
+$('nome').value=pref.ler('rnc_nome');
+if(['BT1','BT2'].includes((P.get('banco')||'').toUpperCase()))$('banco').value=P.get('banco').toUpperCase();else $('banco').value='BT2';
+
+/* ---------------- módulo: foto (reduz no navegador para ficar bem abaixo do limite de 3 MB) ---------------- */
+let fotoBlob=null;
+$('foto').addEventListener('change',async ev=>{
+  fotoBlob=null;$('prev').style.display='none';
+  const f=ev.target.files[0];if(!f)return;
+  try{
+    const bmp=await createImageBitmap(f);
+    const esc_=Math.min(1,1280/Math.max(bmp.width,bmp.height));
+    const c=document.createElement('canvas');c.width=Math.round(bmp.width*esc_);c.height=Math.round(bmp.height*esc_);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    fotoBlob=await new Promise(ok=>c.toBlob(ok,'image/jpeg',0.72));
+    $('prev').src=URL.createObjectURL(fotoBlob);$('prev').style.display='block';
+  }catch(e){aviso($('res'),'warn','Não consegui preparar a foto. Você pode registrar sem foto.');}
+});
+
+/* ---------------- módulo: série (avisa se já existe RNC desta série) ---------------- */
+const normSerie=s=>s.replace(/\s+/g,'').toUpperCase();
+let tAv=null;
+$('serial').addEventListener('input',()=>{
+  const s=normSerie($('serial').value);clearTimeout(tAv);aviso($('aviso'),'','');
+  if(s.length<10)return;
+  tAv=setTimeout(async()=>{
+    try{
+      const j=await api('/api/rnc/serie/'+encodeURIComponent(s));
+      if(j.total===0)return;
+      const lis=j.rncs.map(r=>'<li>'+esc(r.rnc_id)+' — '+esc(r.estado.replace('_',' '))+' — '+esc(r.descricao.slice(0,60))+'</li>').join('');
+      aviso($('aviso'),j.situacao==='BLOQUEADO'?'warn':'ok','Esta série já tem <b>'+j.total+'</b> RNC(s) · situação <span class="tag '+j.situacao+'">'+j.situacao+'</span><ul>'+lis+'</ul>');
+    }catch(e){}
+  },400);
+});
+
+/* ---------------- módulo: envio ---------------- */
+let chave=null,chaveSig=''; // idempotência: a mesma chave vale até o envio dar certo, mas SÓ para o mesmo conteúdo
+const novaChave=()=>(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('k'+Date.now()+Math.random().toString(36).slice(2));
+$('f').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const corpo={serial:normSerie($('serial').value),modelo:$('modelo').value.trim(),banco:$('banco').value,tipo_nc:$('tipo').value,
+    descricao:$('desc').value.trim(),actor:$('nome').value.trim()};
+  if(!corpo.serial||!corpo.modelo||corpo.descricao.length<5||!corpo.actor){
+    aviso($('res'),'bad','Preencha série, modelo, descrição (mín. 5 letras) e seu nome.');return;}
+  const sig=[corpo.serial,corpo.modelo,corpo.banco,corpo.tipo_nc,corpo.descricao].join('|');
+  if(!chave||chaveSig!==sig){chave=novaChave();chaveSig=sig;}   // conteúdo mudou = defeito diferente = chave nova
+  corpo.idempotency_key=chave;
+  $('enviar').disabled=true;aviso($('res'),'warn','Gravando…');
+  try{
+    const j=await api('/api/rnc/abrir',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)});
+    pref.gravar('rnc_nome',corpo.actor);pref.gravar('rnc_srv',($('srv').value||'').trim());
+    let extra='';
+    if(fotoBlob){
+      try{await api('/api/rnc/foto/'+encodeURIComponent(j.rnc.rnc_id)+'?actor='+encodeURIComponent(corpo.actor),{method:'POST',headers:{'Content-Type':'image/jpeg'},body:fotoBlob});extra=' Foto anexada.';}
+      catch(e){extra=' <b>Atenção:</b> a RNC foi salva, mas a foto não subiu ('+esc(e.message)+'). Avise quem faz o reparo ou registre a foto depois.';}
+    }
+    aviso($('res'),'ok','<b>Salvo.</b> '+esc(j.rnc.rnc_id)+' · gerador <span class="tag BLOQUEADO">BLOQUEADO</span>.'+extra+'<br>Coloque a etiqueta de bloqueio e encaminhe ao reparo.');
+    chave=null;chaveSig='';fotoBlob=null;$('f').reset();$('prev').style.display='none';
+    $('nome').value=corpo.actor;$('banco').value=corpo.banco;aviso($('aviso'),'','');
+    carregaLista();
+  }catch(e){
+    aviso($('res'),'bad','<b>NÃO foi salvo.</b> '+esc(e.message)+' — o formulário continua preenchido; corrija e toque de novo (não duplica).');
+  }finally{$('enviar').disabled=false;}
+});
+
+/* ---------------- módulo: lista das RNCs não encerradas ---------------- */
+async function carregaLista(){
+  try{
+    const j=await api('/api/rnc?limit=10');
+    $('dot').style.background='var(--ok)';$('srvst').textContent='conectado';
+    $('lista').innerHTML=j.rncs.length?'<table><tr><th>RNC</th><th>Série</th><th>Estado</th></tr>'+j.rncs.map(r=>'<tr><td>'+esc(r.rnc_id)+'</td><td style="font-family:ui-monospace,monospace;font-size:.8rem">'+esc(r.serial)+'</td><td>'+esc(r.estado.replace('_',' '))+'</td></tr>').join('')+'</table>':'Nenhuma RNC pendente.';
+  }catch(e){
+    $('dot').style.background='var(--bad)';$('srvst').textContent='sem conexão';
+    $('lista').textContent='Não foi possível carregar: '+e.message;
+  }
+}
+$('srv').addEventListener('change',carregaLista);
+carregaLista();setInterval(carregaLista,30000);
+</script>
+</body>
+</html>
