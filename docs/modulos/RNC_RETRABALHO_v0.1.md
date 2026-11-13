@@ -1,17 +1,18 @@
-# RNC e retrabalho do gerador — v0.1 (etapa 1) · 13/11/2026
+# RNC e retrabalho do gerador — v0.1 (etapas 1 e 2) · 13/11/2026
 
 Controle de **qualidade e retrabalho do produto** (não é manutenção de máquina), por número de série. **Só informativo**: nada comanda PLC, chave ou DSE. Piloto **sem SQL**.
 
-## O que existe nesta versão (etapa 1)
+## O que existe nesta versão (etapas 1 e 2)
 | Peça | Arquivo |
 |---|---|
 | Regras (puras, testadas) | `nodered/gerador/rnc/rnc_core_v1.0.js` |
 | Gravação em arquivo, foto, backup | `nodered/gerador/rnc/rnc_io_v1.0.js` |
 | Gerador do fluxo Node-RED | `nodered/gerador/gerar_rnc_v1.0.js` → `nodered/flows/rnc-api-v1.0.json` |
-| Tela de Registro | `dashboard/ferramentas/rnc_registro_v0.1.html` |
+| Tela de Registro (operador do ensaio) | `dashboard/ferramentas/rnc_registro_v0.1.html` |
+| Tela de Reparo (kanban: Aberta · Em reparo · Aguardando reteste · Liberado) | `dashboard/ferramentas/rnc_reparo_v0.1.html` |
 | Testes | `tests/rnc_core.test.js` (`node --test tests/rnc_core.test.js`) |
 
-**Ainda não feito:** tela Reparo (etapa 2), teste completo do ciclo na bancada (3), botão "Registrar defeito" no medidor (4), indicadores/CSV (5).
+**Ainda não feito:** teste completo do ciclo na bancada (3), botão "Registrar defeito" no medidor (4), indicadores/CSV (5).
 
 ## Fluxo e estados (da RNC)
 `ABERTA` (já bloqueia expedição) → `EM_REPARO` → `AGUARDANDO_RETESTE` → `LIBERADO`. Reteste reprovado volta a `EM_REPARO`.
@@ -36,7 +37,7 @@ Gravar só vale com HTTP 2xx e `ok:true`; a resposta vem **depois** do `fsync` n
 2. Variável de ambiente do PM2: `RNC_DIR` = pasta dos dados (caminho absoluto). Opcional: `RNC_SERIAL_REGEX`, `RNC_BANCOS`.
 3. `settings.js` com `functionExternalModules` ligado (padrão) — o nó usa `fs` e `path`.
 4. Importar `rnc-api-v1.0.json` como **nova aba** (não toca nas abas das chaves). Deploy.
-5. Copiar `rnc_registro_v0.1.html` para a pasta `public` do Node-RED (mesma origem; sem CORS) e abrir `http://<servidor>:1880/rnc_registro_v0.1.html?banco=BT2`.
+5. Copiar `rnc_registro_v0.1.html` e `rnc_reparo_v0.1.html` para a pasta `public` do Node-RED (mesma origem; sem CORS) e abrir `http://<servidor>:1880/rnc_registro_v0.1.html?banco=BT2` (operador) e `http://<servidor>:1880/rnc_reparo_v0.1.html` (reparo).
 6. Conferir `GET /api/rnc/saude`.
 Fora da mesma origem, a página precisa de CORS (`httpNodeCors` no `settings.js`) e do campo "Servidor".
 
@@ -47,6 +48,6 @@ Fora da mesma origem, a página precisa de CORS (`httpNodeCors` no `settings.js`
 - Relógio do PC do Node-RED define a data/hora dos eventos.
 
 ## O que foi provado e o que falta (relatório honesto)
-**Provado (simulado, sem PLC/DSE):** 10 testes automáticos das regras e da gravação (ciclo completo, `rev`, transições, idempotência, 1000 gravações seguidas, linha quebrada, foto, backup); **Node-RED 4 real** com o fluxo importado: abrir, repetir com a mesma chave, `rev` velha (409), pulo de estado (422), foto (ida e volta byte a byte), tentativa de ler fora da pasta (404), **60 aberturas simultâneas** sem ID repetido nem buraco, e reinício do Node-RED mantendo os 63 eventos; tela de Registro no navegador (celular), com erro de rede mantendo o formulário.
+**Provado (simulado, sem PLC/DSE):** 10 testes automáticos das regras e da gravação (ciclo completo, `rev`, transições, idempotência, 1000 gravações seguidas, linha quebrada, foto, backup); **Node-RED 4 real** com o fluxo importado: abrir, repetir com a mesma chave, `rev` velha (409), pulo de estado (422), foto (ida e volta byte a byte), tentativa de ler fora da pasta (404), **60 aberturas simultâneas** sem ID repetido nem buraco, e reinício do Node-RED mantendo os 63 eventos; tela de Registro no navegador (celular), com erro de rede mantendo o formulário; tela de Reparo com **duas abas simultâneas** (a segunda recebe o aviso de conflito e não grava), ciclo completo (assumir, reparo sem ação recusado, reparo, reteste reprovado volta a Em reparo, segundo reparo, reteste aprovado libera), foto no detalhe e série com outra RNC pendente seguindo BLOQUEADA.
 **Depende da bancada / TI:** o PC real do BT2 (versão do Node-RED, `RNC_DIR`, permissão de escrita, antivírus), a rede entre o PC de registro e o PC de reparo, o relógio do PC, a cópia do backup para fora do PC, o uso real pelos operadores.
-**Limite conhecido:** o sistema é informativo; o bloqueio de expedição físico depende do processo da fábrica (etiqueta + conferência).
+**Limites conhecidos:** o reteste na tela de Reparo é só o REGISTRO do resultado (o ensaio em si é no medidor; o vínculo `ensaio_id` vem na etapa 4). Com o detalhe aberto a tela não atualiza sozinha (para não perder o que está sendo digitado).  o sistema é informativo; o bloqueio de expedição físico depende do processo da fábrica (etiqueta + conferência).
