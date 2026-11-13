@@ -3694,6 +3694,7 @@ function set(k,v){
   const u=el.querySelector('.u');
   el.innerHTML=(v==null||isNaN(v)?'—':Number(v).toFixed(DEC[k]))+(u?u.outerHTML:'');
 }
+let SIM_FALHA_ALT=false; // v1.10.203: falha SIMULADA do alternador de carga (so Demo; so o Dev/Operador oculto arma): alternador 0 V, bateria 24,8 V, alarme 'Falha de carga do alternador'
 let SIM_FALHA_MOTOR=false; // v1.9.9: fica true a partir do momento em que a falha realmente está "ativa" (ver SIM_FALHA_MOTOR_ARMADA) — é o que demoExtras() lê
 let SIM_FALHA_MOTOR_ARMADA=false; // v1.9.13: checkbox ③ da popup Demo — "armada" (vai disparar quando o ensaio simulado chegar no degrau de 30%), ainda não necessariamente ativa
 function demoExtras(S,L,I,V,op){ // campos da API v3.1 que a tela ainda não usa (só para o demo)
@@ -3702,7 +3703,7 @@ function demoExtras(S,L,I,V,op){ // campos da API v3.1 que a tela ainda não usa
   const [w1,w2,w3]=tri(kw),[a1,a2,a3]=tri(kva),[v1,v2,v3]=tri(kvar),pOleo=S.rpm>300?Math.round(150+250*Math.min(1,S.rpm/1800)):0;
   const agora=new Date().toISOString(),blocos={};['A','B','D','R','C','E','L','J','G1','G2','V','S1','S2'].forEach(k=>blocos[k]={idade:0.4,falhas:0,suspenso:false,ultimoErro:null});
   return {
-    alternador:on?28:0,tempOleoC:Math.round(S.temp+(SIM_FALHA_MOTOR?35:8)),tempAguaF:r1(S.temp*9/5+32),
+    alternador:on?(SIM_FALHA_ALT?0:28):0,tempOleoC:Math.round(S.temp+(SIM_FALHA_MOTOR?35:8)),tempAguaF:r1(S.temp*9/5+32),
     pressaoOleoKpa:SIM_FALHA_MOTOR?0:pOleo,pressaoOleoBar:SIM_FALHA_MOTOR?0:Math.round(pOleo)/100,nivelCombustivel:78,
     frequencia:on?r1(S.rpm/30):0,tensaoL1N:fn(221.1),tensaoL2N:fn(220.8),tensaoL3N:fn(221.3),tensaoFN:fn(221.1),tensaoFF:on?r1(V(221.1)):0,
     tensaoFNMedia:fn(221.1),tensaoFFMedia:on?r1(V(221.1)):0,corrente:r1(I),correnteTerra:0,
@@ -3710,7 +3711,7 @@ function demoExtras(S,L,I,V,op){ // campos da API v3.1 que a tela ainda não usa
     kwL1:w1,kwL2:w2,kwL3:w3,kvaL1:a1,kvaL2:a2,kvaL3:a3,kvarL1:v1,kvarL2:v2,kvarL3:v3,
     kva:r1(kva),kvar:r1(kvar),fpL1:fp,fpL2:fp,fpL3:fp,fp,percKvar:r1(kvar/KW_NOM*100),
     kwh:1234.5,kwhNegativo:0,kvah:1290.2,kvarh:210.4,horasMotor:r1(456+S.t/3600),horasMotorSegundos:Math.round(1641600+S.t),partidas:87,relogioDse:agora,
-    modoCodigo:2,temAlarme:false,alarmeAviso:false,alarmeDesligamento:false,alarmeTripEletrico:false,alarmeDesligamentoControlado:false,alarmes:[],
+    modoCodigo:2,temAlarme:!!SIM_FALHA_ALT,alarmeAviso:!!SIM_FALHA_ALT,alarmeDesligamento:false,alarmeTripEletrico:false,alarmeDesligamentoControlado:false,alarmes:SIM_FALHA_ALT?[{nome:'Falha de carga do alternador',nivel:'aviso'}]:[],
     ecu:{pressaoRefrigeranteKpa:on?120:0,pressaoCombustivelKpa:on?380:0,pressaoTurboKpa:on?Math.round(L*1.2):0,tempAdmissaoC:Math.round(S.temp-5),
          tempEscapeC:on?Math.round(250+L*2):0,consumoLh:on?Math.round((6+L*0.22)*100)/100:0,pressaoAtmosfericaKpa:101,tempCombustivelC:35,
          torquePct:on?Math.round(L*0.9):0,torqueDemandadoPct:on?Math.round(L*0.9):0,cargaNaRotacaoPct:on?Math.round(L*0.95):0,
@@ -3731,7 +3732,7 @@ function demoData(){
     tensaoL1L2:V(221.1),tensaoL2L3:V(220.8),tensaoL3L1:V(221.3),
     correnteL1:Math.max(0,I*0.996+0.3*on*g()),correnteL2:Math.max(0,I+0.3*on*g()),correnteL3:Math.max(0,I*1.004+0.3*on*g()),
     kw:Math.max(0,L*KW_NOM/100+0.15*on*g()),tempAguaC:S.temp,rpm:Math.round(S.rpm+(S.rpm>1500?0.6*g():0)),
-    bateria:(S.rpm>1000?28.3:crank?22.5:25.6)+0.02*g(),percCarga:L,
+    bateria:(S.rpm>1000?(SIM_FALHA_ALT?24.8:28.3):crank?22.5:25.6)+0.02*g(),percCarga:L,
     leds:{stop:S.gen==='parado',manual:S.gen!=='parado',teste:false,auto:false,disjuntorGerador:S.brk,geradorDisponivel:op}, // v1.9.22: antes "manual" vinha sempre true (fixo) — não representava o gerador simulado ligado/desligado; agora acompanha S.gen (igual ao DSE real descrito pelo operador: STOP aceso parado/ocioso, MANUAL aceso ao partir)
     saidaCombustivel:S.gen==='partindo'||op,saidaPartida:crank,...demoExtras(S,L,I,V,op)};
 }
@@ -3919,7 +3920,7 @@ const VERSAO='1.10.203', VERSAO_DATA='13/11/2026';
 const HISTORICO=[
   {v:"1.10.203",d:"13/11/2026",i:[
     'Dev/Operador oculto: NOVA FASE "RNC · Registrar defeito" dentro do ensaio simulado (etapa de 50 %, antes de salvar a etapa). O robô aperta "⚠ Registrar defeito" como o operador e confere: o que o botão anexa (etapa, hora, ≥ 6 grandezas com potência > 0, modelo do DSE, alarmes, marca Demo); a janela abre já preenchida; sem descrição não grava; "Salvo" só depois do servidor confirmar; o servidor guardou a RNC (série BLOQUEADA, contexto da etapa, prefixo [DEMO]); a etiqueta/faixa "RNC: BLOQUEADO" aparece para a série com RNC e some para uma série limpa; o ensaio continua rodando. SEGURANÇA: só grava se a pasta de dados do RNC (GET /api/rnc/saude) tiver "teste" no nome; sem servidor, sem o fluxo RNC ou com pasta real a fase é PULADA com AVISO. A caixa de areia do robô (que bloqueia todo envio que não seja leitura) ganha UMA exceção: POST /api/rnc/abrir, só durante esta fase e só com pasta de teste confirmada. Só fala com /api/rnc/*; não toca PLC, chaves nem DSE.',
-    'Resto IGUAL à v1.10.202. Fragmento-fonte: modulos-fonte/robo_fase_rnc_v0.2.js.'
+    'SIMULADOR do Demo: nova falha simulada do ALTERNADOR DE CARGA (alternador 0 V, bateria 24,8 V, alarme "Falha de carga do alternador"), armada só por esta fase do robô; a fase passa a registrar esse defeito. Resto IGUAL à v1.10.202. Fragmento-fonte: modulos-fonte/robo_fase_rnc_v0.3.js.'
   ]},
   {v:"1.10.202",d:"13/11/2026",i:[
     'NOVO (portado da v1.10.135): botão "⚠ Registrar defeito" no cabeçalho (RNC — Registro de Não Conformidade, qualidade e retrabalho do gerador por nº de série). A janela abre com o que a tela sabe — modelo, etapa do ensaio, hora, grandezas e alarmes do DSE —, o operador confere o nº de série, escolhe o tipo, descreve e confirma; o gerador fica BLOQUEADO para expedição na RNC e o reparo é feito na tela "RNC · Reparo". Só informativo: não lê nem escreve no PLC, nas chaves ou no DSE; fala só com o Node-RED nas rotas /api/rnc/* (fluxo rnc-api-v1.1) pela mesma URL de servidor do medidor. "Salvo" só aparece depois que o servidor confirma a gravação no disco.',
@@ -10010,11 +10011,13 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&e.isTrusted&&OPS.rodando&&!OPS.parar){OPS.parar=true;OPS.motivoAbort='tecla Esc';ui()}},true);
 
   /* =====================================================================================================================
-     robo_fase_rnc_v0.2.js — FASE "RNC · Registrar defeito" do Dev/Operador oculto  ·  13/11/2026
+     robo_fase_rnc_v0.3.js — FASE "RNC · Registrar defeito" do Dev/Operador oculto  ·  13/11/2026
      FRAGMENTO colado DENTRO do módulo do Operador oculto (usa reg, chk, aviso, ate, pausa, passo, clica, OPS, T, ETAPAS, srvBase, $).
      PARA QUE SERVE (leigo): no meio do ensaio simulado (etapa de 50 %), o robô aperta "⚠ Registrar defeito" como o operador: confere o que o botão anexa
      (modelo, etapa, hora, grandezas, alarmes), preenche e registra, confere que o servidor guardou e que o aviso "RNC: BLOQUEADO" aparece e some.
      v0.2 (13/11/2026): a caixa de areia do robô bloqueia todo envio que não seja leitura; esta fase abre UMA exceção — POST /api/rnc/abrir — só enquanto roda e só depois de confirmar que a pasta de dados é de teste (SB.rncPermite). Resto igual à v0.1.
+     v0.3 (13/11/2026): o defeito simulado é FALHA DO ALTERNADOR DE CARGA (pedido do Reginaldo): a fase arma SIM_FALHA_ALT (só no Demo): tensão do alternador 0 V com o motor em marcha, bateria
+       descendo (24,8 V) e alarme "Falha de carga do alternador" no DSE simulado. O robô confere que o contexto anexado mostra a falha, que o servidor a guardou e que a falha é desarmada ao fim.
      SEGURANÇA: só grava se GET /api/rnc/saude disser que a pasta de dados tem "teste" no nome (nunca na pasta real). Sem servidor, sem fluxo RNC ou pasta
      real = a fase é PULADA com um AVISO no relatório (não é falha). Só fala com /api/rnc/*; NÃO toca PLC, chaves nem DSE.
      O registro de teste leva série OPSECRETO<data/hora> e o prefixo [DEMO] (o Demo está ligado); fica na pasta de teste como evidência (o arquivo é só de acréscimo).
@@ -10029,6 +10032,7 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
     if(!sa||!sa.ok){aviso(F,'fase pulada','o serviço RNC não respondeu em /api/rnc/saude (fluxo rnc-api-v1.1 importado e URL do servidor certa?)');return}
     if(!/teste/i.test(String(sa.arquivo||''))){aviso(F,'fase pulada por segurança','a pasta de dados do RNC (…'+String(sa.arquivo||'').slice(-40)+') não tem "teste" no nome: o robô não grava na pasta real');return}
     if(!window.RNC_DEFEITO||!$('bRnc')){chk(F,'botão "Registrar defeito" existe na tela',false,'módulo RNC ausente nesta versão do medidor');return}
+    SIM_FALHA_ALT=true;   // falha de alternador de carga simulada (só Demo); desarmada no finally
     SB.rncPermite=true;   // exceção da caixa de areia: só POST /api/rnc/abrir, só nesta fase, só com pasta de TESTE confirmada
     try{
     const api=async c=>{const r=await fetch(base+c,{cache:'no-store'});return r.json()};
@@ -10036,12 +10040,17 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
     const et=T.et;
 
     chk(F,'o botão "⚠ Registrar defeito" está visível no cabeçalho',$('bRnc').offsetParent!==null,$('bRnc').textContent);
+    passo('RNC: simulando falha do alternador de carga (Demo)');
+    const falhaAlt=()=>{const k=window.RNC_DEFEITO.captura();return k.alarmes&&k.alarmes.temAlarme===true&&(k.grandezas||{}).alternador===0};
+    chk(F,'Demo: falha do alternador de carga aparece nos dados do DSE simulado (alternador 0 V + alarme)',await ate(falhaAlt,8000),JSON.stringify((window.RNC_DEFEITO.captura().alarmes)||null).slice(0,120));
     // 1) o que o botão vai anexar (fotografia da tela)
     const c=window.RNC_DEFEITO.captura(),g=c.grandezas||{};
     chk(F,'contexto: etapa e hora do ensaio',c.ensaio&&c.ensaio.iniciado===true&&c.ensaio.etapa===et&&c.ensaio.etapa_nome===ETAPAS[et].nome&&!!c.momento,JSON.stringify(c.ensaio||null).slice(0,160));
     chk(F,'contexto: grandezas elétricas lidas (≥ 6) e potência > 0 na etapa de '+ETAPAS[et].alvo+' %',Object.keys(g).length>=6&&g.kw>0,'n='+Object.keys(g).length+' kw='+g.kw+' carga%='+g.cargaPct);
     chk(F,'contexto: modelo do DSE e alarmes presentes',!!(c.modelo&&(c.modelo.dse||c.modelo.dse_texto))&&c.alarmes&&Array.isArray(c.alarmes.lista),JSON.stringify(c.modelo||null).slice(0,100));
     chk(F,'contexto: marca Demo (os dados são simulados)',c.demo===true,'demo='+c.demo);
+    {const cc=window.RNC_DEFEITO.captura(),gg=cc.grandezas||{},nomes=((cc.alarmes||{}).lista||[]).map(x=>x.nome);
+     chk(F,'contexto: anexa a falha do alternador (alternador 0 V, bateria < 26 V, alarme "Falha de carga do alternador")',gg.alternador===0&&gg.bateria<26&&nomes.includes('Falha de carga do alternador'),'alternador='+gg.alternador+' bateria='+gg.bateria+' alarmes='+nomes.join('|'))}
     // 2) abre a janela e confere o preenchimento automático
     passo('RNC: abrindo "Registrar defeito"');
     clica($('bRnc'),'Registrar defeito');
@@ -10056,7 +10065,8 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
     clica($('rncEnv'),'Registrar (sem descrição)');await pausa(500);
     chk(F,'sem descrição: recusa e não grava',/Preencha/.test($('rncRes').textContent)&&(await api('/api/rnc/saude')).eventos===antes,$('rncRes').textContent.trim().slice(0,70));
     // 4) registra
-    $('rncDesc').value='Vibração anormal na etapa de '+ETAPAS[et].alvo+' % (registro automático do Operador oculto)';
+    $('rncTipo').value='DEFEITO';
+    $('rncDesc').value='Falha do alternador de carga: tensão do alternador 0 V com o motor em marcha, bateria descendo (24,8 V) e alarme "Falha de carga do alternador" no DSE, na etapa de '+ETAPAS[et].alvo+' % (registro automático do Operador oculto)';
     passo('RNC: registrando o defeito');
     clica($('rncEnv'),'Registrar e bloquear gerador');
     const salvou=await ate(()=>/Salvo\./.test($('rncRes').textContent),8000);
@@ -10065,6 +10075,7 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
     const s=await api('/api/rnc/serie/'+serie),r=(s.rncs||[])[0]||{},cx=r.contexto||{};
     chk(F,'servidor: série ficou BLOQUEADA com 1 RNC aberta',s.situacao==='BLOQUEADO'&&s.total===1&&r.estado==='ABERTA',s.situacao+' total='+s.total+' estado='+r.estado);
     chk(F,'servidor: descrição com prefixo [DEMO] e banco/tipo gravados',/^\[DEMO\]/.test(r.descricao||'')&&!!r.banco&&!!r.tipo_nc,(r.descricao||'').slice(0,40)+' | '+r.banco+' | '+r.tipo_nc);
+    chk(F,'servidor: guardou a falha do alternador no contexto (alternador 0 V + alarme) e a descrição cita o alternador',/alternador/i.test(r.descricao||'')&&r.tipo_nc==='DEFEITO'&&((cx.grandezas||{}).alternador===0)&&((cx.alarmes||{}).lista||[]).some(x=>x.nome==='Falha de carga do alternador'),JSON.stringify((cx.alarmes||{}).lista||[]).slice(0,100)+' alternador='+(cx.grandezas||{}).alternador);
     chk(F,'servidor: o contexto da etapa '+(et+1)+' foi gravado (etapa, modelo, grandezas, alarmes)',cx.ensaio&&cx.ensaio.etapa===et&&cx.modelo&&Object.keys(cx.grandezas||{}).length>=6&&cx.alarmes&&cx.demo===true,JSON.stringify(cx.ensaio||null).slice(0,120));
     // 6) aviso: etiqueta + faixa aparecem para a série com RNC e somem para uma série limpa
     passo('RNC: conferindo o aviso "RNC: BLOQUEADO"');
@@ -10077,7 +10088,8 @@ $('go').onclick=start;$('demo').onchange=start;start();desenha();fitZoom();setIn
     const sumiu=await ate(()=>!vis('pRncAv')&&!vis('rncFaixa'),5000);
     chk(F,'aviso: some para uma série sem RNC',sumiu,'etiqueta='+vis('pRncAv')+' faixa='+vis('rncFaixa'));
     chk(F,'o ensaio simulado continuou rodando (o aviso não bloqueia o ensaio)',T.started&&!T.fim,'started='+T.started+' fim='+T.fim);
-    }finally{SB.rncPermite=false}
+    }finally{SB.rncPermite=false;SIM_FALHA_ALT=false}
+    chk(F,'a falha simulada do alternador foi desarmada ao fim da fase (dados voltam ao normal)',await ate(()=>{const k=window.RNC_DEFEITO.captura();return k.alarmes&&k.alarmes.temAlarme===false&&(k.grandezas||{}).alternador>20},8000),JSON.stringify((window.RNC_DEFEITO.captura().grandezas||{}).alternador));
   }
 
   async function rodar(opt){
