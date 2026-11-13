@@ -22,7 +22,9 @@ async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), 
   fs.writeFileSync(path.join(userDir, 'package.json'), JSON.stringify({ name: 'teste-integracao', version: '0.0.0', dependencies: { 'bt2-nos-s7-teste': '0.1.0' } }));
   fs.symlinkSync(path.join(__dirname, 'nos_s7_teste'), path.join(userDir, 'node_modules', 'bt2-nos-s7-teste'), 'dir');
   const flows = [];
-  for (const f of fluxos) flows.push(...JSON.parse(fs.readFileSync(path.join(FLUXOS, f + '.json'), 'utf8')));
+  // 13/11/2026 - BT2_FLUXO_TROCA="antigo=novo,outro=novo2": le o fluxo NOVO no lugar do antigo (prova de equivalencia de um fluxo organizado com a MESMA bateria de testes). Sem a variavel, nada muda.
+  const troca = Object.fromEntries((process.env.BT2_FLUXO_TROCA || '').split(',').filter(Boolean).map(p => p.split('=')));
+  for (const f of fluxos) flows.push(...JSON.parse(fs.readFileSync(path.join(FLUXOS, (troca[f] || f) + '.json'), 'utf8')));
   for (const c of fluxosCaminho) flows.push(...JSON.parse(fs.readFileSync(c, 'utf8')));   // caminho explicito (uso de teste/probe)
   // variaveis de ambiente DA ABA (como o operador faz em Propriedades > Variaveis de ambiente), trocadas so na copia em memoria
   for (const aba of flows.filter(n => n.type === 'tab')) {
