@@ -29,6 +29,7 @@ O que já foi provado em simulado não precisa ser repetido a fundo; aqui se pro
 4. Abrir no PC BT2: `http://localhost:1880/rnc_registro_v0.1.html?banco=BT2`. No PC do reparo: `http://<IP-BT2>:1880/rnc_reparo_v0.2.html`.
 
 ## 3. Testes
+**Atalho automático:** o script `rnc_teste_bancada_v0.1.js` (no pacote, pasta `testes`) faz sozinho T01, T03–T13, T18 e a parte de reenvio do T21, e escreve OK/FALHOU. Roda no PC BT2 e, para provar a rede (T02), também no PC do reparo. Só roda em pasta de dados com "teste" no nome e vazia. **O que continua manual:** T14–T17, T19, T20, T21 (queda de rede), T22–T27 (medidor/DSE real, reinício, backup, uso real, expedição) e a conferência visual das telas. O T28 (menu ☰) fica adiado até o pacote da sessão BT2 gerar o catálogo com o gerador v0.3.
 Para cada teste: executar, anotar **OK / FALHOU** e observação. **Falhou = registrar como `todo` com ID e gravidade (não apagar nem enfraquecer o teste).** Séries de teste: `TESTE000000000001` (A), `TESTE000000000002` (B), `TESTE000000000003` (C). Operadores de teste: nomes diferentes em cada PC.
 
 ### Bloco A — Serviço e disco
