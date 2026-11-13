@@ -19,6 +19,7 @@ O que já foi provado em simulado não precisa ser repetido a fundo; aqui se pro
 | P5 | Versão do Node-RED anotada: ______ (testado em 4.x). `functionExternalModules` não desligado no `settings.js` | ☐ |
 | P6 | Pasta de dados de teste criada, com permissão de escrita para o usuário do Node-RED (ex.: `C:\...\rnc-dados-teste`; **ajustar o caminho**) | ☐ |
 | P7 | Variável de ambiente `RNC_DIR` = essa pasta, definida do jeito que o PM2 do PC já usa (ecosystem/variáveis) + reinício **com** as variáveis novas | ☐ |
+| P9 | Pacote com `catalogo_ferramentas.js` **gerado** por `gerar_catalogo_auto_v0.3.py` (ver `RNC_RETRABALHO_v0.2.md`) e `menu_dev_v0.3.js` na mesma pasta dos `.html` | ☐ |
 | P8 | Relógio dos PCs conferido (data/hora certas): BT2 ______ · reparo ______ | ☐ |
 
 ## 2. Instalação
@@ -71,6 +72,7 @@ Para cada teste: executar, anotar **OK / FALHOU** e observação. **Falhou = reg
 | T24 | **Cópia do backup para fora do PC** (pen drive/rede/Drive) e abrir uma linha de teste | Cópia legível | ☐ |
 | T25 | Antivírus/permissão: gravar e apagar foto de 2 MB | Sem bloqueio; foto maior que 3 MB é recusada | ☐ |
 | T26 | Dois operadores usam por 30 min no turno, sem ajuda | Conseguem registrar e consertar; anotar dúvidas e o tempo médio para registrar um defeito: ______ s | ☐ |
+| T28 | Menu ☰ do medidor (operador, sem `?dev=1`) | Lista Medidor, Gráfico, **RNC · Registro de defeito** e **RNC · Reparo**; clicar abre a tela certa na mesma pasta | ☐ |
 | T27 | **Processo da fábrica:** colocar a etiqueta BLOQUEADO no gerador de teste; a expedição simula a conferência (consulta o Reparo ou `GET /api/rnc/serie/<série>`) | A expedição consegue ver que está bloqueado **antes** de liberar | ☐ |
 
 ## 4. Critérios de aprovação do piloto

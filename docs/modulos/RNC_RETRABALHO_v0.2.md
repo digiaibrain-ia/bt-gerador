@@ -36,6 +36,13 @@ Pasta (`RNC_DIR`): `rnc.jsonl` · `fotos/<rnc_id>/<n>.jpg|png|webp` (máx. 3 MB;
 `POST /api/rnc/abrir` · `POST /api/rnc/evento` (`rnc_id, rev_esperado, event, data, actor`) · `GET /api/rnc?serial=&estado=&encerradas=1|todas&limit=` · `GET /api/rnc/serie/:serial` · `POST /api/rnc/foto/:rnc_id?actor=` (corpo = imagem) · `GET /api/rnc/foto/:rnc_id/:nome` · `GET /api/rnc/saude`.
 Gravar só vale com HTTP 2xx e `ok:true`; a resposta vem **depois** do `fsync` no disco.
 
+## Menu ☰ do medidor (grupo "Operação")
+O menu ☰ da v1.10.201/202 lê o `catalogo_ferramentas.js`, que é **gerado** (não se edita) a partir da maior versão de cada arquivo da pasta. Para as telas aparecerem no menu do **operador**:
+- `dashboard/ferramentas/catalogo_ferramentas_v0.9.js` (base) = base v0.8 + `RNC · Registro de defeito` e `RNC · Reparo`, ambos no grupo **Operação**.
+- `dashboard/gerador/gerar_catalogo_auto_v0.3.py` = gerador v0.2 apontando para a base v0.9 (9 ferramentas). Uso: `python3 dashboard/gerador/gerar_catalogo_auto_v0.3.py <pasta-do-pacote>`; escreve `catalogo_ferramentas.js` nessa pasta. Os `.html` das duas telas precisam estar na pasta (senão o gerador recusa).
+- Provado em navegador (pasta montada com a v1.10.202 + `menu_dev_v0.3.js` + catálogo gerado): o menu do operador (`?dev=0`) lista Medidor, Gráfico, **RNC · Registro de defeito** e **RNC · Reparo**; clicar abre a tela certa; o modo dev lista também as ferramentas de desenvolvimento; 0 erro de JavaScript.
+- **Atenção ao juntar com a sessão BT2:** o gerador do pacote de lá usa `gerar_catalogo_auto_v0.2.py` + base v0.8 (sem as telas RNC). É preciso passar a usar o v0.3/base v0.9 (ou acrescentar os dois itens à base que estiver valendo), senão o catálogo gerado volta a não listar as telas. Cosmético: a dica (tooltip) do botão ☰ do operador ainda diz "Medidor, Gráfico do ensaio" (texto fixo do `menu_dev_v0.3.js`; não alterado).
+
 ## Botão no medidor (v1.10.202; antes v1.10.135)
 - "⚠ Registrar defeito" no cabeçalho abre a janela com série (campo Nº de série de *Dados do ensaio*), modelo, banco, tipo, descrição e nome. Anexa sozinho modelo, etapa, hora, grandezas e alarmes do DSE (lidos da memória da tela; **nada é lido ou escrito no PLC, nas chaves ou no DSE**). Usa a mesma URL de servidor do medidor.
 - **Aviso informativo** (nunca bloqueia o ensaio): ao iniciar o ensaio, trocar de etapa ou informar a série, consulta `GET /api/rnc/serie/:serial` e mostra a faixa e a etiqueta "RNC: BLOQUEADO (n)". Sem servidor ou rota, fica silencioso.
