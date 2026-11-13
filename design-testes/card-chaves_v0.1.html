@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Protótipo · Chaves de carga v0.1</title>
+<!--
+  PROTÓTIPO v0.1 — NÃO é o medidor. Arquivo único e independente, com dados FICTÍCIOS.
+  Nada aqui conversa com PLC, Node-RED ou rede. Veja card-chaves_v0.1.md.
+
+  Cores: mesmas variáveis do medidor (dashboard/src/index.html, :root e html[data-tema=escuro]).
+  Regra: verde/vermelho/amarelo = SINAL de estado, nunca enfeite. O estado também aparece em
+  TEXTO + SÍMBOLO (não depende só da cor), para quem enxerga mal as cores.
+-->
+<style>
+/* ===== 1. CORES (iguais às do medidor) ===== */
+:root{
+  --ui-tinta:#1a4a78; --ui-tinta-esc:#0f2e4d; --ui-acento:#ec7000; --ui-acento-esc:#c25a00;
+  --bg:#f3f5f8; --card:#fff; --cardin:#fafbfd; --txt:#141414; --mut:#5b6b7e; --line:#dde2e8; --borda:#9aa5b1;
+  --ok:#2e9a5f; --warn:#f1b81c; --bad:#d64545;
+  /* variantes só para TEXTO sobre fundo claro (o --ok/--bad puros têm contraste baixo como letra) */
+  --ok-txt:#14663a; --ok-fundo:#d8f1e2;
+  --bad-txt:#9b1c1c; --bad-fundo:#fde4e4;
+  --off-txt:#4a3b00; --off-fundo:#fff1c9; --off-borda:#e0b84a;
+  --btn-txt:#fff;
+}
+html[data-tema=escuro]{
+  color-scheme:dark;
+  --bg:#16171a; --card:#222428; --cardin:#1c1d20; --txt:#ececea; --mut:#a4a59f; --line:#3b3d43; --borda:#6b6e76;
+  --ok:#3cb371; --warn:#f1b81c; --bad:#ee5a5a;
+  --ok-txt:#9be8b9; --ok-fundo:#1d4d33;
+  --bad-txt:#ffb4ad; --bad-fundo:#4a1f1d;
+  --off-txt:#ffd666; --off-fundo:#4a3c10; --off-borda:#7a6320;
+}
+
+/* ===== 2. BASE ===== */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:18px;line-height:1.35}
+button{font:inherit;cursor:pointer;min-height:48px}
+:focus-visible{outline:3px solid var(--ui-acento);outline-offset:2px}
+
+/* ===== 3. BARRA DE TOPO ===== */
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;background:var(--ui-tinta);color:#fff;border-bottom:3px solid var(--ui-acento)}
+header h1{margin:0;flex:1 1 200px;font-size:19px;letter-spacing:.04em;text-transform:uppercase}
+.barra-btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:0 14px;font-size:16px;font-weight:700}
+.aviso-proto{margin:0;padding:8px 14px;background:var(--off-fundo);color:var(--off-txt);border-bottom:1px solid var(--off-borda);font-size:16px;font-weight:600}
+
+/* ===== 4. CARD ===== */
+main{max-width:720px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h2{margin:0 0 10px;font-size:21px}
+
+/* Potência total: número grande, tamanho FIXO (layout estável: só o valor muda) */
+.total{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:var(--cardin);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px}
+.total small{font-size:16px;color:var(--mut);font-weight:600}
+.total b{font-size:40px;line-height:1.1;font-variant-numeric:tabular-nums}
+.total b i{font-size:20px;font-style:normal;font-weight:600;color:var(--mut);margin-left:6px}
+.total .resumo{width:100%;font-size:16px;color:var(--mut)}
+
+/* Lista de chaves */
+.lista{display:flex;flex-direction:column;gap:8px}
+.chave{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;
+  border:2px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card)}
+.chave .nome{font-size:20px;font-weight:800}
+.chave .kw{font-size:22px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums;min-width:96px}
+.chave .kw i{font-size:16px;font-style:normal;font-weight:600;color:var(--mut);margin-left:3px}
+.estado{display:inline-flex;align-items:center;gap:8px;font-size:17px;font-weight:700;border-radius:99px;padding:4px 12px;border:2px solid transparent}
+.estado .sim{font-size:18px;line-height:1}
+.est-ligada{background:var(--ok-fundo);color:var(--ok-txt);border-color:var(--ok)}
+.est-desligada{background:transparent;color:var(--mut);border-color:var(--borda)}
+.est-falha{background:var(--bad-fundo);color:var(--bad-txt);border-color:var(--bad)}
+.chave.falha{border-color:var(--bad)}
+.chave.desab{background:var(--off-fundo);border-color:var(--off-borda);color:var(--off-txt)}
+.chave.desab .estado{background:transparent;color:inherit;border-color:currentColor}
+.chave .acoes{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.hab-txt{font-size:16px;font-weight:700}
+
+/* Botões (alvo de toque mínimo 48 px) */
+.btn{min-height:48px;min-width:48px;padding:0 18px;border-radius:10px;font-size:18px;font-weight:800;border:2px solid var(--ui-tinta);background:var(--ui-tinta);color:#fff}
+html[data-tema=escuro] .btn{background:#2f6aa3;border-color:#7fb4ea}
+.btn.sec{background:transparent;color:var(--txt);border-color:var(--borda)}
+html[data-tema=escuro] .btn.sec{background:transparent;border-color:var(--borda)}
+.btn.perigo{background:var(--bad-txt);border-color:var(--bad-txt);color:#fff}
+html[data-tema=escuro] .btn.perigo{background:#b83a3a;border-color:#ee5a5a}
+.btn.hab{border-color:#a84f00;background:#a84f00;color:#fff}   /* laranja mais escuro que o do medidor (#c25a00 dava só 4,4:1 com branco) */
+html[data-tema=escuro] .btn.hab{border-color:#ec7000;background:#b85400}
+
+/* Legenda e rodapé */
+.legenda{display:flex;flex-wrap:wrap;gap:8px 14px;margin:12px 0 0;font-size:16px;color:var(--mut)}
+.opcoes{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.opcoes label{display:flex;align-items:center;gap:12px;font-size:17px;min-height:48px}
+.opcoes input{width:28px;height:28px;flex:none}
+
+/* ===== 5. CONFIRMAÇÃO (popup) ===== */
+dialog{border:3px solid var(--ui-acento);border-radius:14px;padding:0;max-width:min(94vw,460px);width:100%;background:var(--card);color:var(--txt)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog .corpo{padding:18px}
+dialog h3{margin:0 0 10px;font-size:23px}
+dialog p{margin:0 0 10px;font-size:19px}
+dialog .aviso-falha{background:var(--bad-fundo);color:var(--bad-txt);border:2px solid var(--bad);border-radius:8px;padding:8px 10px;font-weight:700;font-size:17px}
+dialog .botoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+dialog .botoes .btn{flex:1 1 150px}
+
+/* ===== 6. ANIMAÇÃO — DESLIGADA POR PADRÃO =====
+   Só existe se o operador ligar "animações discretas" E o aparelho não pedir menos movimento.
+   Aplica SOMENTE na abertura do popup. Nunca em números ao vivo e nunca no estado das chaves. */
+@media (prefers-reduced-motion:no-preference){
+  html.anim-on dialog[open]{animation:entra .15s ease-out}
+  @keyframes entra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Banco de teste · Chaves</h1>
+  <button type="button" class="barra-btn" id="bTema" aria-pressed="false">Tema: claro</button>
+</header>
+<p class="aviso-proto">PROTÓTIPO — dados fictícios. Nada aqui comanda equipamento.</p>
+
+<main>
+  <section class="card" aria-labelledby="tit">
+    <h2 id="tit">Chaves de carga</h2>
+
+    <div class="total" aria-live="polite">
+      <small>Potência total em carga</small>
+      <b><span id="kwTotal">0</span><i>kW</i></b>
+      <span class="resumo" id="resumo"></span>
+    </div>
+
+    <div class="lista" id="lista"></div>
+
+    <p class="legenda">
+      <span>● Ligada: entra na carga</span>
+      <span>○ Desligada</span>
+      <span>⚠ Falha: não conta no total</span>
+      <span>Fundo amarelo = desabilitada (nunca entra na carga)</span>
+    </p>
+
+    <div class="opcoes">
+      <label><input type="checkbox" id="chkAnim"> Animações discretas (só na abertura do aviso)</label>
+    </div>
+  </section>
+</main>
+
+<!-- Aviso de confirmação: toda mudança de habilitação passa por aqui -->
+<dialog id="dlg" aria-labelledby="dlgTit">
+  <div class="corpo">
+    <h3 id="dlgTit"></h3>
+    <p id="dlgTxt"></p>
+    <p class="aviso-falha" id="dlgFalha" hidden>Esta chave está em FALHA. Desabilitar é seguro; habilitar não é recomendado.</p>
+    <div class="botoes">
+      <button type="button" class="btn sec" id="dlgNao">Cancelar</button>
+      <button type="button" class="btn" id="dlgSim">Confirmar</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+/* =====================================================================
+   DADOS FICTÍCIOS — 8 chaves. estado: 'ligada' | 'desligada' | 'falha'
+   hab: true = habilitada (pode entrar na carga). kw = potência nominal.
+   ===================================================================== */
+var CHAVES = [
+  {n:1, estado:'ligada',    hab:true, kw:25},
+  {n:2, estado:'ligada',    hab:true, kw:25},
+  {n:3, estado:'desligada', hab:true, kw:50},
+  {n:4, estado:'desligada', hab:true, kw:50},
+  {n:5, estado:'falha',     hab:true, kw:100},
+  {n:6, estado:'desligada', hab:false,kw:100},
+  {n:7, estado:'ligada',    hab:true, kw:75},
+  {n:8, estado:'desligada', hab:true, kw:75}
+];
+var TXT_ESTADO = {ligada:['●','Ligada'], desligada:['○','Desligada'], falha:['⚠','Falha']};
+var $ = function(id){return document.getElementById(id)};
+
+/* Total: só soma chave LIGADA e HABILITADA (falha e desabilitada nunca contam) */
+function totalKw(){
+  return CHAVES.reduce(function(s,c){return s + ((c.estado==='ligada' && c.hab)? c.kw : 0)}, 0);
+}
+
+/* Desenha a lista. Textos do estado sempre em palavra + símbolo, não só cor. */
+function desenha(){
+  var lista = $('lista'); lista.innerHTML='';
+  CHAVES.forEach(function(c){
+    var d = document.createElement('div');
+    d.className = 'chave' + (c.estado==='falha'?' falha':'') + (c.hab?'':' desab');
+    var t = TXT_ESTADO[c.estado];
+    d.innerHTML =
+      '<span class="nome">Chave '+c.n+'</span>'+
+      '<span class="kw">'+c.kw+'<i>kW</i></span>'+
+      '<div class="acoes">'+
+        '<span class="estado est-'+c.estado+'"><span class="sim" aria-hidden="true">'+t[0]+'</span>'+t[1]+'</span>'+
+        '<span class="hab-txt">'+(c.hab?'Habilitada':'DESABILITADA')+'</span>'+
+        '<button type="button" class="btn '+(c.hab?'sec':'hab')+'" data-n="'+c.n+'" '+
+          'aria-label="'+(c.hab?'Desabilitar':'Habilitar')+' chave '+c.n+'">'+(c.hab?'Desabilitar':'Habilitar')+'</button>'+
+      '</div>';
+    lista.appendChild(d);
+  });
+  $('kwTotal').textContent = totalKw();
+  var l = CHAVES.filter(function(c){return c.estado==='ligada'&&c.hab}).length;
+  var f = CHAVES.filter(function(c){return c.estado==='falha'}).length;
+  var x = CHAVES.filter(function(c){return !c.hab}).length;
+  $('resumo').textContent = l+' ligada(s) · '+f+' em falha · '+x+' desabilitada(s)';
+}
+
+/* Confirmação: nada muda sem o operador tocar em "Confirmar". */
+var pendente = null;
+function pedeConfirmacao(n){
+  var c = CHAVES.filter(function(k){return k.n===n})[0];
+  pendente = c;
+  var acao = c.hab ? 'Desabilitar' : 'Habilitar';
+  $('dlgTit').textContent = acao + ' a Chave ' + c.n + '?';
+  $('dlgTxt').textContent = c.hab
+    ? 'A chave não entrará mais na carga.'
+    : 'A chave poderá entrar na carga de '+c.kw+' kW.';
+  $('dlgFalha').hidden = (c.estado!=='falha');
+  $('dlgSim').textContent = acao;
+  $('dlgSim').className = 'btn ' + (c.hab ? 'perigo' : 'hab');
+  $('dlg').showModal();
+  $('dlgNao').focus();           /* foco no Cancelar: toque acidental não confirma */
+}
+$('lista').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-n]'); if(b) pedeConfirmacao(+b.dataset.n);
+});
+$('dlgNao').onclick = function(){ pendente=null; $('dlg').close(); };
+$('dlgSim').onclick = function(){
+  if(pendente){ pendente.hab = !pendente.hab; }   /* PROTÓTIPO: só muda o dado fictício */
+  pendente=null; $('dlg').close(); desenha();
+};
+
+/* Tema claro/escuro: mesmo mecanismo do medidor (html[data-tema=escuro]) */
+$('bTema').onclick = function(){
+  var esc = document.documentElement.dataset.tema==='escuro';
+  if(esc) delete document.documentElement.dataset.tema; else document.documentElement.dataset.tema='escuro';
+  $('bTema').textContent = 'Tema: ' + (esc?'claro':'escuro');
+  $('bTema').setAttribute('aria-pressed', String(!esc));
+};
+/* Animações discretas: desligadas por padrão (a classe só liga o CSS acima) */
+$('chkAnim').onchange = function(){ document.documentElement.classList.toggle('anim-on', this.checked); };
+
+desenha();
+</script>
+</body>
+</html>
