@@ -14,7 +14,7 @@ O que já foi provado em simulado não precisa ser repetido a fundo; aqui se pro
 |---|---|---|
 | P1 | Backup do Node-RED exportado (todas as abas) e do `flows` atual | ☐ |
 | P2 | OK do Reginaldo para importar a aba nova | ☐ |
-| P3 | Pacote .zip no PC BT2 com: `rnc-api-v1.1.json`, `rnc_registro_v0.1.html`, `rnc_reparo_v0.2.html`, `medidor_gerador_v1.10.202.html` (base 1.10.201; confirmar que é a versão que o PC BT2 usa hoje) | ☐ |
+| P3 | Pacote .zip no PC BT2 com: `rnc-api-v1.1.json`, `rnc_registro_v0.1.html`, `rnc_reparo_v0.2.html`, `medidor_gerador_v1.10.203.html` (base 1.10.201 + botão RNC + fase RNC no robô; confirmar que a 1.10.201 é a versão que o PC BT2 usa hoje) | ☐ |
 | P4 | PC do reparo alcança o Node-RED do PC BT2 (ping e navegador abrem `http://<IP-BT2>:1880`) — **decisão 2: confirmar** | ☐ |
 | P5 | Versão do Node-RED anotada: ______ (testado em 4.x). `functionExternalModules` não desligado no `settings.js` | ☐ |
 | P6 | Pasta de dados de teste criada, com permissão de escrita para o usuário do Node-RED (ex.: `C:\...\rnc-dados-teste`; **ajustar o caminho**) | ☐ |
@@ -56,7 +56,7 @@ Para cada teste: executar, anotar **OK / FALHOU** e observação. **Falhou = reg
 ### Bloco C — Medidor com DSE real (carga DESACOPLADA)
 | ID | Passo | Esperado | OK |
 |---|---|---|---|
-| T14 | Medidor v1.10.202 aberto pelo Node-RED, **Demo desligado**, DSE real lendo. Informar série C em *Dados do ensaio*. Botão **⚠ Registrar defeito** | Janela com série, modelo do DSE e banco preenchidos; "O que será anexado" mostra **grandezas reais** (tensões, corrente, rpm, temp.) e alarmes **iguais ao que o DSE mostra** | ☐ |
+| T14 | Medidor v1.10.203 aberto pelo Node-RED, **Demo desligado**, DSE real lendo. Informar série C em *Dados do ensaio*. Botão **⚠ Registrar defeito** | Janela com série, modelo do DSE e banco preenchidos; "O que será anexado" mostra **grandezas reais** (tensões, corrente, rpm, temp.) e alarmes **iguais ao que o DSE mostra** | ☐ |
 | T15 | Confirmar a RNC | "Salvo". No Reparo, o detalhe mostra o **Contexto do ensaio** coerente com o momento (hora, etapa, valores) e **sem** `[DEMO]` | ☐ |
 | T16 | Com a série C bloqueada, **iniciar um ensaio** com essa série | Faixa "Atenção (ensaio iniciado)…" e etiqueta "RNC: BLOQUEADO (1)"; o **ensaio roda normalmente** (aviso não bloqueia) | ☐ |
 | T17 | Trocar de etapa do ensaio | Faixa aparece de novo só se a situação mudou; ensaio segue normal | ☐ |
@@ -74,6 +74,7 @@ Para cada teste: executar, anotar **OK / FALHOU** e observação. **Falhou = reg
 | T25 | Antivírus/permissão: gravar e apagar foto de 2 MB | Sem bloqueio; foto maior que 3 MB é recusada | ☐ |
 | T26 | Dois operadores usam por 30 min no turno, sem ajuda | Conseguem registrar e consertar; anotar dúvidas e o tempo médio para registrar um defeito: ______ s | ☐ |
 | T28 | Menu ☰ do medidor (operador, sem `?dev=1`) | Lista Medidor, Gráfico, **RNC · Registro de defeito** e **RNC · Reparo**; clicar abre a tela certa na mesma pasta | ☐ |
+| T29 | *(opcional, só com OK do Reginaldo e pasta de dados de TESTE)* Medidor v1.10.203 em **Demo local**, desbloqueio do Demo com o Reginaldo (a senha não vem no pacote): popup Demo › Dev/Operador oculto › rodar o ensaio completo | Relatório com a fase **"RNC · Registrar defeito" toda OK** (simula falha do alternador de carga: alternador 0 V, bateria 24,8 V, alarme). Esperado **8 FALHAS do Setup já conhecidas (SETUP-ROBO-01)**: BC56/BC400/BC59,5/BC550, não são do RNC. Com pasta real a fase é PULADA com aviso (não grava) | ☐ |
 | T27 | **Processo da fábrica:** colocar a etiqueta BLOQUEADO no gerador de teste; a expedição simula a conferência (consulta o Reparo ou `GET /api/rnc/serie/<série>`) | A expedição consegue ver que está bloqueado **antes** de liberar | ☐ |
 
 ## 4. Critérios de aprovação do piloto
@@ -92,6 +93,6 @@ Para cada teste: executar, anotar **OK / FALHOU** e observação. **Falhou = reg
 O fluxo é uma aba separada e só grava arquivo. Para desfazer: Node-RED › desabilitar/excluir a aba `RNC · …` › Deploy. Os `.html` novos podem ser apagados da pasta `public`. Nada nas abas das chaves, no PLC ou no DSE foi alterado, então não há o que restaurar além disso. Se algo estranho aparecer, restaurar o backup do P1.
 
 ## 7. Registro do resultado
-Data: ______ · Executado por: ______ · Node-RED: ______ · Medidor: v1.10.202
+Data: ______ · Executado por: ______ · Node-RED: ______ · Medidor: v1.10.203
 Resumo: testes OK ___ / FALHOU ___ · `todo` abertos (ID — gravidade — descrição): ______
 Aprovado para uso real? ☐ Sim ☐ Não · Responsável: ______
