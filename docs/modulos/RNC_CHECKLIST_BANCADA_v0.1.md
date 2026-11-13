@@ -14,7 +14,7 @@ O que já foi provado em simulado não precisa ser repetido a fundo; aqui se pro
 |---|---|---|
 | P1 | Backup do Node-RED exportado (todas as abas) e do `flows` atual | ☐ |
 | P2 | OK do Reginaldo para importar a aba nova | ☐ |
-| P3 | Pacote .zip no PC BT2 com: `rnc-api-v1.1.json`, `rnc_registro_v0.1.html`, `rnc_reparo_v0.2.html`, `medidor_gerador_v1.10.135.html` | ☐ |
+| P3 | Pacote .zip no PC BT2 com: `rnc-api-v1.1.json`, `rnc_registro_v0.1.html`, `rnc_reparo_v0.2.html`, `medidor_gerador_v1.10.202.html` (base 1.10.201; confirmar que é a versão que o PC BT2 usa hoje) | ☐ |
 | P4 | PC do reparo alcança o Node-RED do PC BT2 (ping e navegador abrem `http://<IP-BT2>:1880`) — **decisão 2: confirmar** | ☐ |
 | P5 | Versão do Node-RED anotada: ______ (testado em 4.x). `functionExternalModules` não desligado no `settings.js` | ☐ |
 | P6 | Pasta de dados de teste criada, com permissão de escrita para o usuário do Node-RED (ex.: `C:\...\rnc-dados-teste`; **ajustar o caminho**) | ☐ |
@@ -54,7 +54,7 @@ Para cada teste: executar, anotar **OK / FALHOU** e observação. **Falhou = reg
 ### Bloco C — Medidor com DSE real (carga DESACOPLADA)
 | ID | Passo | Esperado | OK |
 |---|---|---|---|
-| T14 | Medidor v1.10.135 aberto pelo Node-RED, **Demo desligado**, DSE real lendo. Informar série C em *Dados do ensaio*. Botão **⚠ Registrar defeito** | Janela com série, modelo do DSE e banco preenchidos; "O que será anexado" mostra **grandezas reais** (tensões, corrente, rpm, temp.) e alarmes **iguais ao que o DSE mostra** | ☐ |
+| T14 | Medidor v1.10.202 aberto pelo Node-RED, **Demo desligado**, DSE real lendo. Informar série C em *Dados do ensaio*. Botão **⚠ Registrar defeito** | Janela com série, modelo do DSE e banco preenchidos; "O que será anexado" mostra **grandezas reais** (tensões, corrente, rpm, temp.) e alarmes **iguais ao que o DSE mostra** | ☐ |
 | T15 | Confirmar a RNC | "Salvo". No Reparo, o detalhe mostra o **Contexto do ensaio** coerente com o momento (hora, etapa, valores) e **sem** `[DEMO]` | ☐ |
 | T16 | Com a série C bloqueada, **iniciar um ensaio** com essa série | Faixa "Atenção (ensaio iniciado)…" e etiqueta "RNC: BLOQUEADO (1)"; o **ensaio roda normalmente** (aviso não bloqueia) | ☐ |
 | T17 | Trocar de etapa do ensaio | Faixa aparece de novo só se a situação mudou; ensaio segue normal | ☐ |
@@ -89,6 +89,6 @@ Para cada teste: executar, anotar **OK / FALHOU** e observação. **Falhou = reg
 O fluxo é uma aba separada e só grava arquivo. Para desfazer: Node-RED › desabilitar/excluir a aba `RNC · …` › Deploy. Os `.html` novos podem ser apagados da pasta `public`. Nada nas abas das chaves, no PLC ou no DSE foi alterado, então não há o que restaurar além disso. Se algo estranho aparecer, restaurar o backup do P1.
 
 ## 7. Registro do resultado
-Data: ______ · Executado por: ______ · Node-RED: ______ · Medidor: v1.10.135
+Data: ______ · Executado por: ______ · Node-RED: ______ · Medidor: v1.10.202
 Resumo: testes OK ___ / FALHOU ___ · `todo` abertos (ID — gravidade — descrição): ______
 Aprovado para uso real? ☐ Sim ☐ Não · Responsável: ______
