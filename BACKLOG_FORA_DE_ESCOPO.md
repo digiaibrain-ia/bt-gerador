@@ -157,3 +157,9 @@ Documentos (.md/.scl) foram limpos: IPs viraram [IP_1515], [IP_ET200], [IP_PC_BT
 - **Lacunas conhecidas (a revisar, nada corrigido ainda):** o comentário/descrição do fluxo `nodered/flows/bt2/cliente-156-dse-plc-carga-v3.json` (e v2) diz "grava o DB2000 do PLC da Carga (hoje 1515 provisória; destino final 1214FC)"; ~40 arquivos em `docs/` e `nodered/flows` citam DB2000/DB52 (migração, handoffs, roteiros de implantação, `MAPA_RENUMERACAO_BT2`, `PLANO_NUMERACAO_BLOCOS_PLC`, `ESPECIFICACAO_DB58_MODO_HEARTBEAT`, `CONTEXTO_MEDIDOR_GERADOR` etc.); revisar também o roteiro do programador e o infográfico.
 - **Como fazer (método):** versão nova de cada documento/fluxo afetado, gerada por script; só onde a frase contradiz a decisão; arquivos antigos já arquivados não mudam.
 - **Pendente de decisão (levantado em 12/11):** enviar os dados do DSE (grandezas de tela, operadoras, mínimas) ao PLC de Carga para o WinCC do programador, por PUT do 1515, em DB separado do telegrama. Perguntas abertas: só números (1 PUT, bytes 0-195) ou com textos (2 PUTs, 196-311); número do DB no 1200.
+
+## (13/11/2026) IDEIA: página de input de RELATÓRIO DE DEFEITOS durante o ensaio (HTML + SQL)
+- **Origem (Reginaldo):** há situações impossíveis de testar no gerador até as devidas correções; a ideia é registrar os defeitos durante o ensaio, tudo pelo HTML e SQL.
+- **Estado:** só ideia. Não foi feito nada. Pela regra do projeto (SQL Server: "não fazer nada agora"), quando for a hora: fora do caminho de comando, gravação assíncrona, credenciais só em variável do PM2.
+- **Perguntas para quando começar:** quais campos o operador preenche (modelo, etapa, tipo de defeito, texto livre, foto?); se o registro entra no relatório do ensaio; onde fica a página (operação ou dev); se grava primeiro no Node-RED/arquivo e o SQL entra depois.
+- **Menu ☰:** quando a página existir, entra no catálogo no grupo "Operação" (aparece no menu da operação).
