@@ -1,0 +1,274 @@
+[
+  {
+    "id": "rnc_tab",
+    "type": "tab",
+    "label": "RNC · Qualidade e retrabalho (API) v1.0",
+    "disabled": false,
+    "info": "rnc-v1.0 (13/11/2026). RNC (Registro de Não Conformidade) e retrabalho do GERADOR, por número de série. Só informativo.\nNÃO tem nós s7/modbus; NÃO comanda PLC, chave nem DSE; flow SEPARADO das abas de chaves. Só grava arquivo.\nVariáveis de ambiente (PM2): RNC_DIR (pasta dos dados; sem ela usa ./rnc-dados), RNC_SERIAL_REGEX (opcional), RNC_BANCOS (opcional, ex.: BT1,BT2).\nArquivos: rnc.jsonl (um evento por linha, só cresce) · fotos/<rnc_id>/ · backup/ (diário 00:05, 30 dias).\nRotas: POST /api/rnc/abrir · POST /api/rnc/evento · GET /api/rnc · GET /api/rnc/serie/:serial · POST|GET /api/rnc/foto/... · GET /api/rnc/saude.\nRequer no settings.js do Node-RED: functionExternalModules ligado (padrão) para os módulos fs/path do nó function."
+  },
+  {
+    "id": "rnc_c",
+    "type": "comment",
+    "z": "rnc_tab",
+    "name": "RNC · só arquivo · não toca PLC/chave/DSE",
+    "info": "",
+    "x": 220,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "rnc_in_0",
+    "type": "http in",
+    "z": "rnc_tab",
+    "name": "POST /api/rnc/abrir",
+    "url": "/api/rnc/abrir",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 100,
+    "wires": [
+      [
+        "rnc_fn"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_in_1",
+    "type": "http in",
+    "z": "rnc_tab",
+    "name": "POST /api/rnc/evento",
+    "url": "/api/rnc/evento",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 150,
+    "wires": [
+      [
+        "rnc_fn"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_in_2",
+    "type": "http in",
+    "z": "rnc_tab",
+    "name": "GET /api/rnc",
+    "url": "/api/rnc",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 200,
+    "wires": [
+      [
+        "rnc_fn"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_in_3",
+    "type": "http in",
+    "z": "rnc_tab",
+    "name": "GET /api/rnc/serie/:serial",
+    "url": "/api/rnc/serie/:serial",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 250,
+    "wires": [
+      [
+        "rnc_fn"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_in_4",
+    "type": "http in",
+    "z": "rnc_tab",
+    "name": "POST /api/rnc/foto/:rnc_id",
+    "url": "/api/rnc/foto/:rnc_id",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 300,
+    "wires": [
+      [
+        "rnc_fn"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_in_5",
+    "type": "http in",
+    "z": "rnc_tab",
+    "name": "GET /api/rnc/foto/:rnc_id/:nome",
+    "url": "/api/rnc/foto/:rnc_id/:nome",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 350,
+    "wires": [
+      [
+        "rnc_fn"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_in_6",
+    "type": "http in",
+    "z": "rnc_tab",
+    "name": "GET /api/rnc/saude",
+    "url": "/api/rnc/saude",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 400,
+    "wires": [
+      [
+        "rnc_fn"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_fn",
+    "type": "function",
+    "z": "rnc_tab",
+    "name": "RNC · atende as rotas",
+    "func": "// rnc-v1.0 · atende todas as rotas /api/rnc/*. Node-RED é o ÚNICO escritor do rnc.jsonl; tudo abaixo é síncrono (sem corrida).\n// NÃO escreve em PLC/chave/DSE. Só arquivo.\nconst core = (function () { const module = { exports: {} };\n/* =====================================================================================================================\n   rnc_core_v1.0.js — REGRAS do RNC (Registro de Não Conformidade) e retrabalho do gerador  ·  13/11/2026\n   PARA QUE SERVE (leigo): é o \"cérebro\" das regras. Recebe o histórico já gravado + um pedido (abrir RNC, iniciar reparo...)\n   e responde: pode ou não pode, e qual linha nova deve ser gravada. NÃO grava arquivo, NÃO usa rede, NÃO toca PLC/chave/DSE.\n   POR QUE SEPARADO: o mesmo código roda (1) dentro do Node-RED, colado pelo gerador do fluxo, e (2) nos testes (tests/rnc_core.test.js).\n   COMO SE LÊ: o histórico é uma lista de EVENTOS imutáveis (uma linha do rnc.jsonl cada). O estado atual é sempre recalculado deles.\n   ESTADOS da RNC:  ABERTA (já bloqueia expedição) -> EM_REPARO -> AGUARDANDO_RETESTE -> LIBERADO.  Reteste REPROVADO volta a EM_REPARO.\n   REGRAS TRAVADAS AQUI (servidor): rev velha é recusada · não pula estado · reparo exige ação e responsável · só libera com reteste APROVADO ·\n   gerador (série) só fica liberado quando TODAS as RNCs dele estiverem LIBERADO.\n   Formato do evento (tabela-ready):\n     { event_id, rnc_id, serial, event, timestamp, actor, rev, schema_version, banco, idem?, data:{...} }\n   Para acrescentar campo no futuro: ponha DENTRO de data, opcional; nunca altere eventos antigos; suba schema_version só se mudar o sentido de algo.\n   ===================================================================================================================== */\n'use strict';\n\nconst SCHEMA_VERSION = 1;\n\n// Configuração padrão (o fluxo pode sobrescrever por variável de ambiente do PM2: RNC_SERIAL_REGEX, RNC_BANCOS)\nconst CFG_PADRAO = {\n  // ASSUMIDO a partir do exemplo M9MGD26060019SDFWA01715 (23 caracteres, letras e números). Largo de propósito: ajustar quando o formato for confirmado.\n  serialRegex: '^[A-Z0-9]{15,30}$',\n  bancos: ['BT1', 'BT2'],\n  tiposNc: ['DEFEITO', 'ERRO_MONTAGEM', 'FALHA_ENSAIO', 'OUTRO'],\n  maxTexto: 1000,\n  maxNome: 60,\n  maxModelo: 60,\n};\n\nconst ESTADOS = ['ABERTA', 'EM_REPARO', 'AGUARDANDO_RETESTE', 'LIBERADO'];\n\n// Transições permitidas: estado atual -> { evento: estado seguinte } (o RETESTE depende do resultado, tratado em proximoEstado)\nconst TRANSICOES = {\n  ABERTA: { REPARO_INICIADO: 'EM_REPARO' },\n  EM_REPARO: { REPARO_REGISTRADO: 'AGUARDANDO_RETESTE' },\n  AGUARDANDO_RETESTE: { RETESTE_REGISTRADO: '*' },\n  LIBERADO: {},\n};\n\nconst pad = (n, w) => String(n).padStart(w, '0');\nconst txt = (v) => (typeof v === 'string' ? v.trim() : '');\n\n/** Normaliza o número de série: sem espaços, maiúsculo. */\nfunction normalizaSerie(s) {\n  return txt(s).replace(/\\s+/g, '').toUpperCase();\n}\n\nfunction erro(status, msg, extra) {\n  return Object.assign({ status, body: Object.assign({ ok: false, erro: msg }, extra || {}), evento: null });\n}\n\n/** Reconstrói o estado de cada RNC a partir dos eventos (ordem de gravação). */\nfunction reconstruir(eventos) {\n  const rncs = {};\n  for (const e of eventos) {\n    let r = rncs[e.rnc_id];\n    if (e.event === 'RNC_ABERTA') {\n      r = rncs[e.rnc_id] = {\n        rnc_id: e.rnc_id, serial: e.serial, banco: e.banco, modelo: e.data.modelo, tipo_nc: e.data.tipo_nc,\n        descricao: e.data.descricao, ensaio_id: e.data.ensaio_id || null,\n        estado: 'ABERTA', rev: e.rev, aberta_por: e.actor, aberta_em: e.timestamp, atualizado_em: e.timestamp,\n        fotos: [], reparos: [], retestes: [], historico: [],\n      };\n    }\n    if (!r) continue; // evento órfão (arquivo editado à mão): ignorado, não quebra\n    r.historico.push({ event_id: e.event_id, event: e.event, timestamp: e.timestamp, actor: e.actor, rev: e.rev });\n    r.atualizado_em = e.timestamp;\n    if (e.event === 'REPARO_INICIADO') { r.estado = 'EM_REPARO'; r.rev = e.rev; }\n    else if (e.event === 'REPARO_REGISTRADO') {\n      r.estado = 'AGUARDANDO_RETESTE'; r.rev = e.rev;\n      r.reparos.push({ acao: e.data.acao, peca: e.data.peca || null, por: e.actor, em: e.timestamp });\n    } else if (e.event === 'RETESTE_REGISTRADO') {\n      r.estado = e.data.resultado === 'APROVADO' ? 'LIBERADO' : 'EM_REPARO'; r.rev = e.rev;\n      r.retestes.push({ resultado: e.data.resultado, ensaio_id: e.data.ensaio_id || null, por: e.actor, em: e.timestamp });\n    } else if (e.event === 'FOTO_ANEXADA') {\n      r.fotos.push({ foto_ref: e.data.foto_ref, bytes: e.data.bytes || null, por: e.actor, em: e.timestamp });\n    }\n  }\n  return rncs;\n}\n\n/** Situação do gerador (série): BLOQUEADO se qualquer RNC dele não estiver LIBERADO. */\nfunction situacaoSerie(rncs, serial) {\n  const lista = Object.values(rncs).filter((r) => r.serial === serial);\n  const abertas = lista.filter((r) => r.estado !== 'LIBERADO');\n  return {\n    serial,\n    situacao: lista.length === 0 ? 'SEM_RNC' : abertas.length ? 'BLOQUEADO' : 'LIBERADO',\n    total: lista.length,\n    pendentes: abertas.map((r) => ({ rnc_id: r.rnc_id, estado: r.estado })),\n    rncs: lista,\n  };\n}\n\nfunction validaComum(req, cfg) {\n  const actor = txt(req.actor);\n  if (!actor) return 'informe quem está registrando (nome)';\n  if (actor.length > cfg.maxNome) return 'nome muito longo';\n  return null;\n}\n\n/**\n * processar(eventos, req, agora, cfg) — decide um pedido.\n *   req = { acao:'abrir'|'evento'|'foto', ... }  (ver docs/modulos/RNC_RETRABALHO_v0.1.md)\n * Devolve { status, body, evento }. Se evento != null, o chamador DEVE gravá-lo (e só então responder ao HTML).\n */\nfunction processar(eventos, req, agora, cfgIn) {\n  const cfg = Object.assign({}, CFG_PADRAO, cfgIn || {});\n  const rncs = reconstruir(eventos);\n  const ts = agora.toISOString();\n  const proxEvt = 'EVT-' + pad(eventos.length + 1, 6);\n\n  // Idempotência: mesmo pedido reenviado (queda de rede) não duplica.\n  const idem = txt(req.idempotency_key);\n  if (idem) {\n    const ja = eventos.find((e) => e.idem === idem);\n    if (ja) return { status: 200, body: { ok: true, repetido: true, rnc: rncs[ja.rnc_id] }, evento: null };\n  }\n\n  const e0 = validaComum(req, cfg);\n  if (e0) return erro(400, e0);\n  const actor = txt(req.actor);\n\n  if (req.acao === 'abrir') {\n    const serial = normalizaSerie(req.serial);\n    if (!new RegExp(cfg.serialRegex).test(serial)) return erro(400, 'número de série fora do formato', { serialRegex: cfg.serialRegex });\n    const banco = txt(req.banco).toUpperCase();\n    if (!cfg.bancos.includes(banco)) return erro(400, 'banco inválido (use ' + cfg.bancos.join(' ou ') + ')');\n    const modelo = txt(req.modelo);\n    if (!modelo || modelo.length > cfg.maxModelo) return erro(400, 'informe o modelo');\n    const tipo = txt(req.tipo_nc).toUpperCase();\n    if (!cfg.tiposNc.includes(tipo)) return erro(400, 'tipo de não conformidade inválido');\n    const descricao = txt(req.descricao);\n    if (descricao.length < 5 || descricao.length > cfg.maxTexto) return erro(400, 'descreva o defeito (5 a ' + cfg.maxTexto + ' caracteres)');\n    const ano = agora.getUTCFullYear();\n    const n = Object.keys(rncs).filter((id) => id.startsWith('RNC-' + ano + '-')).length + 1;\n    const rnc_id = 'RNC-' + ano + '-' + pad(n, 4);\n    const evento = {\n      event_id: proxEvt, rnc_id, serial, event: 'RNC_ABERTA', timestamp: ts, actor, rev: 1, schema_version: SCHEMA_VERSION, banco,\n      data: { modelo, tipo_nc: tipo, descricao, ensaio_id: txt(req.ensaio_id) || null },\n    };\n    if (idem) evento.idem = idem;\n    const novo = reconstruir(eventos.concat([evento]))[rnc_id];\n    return { status: 201, body: { ok: true, rnc: novo, situacao: situacaoSerie(reconstruir(eventos.concat([evento])), serial).situacao }, evento };\n  }\n\n  // Daqui em diante o pedido é sobre uma RNC existente\n  const r = rncs[txt(req.rnc_id)];\n  if (!r) return erro(404, 'RNC não encontrada');\n\n  if (req.acao === 'foto') {\n    const evento = {\n      event_id: proxEvt, rnc_id: r.rnc_id, serial: r.serial, event: 'FOTO_ANEXADA', timestamp: ts, actor, rev: r.rev, schema_version: SCHEMA_VERSION, banco: r.banco,\n      data: { foto_ref: req.foto_ref, bytes: req.bytes || null },\n    };\n    const novo = reconstruir(eventos.concat([evento]))[r.rnc_id];\n    return { status: 201, body: { ok: true, rnc: novo }, evento };\n  }\n\n  if (req.acao !== 'evento') return erro(400, 'ação desconhecida');\n\n  // Controle de edição simultânea: quem salva com versão velha recebe aviso e a tela atualiza.\n  if (!Number.isInteger(req.rev_esperado)) return erro(400, 'informe rev_esperado');\n  if (req.rev_esperado !== r.rev) return erro(409, 'esta RNC foi alterada por outra pessoa; atualize a tela', { rev_atual: r.rev, rnc: r });\n\n  const nome = txt(req.event).toUpperCase();\n  const permitidas = TRANSICOES[r.estado] || {};\n  if (!(nome in permitidas)) {\n    return erro(422, 'transição não permitida: ' + nome + ' em ' + r.estado, { estado: r.estado, permitidos: Object.keys(permitidas) });\n  }\n\n  const d = req.data || {};\n  const data = {};\n  if (nome === 'REPARO_REGISTRADO') {\n    const acao = txt(d.acao);\n    if (acao.length < 3 || acao.length > cfg.maxTexto) return erro(400, 'descreva a ação executada no reparo');\n    data.acao = acao;\n    const peca = txt(d.peca);\n    if (peca) data.peca = peca.slice(0, cfg.maxTexto); // peça é opcional: nem todo reparo troca peça\n  } else if (nome === 'RETESTE_REGISTRADO') {\n    const res = txt(d.resultado).toUpperCase();\n    if (res !== 'APROVADO' && res !== 'REPROVADO') return erro(400, 'resultado do reteste deve ser APROVADO ou REPROVADO');\n    data.resultado = res;\n    if (txt(d.ensaio_id)) data.ensaio_id = txt(d.ensaio_id);\n  }\n\n  const evento = {\n    event_id: proxEvt, rnc_id: r.rnc_id, serial: r.serial, event: nome, timestamp: ts, actor, rev: r.rev + 1, schema_version: SCHEMA_VERSION, banco: r.banco, data,\n  };\n  if (idem) evento.idem = idem;\n  const todos = reconstruir(eventos.concat([evento]));\n  return { status: 200, body: { ok: true, rnc: todos[r.rnc_id], situacao: situacaoSerie(todos, r.serial).situacao }, evento };\n}\n\nmodule.exports = { SCHEMA_VERSION, CFG_PADRAO, ESTADOS, TRANSICOES, normalizaSerie, reconstruir, situacaoSerie, processar };\n\nreturn module.exports; })();\nconst criarArmazem = (function () { const module = { exports: {} };\n/* =====================================================================================================================\n   rnc_io_v1.0.js — GRAVAÇÃO do RNC em arquivo (rnc.jsonl), fotos e backup  ·  13/11/2026\n   PARA QUE SERVE (leigo): guarda cada evento do RNC numa linha do arquivo rnc.jsonl, no disco do PC do Node-RED, e só avisa \"salvo\"\n   depois que a linha realmente foi para o disco. Também guarda as fotos em pasta e faz a cópia diária (backup).\n   POR QUE ASSIM (técnico): Node-RED é o ÚNICO escritor. Tudo (ler cache -> validar -> gravar -> atualizar cache) roda SÍNCRONO dentro de\n   uma chamada, então dois pedidos simultâneos nunca se misturam (JavaScript é de uma thread só). Gravação = open(append) + write + fsync.\n   NÃO FAZ: não toca PLC/chave/DSE; não usa banco SQL; não apaga linhas (o histórico só cresce).\n   Pasta: variável RNC_DIR (PM2); sem ela usa ./rnc-dados relativo à pasta onde o Node-RED foi iniciado.\n   ===================================================================================================================== */\n'use strict';\n\n/** deps = { fs, path, core, dir, cfg } — o fluxo entrega fs/path; os testes entregam os mesmos. */\nmodule.exports = function criarArmazem(deps) {\n  const { fs, path, core } = deps;\n  const dir = path.resolve(deps.dir || 'rnc-dados');\n  const arq = path.join(dir, 'rnc.jsonl');\n  const dirFotos = path.join(dir, 'fotos');\n  const dirBackup = path.join(dir, 'backup');\n  const MAX_FOTO = 3 * 1024 * 1024; // 3 MB por foto (o HTML já reduz antes de enviar)\n  const TIPOS_FOTO = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };\n\n  let cache = null;      // eventos em memória\n  let tamanhoLido = -1;  // tamanho do arquivo quando foi lido (detecta troca externa, ex.: restauração de backup)\n  let corrompidas = 0;\n\n  function garantePastas() { for (const d of [dir, dirFotos, dirBackup]) fs.mkdirSync(d, { recursive: true }); }\n\n  /** Lê o arquivo inteiro (só quando mudou por fora). Linha quebrada é contada e ignorada: nunca derruba o serviço. */\n  function carregar() {\n    garantePastas();\n    const tam = fs.existsSync(arq) ? fs.statSync(arq).size : 0;\n    if (cache && tam === tamanhoLido) return cache;\n    cache = []; corrompidas = 0;\n    if (tam > 0) {\n      for (const linha of fs.readFileSync(arq, 'utf8').split('\\n')) {\n        if (!linha.trim()) continue;\n        try { cache.push(JSON.parse(linha)); } catch (e) { corrompidas++; }\n      }\n    }\n    tamanhoLido = tam;\n    return cache;\n  }\n\n  /** Grava UMA linha com fsync. Só depois disso o evento entra no cache. Lança erro se o disco falhar (HTML recebe 500, não \"salvo\"). */\n  function gravar(evento) {\n    const fd = fs.openSync(arq, 'a');\n    try {\n      fs.writeSync(fd, JSON.stringify(evento) + '\\n');\n      fs.fsyncSync(fd);\n    } finally { fs.closeSync(fd); }\n    tamanhoLido = fs.statSync(arq).size;\n    cache.push(evento);\n  }\n\n  /** Pedido de abrir/evento: decide (core) e grava. */\n  function executar(req, agora) {\n    const eventos = carregar();\n    const r = core.processar(eventos, req, agora || new Date(), deps.cfg);\n    if (r.evento) gravar(r.evento);\n    return r;\n  }\n\n  /** Pedido de foto: valida, grava o arquivo em fotos/<rnc_id>/<n>.<ext>, depois grava o evento. */\n  function executarFoto(rnc_id, actor, contentType, buffer, agora) {\n    const eventos = carregar();\n    const ext = TIPOS_FOTO[String(contentType || '').split(';')[0].trim().toLowerCase()];\n    if (!ext) return { status: 415, body: { ok: false, erro: 'foto deve ser JPEG, PNG ou WebP' }, evento: null };\n    if (!Buffer.isBuffer(buffer) || buffer.length === 0) return { status: 400, body: { ok: false, erro: 'foto vazia' }, evento: null };\n    if (buffer.length > MAX_FOTO) return { status: 413, body: { ok: false, erro: 'foto maior que 3 MB' }, evento: null };\n    const rncs = core.reconstruir(eventos);\n    const r = rncs[rnc_id];\n    if (!r) return { status: 404, body: { ok: false, erro: 'RNC não encontrada' }, evento: null };\n    const pasta = path.join(dirFotos, rnc_id); // rnc_id vem do arquivo (RNC-AAAA-NNNN), nunca do cliente cru: já conferido acima\n    fs.mkdirSync(pasta, { recursive: true });\n    const nome = (r.fotos.length + 1) + '.' + ext;\n    const fd = fs.openSync(path.join(pasta, nome), 'w');\n    try { fs.writeSync(fd, buffer); fs.fsyncSync(fd); } finally { fs.closeSync(fd); }\n    const res = core.processar(eventos, { acao: 'foto', rnc_id, actor, foto_ref: rnc_id + '/' + nome, bytes: buffer.length }, agora || new Date(), deps.cfg);\n    if (res.evento) gravar(res.evento);\n    return res;\n  }\n\n  /** Lê uma foto para exibir no Reparo. Só aceita referência que existe no histórico (evita ler caminho arbitrário). */\n  function lerFoto(rnc_id, nome) {\n    const eventos = carregar();\n    const ref = rnc_id + '/' + nome;\n    if (!eventos.some((e) => e.event === 'FOTO_ANEXADA' && e.data.foto_ref === ref)) return null;\n    const ext = nome.split('.').pop();\n    const tipo = Object.keys(TIPOS_FOTO).find((k) => TIPOS_FOTO[k] === ext);\n    return { tipo, buffer: fs.readFileSync(path.join(dirFotos, rnc_id, nome)) };\n  }\n\n  function listar() { return core.reconstruir(carregar()); }\n\n  /** Backup diário: copia rnc.jsonl para backup/rnc-AAAA-MM-DD.jsonl (sobrescreve o do mesmo dia) e mantém os 30 mais novos. */\n  function backup(agora) {\n    carregar();\n    if (!fs.existsSync(arq)) return { ok: true, copiado: false };\n    const d = (agora || new Date()).toISOString().slice(0, 10);\n    const dest = path.join(dirBackup, 'rnc-' + d + '.jsonl');\n    fs.copyFileSync(arq, dest);\n    const todos = fs.readdirSync(dirBackup).filter((f) => /^rnc-\\d{4}-\\d{2}-\\d{2}\\.jsonl$/.test(f)).sort();\n    for (const f of todos.slice(0, Math.max(0, todos.length - 30))) fs.unlinkSync(path.join(dirBackup, f));\n    return { ok: true, copiado: true, arquivo: path.basename(dest) };\n  }\n\n  function saude() {\n    const ev = carregar();\n    return { ok: true, arquivo: arq, eventos: ev.length, linhasIgnoradas: corrompidas, ultimoEvento: ev.length ? ev[ev.length - 1].timestamp : null, serialRegex: (deps.cfg && deps.cfg.serialRegex) || core.CFG_PADRAO.serialRegex };\n  }\n\n  return { executar, executarFoto, lerFoto, listar, backup, saude, carregar, dir };\n};\n\nreturn module.exports; })();\n\nconst FLOW = 'rnc-v1.0';\nlet arm = context.get('arm');\nif (!arm) {\n  const cfg = {};\n  if (env.get('RNC_SERIAL_REGEX')) cfg.serialRegex = env.get('RNC_SERIAL_REGEX');\n  if (env.get('RNC_BANCOS')) cfg.bancos = env.get('RNC_BANCOS').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);\n  arm = criarArmazem({ fs, path, core, dir: env.get('RNC_DIR') || 'rnc-dados', cfg });\n  context.set('arm', arm);\n}\nconst req = msg.req || {};\nconst rota = String(req.method || '').toUpperCase() + ' ' + (req.route && req.route.path || '');\nconst body = (msg.payload && typeof msg.payload === 'object' && !Buffer.isBuffer(msg.payload)) ? msg.payload : {};\nconst q = req.query || {};\nconst prm = req.params || {};\nconst H = { 'Content-Type': 'application/json' };\nconst resp = (r) => { msg.statusCode = r.status; msg.headers = H; msg.payload = Object.assign({ flow: FLOW }, r.body); return msg; };\n\nif (rota === 'POST /api/rnc/abrir') {\n  return resp(arm.executar(Object.assign({}, body, { acao: 'abrir' })));\n}\nif (rota === 'POST /api/rnc/evento') {\n  return resp(arm.executar(Object.assign({}, body, { acao: 'evento', event: body.event })));\n}\nif (rota === 'GET /api/rnc') {\n  let lista = Object.values(arm.listar());\n  if (q.serial) { const s = core.normalizaSerie(q.serial); lista = lista.filter(r => r.serial === s); }\n  if (q.estado) lista = lista.filter(r => r.estado === String(q.estado).toUpperCase());\n  if (q.encerradas !== '1') lista = lista.filter(r => r.estado !== 'LIBERADO' || q.encerradas === 'todas');\n  lista.sort((a, b) => (a.atualizado_em < b.atualizado_em ? 1 : -1));\n  const limit = Math.min(Math.max(parseInt(q.limit, 10) || 200, 1), 1000);\n  return resp({ status: 200, body: { ok: true, total: lista.length, rncs: lista.slice(0, limit) } });\n}\nif (rota === 'GET /api/rnc/serie/:serial') {\n  const s = core.normalizaSerie(prm.serial);\n  return resp({ status: 200, body: Object.assign({ ok: true }, core.situacaoSerie(arm.listar(), s)) });\n}\nif (rota === 'POST /api/rnc/foto/:rnc_id') {\n  const ct = (req.headers && req.headers['content-type']) || '';\n  return resp(arm.executarFoto(prm.rnc_id, String(q.actor || ''), ct, msg.payload));\n}\nif (rota === 'GET /api/rnc/foto/:rnc_id/:nome') {\n  const f = arm.lerFoto(prm.rnc_id, prm.nome);\n  if (!f) return resp({ status: 404, body: { ok: false, erro: 'foto não encontrada' } });\n  msg.statusCode = 200; msg.headers = { 'Content-Type': f.tipo, 'Cache-Control': 'max-age=3600' }; msg.payload = f.buffer; return msg;\n}\nif (rota === 'GET /api/rnc/saude') {\n  return resp({ status: 200, body: arm.saude() });\n}\nreturn resp({ status: 404, body: { ok: false, erro: 'rota desconhecida: ' + rota } });\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [
+      {
+        "var": "fs",
+        "module": "fs"
+      },
+      {
+        "var": "path",
+        "module": "path"
+      }
+    ],
+    "x": 520,
+    "y": 220,
+    "wires": [
+      [
+        "rnc_out"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_out",
+    "type": "http response",
+    "z": "rnc_tab",
+    "name": "HTTP response",
+    "statusCode": "",
+    "headers": {},
+    "x": 800,
+    "y": 220,
+    "wires": []
+  },
+  {
+    "id": "rnc_catch",
+    "type": "catch",
+    "z": "rnc_tab",
+    "name": "erro nesta aba",
+    "scope": null,
+    "uncaught": true,
+    "x": 190,
+    "y": 500,
+    "wires": [
+      [
+        "rnc_fn_erro"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_fn_erro",
+    "type": "function",
+    "z": "rnc_tab",
+    "name": "responde 500",
+    "func": "// rnc-v1.0 · qualquer exceção desta aba vira HTTP 500 (a requisição não fica pendurada e o HTML NÃO mostra \"salvo\").\nmsg.statusCode = 500;\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.payload = { ok: false, flow: 'rnc-v1.0', erro: (msg.error && msg.error.message) || 'erro interno' };\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [
+      {
+        "var": "fs",
+        "module": "fs"
+      },
+      {
+        "var": "path",
+        "module": "path"
+      }
+    ],
+    "x": 520,
+    "y": 500,
+    "wires": [
+      [
+        "rnc_out"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_cron",
+    "type": "inject",
+    "z": "rnc_tab",
+    "name": "backup diário 00:05",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "05 00 * * *",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 190,
+    "y": 580,
+    "wires": [
+      [
+        "rnc_fn_bkp"
+      ]
+    ]
+  },
+  {
+    "id": "rnc_fn_bkp",
+    "type": "function",
+    "z": "rnc_tab",
+    "name": "copia rnc.jsonl",
+    "func": "// rnc-v1.0 · cópia diária do rnc.jsonl (00:05). Mantém os 30 mais novos. Só arquivo.\nconst core = (function () { const module = { exports: {} };\n/* =====================================================================================================================\n   rnc_core_v1.0.js — REGRAS do RNC (Registro de Não Conformidade) e retrabalho do gerador  ·  13/11/2026\n   PARA QUE SERVE (leigo): é o \"cérebro\" das regras. Recebe o histórico já gravado + um pedido (abrir RNC, iniciar reparo...)\n   e responde: pode ou não pode, e qual linha nova deve ser gravada. NÃO grava arquivo, NÃO usa rede, NÃO toca PLC/chave/DSE.\n   POR QUE SEPARADO: o mesmo código roda (1) dentro do Node-RED, colado pelo gerador do fluxo, e (2) nos testes (tests/rnc_core.test.js).\n   COMO SE LÊ: o histórico é uma lista de EVENTOS imutáveis (uma linha do rnc.jsonl cada). O estado atual é sempre recalculado deles.\n   ESTADOS da RNC:  ABERTA (já bloqueia expedição) -> EM_REPARO -> AGUARDANDO_RETESTE -> LIBERADO.  Reteste REPROVADO volta a EM_REPARO.\n   REGRAS TRAVADAS AQUI (servidor): rev velha é recusada · não pula estado · reparo exige ação e responsável · só libera com reteste APROVADO ·\n   gerador (série) só fica liberado quando TODAS as RNCs dele estiverem LIBERADO.\n   Formato do evento (tabela-ready):\n     { event_id, rnc_id, serial, event, timestamp, actor, rev, schema_version, banco, idem?, data:{...} }\n   Para acrescentar campo no futuro: ponha DENTRO de data, opcional; nunca altere eventos antigos; suba schema_version só se mudar o sentido de algo.\n   ===================================================================================================================== */\n'use strict';\n\nconst SCHEMA_VERSION = 1;\n\n// Configuração padrão (o fluxo pode sobrescrever por variável de ambiente do PM2: RNC_SERIAL_REGEX, RNC_BANCOS)\nconst CFG_PADRAO = {\n  // ASSUMIDO a partir do exemplo M9MGD26060019SDFWA01715 (23 caracteres, letras e números). Largo de propósito: ajustar quando o formato for confirmado.\n  serialRegex: '^[A-Z0-9]{15,30}$',\n  bancos: ['BT1', 'BT2'],\n  tiposNc: ['DEFEITO', 'ERRO_MONTAGEM', 'FALHA_ENSAIO', 'OUTRO'],\n  maxTexto: 1000,\n  maxNome: 60,\n  maxModelo: 60,\n};\n\nconst ESTADOS = ['ABERTA', 'EM_REPARO', 'AGUARDANDO_RETESTE', 'LIBERADO'];\n\n// Transições permitidas: estado atual -> { evento: estado seguinte } (o RETESTE depende do resultado, tratado em proximoEstado)\nconst TRANSICOES = {\n  ABERTA: { REPARO_INICIADO: 'EM_REPARO' },\n  EM_REPARO: { REPARO_REGISTRADO: 'AGUARDANDO_RETESTE' },\n  AGUARDANDO_RETESTE: { RETESTE_REGISTRADO: '*' },\n  LIBERADO: {},\n};\n\nconst pad = (n, w) => String(n).padStart(w, '0');\nconst txt = (v) => (typeof v === 'string' ? v.trim() : '');\n\n/** Normaliza o número de série: sem espaços, maiúsculo. */\nfunction normalizaSerie(s) {\n  return txt(s).replace(/\\s+/g, '').toUpperCase();\n}\n\nfunction erro(status, msg, extra) {\n  return Object.assign({ status, body: Object.assign({ ok: false, erro: msg }, extra || {}), evento: null });\n}\n\n/** Reconstrói o estado de cada RNC a partir dos eventos (ordem de gravação). */\nfunction reconstruir(eventos) {\n  const rncs = {};\n  for (const e of eventos) {\n    let r = rncs[e.rnc_id];\n    if (e.event === 'RNC_ABERTA') {\n      r = rncs[e.rnc_id] = {\n        rnc_id: e.rnc_id, serial: e.serial, banco: e.banco, modelo: e.data.modelo, tipo_nc: e.data.tipo_nc,\n        descricao: e.data.descricao, ensaio_id: e.data.ensaio_id || null,\n        estado: 'ABERTA', rev: e.rev, aberta_por: e.actor, aberta_em: e.timestamp, atualizado_em: e.timestamp,\n        fotos: [], reparos: [], retestes: [], historico: [],\n      };\n    }\n    if (!r) continue; // evento órfão (arquivo editado à mão): ignorado, não quebra\n    r.historico.push({ event_id: e.event_id, event: e.event, timestamp: e.timestamp, actor: e.actor, rev: e.rev });\n    r.atualizado_em = e.timestamp;\n    if (e.event === 'REPARO_INICIADO') { r.estado = 'EM_REPARO'; r.rev = e.rev; }\n    else if (e.event === 'REPARO_REGISTRADO') {\n      r.estado = 'AGUARDANDO_RETESTE'; r.rev = e.rev;\n      r.reparos.push({ acao: e.data.acao, peca: e.data.peca || null, por: e.actor, em: e.timestamp });\n    } else if (e.event === 'RETESTE_REGISTRADO') {\n      r.estado = e.data.resultado === 'APROVADO' ? 'LIBERADO' : 'EM_REPARO'; r.rev = e.rev;\n      r.retestes.push({ resultado: e.data.resultado, ensaio_id: e.data.ensaio_id || null, por: e.actor, em: e.timestamp });\n    } else if (e.event === 'FOTO_ANEXADA') {\n      r.fotos.push({ foto_ref: e.data.foto_ref, bytes: e.data.bytes || null, por: e.actor, em: e.timestamp });\n    }\n  }\n  return rncs;\n}\n\n/** Situação do gerador (série): BLOQUEADO se qualquer RNC dele não estiver LIBERADO. */\nfunction situacaoSerie(rncs, serial) {\n  const lista = Object.values(rncs).filter((r) => r.serial === serial);\n  const abertas = lista.filter((r) => r.estado !== 'LIBERADO');\n  return {\n    serial,\n    situacao: lista.length === 0 ? 'SEM_RNC' : abertas.length ? 'BLOQUEADO' : 'LIBERADO',\n    total: lista.length,\n    pendentes: abertas.map((r) => ({ rnc_id: r.rnc_id, estado: r.estado })),\n    rncs: lista,\n  };\n}\n\nfunction validaComum(req, cfg) {\n  const actor = txt(req.actor);\n  if (!actor) return 'informe quem está registrando (nome)';\n  if (actor.length > cfg.maxNome) return 'nome muito longo';\n  return null;\n}\n\n/**\n * processar(eventos, req, agora, cfg) — decide um pedido.\n *   req = { acao:'abrir'|'evento'|'foto', ... }  (ver docs/modulos/RNC_RETRABALHO_v0.1.md)\n * Devolve { status, body, evento }. Se evento != null, o chamador DEVE gravá-lo (e só então responder ao HTML).\n */\nfunction processar(eventos, req, agora, cfgIn) {\n  const cfg = Object.assign({}, CFG_PADRAO, cfgIn || {});\n  const rncs = reconstruir(eventos);\n  const ts = agora.toISOString();\n  const proxEvt = 'EVT-' + pad(eventos.length + 1, 6);\n\n  // Idempotência: mesmo pedido reenviado (queda de rede) não duplica.\n  const idem = txt(req.idempotency_key);\n  if (idem) {\n    const ja = eventos.find((e) => e.idem === idem);\n    if (ja) return { status: 200, body: { ok: true, repetido: true, rnc: rncs[ja.rnc_id] }, evento: null };\n  }\n\n  const e0 = validaComum(req, cfg);\n  if (e0) return erro(400, e0);\n  const actor = txt(req.actor);\n\n  if (req.acao === 'abrir') {\n    const serial = normalizaSerie(req.serial);\n    if (!new RegExp(cfg.serialRegex).test(serial)) return erro(400, 'número de série fora do formato', { serialRegex: cfg.serialRegex });\n    const banco = txt(req.banco).toUpperCase();\n    if (!cfg.bancos.includes(banco)) return erro(400, 'banco inválido (use ' + cfg.bancos.join(' ou ') + ')');\n    const modelo = txt(req.modelo);\n    if (!modelo || modelo.length > cfg.maxModelo) return erro(400, 'informe o modelo');\n    const tipo = txt(req.tipo_nc).toUpperCase();\n    if (!cfg.tiposNc.includes(tipo)) return erro(400, 'tipo de não conformidade inválido');\n    const descricao = txt(req.descricao);\n    if (descricao.length < 5 || descricao.length > cfg.maxTexto) return erro(400, 'descreva o defeito (5 a ' + cfg.maxTexto + ' caracteres)');\n    const ano = agora.getUTCFullYear();\n    const n = Object.keys(rncs).filter((id) => id.startsWith('RNC-' + ano + '-')).length + 1;\n    const rnc_id = 'RNC-' + ano + '-' + pad(n, 4);\n    const evento = {\n      event_id: proxEvt, rnc_id, serial, event: 'RNC_ABERTA', timestamp: ts, actor, rev: 1, schema_version: SCHEMA_VERSION, banco,\n      data: { modelo, tipo_nc: tipo, descricao, ensaio_id: txt(req.ensaio_id) || null },\n    };\n    if (idem) evento.idem = idem;\n    const novo = reconstruir(eventos.concat([evento]))[rnc_id];\n    return { status: 201, body: { ok: true, rnc: novo, situacao: situacaoSerie(reconstruir(eventos.concat([evento])), serial).situacao }, evento };\n  }\n\n  // Daqui em diante o pedido é sobre uma RNC existente\n  const r = rncs[txt(req.rnc_id)];\n  if (!r) return erro(404, 'RNC não encontrada');\n\n  if (req.acao === 'foto') {\n    const evento = {\n      event_id: proxEvt, rnc_id: r.rnc_id, serial: r.serial, event: 'FOTO_ANEXADA', timestamp: ts, actor, rev: r.rev, schema_version: SCHEMA_VERSION, banco: r.banco,\n      data: { foto_ref: req.foto_ref, bytes: req.bytes || null },\n    };\n    const novo = reconstruir(eventos.concat([evento]))[r.rnc_id];\n    return { status: 201, body: { ok: true, rnc: novo }, evento };\n  }\n\n  if (req.acao !== 'evento') return erro(400, 'ação desconhecida');\n\n  // Controle de edição simultânea: quem salva com versão velha recebe aviso e a tela atualiza.\n  if (!Number.isInteger(req.rev_esperado)) return erro(400, 'informe rev_esperado');\n  if (req.rev_esperado !== r.rev) return erro(409, 'esta RNC foi alterada por outra pessoa; atualize a tela', { rev_atual: r.rev, rnc: r });\n\n  const nome = txt(req.event).toUpperCase();\n  const permitidas = TRANSICOES[r.estado] || {};\n  if (!(nome in permitidas)) {\n    return erro(422, 'transição não permitida: ' + nome + ' em ' + r.estado, { estado: r.estado, permitidos: Object.keys(permitidas) });\n  }\n\n  const d = req.data || {};\n  const data = {};\n  if (nome === 'REPARO_REGISTRADO') {\n    const acao = txt(d.acao);\n    if (acao.length < 3 || acao.length > cfg.maxTexto) return erro(400, 'descreva a ação executada no reparo');\n    data.acao = acao;\n    const peca = txt(d.peca);\n    if (peca) data.peca = peca.slice(0, cfg.maxTexto); // peça é opcional: nem todo reparo troca peça\n  } else if (nome === 'RETESTE_REGISTRADO') {\n    const res = txt(d.resultado).toUpperCase();\n    if (res !== 'APROVADO' && res !== 'REPROVADO') return erro(400, 'resultado do reteste deve ser APROVADO ou REPROVADO');\n    data.resultado = res;\n    if (txt(d.ensaio_id)) data.ensaio_id = txt(d.ensaio_id);\n  }\n\n  const evento = {\n    event_id: proxEvt, rnc_id: r.rnc_id, serial: r.serial, event: nome, timestamp: ts, actor, rev: r.rev + 1, schema_version: SCHEMA_VERSION, banco: r.banco, data,\n  };\n  if (idem) evento.idem = idem;\n  const todos = reconstruir(eventos.concat([evento]));\n  return { status: 200, body: { ok: true, rnc: todos[r.rnc_id], situacao: situacaoSerie(todos, r.serial).situacao }, evento };\n}\n\nmodule.exports = { SCHEMA_VERSION, CFG_PADRAO, ESTADOS, TRANSICOES, normalizaSerie, reconstruir, situacaoSerie, processar };\n\nreturn module.exports; })();\nconst criarArmazem = (function () { const module = { exports: {} };\n/* =====================================================================================================================\n   rnc_io_v1.0.js — GRAVAÇÃO do RNC em arquivo (rnc.jsonl), fotos e backup  ·  13/11/2026\n   PARA QUE SERVE (leigo): guarda cada evento do RNC numa linha do arquivo rnc.jsonl, no disco do PC do Node-RED, e só avisa \"salvo\"\n   depois que a linha realmente foi para o disco. Também guarda as fotos em pasta e faz a cópia diária (backup).\n   POR QUE ASSIM (técnico): Node-RED é o ÚNICO escritor. Tudo (ler cache -> validar -> gravar -> atualizar cache) roda SÍNCRONO dentro de\n   uma chamada, então dois pedidos simultâneos nunca se misturam (JavaScript é de uma thread só). Gravação = open(append) + write + fsync.\n   NÃO FAZ: não toca PLC/chave/DSE; não usa banco SQL; não apaga linhas (o histórico só cresce).\n   Pasta: variável RNC_DIR (PM2); sem ela usa ./rnc-dados relativo à pasta onde o Node-RED foi iniciado.\n   ===================================================================================================================== */\n'use strict';\n\n/** deps = { fs, path, core, dir, cfg } — o fluxo entrega fs/path; os testes entregam os mesmos. */\nmodule.exports = function criarArmazem(deps) {\n  const { fs, path, core } = deps;\n  const dir = path.resolve(deps.dir || 'rnc-dados');\n  const arq = path.join(dir, 'rnc.jsonl');\n  const dirFotos = path.join(dir, 'fotos');\n  const dirBackup = path.join(dir, 'backup');\n  const MAX_FOTO = 3 * 1024 * 1024; // 3 MB por foto (o HTML já reduz antes de enviar)\n  const TIPOS_FOTO = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };\n\n  let cache = null;      // eventos em memória\n  let tamanhoLido = -1;  // tamanho do arquivo quando foi lido (detecta troca externa, ex.: restauração de backup)\n  let corrompidas = 0;\n\n  function garantePastas() { for (const d of [dir, dirFotos, dirBackup]) fs.mkdirSync(d, { recursive: true }); }\n\n  /** Lê o arquivo inteiro (só quando mudou por fora). Linha quebrada é contada e ignorada: nunca derruba o serviço. */\n  function carregar() {\n    garantePastas();\n    const tam = fs.existsSync(arq) ? fs.statSync(arq).size : 0;\n    if (cache && tam === tamanhoLido) return cache;\n    cache = []; corrompidas = 0;\n    if (tam > 0) {\n      for (const linha of fs.readFileSync(arq, 'utf8').split('\\n')) {\n        if (!linha.trim()) continue;\n        try { cache.push(JSON.parse(linha)); } catch (e) { corrompidas++; }\n      }\n    }\n    tamanhoLido = tam;\n    return cache;\n  }\n\n  /** Grava UMA linha com fsync. Só depois disso o evento entra no cache. Lança erro se o disco falhar (HTML recebe 500, não \"salvo\"). */\n  function gravar(evento) {\n    const fd = fs.openSync(arq, 'a');\n    try {\n      fs.writeSync(fd, JSON.stringify(evento) + '\\n');\n      fs.fsyncSync(fd);\n    } finally { fs.closeSync(fd); }\n    tamanhoLido = fs.statSync(arq).size;\n    cache.push(evento);\n  }\n\n  /** Pedido de abrir/evento: decide (core) e grava. */\n  function executar(req, agora) {\n    const eventos = carregar();\n    const r = core.processar(eventos, req, agora || new Date(), deps.cfg);\n    if (r.evento) gravar(r.evento);\n    return r;\n  }\n\n  /** Pedido de foto: valida, grava o arquivo em fotos/<rnc_id>/<n>.<ext>, depois grava o evento. */\n  function executarFoto(rnc_id, actor, contentType, buffer, agora) {\n    const eventos = carregar();\n    const ext = TIPOS_FOTO[String(contentType || '').split(';')[0].trim().toLowerCase()];\n    if (!ext) return { status: 415, body: { ok: false, erro: 'foto deve ser JPEG, PNG ou WebP' }, evento: null };\n    if (!Buffer.isBuffer(buffer) || buffer.length === 0) return { status: 400, body: { ok: false, erro: 'foto vazia' }, evento: null };\n    if (buffer.length > MAX_FOTO) return { status: 413, body: { ok: false, erro: 'foto maior que 3 MB' }, evento: null };\n    const rncs = core.reconstruir(eventos);\n    const r = rncs[rnc_id];\n    if (!r) return { status: 404, body: { ok: false, erro: 'RNC não encontrada' }, evento: null };\n    const pasta = path.join(dirFotos, rnc_id); // rnc_id vem do arquivo (RNC-AAAA-NNNN), nunca do cliente cru: já conferido acima\n    fs.mkdirSync(pasta, { recursive: true });\n    const nome = (r.fotos.length + 1) + '.' + ext;\n    const fd = fs.openSync(path.join(pasta, nome), 'w');\n    try { fs.writeSync(fd, buffer); fs.fsyncSync(fd); } finally { fs.closeSync(fd); }\n    const res = core.processar(eventos, { acao: 'foto', rnc_id, actor, foto_ref: rnc_id + '/' + nome, bytes: buffer.length }, agora || new Date(), deps.cfg);\n    if (res.evento) gravar(res.evento);\n    return res;\n  }\n\n  /** Lê uma foto para exibir no Reparo. Só aceita referência que existe no histórico (evita ler caminho arbitrário). */\n  function lerFoto(rnc_id, nome) {\n    const eventos = carregar();\n    const ref = rnc_id + '/' + nome;\n    if (!eventos.some((e) => e.event === 'FOTO_ANEXADA' && e.data.foto_ref === ref)) return null;\n    const ext = nome.split('.').pop();\n    const tipo = Object.keys(TIPOS_FOTO).find((k) => TIPOS_FOTO[k] === ext);\n    return { tipo, buffer: fs.readFileSync(path.join(dirFotos, rnc_id, nome)) };\n  }\n\n  function listar() { return core.reconstruir(carregar()); }\n\n  /** Backup diário: copia rnc.jsonl para backup/rnc-AAAA-MM-DD.jsonl (sobrescreve o do mesmo dia) e mantém os 30 mais novos. */\n  function backup(agora) {\n    carregar();\n    if (!fs.existsSync(arq)) return { ok: true, copiado: false };\n    const d = (agora || new Date()).toISOString().slice(0, 10);\n    const dest = path.join(dirBackup, 'rnc-' + d + '.jsonl');\n    fs.copyFileSync(arq, dest);\n    const todos = fs.readdirSync(dirBackup).filter((f) => /^rnc-\\d{4}-\\d{2}-\\d{2}\\.jsonl$/.test(f)).sort();\n    for (const f of todos.slice(0, Math.max(0, todos.length - 30))) fs.unlinkSync(path.join(dirBackup, f));\n    return { ok: true, copiado: true, arquivo: path.basename(dest) };\n  }\n\n  function saude() {\n    const ev = carregar();\n    return { ok: true, arquivo: arq, eventos: ev.length, linhasIgnoradas: corrompidas, ultimoEvento: ev.length ? ev[ev.length - 1].timestamp : null, serialRegex: (deps.cfg && deps.cfg.serialRegex) || core.CFG_PADRAO.serialRegex };\n  }\n\n  return { executar, executarFoto, lerFoto, listar, backup, saude, carregar, dir };\n};\n\nreturn module.exports; })();\n\nlet arm = context.get('arm');\nif (!arm) arm = criarArmazem({ fs, path, core, dir: env.get('RNC_DIR') || 'rnc-dados' });\nconst r = arm.backup(new Date());\nnode.status({ fill: 'green', shape: 'dot', text: r.copiado ? r.arquivo : 'sem dados ainda' });\nreturn null;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [
+      {
+        "var": "fs",
+        "module": "fs"
+      },
+      {
+        "var": "path",
+        "module": "path"
+      }
+    ],
+    "x": 520,
+    "y": 580,
+    "wires": [
+      []
+    ]
+  }
+]

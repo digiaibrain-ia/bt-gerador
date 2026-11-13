@@ -30,3 +30,6 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+
+# RNC: dados reais (rnc.jsonl, fotos, backup) nunca vao para o Git
+rnc-dados/
