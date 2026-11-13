@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Protótipo · Medidor do gerador v0.1</title>
+<!--
+  PROTÓTIPO v0.1 do medidor INTEIRO — NÃO é o medidor real. Arquivo único, dados FICTÍCIOS, sem rede.
+  Plano de design: PLANO_medidor_v0.1.md. Explicação: medidor_v0.1.md.
+  Cores: as mesmas do medidor (dashboard/src/index.html). Verde/amarelo/vermelho = SÓ sinal de estado.
+  Movimento: só onde mostra uma mudança ou pede ação (ver bloco "MOVIMENTO" no CSS).
+-->
+<style>
+/* ===== 1. CORES (iguais às do medidor + variantes para texto legível) ===== */
+:root{
+  --ui-tinta:#1a4a78; --ui-acento:#ec7000; --ui-acento-esc:#a84f00;
+  --bg:#f3f5f8; --card:#fff; --cardin:#fafbfd; --txt:#141414; --mut:#5b6b7e; --line:#dde2e8; --borda:#9aa5b1;
+  --ok:#2e9a5f; --warn:#f1b81c; --bad:#d64545; --blue:#2f7fd8;
+  --ok-txt:#14663a; --ok-fundo:#d8f1e2; --bad-txt:#9b1c1c; --bad-fundo:#fde4e4;
+  --warn-txt:#4a3b00; --warn-fundo:#fff1c9; --warn-borda:#e0b84a; --blue-txt:#174f8f; --blue-fundo:#e1edfb;
+  --linha:#1a4a78; --alvo:#c25a00; --btn:#1a4a78; --btn-txt:#fff;
+}
+html[data-tema=escuro]{
+  color-scheme:dark;
+  --bg:#16171a; --card:#222428; --cardin:#1c1d20; --txt:#ececea; --mut:#a4a59f; --line:#3b3d43; --borda:#6b6e76;
+  --ok:#3cb371; --bad:#ee5a5a; --blue:#4a9be8;
+  --ok-txt:#9be8b9; --ok-fundo:#1d4d33; --bad-txt:#ffb4ad; --bad-fundo:#4a1f1d;
+  --warn-txt:#ffd666; --warn-fundo:#4a3c10; --warn-borda:#7a6320; --blue-txt:#a9d1ff; --blue-fundo:#1b3550;
+  --linha:#6fb0f0; --alvo:#ff9a3d; --btn:#2f6aa3;
+}
+
+/* ===== 2. BASE ===== */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:18px/1.35 "Bahnschrift","Segoe UI",system-ui,Arial,sans-serif}
+button{font:inherit;cursor:pointer;min-height:48px;color:inherit}
+:focus-visible{outline:3px solid var(--ui-acento);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ===== 3. TOPO ===== */
+.topo{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 14px;background:var(--ui-tinta);color:#fff;border-bottom:3px solid var(--ui-acento)}
+.topo h1{margin:0;flex:1 1 200px;font-size:20px}
+.topo .bt{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:8px;padding:0 14px;font-size:16px;font-weight:700}
+.links{display:flex;flex-wrap:wrap;gap:6px 16px;width:100%;font-size:16px}
+.links span{display:inline-flex;align-items:center;gap:6px}
+.links i{width:12px;height:12px;border-radius:50%;background:#9aa5b1;border:2px solid rgba(255,255,255,.7)}
+.links .on i{background:#3cb371}
+.banner{margin:0;padding:8px 14px;background:var(--warn-fundo);color:var(--warn-txt);border-bottom:1px solid var(--warn-borda);font-size:16px;font-weight:600}
+
+/* ===== 4. GRADE DA PÁGINA (a ordem do HTML é a ordem do celular) ===== */
+.pagina{display:grid;gap:12px;padding:12px;max-width:1700px;margin:0 auto;grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"etapa" "banco" "instr" "grafico" "registro"}
+#pEtapa{grid-area:etapa}#pBanco{grid-area:banco}#pInstr{grid-area:instr}#pGrafico{grid-area:grafico}#pRegistro{grid-area:registro}
+@media(min-width:1100px){
+  .pagina{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1.15fr);
+    grid-template-areas:"etapa instr banco" "grafico registro banco"}
+}
+.painel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.painel h2{margin:0 0 10px;font-size:21px}
+.painel h3{margin:14px 0 6px;font-size:18px;color:var(--mut)}
+
+/* ===== 5. ETAPA: relógio, lâmpada, régua de carga, botões ===== */
+.etapa-topo{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between}
+.relogio b{font-size:54px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.relogio span{font-size:18px;color:var(--mut);margin-left:8px}
+
+/* Lâmpada: o que fazer AGORA. Palavra + símbolo + cor (nunca só cor). */
+.lampada{display:flex;align-items:center;gap:12px;flex:1 1 260px;min-height:64px;padding:8px 14px;border:2px solid var(--borda);border-radius:12px;background:var(--cardin)}
+.lamp-bola{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:22px;font-weight:800;color:#fff;background:#8d8d88}
+.lamp-txt{font-size:21px;font-weight:800;line-height:1.15}
+.lampada[data-e=up],.lampada[data-e=down]{background:var(--warn-fundo);border-color:var(--warn-borda);color:var(--warn-txt)}
+.lampada[data-e=up] .lamp-bola,.lampada[data-e=down] .lamp-bola{background:var(--warn);color:#3b2f00}
+.lampada[data-e=est]{background:var(--blue-fundo);border-color:var(--blue);color:var(--blue-txt)}
+.lampada[data-e=est] .lamp-bola{background:var(--blue)}
+.lampada[data-e=ok]{background:var(--ok-fundo);border-color:var(--ok);color:var(--ok-txt)}
+.lampada[data-e=ok] .lamp-bola{background:var(--ok)}
+.lampada[data-e=fim] .lamp-bola,.lampada[data-e=pausa] .lamp-bola{background:var(--ui-tinta)}
+
+/* Régua de carga: 0 a 120 %, com o alvo da etapa marcado em laranja */
+.regua{margin:14px 0 6px}
+.trilho{position:relative;height:44px;border:2px solid var(--borda);border-radius:8px;background:var(--cardin);overflow:visible}
+.trilho .barra{position:absolute;inset:0 auto 0 0;width:0;background:var(--linha);opacity:.85;border-radius:6px 0 0 6px}
+.trilho.ok .barra{background:var(--ok);opacity:1}
+.trilho .l100{position:absolute;top:0;bottom:0;left:calc(100% / 1.2);border-left:2px dashed var(--mut)}
+.trilho .alvo{position:absolute;top:-8px;bottom:-8px;width:0;border-left:4px solid var(--alvo);left:0}
+.trilho .alvo::before{content:"";position:absolute;top:-6px;left:-10px;border:8px solid transparent;border-top:10px solid var(--alvo);border-bottom:0}
+.escala{position:relative;height:24px;margin-top:6px;font-size:16px;color:var(--mut);font-variant-numeric:tabular-nums}
+.escala span{position:absolute;transform:translateX(-50%)}
+.escala span:first-child{transform:none}.escala span:last-child{transform:translateX(-100%)}
+.leit{display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;font-size:18px}
+.leit b{font-size:34px;font-variant-numeric:tabular-nums;display:inline-block;min-width:3.6ch;text-align:right}
+.leit .alv b{color:var(--alvo)}
+
+.acoes{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 10px}
+.btn{min-height:52px;min-width:52px;padding:0 20px;border-radius:10px;font-size:19px;font-weight:800;border:2px solid var(--btn);background:var(--btn);color:var(--btn-txt)}
+.btn.sec{background:transparent;color:var(--txt);border-color:var(--borda)}
+.btn.laranja{background:var(--ui-acento-esc);border-color:var(--ui-acento-esc);color:#fff}
+.btn.perigo{background:var(--bad-txt);border-color:var(--bad-txt);color:#fff}
+html[data-tema=escuro] .btn.perigo{background:#b83a3a;border-color:#ee5a5a}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* Etapas: 6 faixas. Preenchimento = andamento. Concluída tem ✓. */
+.etapas{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.et{position:relative;min-height:56px;border:2px solid var(--borda);border-radius:8px;padding:4px 2px;text-align:center;font-weight:800;font-size:17px;line-height:1.15;font-variant-numeric:tabular-nums;
+  background:linear-gradient(90deg,var(--blue-fundo) var(--p,0%),transparent var(--p,0%))}
+.et small{display:block;font-size:16px;font-weight:600;color:var(--mut)}
+.et.feita{background:var(--ok-fundo);border-color:var(--ok);color:var(--ok-txt)}
+.et.feita small{color:inherit}
+.et.atual{border-color:var(--alvo);box-shadow:0 0 0 2px var(--alvo)}
+
+/* ===== 6. INSTRUMENTOS: um quadro de linhas finas (não 10 cartões iguais) ===== */
+.quadro{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.quadro.c3{grid-template-columns:repeat(3,1fr)}.quadro.c2{grid-template-columns:repeat(2,1fr)}
+.cel{background:var(--card);padding:8px 10px;min-width:0}
+.cel .r{display:block;font-size:16px;color:var(--mut)}
+.cel .v{font-size:32px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cel .v u{text-decoration:none;font-size:16px;font-weight:600;color:var(--mut);margin-left:3px}
+.cel.alerta{background:var(--warn-fundo)}.cel.alerta .v{color:var(--warn-txt)}
+
+/* ===== 7. BANCO DE CHAVES: disjuntores ===== */
+.banco-topo{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:6px}
+.banco-topo h2{margin:0}
+.seg{display:inline-flex;border:2px solid var(--borda);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:0 16px;font-size:17px;font-weight:700;min-height:48px}
+.seg button[aria-pressed=true]{background:var(--btn);color:#fff}
+.msg{min-height:26px;margin:2px 0 6px;font-size:16px;color:var(--mut)}
+.grupo-t{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 6px;font-weight:800;font-size:19px}
+.grupo-t span{font-weight:600;font-size:17px;color:var(--mut);font-variant-numeric:tabular-nums}
+.grade{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0 8px;border:2px solid var(--borda);border-radius:10px;background:var(--card);min-height:112px;min-width:0}
+.tile .nm{font-size:18px;font-weight:800}
+.tile .st{font-size:16px;font-weight:700;line-height:1.1;letter-spacing:-.03em;white-space:nowrap}
+.tile .kw{font-size:16px;color:var(--mut);font-variant-numeric:tabular-nums}
+/* Disjuntor: calha com alavanca. Em cima = ligada, embaixo = desligada, no MEIO = desarmou (falha). */
+.calha{position:relative;width:30px;height:46px;margin:2px 0;border-radius:6px;background:var(--line);border:2px solid var(--borda)}
+.alav{position:absolute;left:2px;right:2px;top:2px;height:18px;border-radius:4px;background:var(--mut);transform:translateY(22px);transition:transform .18s ease-out,background-color .18s}
+.tile.on .calha{background:var(--ok-fundo);border-color:var(--ok)}
+.tile.on .alav{transform:translateY(0);background:var(--ok)}
+.tile.on{border-color:var(--ok)}.tile.on .st{color:var(--ok-txt)}
+.tile.falha{border-color:var(--bad);background:var(--bad-fundo)}
+.tile.falha .calha{border-color:var(--bad)}
+.tile.falha .alav{transform:translateY(11px);background:var(--bad)}
+.tile.falha .st,.tile.falha .nm{color:var(--bad-txt)}
+.tile.bloq{background:repeating-linear-gradient(45deg,var(--warn-fundo) 0 8px,transparent 8px 16px);border-color:var(--warn-borda);color:var(--warn-txt)}
+.tile.bloq .kw{color:inherit}
+.tile.sug{outline:3px dashed var(--alvo);outline-offset:2px}   /* próxima chave sugerida (modo manual) */
+.tile.mudou::after{content:"";position:absolute;inset:-4px;border-radius:13px;border:3px solid var(--alvo);pointer-events:none;animation:anel 1.4s ease-out forwards}
+@keyframes anel{from{opacity:1}to{opacity:0}}
+.legenda{margin:8px 0 0;font-size:16px;color:var(--mut)}
+.resumo{margin-top:12px}
+.resumo .v{font-size:26px}
+.resumo .v u{margin-left:2px}
+
+/* ===== 8. GRÁFICO e REGISTRO ===== */
+canvas{display:block;width:100%;height:220px}
+@media(min-width:1100px){canvas{height:250px}}
+.leg-g{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:16px;color:var(--mut);margin-top:6px}
+.leg-g b{display:inline-block;width:26px;height:0;border-top:4px solid var(--linha);vertical-align:middle;margin-right:6px}
+.leg-g b.t{border-top:3px dashed var(--alvo)}
+.tbw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:17px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;color:var(--mut);font-size:16px;padding:6px 8px;border-bottom:2px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line)}
+td.d{text-align:right}th.d{text-align:right}
+tr.atual td{background:var(--blue-fundo)}
+tr.feita td:last-child{color:var(--ok-txt);font-weight:700}
+
+@media(max-width:599px){
+  .painel{padding:12px 9px}
+  .pagina{padding:10px 8px}
+  .etapas{grid-template-columns:repeat(3,1fr)}
+  .col-tensao{display:none}
+  .et{min-height:60px;padding:6px 2px}
+}
+footer{padding:10px 14px 24px;font-size:16px;color:var(--mut);text-align:center}
+
+/* ===== 9. AVISO DE CONFIRMAÇÃO ===== */
+dialog{border:3px solid var(--ui-acento);border-radius:14px;padding:0;max-width:min(94vw,460px);width:100%;background:var(--card);color:var(--txt)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog .corpo{padding:18px}
+dialog h3{margin:0 0 8px;font-size:23px;color:var(--txt)}
+dialog p{margin:0;font-size:19px}
+dialog .bots{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+dialog .bots .btn{flex:1 1 140px}
+
+/* ===== 10. MOVIMENTO =====
+   Só onde MOSTRA uma mudança ou pede ação:
+   - alavanca/anel das chaves (acima), barra de carga, lâmpada de "ajustar", aviso de confirmação.
+   Nunca em números ao vivo. Botão "Animações" e "reduzir movimento" do aparelho desligam tudo. */
+.trilho .barra{transition:width .5s ease-out,background-color .3s}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(241,184,28,.7)}70%,100%{box-shadow:0 0 0 12px rgba(241,184,28,0)}}
+.lampada[data-e=up] .lamp-bola,.lampada[data-e=down] .lamp-bola{animation:pulso 1.4s ease-out infinite}
+dialog[open]{animation:entra .15s ease-out}
+@keyframes entra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+html.sem-anim *,html.sem-anim *::before,html.sem-anim *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <h1>Medidor do gerador</h1>
+  <button type="button" class="bt" id="bAnim" aria-pressed="true">Animações: ligadas</button>
+  <button type="button" class="bt" id="bTema" aria-pressed="false">Tema: claro</button>
+  <div class="links" role="group" aria-label="Estado das conexões">
+    <span class="on"><i></i>PLC (demonstração)</span><span class="on"><i></i>Node-RED (demonstração)</span><span class="on"><i></i>Tela ativa</span>
+  </div>
+</header>
+<p class="banner">Protótipo com dados inventados. Nada aqui comanda equipamento.</p>
+
+<main class="pagina">
+
+  <!-- ETAPA: o que está acontecendo e o que fazer agora -->
+  <section class="painel" id="pEtapa" aria-labelledby="tEtapa">
+    <div class="etapa-topo">
+      <div>
+        <h2 id="tEtapa">Etapa <span id="etN">1</span> de 6</h2>
+        <div class="relogio" aria-label="Tempo do ensaio"><b id="clk">00:00</b><span id="clkTot">de 12:00</span></div>
+      </div>
+      <div class="lampada" id="lamp" data-e="espera" role="status" aria-live="polite">
+        <span class="lamp-bola" id="lampBola" aria-hidden="true">–</span><span class="lamp-txt" id="lampTxt">Aguardando início</span>
+      </div>
+    </div>
+
+    <div class="regua">
+      <div class="trilho" id="trilho" role="img" aria-label="Carga medida em relação ao alvo da etapa">
+        <i class="barra" id="rgBarra"></i><span class="l100"></span><span class="alvo" id="rgAlvo"></span>
+      </div>
+      <div class="escala" aria-hidden="true" id="escala"></div>
+      <div class="leit">
+        <span>Medido <b id="rgM">0,0</b>%</span>
+        <span class="alv">Alvo <b id="rgA">25</b>%</span>
+      </div>
+    </div>
+
+    <div class="acoes">
+      <button type="button" class="btn" id="bIni">Iniciar</button>
+      <button type="button" class="btn sec" id="bPau" disabled>Pausar</button>
+      <button type="button" class="btn sec" id="bZer" disabled>Zerar etapa</button>
+    </div>
+    <div class="etapas" id="etapas" aria-label="Etapas do ensaio"></div>
+  </section>
+
+  <!-- BANCO DE CHAVES -->
+  <section class="painel" id="pBanco" aria-labelledby="tBanco">
+    <div class="banco-topo">
+      <h2 id="tBanco">Banco de cargas</h2>
+      <div class="seg" role="group" aria-label="Quem comanda as chaves">
+        <button type="button" id="mAuto" aria-pressed="true">Automático</button>
+        <button type="button" id="mMan" aria-pressed="false">Manual</button>
+      </div>
+    </div>
+    <p class="msg" id="msg" aria-live="polite"></p>
+    <div id="bancos"></div>
+    <p class="legenda">Alavanca em cima = ligada · embaixo = desligada · no meio = desarmou (falha) · fundo listrado = bloqueada. Contorno tracejado laranja = próxima chave sugerida (modo manual).</p>
+    <div class="quadro c3 resumo">
+      <div class="cel"><span class="r">Nas chaves</span><span class="v" id="bkApl">0,0<u>kW</u></span></div>
+      <div class="cel"><span class="r">Medido (DSE)</span><span class="v" id="bkDse">0,0<u>kW</u></span></div>
+      <div class="cel" id="bkDifC"><span class="r">Diferença</span><span class="v" id="bkDif">0,0<u>kW</u></span></div>
+    </div>
+  </section>
+
+  <!-- INSTRUMENTOS -->
+  <section class="painel" id="pInstr" aria-labelledby="tInstr">
+    <h2 id="tInstr">Leitura do gerador</h2>
+    <h3>Tensão</h3>
+    <div class="quadro c3">
+      <div class="cel"><span class="r">L1-L2</span><span class="v" id="vA">0<u>V</u></span></div>
+      <div class="cel"><span class="r">L2-L3</span><span class="v" id="vB">0<u>V</u></span></div>
+      <div class="cel"><span class="r">L3-L1</span><span class="v" id="vC">0<u>V</u></span></div>
+    </div>
+    <h3>Corrente</h3>
+    <div class="quadro c3">
+      <div class="cel"><span class="r">L1</span><span class="v" id="iA">0<u>A</u></span></div>
+      <div class="cel"><span class="r">L2</span><span class="v" id="iB">0<u>A</u></span></div>
+      <div class="cel"><span class="r">L3</span><span class="v" id="iC">0<u>A</u></span></div>
+    </div>
+    <h3>Geral</h3>
+    <div class="quadro c2">
+      <div class="cel"><span class="r">Potência</span><span class="v" id="gKw">0,0<u>kW</u></span></div>
+      <div class="cel" id="gAguaC"><span class="r">Água</span><span class="v" id="gAgua">0,0<u>°C</u></span></div>
+      <div class="cel"><span class="r">Rotação</span><span class="v" id="gRpm">0<u>rpm</u></span></div>
+      <div class="cel"><span class="r">Bateria</span><span class="v" id="gBat">0,0<u>V</u></span></div>
+    </div>
+  </section>
+
+  <!-- GRÁFICO -->
+  <section class="painel" id="pGrafico" aria-labelledby="tGra">
+    <h2 id="tGra">Carga no tempo</h2>
+    <canvas id="cv" role="img" aria-label="Gráfico da carga medida e do alvo ao longo do ensaio"></canvas>
+    <div class="leg-g"><span><b></b>Medido</span><span><b class="t"></b>Alvo da etapa</span></div>
+  </section>
+
+  <!-- REGISTRO -->
+  <section class="painel" id="pRegistro" aria-labelledby="tReg">
+    <h2 id="tReg">Registro do ensaio</h2>
+    <div class="tbw"><table>
+      <thead><tr><th>Etapa</th><th class="d">Alvo</th><th class="d">Carga</th><th class="d col-tensao">Tensão</th><th>Situação</th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table></div>
+  </section>
+</main>
+
+<footer>Protótipo v0.1 · tempo acelerado 10× na demonstração · todos os números são inventados</footer>
+
+<dialog id="dlg" aria-labelledby="dlgT">
+  <div class="corpo"><h3 id="dlgT"></h3><p id="dlgP"></p>
+    <div class="bots"><button type="button" class="btn sec" id="dlgNao">Cancelar</button><button type="button" class="btn" id="dlgSim">Confirmar</button></div>
+  </div>
+</dialog>
+
+<script>
+/* =====================================================================
+   DEMONSTRAÇÃO (tudo inventado). Um "tick" = 1 segundo real.
+   Cada tick conta como 10 s de ensaio, SÓ quando a lâmpada está verde.
+   ===================================================================== */
+(function(){
+'use strict';
+var $ = function(i){return document.getElementById(i)};
+var f1 = function(n){return n.toFixed(1).replace('.',',')};
+var f0 = function(n){return Math.round(n).toString()};
+
+/* ---- 1. Dados fictícios ---- */
+var NOMINAL = 350;                    /* kW do gerador de mentira = 100 % */
+var ALVOS = [25,50,75,100,110,50];    /* % de carga de cada etapa */
+var DUR = 120, TOL = 2;               /* segundos por etapa; tolerância em % */
+var BANCOS = [
+  {id:'A', nome:'Banco A', kw:[10,10,20,20,40,40,80,80]},
+  {id:'B', nome:'Banco B', kw:[5,5,10,10,20,20,40,40]}
+];
+var CH = [];                          /* lista plana de chaves */
+BANCOS.forEach(function(b){ b.kw.forEach(function(kw,i){
+  CH.push({id:b.id+(i+1), banco:b.id, kw:kw, on:false, hab:true, falha:false, plano:false, el:null});
+});});
+CH.forEach(function(c){ if(c.id==='B2') c.hab=false; if(c.id==='B8') c.falha=true; });  /* uma bloqueada e uma em falha */
+
+/* ---- 2. Estado ---- */
+var S = {rodando:false, fim:false, i:0, T:0, m:0, estab:0, modo:'auto', agua:55, lamp:'espera',
+         hist:{m:[],a:[]}, reg:[], acc:{n:0,m:0,v:0}, inst:{}};
+
+function disp(c){ return c.hab && !c.falha; }
+function aplicado(){ return CH.reduce(function(s,c){return s+((c.on&&disp(c))?c.kw:0)},0); }
+
+/* ---- 3. Plano: qual conjunto de chaves chega mais perto do alvo ---- */
+function planejar(){
+  var d = CH.filter(disp), alvo = ALVOS[S.i]/100*NOMINAL, best=0, bs=1e9, bd=1e9;
+  for(var mask=0; mask<(1<<d.length); mask++){
+    var s=0, dif=0;
+    for(var k=0;k<d.length;k++){ var on=(mask>>k)&1; if(on) s+=d[k].kw; if(!!on!==d[k].on) dif++; }
+    var e=Math.abs(s-alvo);
+    if(e<bs-1e-9 || (Math.abs(e-bs)<1e-9 && dif<bd)){ bs=e; bd=dif; best=mask; }
+  }
+  CH.forEach(function(c){ c.plano=false; });
+  d.forEach(function(c,k){ c.plano=!!((best>>k)&1); });
+}
+/* Próxima chave a mexer: primeiro desliga o que sobra, depois liga a maior que falta */
+function proxima(){
+  var off = CH.filter(function(c){return disp(c)&&c.on&&!c.plano});
+  if(off.length) return off[0];
+  var on = CH.filter(function(c){return disp(c)&&!c.on&&c.plano}).sort(function(a,b){return b.kw-a.kw});
+  return on[0]||null;
+}
+
+/* ---- 4. Comandos ---- */
+function alternar(c, v){
+  c.on = v; planejarSeFalta();
+  if(c.el){ c.el.classList.remove('mudou'); void c.el.offsetWidth; c.el.classList.add('mudou'); }  /* anel "mudou agora" */
+}
+function planejarSeFalta(){ /* o plano só é recalculado ao trocar de etapa */ }
+
+function iniciar(){
+  if(S.fim){ novo(); }
+  S.rodando=true; planejar(); render();
+}
+function pausar(){ S.rodando=false; render(); }
+function novo(){
+  S.fim=false; S.i=0; S.T=0; S.m=0; S.estab=0; S.hist={m:[],a:[]}; S.reg=[]; S.acc={n:0,m:0,v:0};
+  CH.forEach(function(c){c.on=false}); planejar();
+}
+function fechaEtapa(){
+  var n=S.acc.n||1;
+  S.reg[S.i]={m:S.acc.m/n, v:S.acc.v/n};
+  S.acc={n:0,m:0,v:0}; S.i++; S.estab=0;
+  if(S.i>=ALVOS.length){ S.fim=true; S.rodando=false; S.i=ALVOS.length-1; S.lamp='fim'; }
+  else planejar();
+}
+
+/* ---- 5. Um passo da simulação ---- */
+function tick(){
+  var fimOff = S.fim && S.modo==='auto';
+  if(S.rodando && !S.fim && S.modo==='auto'){ var p=proxima(); if(p) alternar(p,p.plano); }
+  if(fimOff){ var lig=CH.filter(function(c){return c.on})[0]; if(lig) alternar(lig,false); }
+  var a = aplicado()/NOMINAL*100;
+  S.m = Math.max(0, S.m + (a-S.m)*0.6 + (Math.random()-.5)*0.3);
+
+  /* instrumentos: tensão cai um pouco com a carga; corrente vem da potência */
+  var kw = S.m/100*NOMINAL, v = 381 - 0.02*S.m;
+  var vv = [v+(Math.random()-.5)*2, v+(Math.random()-.5)*2, v+(Math.random()-.5)*2];
+  var ia = kw*1000/(1.732*v*0.8);
+  S.agua += ((58+0.28*S.m) - S.agua)*0.05;
+  S.inst = {v:vv, i:[ia*(1+(Math.random()-.5)*.03), ia*(1+(Math.random()-.5)*.03), ia*(1+(Math.random()-.5)*.03)],
+            kw:kw, rpm:1800-0.25*S.m+(Math.random()-.5)*2, bat:26.4+(Math.random()-.5)*.1};
+
+  if(S.rodando && !S.fim){
+    var err = S.m - ALVOS[S.i];
+    if(err < -TOL){ S.estab=0; S.lamp='up'; }
+    else if(err > TOL){ S.estab=0; S.lamp='down'; }
+    else { S.estab++; if(S.estab<3) S.lamp='est'; else {
+      S.lamp='ok'; S.T+=10; S.acc.n++; S.acc.m+=S.m; S.acc.v+=(vv[0]+vv[1]+vv[2])/3;
+      if(S.T >= (S.i+1)*DUR) fechaEtapa();
+    }}
+    S.hist.m.push(S.m); S.hist.a.push(ALVOS[S.i]);
+  } else if(!S.fim){ S.lamp = S.T>0 ? 'pausa' : 'espera'; }
+  render();
+}
+
+/* ---- 6. Desenho (atualiza os elementos que já existem; não reconstrói) ---- */
+var LAMPS = {
+  espera:['–','Aguardando início'], up:['▲','Aumentar a carga'], down:['▼','Reduzir a carga'],
+  est:['…','Estabilizando'], ok:['✓','Etapa contando'], pausa:['❚❚','Ensaio pausado'], fim:['■','Ensaio concluído']
+};
+var NOMES_ST = function(c){ return c.falha?'Falha':(!c.hab?'Bloqueada':(c.on?'Ligada':'Desligada')); };
+function mmss(s){ var m=Math.floor(s/60), r=Math.floor(s%60); return (m<10?'0':'')+m+':'+(r<10?'0':'')+r; }
+
+function montaFixos(){
+  /* escala da régua */
+  var e=$('escala'); [0,20,40,60,80,100,120].forEach(function(n){ var s=document.createElement('span'); s.style.left=(n/120*100)+'%'; s.textContent=n; e.appendChild(s); });
+  /* faixas das etapas */
+  var et=$('etapas'); ALVOS.forEach(function(a,j){ var d=document.createElement('div'); d.className='et'; d.id='et'+j; d.innerHTML=a+'%<small>etapa '+(j+1)+'</small>'; et.appendChild(d); });
+  /* grupos de chaves */
+  var bc=$('bancos');
+  BANCOS.forEach(function(b){
+    var g=document.createElement('div');
+    g.innerHTML='<div class="grupo-t">'+b.nome+'<span id="tot'+b.id+'"></span></div><div class="grade" id="gr'+b.id+'"></div>';
+    bc.appendChild(g);
+    CH.filter(function(c){return c.banco===b.id}).forEach(function(c){
+      var t=document.createElement('button'); t.type='button'; t.className='tile'; t.dataset.id=c.id;
+      t.innerHTML='<span class="nm">'+c.id+'</span><span class="calha"><i class="alav"></i></span><span class="st"></span><span class="kw">'+c.kw+' kW</span>';
+      $('gr'+b.id).appendChild(t); c.el=t;
+    });
+  });
+  /* registro */
+  var tb=$('tb'); ALVOS.forEach(function(a,j){ var r=document.createElement('tr'); r.id='rg'+j; r.innerHTML='<td>'+(j+1)+'</td><td class="d">'+a+'%</td><td class="d">—</td><td class="d col-tensao">—</td><td>Pendente</td>'; tb.appendChild(r); });
+}
+
+function render(){
+  var i=S.i, alvo=ALVOS[i];
+  $('etN').textContent=i+1; $('clk').textContent=mmss(S.T);
+  /* lâmpada */
+  var L=LAMPS[S.lamp]; $('lamp').dataset.e=S.lamp; $('lampBola').textContent=L[0]; $('lampTxt').textContent=L[1];
+  /* régua */
+  $('rgBarra').style.width=Math.min(100,S.m/120*100)+'%';
+  $('rgAlvo').style.left=(alvo/120*100)+'%';
+  $('trilho').classList.toggle('ok', S.lamp==='ok');
+  $('rgM').textContent=f1(S.m); $('rgA').textContent=alvo;
+  /* botões */
+  $('bIni').textContent = S.fim?'Novo ensaio':'Iniciar'; $('bIni').disabled = S.rodando;
+  $('bPau').disabled = !S.rodando; $('bZer').disabled = !(S.rodando||S.lamp==='pausa');
+  /* faixas das etapas */
+  ALVOS.forEach(function(a,j){ var e=$('et'+j), feita=(j<i)||S.fim;
+    e.className='et'+(feita?' feita':'')+((j===i&&!S.fim)?' atual':'');
+    e.style.setProperty('--p', (j===i&&!S.fim)?Math.max(0,Math.min(100,(S.T-i*DUR)/DUR*100))+'%':'0%');
+    e.firstChild.nodeValue=(feita?'✓ ':'')+a+'%'; });
+  /* chaves */
+  var sug = (S.modo==='manual' && S.rodando && !S.fim) ? proxima() : null;
+  CH.forEach(function(c){
+    c.el.classList.toggle('on', c.on&&disp(c)); c.el.classList.toggle('falha', c.falha); c.el.classList.toggle('bloq', !c.hab&&!c.falha);
+    c.el.classList.toggle('sug', c===sug);
+    c.el.querySelector('.st').textContent=NOMES_ST(c);
+    c.el.setAttribute('aria-label','Chave '+c.id+', '+c.kw+' quilowatts, '+NOMES_ST(c));
+  });
+  BANCOS.forEach(function(b){ var s=CH.filter(function(c){return c.banco===b.id&&c.on&&disp(c)}).reduce(function(x,c){return x+c.kw},0);
+    $('tot'+b.id).textContent=s+' kW ligados'; });
+  var ap=aplicado(), dse=S.m/100*NOMINAL, dif=ap-dse;
+  $('bkApl').firstChild.nodeValue=f1(ap); $('bkDse').firstChild.nodeValue=f1(dse); $('bkDif').firstChild.nodeValue=(dif>0?'+':'')+f1(dif);
+  $('bkDifC').classList.toggle('alerta', Math.abs(dif)>3);
+  /* instrumentos */
+  var n=S.inst; if(n.v){
+    $('vA').firstChild.nodeValue=f0(n.v[0]); $('vB').firstChild.nodeValue=f0(n.v[1]); $('vC').firstChild.nodeValue=f0(n.v[2]);
+    $('iA').firstChild.nodeValue=f0(n.i[0]); $('iB').firstChild.nodeValue=f0(n.i[1]); $('iC').firstChild.nodeValue=f0(n.i[2]);
+    $('gKw').firstChild.nodeValue=f1(n.kw); $('gRpm').firstChild.nodeValue=f0(n.rpm); $('gBat').firstChild.nodeValue=f1(n.bat);
+    $('gAgua').firstChild.nodeValue=f1(S.agua); $('gAguaC').classList.toggle('alerta', S.agua>95);
+  }
+  /* registro */
+  ALVOS.forEach(function(a,j){ var r=$('rg'+j), x=S.reg[j], c=r.children;
+    r.className = x?'feita':((j===i&&S.rodando)?'atual':'');
+    c[2].textContent = x? f1(x.m)+'%':'—'; c[3].textContent = x? f0(x.v)+' V':'—';
+    c[4].textContent = x?'Concluída':((j===i&&S.rodando)?'Em andamento':'Pendente'); });
+  desenhaGrafico();
+}
+
+/* ---- 7. Gráfico (canvas simples, sem biblioteca) ---- */
+function cor(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function desenhaGrafico(){
+  var cv=$('cv'), r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  if(!r.width) return;
+  cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+  var g=cv.getContext('2d'); g.scale(dpr,dpr);
+  var W=r.width, H=r.height, ml=44, mb=26, mt=8, mr=10, pw=W-ml-mr, ph=H-mb-mt;
+  var N=Math.max(80, S.hist.m.length), X=function(k){return ml+k/N*pw}, Y=function(p){return mt+ph-(p/120)*ph};
+  g.font='16px system-ui,sans-serif'; g.textBaseline='middle';
+  g.strokeStyle=cor('--line'); g.fillStyle=cor('--mut'); g.lineWidth=1;
+  [0,25,50,75,100,120].forEach(function(p){ g.beginPath(); g.moveTo(ml,Y(p)); g.lineTo(W-mr,Y(p)); g.stroke(); g.textAlign='right'; g.fillText(p,ml-6,Y(p)); });
+  function linha(arr,c,w,dash){ if(arr.length<1) return; g.beginPath(); g.setLineDash(dash||[]); g.strokeStyle=c; g.lineWidth=w;
+    arr.forEach(function(v,k){ k?g.lineTo(X(k),Y(v)):g.moveTo(X(k),Y(v)); }); g.stroke(); g.setLineDash([]); }
+  linha(S.hist.a, cor('--alvo'), 3, [8,5]);
+  linha(S.hist.m, cor('--linha'), 3);
+  g.textAlign='center'; g.fillStyle=cor('--mut'); g.fillText('tempo do ensaio',ml+pw/2,H-8);
+}
+
+/* ---- 8. Aviso de confirmação ---- */
+var acaoPend=null;
+function confirma(titulo, texto, rotulo, classe, fn){
+  $('dlgT').textContent=titulo; $('dlgP').textContent=texto; acaoPend=fn;
+  $('dlgSim').textContent=rotulo; $('dlgSim').className='btn '+(classe||''); $('dlgSim').hidden=!fn;
+  $('dlgNao').textContent = fn?'Cancelar':'Entendi';
+  $('dlg').showModal(); $('dlgNao').focus();           /* foco no botão seguro */
+}
+$('dlgNao').onclick=function(){ acaoPend=null; $('dlg').close(); };
+$('dlgSim').onclick=function(){ var f=acaoPend; acaoPend=null; $('dlg').close(); if(f) f(); render(); };
+
+/* ---- 9. Eventos ---- */
+$('bIni').onclick=iniciar;
+$('bPau').onclick=pausar;
+$('bZer').onclick=function(){
+  confirma('Zerar a etapa '+(S.i+1)+'?','O tempo desta etapa volta ao início. As outras etapas não mudam.','Zerar etapa','perigo',
+    function(){ S.T=S.i*DUR; S.estab=0; S.acc={n:0,m:0,v:0}; });
+};
+function modo(m){ S.modo=m; $('mAuto').setAttribute('aria-pressed',String(m==='auto')); $('mMan').setAttribute('aria-pressed',String(m==='manual'));
+  $('msg').textContent = m==='auto' ? 'O sistema liga e desliga as chaves para chegar ao alvo.' : 'Você liga e desliga as chaves. Toque numa chave para comandar.'; render(); }
+$('mAuto').onclick=function(){modo('auto')}; $('mMan').onclick=function(){modo('manual')};
+$('bancos').addEventListener('click', function(e){
+  var t=e.target.closest('.tile'); if(!t) return;
+  var c=CH.filter(function(x){return x.id===t.dataset.id})[0];
+  if(S.modo==='auto'){ $('msg').textContent='Modo automático: troque para Manual para comandar as chaves.'; return; }
+  if(!disp(c)){ confirma('Chave '+c.id+' indisponível', c.falha?'A chave está em falha e não pode ser comandada.':'A chave está bloqueada (desabilitada).', '', '', null); return; }
+  var lig=!c.on;
+  confirma((lig?'Ligar':'Desligar')+' a chave '+c.id+'?', (lig?'Entram ':'Saem ')+c.kw+' kW da carga.', lig?'Ligar chave':'Desligar chave', lig?'laranja':'perigo',
+    function(){ alternar(c,lig); });
+});
+$('bTema').onclick=function(){
+  var esc=document.documentElement.dataset.tema==='escuro';
+  if(esc) delete document.documentElement.dataset.tema; else document.documentElement.dataset.tema='escuro';
+  $('bTema').textContent='Tema: '+(esc?'claro':'escuro'); $('bTema').setAttribute('aria-pressed',String(!esc)); render();
+};
+$('bAnim').onclick=function(){
+  var off=document.documentElement.classList.toggle('sem-anim');
+  $('bAnim').textContent='Animações: '+(off?'desligadas':'ligadas'); $('bAnim').setAttribute('aria-pressed',String(!off));
+};
+window.addEventListener('resize', desenhaGrafico);
+
+/* ---- 10. Partida ---- */
+montaFixos(); planejar(); modo('auto'); tick();
+var q=new URLSearchParams(location.search);
+if(q.get('manual')==='1') modo('manual');
+if(q.get('auto')==='1') iniciar();
+for(var k=0;k<(+q.get('ticks')||0);k++) tick();     /* só para tirar capturas no meio do ensaio */
+setInterval(tick,1000);
+})();
+</script>
+</body>
+</html>
