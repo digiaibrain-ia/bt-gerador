@@ -15,7 +15,7 @@ Controle de **qualidade e retrabalho do produto** (não é manutenção de máqu
 | **Botão "⚠ Registrar defeito" no medidor** + aviso de RNC pendente | `dashboard/ferramentas/medidor_gerador_v1.10.135.html` (fonte do módulo: `dashboard/modulos-fonte/rnc_defeito_v0.1.js`) |
 | Testes | `tests/rnc_core.test.js` (v1.0) e `tests/rnc_core_v1.1.test.js` (`node --test tests/*.test.js`) |
 
-**Ainda não feito:** teste completo do ciclo na bancada (3), botão "Registrar defeito" no medidor (4), indicadores/CSV (5).
+**Ainda não feito:** teste completo do ciclo na bancada (3; roteiro pronto em `docs/modulos/RNC_CHECKLIST_BANCADA_v0.1.md`), botão "Registrar defeito" no medidor (4), indicadores/CSV (5).
 
 ## Fluxo e estados (da RNC)
 `ABERTA` (já bloqueia expedição) → `EM_REPARO` → `AGUARDANDO_RETESTE` → `LIBERADO`. Reteste reprovado volta a `EM_REPARO`.
