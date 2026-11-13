@@ -49,6 +49,15 @@ O menu ☰ da v1.10.201/202 lê o `catalogo_ferramentas.js`, que é **gerado** (
 - **Demo:** permitido para treino; descrição leva `[DEMO]` e o contexto `demo:true` (o Reparo destaca).
 - "Salvo" só depois da confirmação do servidor; falha mantém a janela preenchida e o reenvio não duplica.
 
+## Teste no Demo com o Dev/Operador oculto (medidor v1.10.203) — 13/11/2026
+O medidor `v1.10.203` (= v1.10.202 + fase nova do robô + falha simulada do alternador) roda o RNC dentro do ensaio simulado, sem PC BT2 nem DSE real.
+- **Fase "RNC · Registrar defeito"** (fragmento `dashboard/modulos-fonte/robo_fase_rnc_v0.3.js`; gerador `dashboard/gerador/gerar_medidor_v1.10.203_v0.3.py`): na etapa de 50 %, antes de salvar, o robô aperta o botão como o operador e confere 19 pontos (contexto, janela, recusa sem descrição, "Salvo" só após o servidor, leitura de volta do servidor, aviso que aparece e some, ensaio segue).
+- **Falha simulada do ALTERNADOR DE CARGA** (pedido do Reginaldo; só Demo; só o robô arma; sem checkbox na tela): alternador 0 V, bateria 24,8 V, alarme "Falha de carga do alternador". A RNC de teste é um DEFEITO desse alternador; o servidor guardou o alarme e as grandezas no contexto. A falha é desarmada ao fim.
+- **Segurança:** a fase só grava se `GET /api/rnc/saude` mostrar pasta de dados com "teste" no nome; senão é PULADA com aviso. A caixa de areia do robô (que bloqueia todo envio que não seja leitura) ganhou UMA exceção: `POST /api/rnc/abrir`, só durante a fase.
+- **Resultado (Node-RED 4 real, pasta de teste):** 186 OK · 8 FALHA · 1 AVISO · 0 erro de JavaScript. As 19 conferências do RNC passaram. A 1ª execução da fase falhou (caixa de areia bloqueou o envio) e foi corrigida com a exceção acima.
+- **As 8 FALHAS são do Setup e NÃO são do RNC:** BC56, BC400, BC59,5 e BC550, "o popup explica o motivo (LOCAL)" e "chX ch1 fica selecionada para calibrar" (mensagem "Informe o chaveamento do banco (220 / 380 / 440 V) antes de selecionar uma chave"). Já existem na v1.10.202 original (166 OK · 8 FALHA, sem RNC) e o relatório antigo (v1.9.78) já tinha 4 do mesmo tipo. **Achado fora do escopo — levar ao `BACKLOG_FORA_DE_ESCOPO.md` da sessão BT2 (id sugerido: SETUP-ROBO-01, gravidade média)**: o robô espera ver a chave selecionada/explicada, mas o Setup exige o chaveamento antes; ou o teste do robô precisa informar o chaveamento, ou a mensagem do popup precisa explicar o motivo LOCAL.
+- **Limites:** é Demo (dados do simulador); não prova DSE real, PC BT2 nem rede. O robô não substitui o roteiro de bancada.
+
 ## Instalar (no PC do Node-RED — só com OK do Reginaldo e backup antes)
 1. Backup do Node-RED exportado.
 2. Variável de ambiente do PM2: `RNC_DIR` = pasta dos dados (caminho absoluto). Opcional: `RNC_SERIAL_REGEX`, `RNC_BANCOS`.
