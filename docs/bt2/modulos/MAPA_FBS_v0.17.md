@@ -21,3 +21,5 @@ A cópia do mapa **embutida** no medidor (`window.EMB.mapa`) estava na **v0.14**
 ## Limites
 - No roteiro de teste a mãe para em SEM_CARGA (o gerador virtual não é ligado): a mãe em EXECUTANDO (sugestão e rodízio em ação) não foi exercitada de ponta a ponta.
 - Se a iluminação "ficou legal" é julgamento visual do Reginaldo; ajustes viram a v0.18.
+
+> **Substituída em 14/11/2026 pela v0.18** (`MAPA_FBS_v0.18.md`): o contorno âmbar que piscava saiu; entrou a auréola de fundo que respira no bloco ativo.
