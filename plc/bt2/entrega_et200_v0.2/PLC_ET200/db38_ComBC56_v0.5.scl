@@ -1,0 +1,35 @@
+DATA_BLOCK "db38_ComBC56"
+TITLE = db38_ComBC56 v0.5 (DB38)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+NON_RETAIN
+////====================================
+//// v0.5 (14/11/2026): so o NOME simbolico passou a db38_ComBC56 (o nome real do DB no projeto do ET200); layout IDENTICO ao v0.4 (24 bytes).
+//// ComBC56 (DB38) v0.4 - RASCUNHO (06/11/2026, Fase 4 / Portao A) - nao compilado, nao testado. NAO substitui a v0.3 ate o OK da carga.
+//// O QUE MUDA vs v0.3 (12 bytes -> 24 bytes): PEDIDO/RESPOSTA de verdade. O 1515 escreve o PEDIDO (DBB0..9); o ET200 escreve a RESPOSTA (DBB10..23).
+////   Novos: habPed/habResp (habilitar/desabilitar com confirmacao), seq/eco (o 1515 confere que o pacote foi tratado),
+////          falhaRetorno e contatorColado (regra "SB some -> CB cai", T = 2 s, ver fb_supervisaoChaves16).
+//// PUT do 1515 : P#DB38.DBX0.0 BYTE 10     |     GET do 1515 : P#DB38.DBX10.0 BYTE 14   (FB101 v0.8 / chamadas v0.8)
+//// ESCRITOR UNICO (regra de ouro): DBB0..9 so pelo PUT do 1515; DBB10..23 so pelo programa do ET200. Nunca espelhar o DB inteiro nos dois sentidos.
+//// POR QUE DB GLOBAL SEM OTIMIZACAO : PUT/GET enderecam por byte/bit absoluto. CONFERIR os deslocamentos na coluna "Deslocamento" do TIA.
+//// CARGA JUNTA: layout novo (24 B) com o FB101 v0.7 (6+6 B) NAO fecha. Carregar ET200 e 1515 na mesma janela (ordem no roteiro).
+////=====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;       // DBX0.0..1.7   PEDIDO  comando das contatoras (PUT)
+      vida1515 : Int;                    // DBW2          PEDIDO  contador de vida do 1515, 0 a 32766 (PUT)
+      ligarBanco : Bool;                 // DBX4.0        PEDIDO  Ligar banco (PUT)
+      resPut : Byte;                     // DBB5          reserva
+      habPed : Array[1..16] of Bool;    // DBX6.0..7.7   PEDIDO  habilitar (1) / desabilitar (0) cada chave (PUT)
+      seq : Int;                         // DBW8          PEDIDO  contador do pacote, 1..32766 (PUT)
+      fbk : Array[1..16] of Bool;       // DBX10.0..11.7 RESPOSTA contato auxiliar de cada contatora = SB (GET)
+      vidaET : Int;                      // DBW12         RESPOSTA contador de vida do ET200 (GET)
+      seletoraAuto : Bool;               // DBX14.0       RESPOSTA seletora do banco em Auto, 1 = Auto (GET)
+      resGet : Byte;                     // DBB15         reserva
+      habResp : Array[1..16] of Bool;   // DBX16.0..17.7 RESPOSTA habilitacao aplicada no ET200 (GET)
+      eco : Int;                         // DBW18         RESPOSTA copia do seq recebido (GET)
+      falhaRetorno : Array[1..16] of Bool;   // DBX20.0..21.7 RESPOSTA sem retorno por T, TRAVADA (GET)
+      contatorColado : Array[1..16] of Bool; // DBX22.0..23.7 RESPOSTA contator colado, TRAVADO (GET)
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK
