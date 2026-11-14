@@ -2,7 +2,7 @@
 // Uso: node tests/e2e/dados_ensaio_ns.js     (MEDIDOR=nome.html para testar outra versao)
 const { chromium } = require('playwright');
 const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.204.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.205.html');
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 const eq = (p, nome, c) => p.evaluate(([nome, c]) => { const i = DADOS.equip.findIndex(r => r[0] === nome); return document.querySelector('#dEquip input[data-r="' + i + '"][data-c="' + c + '"]').value; }, [nome, c]);
 const setEq = (p, nome, c, v) => p.evaluate(([nome, c, v]) => { const i = DADOS.equip.findIndex(r => r[0] === nome); const e = document.querySelector('#dEquip input[data-r="' + i + '"][data-c="' + c + '"]'); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); }, [nome, c, v]);
@@ -44,15 +44,30 @@ const digita = async (p, v) => { await p.fill('#dServ', v); await p.dispatchEven
       ok('modo Manual confirmado: origemDados=manual, ns=null, NS so normalizado', m.origemDados === 'manual' && m.ns === null && m.serie === 'SN-1', JSON.stringify([m.origemDados, m.serie]));
       await p.evaluate(() => abreDados(false)); await p.waitForTimeout(200); await p.evaluate(() => document.querySelector('input[name=dModo][value=ns]').click());
     }
-    if (await p.evaluate(() => /1\.10\.2(0[4-9]|[1-9]\d)/.test(document.querySelector('meta[name=app-version]').content))) {
-      await digita(p, 'SDFWA01715');
-      ok('NS do MES com S na frente (SDFWA01715) preenche Motor 12 (2V), Alternador WEG, DSE 4520', (await eq(p, 'Motor', 1)) === 'MWM' && (await eq(p, 'Alternador', 1)) === 'WEG' && (await eq(p, 'Controlador', 2)) === 'DSE 4520', await eq(p, 'Motor', 2));
-      ok('... com aviso do prefixo S', await p.evaluate(() => /Prefixo "S"/.test(document.getElementById('dNsBox').textContent)));
+    if (await p.evaluate(() => /1\.10\.2(0[5-9]|[1-9]\d)/.test(document.querySelector('meta[name=app-version]').content))) {
+      // 1.10.205: decodificador estrito (so as normas) + origem dos campos + conflito com o catalogo
+      await digita(p, 'DTMFØ4447'); await p.waitForTimeout(50);
+      ok('origem: campos do NS com barra azul (Motor, Alternador, Controlador)', await p.evaluate(() => document.querySelectorAll('#dEquip .dns-o-ns').length >= 6), String(await p.evaluate(() => document.querySelectorAll('#dEquip .dns-o-ns').length)));
+      ok('legenda de origem aparece', await p.evaluate(() => /Origem dos campos: .*NS \(\d+\).*catálogo \(0\)/.test(document.getElementById('dNsBox').textContent)));
+      // simula o que a busca de modelo faz (preenche freq/tensao/potencia e o controlador Deep Sea) e termina chamando fichaModelo
+      await p.evaluate(() => { const set = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); };
+        set('dFreq', '60'); set('dTens', '220'); set('dPot', '208'); const i = DADOS.equip.findIndex(r => r[0] === 'Controlador');
+        document.querySelector('#dEquip input[data-r="' + i + '"][data-c="1"]').value = 'Deep Sea'; document.querySelector('#dEquip input[data-r="' + i + '"][data-c="2"]').value = '4520';
+        window.fichaModelo({ kVA: 260, V: 220, Hz: 60, kW: 208, arquivo: 'teste.dse' }); });
+      ok('catalogo marca Frequencia, Tensao e Potencia com barra verde', await p.evaluate(() => ['dFreq', 'dTens', 'dPot'].every(id => document.getElementById(id).classList.contains('dns-o-cat'))));
+      ok('catalogo vence no Controlador (barra verde) e Motor segue do NS (azul)', await p.evaluate(() => { const i = DADOS.equip.findIndex(r => r[0] === 'Controlador'), m = DADOS.equip.findIndex(r => r[0] === 'Motor'); return document.querySelector('#dEquip input[data-r="' + i + '"][data-c="1"]').classList.contains('dns-o-cat') && document.querySelector('#dEquip input[data-r="' + m + '"][data-c="1"]').classList.contains('dns-o-ns'); }));
+      ok('conflito: NS diz Deif AGC150 e o catalogo e Deep Sea -> aviso', await p.evaluate(() => /indica o controlador "Deif AGC150".*Deep Sea/.test(document.getElementById('dNsBox').textContent)));
+      await p.fill('#dTens', '380'); ok('digitar a mao tira a marca do campo (Tensao)', await p.evaluate(() => !document.getElementById('dTens').classList.contains('dns-o-cat')));
+      await digita(p, 'GDWAØ4447'); await p.waitForTimeout(50);
+      ok('NS novo: o NS vence no Controlador, mas Frequencia e Potencia seguem como catalogo', await p.evaluate(() => { const i = DADOS.equip.findIndex(r => r[0] === 'Controlador'); return document.querySelector('#dEquip input[data-r="' + i + '"][data-c="1"]').classList.contains('dns-o-ns') && document.getElementById('dFreq').classList.contains('dns-o-cat'); }));
+      const antesMotor = await eq(p, 'Motor', 1); await digita(p, 'SDFWA01715');
+      ok('estrito: SDFWA01715 (10 caracteres) e recusado e NAO preenche nada', await p.evaluate(() => /não reconhecido/.test(document.getElementById('dNsBox').textContent) && /Nenhum campo foi preenchido/.test(document.getElementById('dNsBox').textContent)) && (await eq(p, 'Motor', 1)) === antesMotor);
     }
     await digita(p, '*SNNØ4447*'); ok('torre solar sem motor/alternador (com * do codigo de barras)', (await eq(p, 'Motor', 1)) === '-' && (await eq(p, 'Alternador', 1)) === '-');
     ok('dialogo cabe na tela (titulo e botao OK visiveis)', await p.evaluate(() => { const r = document.querySelector('#dlgDados .jt').getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && document.getElementById('dOk').getBoundingClientRect().bottom <= innerHeight + 1; }));
     await p.evaluate(() => document.getElementById('dlgDados').close());
     await p.evaluate(() => abreDados(false)); await p.waitForTimeout(200);
+    ok('reabrir em Manual: nenhuma barra de origem', await p.evaluate(() => document.querySelectorAll('.dns-o-ns,.dns-o-cat').length === 0));
     ok('fechar e reabrir volta para Manual', await p.evaluate(() => document.querySelector('input[name=dModo]:checked').value === 'manual' && document.getElementById('dNsBox').hidden));
     ok('sem erro de JavaScript na pagina', erros.length === 0, erros.join(' | '));
     await ctx.close();
