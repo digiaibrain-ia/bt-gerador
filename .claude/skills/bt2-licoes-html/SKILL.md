@@ -23,3 +23,5 @@ Fonte: `docs/licoes/REGISTRO_LICOES_v0.1.md` (LL-020 a LL-029) e `docs/licoes/IN
 - "Em curso" é calculado (iniciado e não gravado), nunca uma flag solta; depois de gravar nada fica travado. LL-048
 - **Texto longo não fica na tela: vira janela suspensa (popover) com o ícone ⓘ.** Na tela só um resumo curto; detalhe, avisos e exemplos no painel (fecha com ✕, Esc ou clique fora). LL-056
 - **Número de série/identificação: normalizar no servidor** (Ø→0, sem `*`/espaços, maiúsculas) e decodificar só o que a norma define. Exemplos de teste e de tela: só os da norma. LL-057/058
+- **Ferramenta embutida no medidor (gráfico, mapa): ao mudar o arquivo, o medidor sai em versão nova com a cópia embutida atualizada**; teste compara a cópia com a versão mais nova da pasta. LL-059
+- **Animação de atividade (pulso) só quando algo mudou de verdade**: ruído de medição, contadores de tempo e a primeira foto não contam; não muda tamanho nem posição; respeita "reduzir movimento". Estado nunca só por cor: símbolo de forma junto.
