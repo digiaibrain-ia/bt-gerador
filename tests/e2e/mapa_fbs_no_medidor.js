@@ -1,10 +1,10 @@
-// Medidor 1.10.208: o botao "Mapa dos FBs" (Patamar Guiado > Detalhes > Ferramentas) abre a copia EMBUTIDA do mapa (v0.18) e a AUREOLA do bloco ativo funciona com os FBs virtuais DE VERDADE (sem injetar foto).
+// Medidor 1.10.209: o botao "Mapa dos FBs" (Patamar Guiado > Detalhes > Ferramentas) abre a copia EMBUTIDA do mapa (v0.19) e a AUREOLA do bloco ativo funciona com os FBs virtuais DE VERDADE (sem injetar foto).
 // Roteiro no DEMO: parado (nenhum bloco brilha) -> Operador Auto + Ligar Patamar Guiado + iniciar o ensaio (brilham os blocos em estado ativo, nao todos; a aureola respira sem apagar).
 // LIMITE: neste roteiro a mae para em SEM_CARGA (o gerador virtual nao e ligado): so se exercita armar e iniciar; a mae no estado EXECUTANDO (sugestao 4, rodizio 5 em acao) nao e exercitada aqui. A logica da aureola esta em mapa_fbs_aura.js.
 // Abre o arquivo direto (file://), sem servidor. Uso: node tests/e2e/mapa_fbs_no_medidor.js   (MEDIDOR=nome.html; SHOTS=pasta para salvar capturas)
 const { chromium } = require('playwright');
 const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.208.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.209.html');
 const SHOTS = process.env.SHOTS || '';
 const fs = require('fs');
 // GUARDA (LL-059): a copia embutida do mapa tem que ser a versao MAIS NOVA que existe na pasta (a 1.10.206 embutia a v0.14 enquanto a pasta ja tinha a v0.16)
@@ -25,8 +25,20 @@ const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 
     ok('o painel do mapa abre', await p.evaluate(() => document.getElementById('dlgMapaFBs').open));
     const fr = await (await p.$('#mapaFrame')).contentFrame(); await fr.waitForSelector('#svgm', { timeout: 5000 });
     const verEmb = await fr.evaluate(() => document.querySelector('meta[name=app-version]').content);
-    ok('a copia embutida do mapa e a v0.18 (era v0.14)', verEmb === '0.18', verEmb);
+    ok('a copia embutida do mapa e a v0.19 (era v0.14)', verEmb === '0.19', verEmb);
     ok('GUARDA: a copia embutida e a versao mais nova do mapa na pasta (v0.' + maisNova + ')', verEmb === '0.' + maisNova);
+    // v1.10.209: area do diagrama no celular. Celular: painel em TELA CHEIA, titulo em UMA linha, o diagrama com a maior parte da tela. PC: painel como antes.
+    const cel = nome.startsWith('celular');
+    const geo = await p.evaluate(() => { const d = document.getElementById('dlgMapaFBs'), r = d.getBoundingClientRect(), t = d.querySelector('.jt').getBoundingClientRect(), i = document.getElementById('mapaFrame').getBoundingClientRect(), j = document.getElementById('mapaJan'); return { W: innerWidth, H: innerHeight, dw: Math.round(r.width), dh: Math.round(r.height), t: Math.round(t.height), ih: Math.round(i.height), jan: j.innerText.trim(), janW: Math.round(j.getBoundingClientRect().width) }; });
+    const cvH = await fr.evaluate(() => Math.round(document.getElementById('cv').getBoundingClientRect().height));
+    if (cel) {
+      // o modulo de janelas do projeto (LL-020) impoe max-width/max-height em linha com 4 px de folga por lado, para toda janela caber inteira na tela: o painel ocupa a tela MENOS essa folga
+      ok('celular: o painel ocupa a tela inteira (menos 4 px de folga por lado, regra de janelas LL-020)', geo.dw >= geo.W - 10 && geo.dh >= geo.H - 10 && geo.dw <= geo.W && geo.dh <= geo.H, geo.dw + 'x' + geo.dh + ' em ' + geo.W + 'x' + geo.H);
+      ok('celular: barra de titulo em UMA linha (<= 56 px) e o botao Janela propria so com o icone', geo.t <= 56 && geo.jan === '↗' && geo.janW <= 48, 'titulo ' + geo.t + ' px, botao "' + geo.jan + '"');
+      ok('celular: o iframe usa quase toda a altura (>= 90 %) e o DIAGRAMA ocupa >= 60 % da altura da tela', geo.ih / geo.H >= 0.9 && cvH / geo.H >= 0.6, 'iframe ' + geo.ih + ' px · diagrama ' + cvH + ' px de ' + geo.H + ' = ' + Math.round(100 * cvH / geo.H) + ' %');
+    } else {
+      ok('PC: painel como antes (iframe 76vh, botao "Janela propria" com texto, barra de titulo normal)', Math.abs(geo.ih - Math.round(0.76 * geo.H)) <= 4 && /Janela própria/.test(geo.jan) && geo.dw < geo.W, 'iframe ' + geo.ih + ' px (76vh = ' + Math.round(0.76 * geo.H) + '), botao "' + geo.jan + '"');
+    }
     ok('o medidor entrega a foto dos FBs ao mapa (AO VIVO)', await fr.evaluate(() => typeof AO !== 'undefined' && AO !== null && AO.v === 1 && /AO VIVO/.test(document.getElementById('vivo').textContent)));
     const auras = () => fr.evaluate(() => [...document.querySelectorAll('.aura')].map(h => h.closest('g').getAttribute('aria-label').replace(/:.*/, '')));
     const opac = () => fr.evaluate(() => [...document.querySelectorAll('.aura')].map(a => +getComputedStyle(a).opacity));
