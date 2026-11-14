@@ -2,7 +2,7 @@
 // Uso: node tests/e2e/dados_ensaio_ns.js     (MEDIDOR=nome.html para testar outra versao)
 const { chromium } = require('playwright');
 const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.203.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.204.html');
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 const eq = (p, nome, c) => p.evaluate(([nome, c]) => { const i = DADOS.equip.findIndex(r => r[0] === nome); return document.querySelector('#dEquip input[data-r="' + i + '"][data-c="' + c + '"]').value; }, [nome, c]);
 const setEq = (p, nome, c, v) => p.evaluate(([nome, c, v]) => { const i = DADOS.equip.findIndex(r => r[0] === nome); const e = document.querySelector('#dEquip input[data-r="' + i + '"][data-c="' + c + '"]'); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); }, [nome, c, v]);
@@ -43,6 +43,11 @@ const digita = async (p, v) => { await p.fill('#dServ', v); await p.dispatchEven
       const m = await p.evaluate(() => ensCamposPreench());
       ok('modo Manual confirmado: origemDados=manual, ns=null, NS so normalizado', m.origemDados === 'manual' && m.ns === null && m.serie === 'SN-1', JSON.stringify([m.origemDados, m.serie]));
       await p.evaluate(() => abreDados(false)); await p.waitForTimeout(200); await p.evaluate(() => document.querySelector('input[name=dModo][value=ns]').click());
+    }
+    if (await p.evaluate(() => /1\.10\.2(0[4-9]|[1-9]\d)/.test(document.querySelector('meta[name=app-version]').content))) {
+      await digita(p, 'SDFWA01715');
+      ok('NS do MES com S na frente (SDFWA01715) preenche Motor 12 (2V), Alternador WEG, DSE 4520', (await eq(p, 'Motor', 1)) === 'MWM' && (await eq(p, 'Alternador', 1)) === 'WEG' && (await eq(p, 'Controlador', 2)) === 'DSE 4520', await eq(p, 'Motor', 2));
+      ok('... com aviso do prefixo S', await p.evaluate(() => /Prefixo "S"/.test(document.getElementById('dNsBox').textContent)));
     }
     await digita(p, '*SNNØ4447*'); ok('torre solar sem motor/alternador (com * do codigo de barras)', (await eq(p, 'Motor', 1)) === '-' && (await eq(p, 'Alternador', 1)) === '-');
     ok('dialogo cabe na tela (titulo e botao OK visiveis)', await p.evaluate(() => { const r = document.querySelector('#dlgDados .jt').getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && document.getElementById('dOk').getBoundingClientRect().bottom <= innerHeight + 1; }));
