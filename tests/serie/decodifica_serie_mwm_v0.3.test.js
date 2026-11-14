@@ -55,12 +55,12 @@ describe('gerador (ETD 091)', () => {
 });
 
 describe('v0.3 estrito: so o que a norma define', () => {
-  test('SDFWA01715 (10 caracteres, S na frente) e INVALIDO e nao decodifica nada', () => {
-    const r = decodificaSerie('SDFWA01715');
+  test('10 caracteres (letra a mais na frente de um NS da ETD 091) e INVALIDO e nao decodifica nada', () => {
+    const r = decodificaSerie('XDTMFØ4447');
     assert.equal(r.valido, false); assert.equal(r.tipo, null); assert.equal(r.motor, undefined); assert.equal(r.prefixoMes, undefined);
     assert.match(r.erros[0], /10 caracteres/);
   });
-  test('string longa do MES (aplicacao + NS) tambem e invalida', () => { assert.equal(decodificaSerie('M9MGD26060019SDFWA01715').valido, false); });
+  test('string longa (texto antes do NS da ETD 091) tambem e invalida', () => { assert.equal(decodificaSerie('ABCDE12345678DTMFØ4447').valido, false); });
   test('S na posicao 2 e motor Scania (tabela II); S na posicao 1 e invalido no gerador', () => {
     const r = decodificaSerie('DSWAØ0001'); assert.equal(r.valido, true); assert.match(r.motor.descricao, /Scania/);
     assert.equal(decodificaSerie('SDWAØ0001').valido, false);

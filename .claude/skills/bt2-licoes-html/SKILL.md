@@ -21,4 +21,5 @@ Fonte: `docs/licoes/REGISTRO_LICOES_v0.1.md` (LL-020 a LL-029) e `docs/licoes/IN
 - Balão/dica = "última camada": fora do fluxo (`position:fixed`/popover), nunca `::after` absoluto dentro de card; texto selecionável. LL-046
 - Toda tela: passar o mouse/focar NÃO muda posição nem tamanho de nada; testar em 1536×694 (notebook do Reginaldo). LL-047
 - "Em curso" é calculado (iniciado e não gravado), nunca uma flag solta; depois de gravar nada fica travado. LL-048
-
+- **Texto longo não fica na tela: vira janela suspensa (popover) com o ícone ⓘ.** Na tela só um resumo curto; detalhe, avisos e exemplos no painel (fecha com ✕, Esc ou clique fora). LL-056
+- **Número de série/identificação: normalizar no servidor** (Ø→0, sem `*`/espaços, maiúsculas) e decodificar só o que a norma define. Exemplos de teste e de tela: só os da norma. LL-057/058

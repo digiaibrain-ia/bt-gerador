@@ -24,3 +24,8 @@ Teste: `node tests/e2e/dados_ensaio_ns.js` (Playwright, abre o arquivo direto; d
 - **Origem de cada campo:** barra azul = NS, barra verde = catálogo, sem barra = digitado. Quem rodar por último vence; digitar à mão tira a marca. Legenda no quadro do NS.
 - **Conflito:** o catálogo preenche sempre "Deep Sea". Se o NS indicar outro controlador (ex.: Deif AGC150), aparece aviso.
 - **Não faz:** não manda o nome do modelo do catálogo ao registro (exigiria fluxo v1.11); não recebe o NS direto do MES (depende da TI); a string longa do MES (aplicação + NS) não é decifrada.
+
+## Atualização 14/11/2026 — medidor 1.10.206 (regra do texto longo)
+- A interface do NS saiu do script antigo e virou módulo próprio: `dashboard/modulos-fonte/dados_ensaio_ns_v0.2.js` (gerador: `dashboard/gerador/gerar_medidor_v1.10.206_v0.1.py`, de 1.10.205).
+- **Regra:** texto longo não fica na tela, vira janela suspensa (popover) com o ícone ⓘ. Na tela: uma linha curta (o que o NS é + etiquetas "NS n", "catálogo n", "⚠ avisos", "⚠ conflito", "✎ alterados"). No ⓘ: decodificação completa, avisos, conflito, alterados, legenda das barras e os exemplos das normas (ETD 091 5.1–5.3 e ETD 094 5.1–5.3, com botão "usar"). Fecha com ✕, Esc (só o painel) ou clique fora.
+- Teste: `node tests/e2e/dados_ensaio_ns.js` (84 verificações, desktop 1536×694 e celular 390). Exemplos de NS: só os das normas.

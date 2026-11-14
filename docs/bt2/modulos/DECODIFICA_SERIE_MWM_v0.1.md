@@ -27,3 +27,6 @@ const r = decodificaSerie('*DTMFØ4447*', { dataFabricacao: '2026-11-14' });
 - Estrutura antiga (antes de 29/12/2020) não decodificada.
 - Formato de entrega do MES (campo, data de fabricação) ainda não definido.
 - Ligação ao registro de ensaio (`serie`) fica para versão nova do fluxo, depois do OK.
+
+## Atualização 14/11/2026 — v0.3 (estrita)
+Arquivo atual: `decodifica_serie_mwm_v0.3.js` (lógica da v0.1: só as normas). Teste: `tests/serie/decodifica_serie_mwm_v0.3.test.js`. A v0.2, que aceitava letra na frente do NS, foi descartada: formato fora da norma é inválido e nada é preenchido. Exemplos de teste: só os das normas (ETD 091 itens 5.1 a 5.3; ETD 094 itens 5.1 a 5.3).
