@@ -1,0 +1,29 @@
+DATA_BLOCK "db39_ComBC400"
+TITLE = db39_ComBC400 v0.5 (DB39)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+NON_RETAIN
+////====================================
+//// v0.5 (14/11/2026): so o NOME simbolico passou a db39_ComBC400 (o nome real do DB no projeto do ET200); layout IDENTICO ao v0.4 (24 bytes).
+//// ComBC400 (DB39) v0.4 - RASCUNHO (06/11/2026). Layout IGUAL ao ComBC56 v0.4 (24 bytes). Ver o cabecalho do DB38.
+//// PUT do 1515 : P#DB39.DBX0.0 BYTE 10     |     GET do 1515 : P#DB39.DBX10.0 BYTE 14
+////=====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;
+      vida1515 : Int;
+      ligarBanco : Bool;
+      resPut : Byte;
+      habPed : Array[1..16] of Bool;
+      seq : Int;
+      fbk : Array[1..16] of Bool;
+      vidaET : Int;
+      seletoraAuto : Bool;
+      resGet : Byte;
+      habResp : Array[1..16] of Bool;
+      eco : Int;
+      falhaRetorno : Array[1..16] of Bool;
+      contatorColado : Array[1..16] of Bool;
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK

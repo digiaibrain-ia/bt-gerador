@@ -1,0 +1,10 @@
+ENTREGA FASE 4 (BT2) - 06/11/2026 - regra SB/CB (T=2 s), medidor 1.10.172, plano do PLC 1200
+Execucao: Engenharia de Automacao (Reginaldo). Ambiente de teste: carga de potencia DESACOPLADA. Nada foi validado em PLC real.
+
+1) Confira a integridade:   sha256sum -c MANIFESTO.sha256
+2) Leia 05_documentos/ROTEIRO_ATUALIZACAO_FASE4_v0.1.md (ordem, acoplamentos, rollback) e RELATORIO_PORTAO_A/B/C/D.
+3) Faca BACKUP antes (TIA 1515 e PLC do banco; Node-RED exportado).
+4) O medidor 1.10.172 (03_front) e independente: pode entrar primeiro. O PLC (plc/) e os fluxos v3.5 (01_fluxos_importar) entram JUNTOS.
+5) Execute 05_documentos/CHECKLIST_BANCADA_v0.2.md e devolva preenchido.
+6) Arquivos "-PC.json" (com IP) vem em pacote separado e so servem ao PC BT2; nunca no Git.
+7) Os blocos SCL sao RASCUNHO (nao compilados). Conferir os deslocamentos e o mapeamento fisico do FC4 antes de carregar.

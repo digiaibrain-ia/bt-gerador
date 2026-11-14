@@ -1,0 +1,50 @@
+TYPE "typeComBanco16"
+TITLE = typeComBanco16 v0.1
+VERSION : 0.1
+////====================================
+//// typeComBanco16 v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE E : telegrama PEDIDO/RESPOSTA entre o 1515 (ensaio) e o PLC de cargas, ate 16 chaves, 24 bytes. LAYOUT IDENTICO ao ComBC56 v0.4 (DB38 do ET200):
+////           o FB101 v0.8 do 1515 funciona sem mudanca de logica; so mudam o numero do DB remoto e o ID da conexao.
+//// PUT do 1515 : DBX0.0 BYTE 10 (PEDIDO)    GET do 1515 : DBX10.0 BYTE 14 (RESPOSTA)
+//// ESCRITOR UNICO : PEDIDO so pelo PUT do 1515; RESPOSTA so pelo fb_bancoCarga16 (este PLC). Nunca espelhar o DB inteiro nos dois sentidos.
+////====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;            // DBX0.0..1.7   PEDIDO   comando das contatoras (CB)
+      vida1515 : Int;                         // DBW2          PEDIDO   vida do 1515, 0..32766
+      ligarBanco : Bool;                      // DBX4.0        PEDIDO   Ligar banco
+      resPut : Byte;                          // DBB5          reserva
+      habPed : Array[1..16] of Bool;         // DBX6.0..7.7   PEDIDO   habilitar (1) / desabilitar (0)
+      seq : Int;                              // DBW8          PEDIDO   contador do pacote, 1..32766
+      fbk : Array[1..16] of Bool;            // DBX10.0..11.7 RESPOSTA contato auxiliar real (SB)
+      vidaET : Int;                           // DBW12         RESPOSTA vida deste PLC
+      seletoraAuto : Bool;                    // DBX14.0       RESPOSTA seletora do banco em Auto
+      resGet : Byte;                          // DBB15         reserva
+      habResp : Array[1..16] of Bool;        // DBX16.0..17.7 RESPOSTA habilitacao aplicada
+      eco : Int;                              // DBW18         RESPOSTA copia do seq
+      falhaRetorno : Array[1..16] of Bool;   // DBX20.0..21.7 RESPOSTA sem retorno por T, TRAVADA
+      contatorColado : Array[1..16] of Bool; // DBX22.0..23.7 RESPOSTA contator colado, TRAVADO
+   END_STRUCT;
+END_TYPE
+
+TYPE "typeCompetenciaBanco"
+TITLE = typeCompetenciaBanco v0.1
+VERSION : 0.1
+////====================================
+//// typeCompetenciaBanco v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE E : DB DE COMPETENCIA do banco = sinais que SO este PLC conhece e o 1515/Node-RED/tela precisam ler (8 bytes, GET do 1515 a ~1 s).
+//// POR QUE SEPARADO do telegrama rapido: o telegrama de 24 bytes e o ciclo de COMANDO (~100 ms) e nao pode mudar de tamanho sem mudar fluxo e FB101;
+////           estes sinais mudam devagar e sao novos. Assim comando e seguranca continuam rapidos e iguais ao ensaiado.
+//// ASSUMIDO - A CONFIRMAR com o Reginaldo/programador: nomes, quais sinais existem fisicamente (ventilador, contator geral, chaveamento), significado dos bits de alarmes.
+//// GET do 1515 : DBX0.0 BYTE 8.   Escritor unico: fb_bancoCarga16.
+////====================================
+   STRUCT
+      bancoLiberado : Bool;        // DBX0.0 banco aceita comandos agora (comunicacao viva E seletora Auto E intertravamento ok E Ligar banco)
+      bancoLigadoFbk : Bool;       // DBX0.1 feedback REAL do contator geral do banco (hoje a tela mostra so o COMANDO)  [A PREENCHER]
+      intertravamentoOk : Bool;    // DBX0.2 emergencia/protecoes do banco ok
+      ventiladorOk : Bool;         // DBX0.3 ventilador do banco ok (licao BANC-1; so vale se UsaVentilador)  [A CONFIRMAR]
+      resB1 : Byte;                // DBB1  reserva
+      chaveamentoFisicoV : Int;    // DBW2  chaveamento FISICO lido pelo banco: 0 = nao sabe, 220, 380 ou 440  [A CONFIRMAR se existe sinal]
+      alarmes : Word;              // DBW4  bit0 sem comunicacao | bit1 falha de retorno | bit2 contator colado | bit3 intertravamento aberto | bit4 ventilador  [ASSUMIDO]
+      vidaCompet : Int;            // DBW6  contador de vida deste bloco, sobe a cada ~100 ms (prova que o PLC esta atualizando)
+   END_STRUCT;
+END_TYPE

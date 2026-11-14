@@ -30,3 +30,6 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+
+# Testes de integracao (Fase 1): instalacao local do Node-RED de teste (nunca vai ao Git)
+tests/integracao/runtime/

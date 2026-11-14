@@ -1,0 +1,36 @@
+DATA_BLOCK "db3002_BC56_SetupPorTensao"
+TITLE = db3002_BC56_SetupPorTensao v0.2 (DB3002)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.2
+////====================================
+//// db3002_BC56_SetupPorTensao (DB3002) - GERADO por plc/bt2/gerador/gerar_banco_v0.2.py (03/11/2026) - nao compilado, nao testado
+//// O QUE FAZ : mesmo papel do db152_BC56_SetupPorTensao v0.2, 16 chaves por chaveamento (1=220, 2=380, 3=440 V). Banco BC56.
+//// p = (chaveamento-1)*16 + (chave-1)  (0..47)
+//// OFFSETS (calculados; CONFERIR no TIA): tensaoV W0/2/4 | kwReal D6+4p | rMedidoOhm D198+4p | vMedidaV D390+4p
+////    baseKw D582+4p | setupData B774+12p | setupOk X1350.0+p | selV.tensaoSel W1356
+//// RETENTIVIDADE : precisa sobreviver a reinicio da CPU; conferir no TIA.
+////=====================================
+   VAR
+      setupV : Struct
+         tensaoV     : Array[1..3] of Int;
+         kwReal      : Array[1..3, 1..16] of Real;
+         rMedidoOhm  : Array[1..3, 1..16] of Real;
+         vMedidaV    : Array[1..3, 1..16] of Real;
+         baseKw      : Array[1..3, 1..16] of Real;
+         setupData   : Array[1..3, 1..16] of DTL;
+         setupOk     : Array[1..3, 1..16] of Bool;
+      END_STRUCT;
+      selV : Struct
+         tensaoSel   : Int;
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+   setupV.tensaoV[1] := 220;
+   setupV.tensaoV[2] := 380;
+   setupV.tensaoV[3] := 440;
+   selV.tensaoSel := 0;   // NAO informado ate o operador escolher no HTML
+
+END_DATA_BLOCK

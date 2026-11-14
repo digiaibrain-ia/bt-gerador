@@ -1,0 +1,60 @@
+FUNCTION_BLOCK "fb104_putDseCarga"
+TITLE = fb104_putDseCarga v0.1 (FB104)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.1
+////====================================
+//// fb104_putDseCarga (FB104) v0.1 (12/11/2026) - RASCUNHO, nao compilado. Lado do 1515: repassa as grandezas do DSE (DB2000, bytes 0..135) ao PLC de Carga por PUT, ciclico.
+//// SO INFORMACAO PARA A TELA (WinCC): NAO e comando. Falha deste PUT nao pode afetar as contatoras (o telegrama dos bancos e outro FB e outro DB).
+//// DB2000: o Node-RED grava so no 1515; este FB so le e envia. No PLC de Carga o db2000_BancoTeste2_DSE tem o MESMO numero e os mesmos offsets (somente leitura).
+//// INSTANCIA : db2001i_DSE_PutCarga (DB2001, faixa 2000-2099 do plano). CHAMAR 1x por ciclo no OB ciclico (ver chamadas_DSE_v0.1.scl).
+//// CONEXAO   : ID_Conexao pode ser o MESMO do telegrama dos bancos ou outro. CONFERIR no TIA se a conexao aceita 3 jobs de PUT/GET ao mesmo tempo; se nao aceitar, use uma 2a conexao S7.
+//// CONFERIR no TIA: passar Origem (VARIANT) adiante para o SD_1 do PUT; ponteiro absoluto P#DB2000.DBX0.0 BYTE 136 no 1515 (DB2000 sem acesso otimizado).
+////====================================
+   VAR_INPUT
+      Hab : Bool;   // TRUE = envia; FALSE = para
+      ID_Conexao : Word;   // ID local da conexao S7 do 1515 com o PLC de Carga (a PREENCHER no TIA)
+      Remoto : Remote;   // destino no PLC de Carga: P#DB2000.DBX0.0 BYTE 136
+      Origem : Variant;   // origem no 1515: P#DB2000.DBX0.0 BYTE 136
+      Pausa : Time := T#1S;   // intervalo entre PUTs (o Node-RED atualiza a cada 1 a 2 s)
+   END_VAR
+   VAR_OUTPUT
+      StatusPut : Word;   // ultimo STATUS do PUT (0 = ok)
+      FalhaPut : Bool;   // ultimo PUT terminou com ERROR
+   END_VAR
+   VAR
+      statPut : PUT;   // multi-instancia do PUT
+      estado : Int;   // 0 dispara o PUT, 1 aguarda DONE/ERROR, 2 pausa
+      reqPut : Bool;
+      putDone : Bool;
+      putError : Bool;
+      tPausa : TON_TIME;
+   END_VAR
+BEGIN
+   REGION "1) Chamada da instrucao PUT"
+      #statPut(REQ := #reqPut, ID := #ID_Conexao, DONE => #putDone, ERROR => #putError, STATUS => #StatusPut, ADDR_1 := #Remoto, SD_1 := #Origem);
+   END_REGION
+   REGION "2) Maquina de estados PUT -> pausa"
+      IF NOT #Hab THEN
+         #estado := 0;
+         #reqPut := FALSE;
+      ELSE
+         CASE #estado OF
+            0:
+               #reqPut := TRUE;
+               #estado := 1;
+            1:
+               IF #putDone OR #putError THEN
+                  #FalhaPut := #putError;
+                  #reqPut := FALSE;
+                  #estado := 2;
+               END_IF;
+            2:
+               IF #tPausa.Q THEN
+                  #estado := 0;
+               END_IF;
+         END_CASE;
+      END_IF;
+      #tPausa(IN := #Hab AND (#estado = 2), PT := #Pausa);
+   END_REGION
+END_FUNCTION_BLOCK

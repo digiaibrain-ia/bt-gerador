@@ -1,0 +1,113 @@
+[
+  {
+    "id": "s7iso_tab",
+    "type": "tab",
+    "label": "Teste S7 isolado v0.1",
+    "disabled": false,
+    "info": "v0.1 (14/11/2026) — Teste S7 isolado: lê 3 posições (início e fim do DB3000 e o fim do DB3002) e mostra no Debug. Serve para separar problema de conexão (PUT/GET, endereço) de problema de DB (tamanho, acesso otimizado). Não escreve nada no PLC.\n\n## Como usar\n1. No endpoint \"PLC (teste isolado)\", se a variável PLC_IP não chegar ao Node-RED, troque ${PLC_IP} pelo IP do PLC **só neste teste** (não exporte com o IP).\n2. Deploy. Abra a barra lateral Debug.\n3. Leia: valor numérico = leitura ok; erro = veja a mensagem. \"online\" no nó = conexão aberta.\n\n## Como ler\n- Lê db3000_byte0 mas falha em db3000_ultimo_bit_X470_0: o DB3000 é menor que 471 bytes (DB antigo) ou está com acesso otimizado.\n- Falha em tudo e o nó não fica online: conexão S7 recusada (PUT/GET/proteção/endereço).\n- Lê tudo: a conexão e os DBs estão corretos; o problema está no fluxo ou na variável do endpoint do fluxo das chaves.",
+    "env": []
+  },
+  {
+    "id": "s7iso_ep",
+    "type": "s7 endpoint",
+    "transport": "iso-on-tcp",
+    "address": "${PLC_IP}",
+    "port": "102",
+    "rack": "0",
+    "slot": "1",
+    "localtsaphi": "01",
+    "localtsaplo": "00",
+    "remotetsaphi": "01",
+    "remotetsaplo": "00",
+    "connmode": "rack-slot",
+    "adapter": "",
+    "busaddr": "2",
+    "cycletime": "1000",
+    "timeout": "2000",
+    "name": "PLC (teste isolado)",
+    "vartable": [
+      {
+        "addr": "DB3000,BYTE0",
+        "name": "db3000_byte0"
+      },
+      {
+        "addr": "DB3000,X470.0",
+        "name": "db3000_ultimo_bit_X470_0"
+      },
+      {
+        "addr": "DB3002,INT1356",
+        "name": "db3002_TensaoSel"
+      }
+    ]
+  },
+  {
+    "id": "s7iso_nota",
+    "type": "comment",
+    "z": "s7iso_tab",
+    "name": "Teste S7 isolado v0.1 — leia o info da aba antes de usar",
+    "info": "v0.1 (14/11/2026) — Teste S7 isolado: lê 3 posições (início e fim do DB3000 e o fim do DB3002) e mostra no Debug. Serve para separar problema de conexão (PUT/GET, endereço) de problema de DB (tamanho, acesso otimizado). Não escreve nada no PLC.",
+    "x": 300,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "s7iso_inj",
+    "type": "inject",
+    "z": "s7iso_tab",
+    "name": "lê agora (e a cada 2 s)",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "2",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "2",
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 170,
+    "y": 120,
+    "wires": [
+      [
+        "s7iso_in"
+      ]
+    ],
+    "info": "Dispara a leitura 1 vez ao iniciar e depois a cada **2 s**. Só dispara o teste; não escreve no PLC.\n\n**Envia para:** le 3 posicoes (DB3000 e DB3002)"
+  },
+  {
+    "id": "s7iso_in",
+    "type": "s7 in",
+    "z": "s7iso_tab",
+    "endpoint": "s7iso_ep",
+    "mode": "all",
+    "variable": "",
+    "diff": false,
+    "name": "le 3 posicoes (DB3000 e DB3002)",
+    "x": 430,
+    "y": 120,
+    "wires": [
+      [
+        "s7iso_dbg"
+      ]
+    ],
+    "info": "Lê do PLC (nó S7, endpoint **PLC (teste isolado)**, modo todas as variáveis): início do DB3000 (BYTE0), o último bit do DB3000 (X470.0) e o fim do DB3002 (INT1356). Falha de leitura aparece no Debug.\n\n**Recebe de:** lê agora\n\n**Envia para:** mostra no Debug"
+  },
+  {
+    "id": "s7iso_dbg",
+    "type": "debug",
+    "z": "s7iso_tab",
+    "name": "mostra no Debug",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "x": 700,
+    "y": 120,
+    "wires": [],
+    "info": "Mostra a mensagem completa da leitura (valores ou erro). Sem lógica."
+  }
+]

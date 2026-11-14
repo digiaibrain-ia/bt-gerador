@@ -1,0 +1,22 @@
+// [v0.3 09/11/2026, Fase 4 / Etapa 3, RASCUNHO: chamada do FB103 v0.3 com pedido/resposta, apontando para o PLC de cargas 1200; resto igual a v0.2. Nao compilado.]
+// ============================================================================
+// Banco BC59,5 (18 chaves) -> arrays de 32 -> fb102_setupChaves32 / fb103_ComEt200_32. GERADO por gerar_banco_v0.2.py (03/11/2026). Nao compilado.
+// Ordem no OB1: 1) comunicacao (fb103_ComEt200_32) 2) setup (fb102_setupChaves32). Instancias = DBs de instancia dos FBs (criar como "fb103_ComEt200_32" e "fb102_setupChaves32" no TIA).
+// ============================================================================
+"db3205i_BC595_ComEt200"(Hab := TRUE, ID_Conexao := W#16#0,   // A PREENCHER: ID da conexao S7 com o PLC de cargas (1200)
+    RemotoCmd := P#DB3207.DBX0.0 BYTE 14, RemotoFb := P#DB3207.DBX14.0 BYTE 22,   // v0.3: PEDIDO / RESPOSTA no DB3207 do PLC de cargas
+    ComOk => "db3200_BC595_Chaves".sbBanco.comEt200Ok, SeletoraAuto => "db3200_BC595_Chaves".sbBanco.seletoraAuto, RespEcoOk => "db3200_BC595_Chaves".sbRet.respEcoOk,
+    CbLigar := "db3200_BC595_Chaves".cb.ligar, SbLigada := "db3200_BC595_Chaves".sb.ligada, LigarBanco := "db3200_BC595_Chaves".cbBanco.ligar,
+    HabilitadaPed := "db3200_BC595_Chaves".setup.habilitada, HabResp := "db3200_BC595_Chaves".sbRet.habResp,
+    FalhaRetorno := "db3200_BC595_Chaves".sbRet.falhaRetorno, ContatorColado := "db3200_BC595_Chaves".sbRet.contatorColado);
+
+"db3204i_BC595_SetupChaves"(
+    NumChaves := 18, GeradorOperando := "db52_BancoTeste2_DSE".ledManual, EnsaioAtivo := FALSE,   // TODO: tag real do DB "Dados do ensaio"
+    kWMedido := "db52_BancoTeste2_DSE".potenciaKw, VaMedido := "db52_BancoTeste2_DSE".tensaoL1L2,
+    VbMedido := "db52_BancoTeste2_DSE".tensaoL2L3, VcMedido := "db52_BancoTeste2_DSE".tensaoL3L1,
+    TensaoSel := "db3202_BC595_SetupPorTensao".selV.tensaoSel, ChaveSelecionada := "db3200_BC595_Chaves".setup.chaveSel, ComandoSalvar := "db3200_BC595_Chaves".setup.salvar,
+    kWNominal := "db3200_BC595_Chaves".setup.nominal, CbLigar := "db3200_BC595_Chaves".cb.ligar, SbLigada := "db3200_BC595_Chaves".sb.ligada, Habilitada := "db3200_BC595_Chaves".setup.habilitada,
+    SetupOk := "db3200_BC595_Chaves".setup.setupOk, KwReal := "db3200_BC595_Chaves".setup.kwReal, RmedidoOhm := "db3200_BC595_Chaves".setup.rMedidoOhm,
+    RteoricoOhm := "db3200_BC595_Chaves".setup.rTeoricoOhm, SetupData := "db3200_BC595_Chaves".setup.setupData,
+    KwRealV := "db3202_BC595_SetupPorTensao".setupV.kwReal, RmedidoV := "db3202_BC595_SetupPorTensao".setupV.rMedidoOhm, VmedidaV := "db3202_BC595_SetupPorTensao".setupV.vMedidaV,
+    BaseKwV := "db3202_BC595_SetupPorTensao".setupV.baseKw, SetupDataV := "db3202_BC595_SetupPorTensao".setupV.setupData, SetupOkV := "db3202_BC595_SetupPorTensao".setupV.setupOk);

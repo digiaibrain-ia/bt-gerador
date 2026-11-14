@@ -1,0 +1,1 @@
+{ "name": "bt2-nos-s7-teste", "version": "0.1.0", "private": true, "description": "Nos S7 de TESTE: imitam s7 endpoint/in/out sobre o PLC simulado em memoria. Nao conectam a rede.", "node-red": { "nodes": { "s7-teste": "s7-teste.js" } } }

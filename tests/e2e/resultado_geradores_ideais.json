@@ -1,0 +1,99 @@
+[
+ {
+  "gerador": "G4501AMF_SCA_800KVA_60HZ_380V_24V.dse",
+  "kw100": 581.8,
+  "limitePct": 110,
+  "excessoPct": 2,
+  "parErro": "G inacessivel",
+  "patamarLigado": true,
+  "etapas": [
+   {
+    "et": 1,
+    "pct": 0,
+    "alvoKw": 0,
+    "esperado": 0,
+    "sel": 0,
+    "cmd": 0,
+    "conf": 0,
+    "estado": "PREVIA",
+    "okSel": true,
+    "okLim": true,
+    "okConf": true,
+    "chavesCmd": 0
+   },
+   {
+    "et": 2,
+    "pct": 30,
+    "alvoKw": 174.5,
+    "esperado": 174.5,
+    "sel": 174.5,
+    "cmd": 174.5,
+    "conf": 174.5,
+    "estado": "NO_PATAMAR",
+    "okSel": true,
+    "okLim": true,
+    "okConf": true,
+    "chavesCmd": 0
+   },
+   {
+    "et": 3,
+    "pct": 50,
+    "alvoKw": 290.9,
+    "esperado": 290.5,
+    "sel": 290.5,
+    "cmd": 290.5,
+    "conf": 290.5,
+    "estado": "PREVIA",
+    "okSel": true,
+    "okLim": true,
+    "okConf": true,
+    "chavesCmd": 0
+   },
+   {
+    "et": 4,
+    "pct": 100,
+    "alvoKw": 581.8,
+    "esperado": 581.5,
+    "sel": 581.5,
+    "cmd": 581.5,
+    "conf": 581.5,
+    "estado": "PREVIA",
+    "okSel": true,
+    "okLim": true,
+    "okConf": true,
+    "chavesCmd": 0
+   },
+   {
+    "et": 5,
+    "pct": 107,
+    "alvoKw": 622.5,
+    "esperado": 623,
+    "sel": 623,
+    "cmd": 623,
+    "conf": 623,
+    "estado": "PREVIA",
+    "okSel": true,
+    "okLim": true,
+    "okConf": true,
+    "chavesCmd": 0
+   },
+   {
+    "et": 6,
+    "pct": 0,
+    "alvoKw": 0,
+    "esperado": 0,
+    "sel": 0,
+    "cmd": 0,
+    "conf": 0,
+    "estado": "SEM_CARGA",
+    "okSel": true,
+    "okLim": true,
+    "okConf": true,
+    "chavesCmd": 0
+   }
+  ],
+  "fim": true,
+  "falhas": 0,
+  "errosJS": []
+ }
+]

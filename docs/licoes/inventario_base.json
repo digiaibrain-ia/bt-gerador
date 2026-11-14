@@ -1,0 +1,1079 @@
+{
+ "arquivo": "dashboard/ferramentas/medidor_gerador_v1.10.190.html",
+ "geradoEm": "2026-11-09T03:46:09.819Z",
+ "total": 134,
+ "pontos": [
+  {
+   "linha": 2518,
+   "padrao": "demo.checked",
+   "funcao": "passo",
+   "risco": "ALTO",
+   "trecho": "const demo=$('demo').checked; if(!demo&&T.sp!==1)setVel(1);",
+   "assinatura": "52f656db32"
+  },
+  {
+   "linha": 2803,
+   "padrao": "demo.checked",
+   "funcao": "carregaDados",
+   "risco": "ALTO",
+   "trecho": "const m=$('demo').checked?'demo':'real';if(m===DADOS_MODO)return;DADOS_MODO=m;",
+   "assinatura": "370cfcb860"
+  },
+  {
+   "linha": 2847,
+   "padrao": "demo.checked",
+   "funcao": "motorFalhaDegrau",
+   "risco": "ALTO",
+   "trecho": "if(SIM_FALHA_MOTOR_ARMADA&&!SIM_FALHA_MOTOR&&$('demo').checked&&ETAPAS[T.et].alvo===30)SIM_FALHA_MOTOR=true;",
+   "assinatura": "e358cd98ac"
+  },
+  {
+   "linha": 3293,
+   "padrao": "bkEhDemoLocal",
+   "funcao": "setModo",
+   "risco": "MEDIO",
+   "trecho": "if(a&&typeof bkEhDemoLocal==='function'&&bkEhDemoLocal())bkAutoLibera();",
+   "assinatura": "9f6a0abf19"
+  },
+  {
+   "linha": 3473,
+   "padrao": "demo.checked",
+   "funcao": "bancoDados",
+   "risco": "ALTO",
+   "trecho": "if($('demo').checked)return bancoSim();",
+   "assinatura": "50b540518d"
+  },
+  {
+   "linha": 3478,
+   "padrao": "demo.checked",
+   "funcao": "bkEhDemoLocal",
+   "risco": "MEDIO",
+   "trecho": "const bkEhDemoLocal=()=>$('demo').checked&&CH_SRV.fonte==='mock';",
+   "assinatura": "4153365bcf"
+  },
+  {
+   "linha": 3480,
+   "padrao": "bkEhDemoLocal",
+   "funcao": "bkAtualiza",
+   "risco": "ALTO",
+   "trecho": "const demoLocal=bkEhDemoLocal(),demoLocalOuPlc=true;",
+   "assinatura": "e6a8673d15"
+  },
+  {
+   "linha": 3590,
+   "padrao": "demo.checked",
+   "funcao": "botoesGer",
+   "risco": "MEDIO",
+   "trecho": "if($('demo').checked){",
+   "assinatura": "d471b048f8"
+  },
+  {
+   "linha": 3612,
+   "padrao": "demo.checked",
+   "funcao": "botoesGer",
+   "risco": "BAIXO",
+   "trecho": "bi.title=armado?'Ensaio ARMADO — clique para iniciar a contagem do cronômetro agora':T.run?'Cronômetro em andamento':'Inicia o ensaio'+($('d",
+   "assinatura": "be139eb3e2"
+  },
+  {
+   "linha": 3641,
+   "padrao": "demo.checked",
+   "funcao": "clickIniciar",
+   "risco": "ALTO",
+   "trecho": "if($('demo').checked){if(SIM.gen==='parado'){SIM.gen='partindo';SIM.gt=0}}",
+   "assinatura": "70fa0daf76"
+  },
+  {
+   "linha": 3669,
+   "padrao": "demo.checked",
+   "funcao": "bGenStop",
+   "risco": "ALTO",
+   "trecho": "if(!$('demo').checked)return;",
+   "assinatura": "072701503c"
+  },
+  {
+   "linha": 3821,
+   "padrao": "demo.checked",
+   "funcao": "tick",
+   "risco": "ALTO",
+   "trecho": "if($('demo').checked)d=demoData();",
+   "assinatura": "e32a72b186"
+  },
+  {
+   "linha": 3851,
+   "padrao": "demo.checked",
+   "funcao": "start",
+   "risco": "ALTO",
+   "trecho": "$('sim').style.display=$('demo').checked?'block':'none';",
+   "assinatura": "956cbc828b"
+  },
+  {
+   "linha": 4854,
+   "padrao": "SRVM.plc",
+   "funcao": "nivelAgua",
+   "risco": "MEDIO",
+   "trecho": "Modos (deduzidos de #demo + SRVM.plc, nunca guardados): 'real' (padrão: DSE real + PLC) | 'demoLocal' (DSE simulado, nada vai ao PLC) | 'dem",
+   "assinatura": "8007ab3f4c"
+  },
+  {
+   "linha": 4860,
+   "padrao": "chPlcAtivo()",
+   "funcao": "nivelAgua",
+   "risco": "MEDIO",
+   "trecho": "dentro do Demo local ninguém faz essa leitura (chPlcAtivo()=false), então existe uma sonda própria (srvSondaPlc) só pra isto — não toca",
+   "assinatura": "eee205cd1f"
+  },
+  {
+   "linha": 4862,
+   "padrao": "srvUsaPlc()",
+   "funcao": "plcAtivoAgora",
+   "risco": "MEDIO",
+   "trecho": "const plcAtivoAgora=()=>srvUsaPlc()?BANCOS_PLC.some(b=>LINK.bancoOk(b.id)):(SRVM.plcOk&&Date.now()-SRVM.plcOkTs<8000);",
+   "assinatura": "e9e27f32e9"
+  },
+  {
+   "linha": 4879,
+   "padrao": "demo.checked",
+   "funcao": "srvSondaPlc",
+   "risco": "MEDIO",
+   "trecho": "setInterval(()=>{if($('demo').checked&&!srvUsaPlc())srvSondaPlc()},3000);",
+   "assinatura": "0f04cbc1cc"
+  },
+  {
+   "linha": 4881,
+   "padrao": "demo.checked",
+   "funcao": "srvUsaPlc",
+   "risco": "MEDIO",
+   "trecho": "const srvUsaPlc=()=>!$('demo').checked||SRVM.plc;",
+   "assinatura": "ea1bc43366"
+  },
+  {
+   "linha": 4882,
+   "padrao": "demo.checked",
+   "funcao": "srvChave",
+   "risco": "ALTO",
+   "trecho": "const srvChave=()=>!$('demo').checked?'real':(SRVM.plc?'demoPlc':'demoLocal');",
+   "assinatura": "35ccb1074f"
+  },
+  {
+   "linha": 4910,
+   "padrao": "srvUsaPlc()",
+   "funcao": "srvSalvaUrl",
+   "risco": "MEDIO",
+   "trecho": "if(srvUsaPlc()&&typeof window.chAtualizaDoPlc==='function')window.chAtualizaDoPlc();",
+   "assinatura": "87e775818f"
+  },
+  {
+   "linha": 4913,
+   "padrao": "srvUsaPlc()",
+   "funcao": "srvSalvaUrl",
+   "risco": "MEDIO",
+   "trecho": "if(!srvUsaPlc())srvSondaPlc();",
+   "assinatura": "20c7489bad"
+  },
+  {
+   "linha": 4918,
+   "padrao": "srvChave()",
+   "funcao": "srvVerModo",
+   "risco": "ALTO",
+   "trecho": "const novo=srvChave(),antes=SRVM.mk,manual=SRVM.manual;SRVM.manual=false;",
+   "assinatura": "4cbcd17b5a"
+  },
+  {
+   "linha": 4922,
+   "padrao": "=== 'demoLocal'/'demoPlc'",
+   "funcao": "srvVerModo",
+   "risco": "MEDIO",
+   "trecho": "if(typeof window.chModoSeguro==='function')window.chModoSeguro({eraPlc:antes!=='demoLocal',serPlc:novo!=='demoLocal',manterDemo:manual});",
+   "assinatura": "0b09d4dd49"
+  },
+  {
+   "linha": 4939,
+   "padrao": "srvUsaPlc()",
+   "funcao": "srvVerModo",
+   "risco": "ALTO",
+   "trecho": "get fonte(){return srvUsaPlc()?'nodered':'mock'},set fonte(v){},",
+   "assinatura": "841a87ba34"
+  },
+  {
+   "linha": 6066,
+   "padrao": "demo.checked",
+   "funcao": "bSalv",
+   "risco": "ALTO",
+   "trecho": "$('resStop').style.display=$('demo').checked?'':'none';",
+   "assinatura": "dc53c7e0d4"
+  },
+  {
+   "linha": 6232,
+   "padrao": "demo.checked",
+   "funcao": "novaPag",
+   "risco": "BAIXO",
+   "trecho": "pg.t(X0,56,'Origem: '+($('demo').checked?'DADOS DEMO (SIMULAÇÃO)':'DADOS REAIS (Node-RED/DSE)')+' · '+(tagLeitura||'')+' · Gerado em: '+dt,9",
+   "assinatura": "09f3913d68"
+  },
+  {
+   "linha": 6249,
+   "padrao": "demo.checked",
+   "funcao": "novaPag",
+   "risco": "BAIXO",
+   "trecho": "pg.t(X0,585,`Gerado em ${dt} · Medidor do Gerador v${VERSAO}${$('demo').checked?' · SIMULAÇÃO':''}`,7);",
+   "assinatura": "abaca12fd0"
+  },
+  {
+   "linha": 6254,
+   "padrao": "demo.checked",
+   "funcao": "nomeArq",
+   "risco": "ALTO",
+   "trecho": "return `${prefixo}_${$('demo').checked?'DEMO':'REAL'}_${a.getFullYear()}${p2(a.getMonth()+1)}${p2(a.getDate())}_${p2(a.getHours())}${p2(a.ge",
+   "assinatura": "65d977fca0"
+  },
+  {
+   "linha": 6588,
+   "padrao": "demo.checked",
+   "funcao": "dm",
+   "risco": "MEDIO",
+   "trecho": "const dm=()=>$('demo').checked;",
+   "assinatura": "011822e1a3"
+  },
+  {
+   "linha": 6695,
+   "padrao": "srvUsaPlc()",
+   "funcao": "offsetBanco",
+   "risco": "ALTO",
+   "trecho": "const CH_SRV={get fonte(){return srvUsaPlc()?'nodered':'mock'},set fonte(v){},get url(){return SRVM.url},set url(v){}};",
+   "assinatura": "e940822f36"
+  },
+  {
+   "linha": 6711,
+   "padrao": "chPlcAtivo()",
+   "funcao": "tensFeat",
+   "risco": "MEDIO",
+   "trecho": "const tensFeat=id=>chPlcAtivo()?TENS_PLC[id]:'local';",
+   "assinatura": "529c17d31a"
+  },
+  {
+   "linha": 6713,
+   "padrao": "tensFeat()",
+   "funcao": "tensExige",
+   "risco": "ALTO",
+   "trecho": "const tensExige=id=>{const f=tensFeat(id);return f==='local'||f==='ok'||f==='semdb'};",
+   "assinatura": "4db626f44a"
+  },
+  {
+   "linha": 6714,
+   "padrao": "tensFeat()",
+   "funcao": "tensMsg",
+   "risco": "MEDIO",
+   "trecho": "const tensMsg=id=>tensFeat(id)==='semdb'?('DB'+DB_TENS[id]+' (Setup por chaveamento) sem leitura no PLC — baixe o DB'+DB_TENS[id]+' v0.2 e o",
+   "assinatura": "6ff421c809"
+  },
+  {
+   "linha": 6912,
+   "padrao": "chPlcAtivo()",
+   "funcao": "renderTabs",
+   "risco": "MEDIO",
+   "trecho": "if(chPlcAtivo())chAtualizaDoPlc();",
+   "assinatura": "7745455726"
+  },
+  {
+   "linha": 6916,
+   "padrao": "demo.checked",
+   "funcao": "genOn",
+   "risco": "ALTO",
+   "trecho": "const genOn=()=>GEN.estado==='operando'&&!($('demo').checked&&SIM.gen!=='operando');",
+   "assinatura": "e1acc6dac5"
+  },
+  {
+   "linha": 6921,
+   "padrao": "demo.checked",
+   "funcao": "aplicaDis",
+   "risco": "ALTO",
+   "trecho": "try{drawBanco($('demo').checked?bancoSim():null)}catch(e){}",
+   "assinatura": "d000dd6ba2"
+  },
+  {
+   "linha": 6940,
+   "padrao": "chPlcAtivo()",
+   "funcao": "grade",
+   "risco": "MEDIO",
+   "trecho": "+(chPlcAtivo()?'Vão de verdade pro PLC (DB'+DB_BANCO[bidAtivo()]+') a cada clique.':'Valem na tela e no Demo; ainda não vão ao PLC (sem modo",
+   "assinatura": "9c951a1325"
+  },
+  {
+   "linha": 6944,
+   "padrao": "tensFeat()",
+   "funcao": "tensRenderBase",
+   "risco": "ALTO",
+   "trecho": "const id=bidAtivo(),f=tensFeat(id),c=tensAtiva(id),seg=$('stTensSeg'),chip=$('stTensChip');if(!seg||!chip)return;",
+   "assinatura": "959bf73813"
+  },
+  {
+   "linha": 6956,
+   "padrao": "tensFeat()",
+   "funcao": "tensVDados",
+   "risco": "MEDIO",
+   "trecho": "const v=(tensFeat(bidAtivo())==='ok')?(dadosConfirmados()?+DADOS.tensao:0):NUM(($('dTens')||{}).value);",
+   "assinatura": "6108a4b222"
+  },
+  {
+   "linha": 6960,
+   "padrao": "tensFeat()",
+   "funcao": "tensRender",
+   "risco": "ALTO",
+   "trecho": "const id=bidAtivo(),f=tensFeat(id),seg=$('stTensSeg'),chip=$('stTensChip');if(!seg||!chip)return;",
+   "assinatura": "9d3b414f1f"
+  },
+  {
+   "linha": 6972,
+   "padrao": "tensFeat()",
+   "funcao": "tensAuto",
+   "risco": "MEDIO",
+   "trecho": "const id=bidAtivo(),f=tensFeat(id),vd=tensVDados(),cd=TENS_V.indexOf(vd)+1;",
+   "assinatura": "b78675e79b"
+  },
+  {
+   "linha": 6980,
+   "padrao": "tensFeat()",
+   "funcao": "tensSet",
+   "risco": "MEDIO",
+   "trecho": "const id=bidAtivo(),f=tensFeat(id),st=$('stTxt');",
+   "assinatura": "1653f0e6d6"
+  },
+  {
+   "linha": 7008,
+   "padrao": "chPlcAtivo()",
+   "funcao": "live",
+   "risco": "ALTO",
+   "trecho": "if(chPlcAtivo())chFetch('POST',rotaCh(bidDeCh(selAntigo),'selecionar'),{indice:0}).catch(()=>{});",
+   "assinatura": "fdf240ea65"
+  },
+  {
+   "linha": 7013,
+   "padrao": "demo.checked",
+   "funcao": "live",
+   "risco": "MEDIO",
+   "trecho": "const gd=$('stGenDemo');gd.hidden=!$('demo').checked;",
+   "assinatura": "ba77bd4072"
+  },
+  {
+   "linha": 7065,
+   "padrao": "chPlcAtivo()",
+   "funcao": "bx",
+   "risco": "MEDIO",
+   "trecho": "if(chPlcAtivo()){",
+   "assinatura": "708e57e03c"
+  },
+  {
+   "linha": 7111,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chSetupGeradorParou",
+   "risco": "ALTO",
+   "trecho": "if(chPlcAtivo())chFetch('POST',rotaCh(bidDeCh(selAntigo),'selecionar'),{indice:0}).catch(()=>{});",
+   "assinatura": "a2422ed5e1"
+  },
+  {
+   "linha": 7127,
+   "padrao": "demo.checked",
+   "funcao": "liga",
+   "risco": "ALTO",
+   "trecho": "try{drawBanco($('demo').checked?bancoSim():null)}catch(e){}",
+   "assinatura": "14aaf16f42"
+  },
+  {
+   "linha": 7135,
+   "padrao": "tensFeat()",
+   "funcao": "chSel.click",
+   "risco": "ALTO",
+   "trecho": "if(SEL!==q&&tensExige(bidT)&&!(tensFeat(bidT)==='ok'||tensFeat(bidT)==='local'?tensAtiva(bidT):0)){$('stTxt').textContent=tensMsg(bidT);retu",
+   "assinatura": "50fc9b41ee"
+  },
+  {
+   "linha": 7141,
+   "padrao": "demo.checked",
+   "funcao": "chSel.click",
+   "risco": "ALTO",
+   "trecho": "if(!genOn()){$('stTxt').textContent='Setup só com o gerador em START (operando). '+($('demo').checked?'Use \"Ligar gerador (Demo)\".':'Ligue n",
+   "assinatura": "e16d47b86c"
+  },
+  {
+   "linha": 7142,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chSel.click",
+   "risco": "MEDIO",
+   "trecho": "const real_=chPlcAtivo(),indiceApi=q-offsetBanco(BANCO_ATIVO)+1;",
+   "assinatura": "d005d8fd60"
+  },
+  {
+   "linha": 7165,
+   "padrao": "chPlcAtivo()",
+   "funcao": "stSalva",
+   "risco": "MEDIO",
+   "trecho": "if(chPlcAtivo()){",
+   "assinatura": "0caf8985b3"
+  },
+  {
+   "linha": 7186,
+   "padrao": "demo.checked",
+   "funcao": "stGenDemo",
+   "risco": "ALTO",
+   "trecho": "if(!$('demo').checked)return;",
+   "assinatura": "5093a3b6f6"
+  },
+  {
+   "linha": 7191,
+   "padrao": "chPlcAtivo()",
+   "funcao": "stGenDemo",
+   "risco": "MEDIO",
+   "trecho": "if(chPlcAtivo()){",
+   "assinatura": "4f348f271e"
+  },
+  {
+   "linha": 7199,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chUsaReal",
+   "risco": "ALTO",
+   "trecho": "if(!chPlcAtivo())return;",
+   "assinatura": "0701302925"
+  },
+  {
+   "linha": 7207,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chLimpaReal",
+   "risco": "ALTO",
+   "trecho": "if(!temNesteBanco&&!chPlcAtivo())return;",
+   "assinatura": "6a29c7731b"
+  },
+  {
+   "linha": 7210,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chLimpaReal",
+   "risco": "ALTO",
+   "trecho": "if(!confirm('Apagar os kW reais de todas as chaves do '+BANCOS[BANCO_ATIVO].nome+(eTens?' no chaveamento '+TENS_V[cL-1]+' V':'')+(chPlcAtivo",
+   "assinatura": "1eea85b6d5"
+  },
+  {
+   "linha": 7211,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chLimpaReal",
+   "risco": "MEDIO",
+   "trecho": "if(chPlcAtivo()){",
+   "assinatura": "87a4526bf8"
+  },
+  {
+   "linha": 7238,
+   "padrao": "demo.checked",
+   "funcao": "pdfChaves",
+   "risco": "MEDIO",
+   "trecho": "const demo=$('demo').checked;",
+   "assinatura": "57b1605b19"
+  },
+  {
+   "linha": 7289,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chImprimir",
+   "risco": "MEDIO",
+   "trecho": "if(chPlcAtivo())chAtualizaDoPlc();",
+   "assinatura": "ed21aef5d0"
+  },
+  {
+   "linha": 7294,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chImprimir",
+   "risco": "MEDIO",
+   "trecho": "if(chPlcAtivo())chAtualizaDoPlc();",
+   "assinatura": "ed21aef5d0"
+  },
+  {
+   "linha": 7296,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chImprimir",
+   "risco": "MEDIO",
+   "trecho": "if(!chPlcAtivo())tensAplicaLocal(bidAtivo());",
+   "assinatura": "6da904ae2b"
+  },
+  {
+   "linha": 7309,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chAtualizaIntervalos",
+   "risco": "MEDIO",
+   "trecho": "if(abertoAlgum)tmrPlc=setInterval(()=>{if(chPlcAtivo())chAtualizaDoPlc()},3000);",
+   "assinatura": "60f456fa37"
+  },
+  {
+   "linha": 7325,
+   "padrao": "chPlcAtivo()",
+   "funcao": "chGrade.change",
+   "risco": "ALTO",
+   "trecho": "if(!chPlcAtivo())return;",
+   "assinatura": "b1783fca98"
+  },
+  {
+   "linha": 7357,
+   "padrao": "bkEhDemoLocal",
+   "funcao": "bkCliqueCtl",
+   "risco": "MEDIO",
+   "trecho": "const demoLocal=bkEhDemoLocal(),bi=BANCOS.findIndex(b=>b.id===id);",
+   "assinatura": "59cb788c5c"
+  },
+  {
+   "linha": 7421,
+   "padrao": "demo.checked",
+   "funcao": "bancos.click",
+   "risco": "ALTO",
+   "trecho": "if(!$('demo').checked)return;",
+   "assinatura": "f8b84f56db"
+  },
+  {
+   "linha": 7782,
+   "padrao": "demo.checked",
+   "funcao": "demoOn",
+   "risco": "MEDIO",
+   "trecho": "const demoOn=()=>!!($('demo')&&$('demo').checked);",
+   "assinatura": "6e4d54af39"
+  },
+  {
+   "linha": 7786,
+   "padrao": "demoOn()",
+   "funcao": "sidse",
+   "risco": "BAIXO",
+   "trecho": "const sidse=()=>demoOn()||G.fonteDse!=='REAL';",
+   "assinatura": "64dadf04d3"
+  },
+  {
+   "linha": 7873,
+   "padrao": "demo.checked",
+   "funcao": "sincKw",
+   "risco": "ALTO",
+   "trecho": "const demo=$('demo')&&$('demo').checked;KW_NOM=demo&&p>0?p:91}",
+   "assinatura": "fe67dbcb0f"
+  },
+  {
+   "linha": 7932,
+   "padrao": "demoOn()",
+   "funcao": "desenha",
+   "risco": "ALTO",
+   "trecho": "'<div class=\"pd-sec\"><h4>Fonte do DSE</h4><div class=\"gd-row\"><button type=\"button\" data-gd=\"fSidse\" class=\"'+(sidse()?'on':'')+'\" title=\"SI",
+   "assinatura": "18f7a4e64f"
+  },
+  {
+   "linha": 8016,
+   "padrao": "demoOn()",
+   "funcao": "onClickGd",
+   "risco": "BAIXO",
+   "trecho": "else if(a==='fSidse'||a==='fReal'){if(a==='fReal'&&(demoOn()||!dseConectado())){G.msg='DSE real indisponível agora (Demo ligado ou DSE sem l",
+   "assinatura": "181ab3f121"
+  },
+  {
+   "linha": 8214,
+   "padrao": "demo.checked",
+   "funcao": "demoTxt",
+   "risco": "BAIXO",
+   "trecho": "const demoTxt=()=>($('demo')&&$('demo').checked)?'SIMULAÇÃO (DEMO)':'DADOS REAIS';",
+   "assinatura": "49023564da"
+  },
+  {
+   "linha": 8459,
+   "padrao": "demo.checked",
+   "funcao": "hReg",
+   "risco": "BAIXO",
+   "trecho": "H.push({t:Date.now(),e:ev,cod:o.cod,ref:o.ref||'',tipo:o.tipo,card:o.card,txt:o.txt,m:($('demo')&&$('demo').checked)?'DEMO':'REAL'});",
+   "assinatura": "6fb2bfc9e8"
+  },
+  {
+   "linha": 8499,
+   "padrao": "demo.checked",
+   "funcao": "varre",
+   "risco": "MEDIO",
+   "trecho": "const agora=Date.now(),demo=!!($('demo')&&$('demo').checked),gr=agora-T0>GRACA;",
+   "assinatura": "e528e6e1dd"
+  },
+  {
+   "linha": 8664,
+   "padrao": "demo.checked",
+   "funcao": "dados",
+   "risco": "BAIXO",
+   "trecho": "$('ocPrt').textContent=tit+' — gerado em '+new Date().toLocaleString('pt-BR')+' — Medidor do Gerador v'+VERSAO+(($('demo')&&$('demo').checke",
+   "assinatura": "6bd6288bcb"
+  },
+  {
+   "linha": 8665,
+   "padrao": "demo.checked",
+   "funcao": "dados",
+   "risco": "BAIXO",
+   "trecho": "imprimeComNome('alertas_falhas_'+(($('demo')&&$('demo').checked)?'DEMO':'REAL')+'_'+seloDataHora(),'prOcor');",
+   "assinatura": "30ccd049c8"
+  },
+  {
+   "linha": 8677,
+   "padrao": "demo.checked",
+   "funcao": "ohExp.click",
+   "risco": "BAIXO",
+   "trecho": "imprimeComNome('alertas_falhas_historico_'+(($('demo')&&$('demo').checked)?'DEMO':'REAL')+'_'+seloDataHora(),'prOcHist');",
+   "assinatura": "6c114e7a10"
+  },
+  {
+   "linha": 8724,
+   "padrao": "demo.checked",
+   "funcao": "rgAuto",
+   "risco": "BAIXO",
+   "trecho": "const dem=$('demo').checked,pre=dem?'[DEMO] ':'';",
+   "assinatura": "ac4517dcfd"
+  },
+  {
+   "linha": 8734,
+   "padrao": "demo.checked",
+   "funcao": "rgIds",
+   "risco": "BAIXO",
+   "trecho": "const au=rgAuto(),ov=rgOver(),pre=$('demo').checked?'[DEMO] ':'';",
+   "assinatura": "d47b5740bc"
+  },
+  {
+   "linha": 8749,
+   "padrao": "demo.checked",
+   "funcao": "rgIniciar",
+   "risco": "MEDIO",
+   "trecho": "dse,ger,serie:DADOS.serie,versao:DADOS.versao,ini:now,fim:null,ult:now,n:0,semDado:0,demo:$('demo').checked,modo:MODO,",
+   "assinatura": "e17de19841"
+  },
+  {
+   "linha": 8821,
+   "padrao": "demo.checked",
+   "funcao": "rgAmostra",
+   "risco": "ALTO",
+   "trecho": "if($('demo').checked!==s.demo){rgParar('trocou entre demo e real');abreReg('Registro encerrado: o modo demo/real mudou. Ative de novo para c",
+   "assinatura": "7b4d6da581"
+  },
+  {
+   "linha": 8998,
+   "padrao": "demo.checked",
+   "funcao": "rgBloqDemo",
+   "risco": "MEDIO",
+   "trecho": "const rgBloqDemo=()=>$('rgSemDemo').checked&&$('demo').checked;",
+   "assinatura": "efdf5528f3"
+  },
+  {
+   "linha": 9097,
+   "padrao": "demo.checked",
+   "funcao": "dmAtualiza",
+   "risco": "MEDIO",
+   "trecho": "const demo=$('demo').checked,mk=srvChave(),trav=!demo&&dadoOk,rod=ensaioRodando(),url=srvBase();",
+   "assinatura": "c2462699a1"
+  },
+  {
+   "linha": 9098,
+   "padrao": "SRVM.plc",
+   "funcao": "dmAtualiza",
+   "risco": "MEDIO",
+   "trecho": "$('dmTradicional').checked=demo;$('dmPlc').checked=demo&&SRVM.plc;$('dmMotor').checked=SIM_FALHA_MOTOR_ARMADA;",
+   "assinatura": "37ff7c96b2"
+  },
+  {
+   "linha": 9116,
+   "padrao": "=== 'demoLocal'/'demoPlc'",
+   "funcao": "dmAtualiza",
+   "risco": "BAIXO",
+   "trecho": "inf.textContent=(mk==='demoLocal'?'Não usado agora (Demo local). ':'')+(!url?'Sem URL: a página foi aberta como arquivo (file:",
+   "assinatura": "ee368f27ce"
+  },
+  {
+   "linha": 9123,
+   "padrao": "demo.checked",
+   "funcao": "demoDesliga",
+   "risco": "ALTO",
+   "trecho": "if(!$('demo').checked&&!SIM_FALHA_MOTOR_ARMADA)return;",
+   "assinatura": "4b17120cd8"
+  },
+  {
+   "linha": 9124,
+   "padrao": "SRVM.plc",
+   "funcao": "demoDesliga",
+   "risco": "ALTO",
+   "trecho": "SIM_FALHA_MOTOR_ARMADA=false;SIM_FALHA_MOTOR=false;SRVM.plc=false;",
+   "assinatura": "68d0c7cfaa"
+  },
+  {
+   "linha": 9125,
+   "padrao": "demo.checked",
+   "funcao": "demoDesliga",
+   "risco": "ALTO",
+   "trecho": "if($('demo').checked){$('demo').checked=false;limpaIndicadoresDemo();",
+   "assinatura": "e216ebe0e1"
+  },
+  {
+   "linha": 9132,
+   "padrao": "SRVM.plc",
+   "funcao": "demoAplica",
+   "risco": "MEDIO",
+   "trecho": "function demoAplica(){",
+   "assinatura": "4d8840730f"
+  },
+  {
+   "linha": 9134,
+   "padrao": "demo.checked",
+   "funcao": "demoAplica",
+   "risco": "MEDIO",
+   "trecho": "if(quer&&!$('demo').checked&&dadoOk){",
+   "assinatura": "fddb5ff31c"
+  },
+  {
+   "linha": 9138,
+   "padrao": "demo.checked",
+   "funcao": "demoAplica",
+   "risco": "MEDIO",
+   "trecho": "if(ensaioRodando()&&(quer!==$('demo').checked||querPlc!==(SRVM.plc&&$('demo').checked))){",
+   "assinatura": "17201b50c7"
+  },
+  {
+   "linha": 9146,
+   "padrao": "demo.checked",
+   "funcao": "demoAplica",
+   "risco": "BAIXO",
+   "trecho": "if(querPlc&&!(SRVM.plc&&$('demo').checked)&&!confirm('DEMO + PLC REAL\\n\\nO DSE continua simulado, mas as chaves e o registro do ensaio vão G",
+   "assinatura": "e6871aed79"
+  },
+  {
+   "linha": 9151,
+   "padrao": "SRVM.plc",
+   "funcao": "demoAplica",
+   "risco": "ALTO",
+   "trecho": "SRVM.plc=querPlc;SRVM.manual=true;",
+   "assinatura": "4306ca2d02"
+  },
+  {
+   "linha": 9152,
+   "padrao": "demo.checked",
+   "funcao": "demoAplica",
+   "risco": "MEDIO",
+   "trecho": "if($('demo').checked!==quer){if(!quer)limpaIndicadoresDemo();$('demo').checked=quer;start()}else{srvVerModo();desenha()}",
+   "assinatura": "dc5dac9dc3"
+  },
+  {
+   "linha": 9190,
+   "padrao": "srvUsaPlc()",
+   "funcao": "bDemo.click",
+   "risco": "MEDIO",
+   "trecho": "if(!srvUsaPlc())srvSondaPlc();",
+   "assinatura": "99f3ec1dd4"
+  },
+  {
+   "linha": 9201,
+   "padrao": "SRVM.plc",
+   "funcao": "bDemoLock",
+   "risco": "ALTO",
+   "trecho": "SIM_FALHA_MOTOR=false;SIM_FALHA_MOTOR_ARMADA=false;SRVM.plc=false;",
+   "assinatura": "7aea4e2eb9"
+  },
+  {
+   "linha": 9202,
+   "padrao": "demo.checked",
+   "funcao": "bDemoLock",
+   "risco": "ALTO",
+   "trecho": "if($('demo').checked){limpaIndicadoresDemo();$('demo').checked=false;SRVM.manual=true;start()}else desenha();",
+   "assinatura": "f31f397b63"
+  },
+  {
+   "linha": 9210,
+   "padrao": "demo.checked",
+   "funcao": "demoSondaDse",
+   "risco": "ALTO",
+   "trecho": "if(!$('demo').checked||_sondaBusy)return;",
+   "assinatura": "ae3a2857fd"
+  },
+  {
+   "linha": 9217,
+   "padrao": "demo.checked",
+   "funcao": "demoSondaDse",
+   "risco": "MEDIO",
+   "trecho": "if(find(d,'ok')===true&&!isNaN(idade)&&idade<=MAX_IDADE&&$('demo').checked)demoDseRealDetectado(dseUrl());",
+   "assinatura": "1c81374a46"
+  },
+  {
+   "linha": 9223,
+   "padrao": "SRVM.plc",
+   "funcao": "demoDseRealDetectado",
+   "risco": "ALTO",
+   "trecho": "SIM_FALHA_MOTOR_ARMADA=false;SIM_FALHA_MOTOR=false;SRVM.plc=false;SRVM.manual=false;",
+   "assinatura": "9a92f4520c"
+  },
+  {
+   "linha": 9224,
+   "padrao": "demo.checked",
+   "funcao": "demoDseRealDetectado",
+   "risco": "ALTO",
+   "trecho": "limpaIndicadoresDemo();$('demo').checked=false;",
+   "assinatura": "8381484278"
+  },
+  {
+   "linha": 9270,
+   "padrao": "demo.checked",
+   "funcao": "snap",
+   "risco": "MEDIO",
+   "trecho": "const demo=$('demo').checked;",
+   "assinatura": "fb0f10e4b1"
+  },
+  {
+   "linha": 9276,
+   "padrao": "srvUsaPlc()",
+   "funcao": "tl",
+   "risco": "MEDIO",
+   "trecho": "try{com.dse=!!LINK.dse.ok;if(srvUsaPlc())BANCOS_PLC.forEach(b=>{com['b'+rotaDe(b.id)]=!!LINK.bancoOk(b.id)})}catch(e){}",
+   "assinatura": "431f8b930e"
+  },
+  {
+   "linha": 9278,
+   "padrao": "srvChave()",
+   "funcao": "tl",
+   "risco": "ALTO",
+   "trecho": "return{modo:srvChave(),gen:demo?SIM.gen:GEN.estado,sim:demo?(auto?'AUTO':'MANUAL'):null,ens,et:T.started?T.et:null,",
+   "assinatura": "048443b868"
+  },
+  {
+   "linha": 9291,
+   "padrao": "srvChave()",
+   "funcao": "log",
+   "risco": "ALTO",
+   "trecho": "modo:(()=>{try{return srvChave()}catch(x){return '?'}})(),card:card||'app',tipo,acao:trunc(acao,300),res:res||'info',det:limpa(det),est:opt.",
+   "assinatura": "1687e3f9f3"
+  },
+  {
+   "linha": 9437,
+   "padrao": "srvChave()",
+   "funcao": "publica",
+   "risco": "ALTO",
+   "trecho": "if(pubBusy||!lib()||!$('obsEnvia').checked||srvChave()==='demoLocal')return;",
+   "assinatura": "51c2f82dc8"
+  },
+  {
+   "linha": 9471,
+   "padrao": "srvChave()",
+   "funcao": "infoObs",
+   "risco": "ALTO",
+   "trecho": "const nr=!$('obsEnvia').checked?'envio ao Node-RED desligado':(srvChave()==='demoLocal'?'Demo local — nada sai do navegador (o gerenciador r",
+   "assinatura": "5299baca3d"
+  },
+  {
+   "linha": 9515,
+   "padrao": "srvChave()",
+   "funcao": "ate",
+   "risco": "MEDIO",
+   "trecho": "if(OPS.modo&&srvChave()!==OPS.modo){OPS.motivoAbort='o modo da tela mudou durante o teste ('+OPS.modo+' → '+srvChave()+')';throw ABORT}",
+   "assinatura": "8ba28cfc86"
+  },
+  {
+   "linha": 9537,
+   "padrao": "srvChave()",
+   "funcao": "modoSim",
+   "risco": "MEDIO",
+   "trecho": "const modoSim=()=>srvChave();",
+   "assinatura": "9c8ab06fdb"
+  },
+  {
+   "linha": 9572,
+   "padrao": "modoSim()",
+   "funcao": "preparaChaves",
+   "risco": "MEDIO",
+   "trecho": "if(modoSim()==='demoPlc'&&!LINK.bancoOk(id0))aviso(F,nome(q0)+': bloqueio de chave desabilitada não conferido','banco sem leitura do PLC (a ",
+   "assinatura": "586f9d78a1"
+  },
+  {
+   "linha": 9590,
+   "padrao": "modoSim()",
+   "funcao": "estabilizaHabil",
+   "risco": "ALTO",
+   "trecho": "if(modoSim()!=='demoPlc'||!OPS.habilitei||!OPS.habilitei.length)return;",
+   "assinatura": "2d979381a1"
+  },
+  {
+   "linha": 9748,
+   "padrao": "modoSim()",
+   "funcao": "faseSetup",
+   "risco": "MEDIO",
+   "trecho": "const local=modoSim()==='demoLocal';",
+   "assinatura": "7a0e52a05e"
+  },
+  {
+   "linha": 9803,
+   "padrao": "modoSim()",
+   "funcao": "tiles",
+   "risco": "MEDIO",
+   "trecho": "if(modoSim()==='demoPlc')await soltaTudoPlc();",
+   "assinatura": "8b20567a63"
+  },
+  {
+   "linha": 9805,
+   "padrao": "modoSim()",
+   "funcao": "soltaTudoLocalOuPlc",
+   "risco": "MEDIO",
+   "trecho": "async function soltaTudoLocalOuPlc(){modoSim()==='demoPlc'?await soltaTudoPlc():await soltaTudoLocal()}",
+   "assinatura": "11b24bdbbf"
+  },
+  {
+   "linha": 9815,
+   "padrao": "modoSim()",
+   "funcao": "travasEnsaio",
+   "risco": "ALTO",
+   "trecho": "if(modoSim()!=='demoLocal')return;",
+   "assinatura": "1ef6d644a4"
+  },
+  {
+   "linha": 9891,
+   "padrao": "modoSim()",
+   "funcao": "faseEnsaio",
+   "risco": "MEDIO",
+   "trecho": "if(modoSim()==='demoLocal'){",
+   "assinatura": "945fc65656"
+  },
+  {
+   "linha": 9918,
+   "padrao": "modoSim()",
+   "funcao": "faseEnsaio",
+   "risco": "MEDIO",
+   "trecho": "if(modoSim()==='demoLocal'){",
+   "assinatura": "945fc65656"
+  },
+  {
+   "linha": 9936,
+   "padrao": "modoSim()",
+   "funcao": "restaura",
+   "risco": "MEDIO",
+   "trecho": "if(modoSim()==='demoPlc')await soltaTudoPlc();else await soltaTudoLocal();",
+   "assinatura": "91d3b22acd"
+  },
+  {
+   "linha": 9938,
+   "padrao": "modoSim()",
+   "funcao": "restaura",
+   "risco": "MEDIO",
+   "trecho": "if(modoSim()==='demoLocal'&&est.bks){for(const id in est.bks){if(BKS[id]){await paraSel(id,est.bks[id].sel);if(est.bks[id].sel==='auto')awai",
+   "assinatura": "606537d8db"
+  },
+  {
+   "linha": 9939,
+   "padrao": "modoSim()",
+   "funcao": "restaura",
+   "risco": "MEDIO",
+   "trecho": "if(modoSim()==='demoPlc'){for(const id in OPS_LIGOU){if(BKS[id]&&BKS[id].lig){clica(btnL(id),'Desligar banco BC'+id);if(!(await ate(()=>!BKS",
+   "assinatura": "c99f1304d6"
+  },
+  {
+   "linha": 9960,
+   "padrao": "modoSim()",
+   "funcao": "rodar",
+   "risco": "MEDIO",
+   "trecho": "const modo=modoSim();",
+   "assinatura": "56aaf90f51"
+  },
+  {
+   "linha": 9961,
+   "padrao": "demo.checked",
+   "funcao": "rodar",
+   "risco": "ALTO",
+   "trecho": "if(modo==='real'||!$('demo').checked){alert('O Dev/Operador oculto só roda com o Demo ligado (Demo local ou Demo + PLC). No modo REAL ele nã",
+   "assinatura": "4ee0929c28"
+  },
+  {
+   "linha": 9965,
+   "padrao": "=== 'demoLocal'/'demoPlc'",
+   "funcao": "rodar",
+   "risco": "MEDIO",
+   "trecho": "const plc=modo==='demoPlc',ens=opt.ensaio!==false;",
+   "assinatura": "88306e3f55"
+  },
+  {
+   "linha": 9980,
+   "padrao": "=== 'demoLocal'/'demoPlc'",
+   "funcao": "rodar",
+   "risco": "MEDIO",
+   "trecho": "if(modo==='demoLocal')await faseCargasLocal();else await faseCargasPlc();",
+   "assinatura": "af5f540d4f"
+  },
+  {
+   "linha": 10004,
+   "padrao": "=== 'demoLocal'/'demoPlc'",
+   "funcao": "relatorioMd",
+   "risco": "MEDIO",
+   "trecho": "let md='# Dev/Operador oculto — relatório\\n\\n- Versão do HTML: '+VERSAO+'\\n- Modo: '+(OPS.modo==='demoPlc'?'Demo + PLC':'Demo local')+'\\n- D",
+   "assinatura": "9adf6f60c8"
+  },
+  {
+   "linha": 10037,
+   "padrao": "demo.checked",
+   "funcao": "ui",
+   "risco": "MEDIO",
+   "trecho": "const real=!$('demo').checked||modoSim()==='real';",
+   "assinatura": "3367ec9946"
+  },
+  {
+   "linha": 10042,
+   "padrao": "modoSim()",
+   "funcao": "ui",
+   "risco": "MEDIO",
+   "trecho": "const c2=cont(),m=OPS.modo||modoSim();",
+   "assinatura": "2175da356c"
+  },
+  {
+   "linha": 10044,
+   "padrao": "=== 'demoLocal'/'demoPlc'",
+   "funcao": "ui",
+   "risco": "BAIXO",
+   "trecho": ":OPS.fim?('Última execução: '+(OPS.modo==='demoPlc'?'Demo + PLC':'Demo local')+' · '+hms(OPS.fim-OPS.ini)+' · '+c2.ok+' OK · '+c2.falha+' FA",
+   "assinatura": "652553b64e"
+  },
+  {
+   "linha": 10045,
+   "padrao": "demo.checked",
+   "funcao": "ui",
+   "risco": "BAIXO",
+   "trecho": ":(m==='real'||!$('demo').checked?'Ligue o Demo (① Demo) para liberar o Dev/Operador oculto. No modo REAL ele não roda.':(m==='demoPlc'?'Demo",
+   "assinatura": "cc5e83e5b8"
+  },
+  {
+   "linha": 10374,
+   "padrao": "modoSim()",
+   "funcao": "rodarAv",
+   "risco": "MEDIO",
+   "trecho": "const modo=modoSim(),tipo=opt.tipo||'avancado';",
+   "assinatura": "13a066d3fb"
+  },
+  {
+   "linha": 10375,
+   "padrao": "demo.checked",
+   "funcao": "rodarAv",
+   "risco": "ALTO",
+   "trecho": "if(modo!=='demoLocal'||!$('demo').checked){alert('O Dev/Operador oculto AVANÇADO/MONKEY só roda em DEMO LOCAL (nunca no REAL e nunca em Demo",
+   "assinatura": "79decb817a"
+  },
+  {
+   "linha": 10640,
+   "padrao": "demo.checked",
+   "funcao": "bModo.click",
+   "risco": "MEDIO",
+   "trecho": "simulado: !!T.simulado, tipo: MODO, salvarManual: !!salvarManual, tolerancia: TOL, demo: !!$('demo').checked, versao: VERSAO },",
+   "assinatura": "be13679c27"
+  },
+  {
+   "linha": 10875,
+   "padrao": "demo.checked",
+   "funcao": "varre",
+   "risco": "MEDIO",
+   "trecho": "risco:{ids:['dlgParam','dlgAgua','dlgDemo'],bloqueado:()=>ensaioRodando()?'Indisponível com o ensaio em andamento':((typeof genLigado==='fun",
+   "assinatura": "fcb6597570"
+  },
+  {
+   "linha": 11517,
+   "padrao": "demo.checked",
+   "funcao": "monitoramento",
+   "risco": "MEDIO",
+   "trecho": "try { o.demo = !!$('demo').checked; } catch (e) { }",
+   "assinatura": "1f40605811"
+  },
+  {
+   "linha": 11607,
+   "padrao": "demo.checked",
+   "funcao": "resumoMd",
+   "risco": "BAIXO",
+   "trecho": "try { L.push('- Modo: ' + ($('demo').checked ? 'DEMO' : 'REAL')); } catch (e) { }",
+   "assinatura": "8221bec217"
+  }
+ ]
+}

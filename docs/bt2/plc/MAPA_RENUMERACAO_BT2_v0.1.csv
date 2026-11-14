@@ -1,0 +1,19 @@
+﻿banco;bloco;numero_atual;numero_novo;nome_novo;observacao
+BC56;DB chaves;150;3000;db3000_BC56_Chaves;"mudar o número em Propriedades preserva os valores; senão snapshot"
+BC56;DB setup por tensão;152;3002;db3002_BC56_SetupPorTensao;idem (retentivo)
+BC56;DB instância FB100;154;3004;db3004i_BC56_SetupChaves;sem dados a preservar
+BC56;DB instância FB101;155;3005;db3005i_BC56_ComEt200;sem dados a preservar
+BC400;DB chaves;158;3100;db3100_BC400_Chaves;"mudar o número em Propriedades preserva os valores; senão snapshot"
+BC400;DB setup por tensão;160;3102;db3102_BC400_SetupPorTensao;idem (retentivo)
+BC400;DB instância FB100;162;3104;db3104i_BC400_SetupChaves;sem dados a preservar
+BC400;DB instância FB101;163;3105;db3105i_BC400_ComEt200;sem dados a preservar
+BT2;DB DSE;52;2000;db2000_BancoTeste2_DSE;o Node-RED lê/escreve estes: ajustar os fluxos servidor-deepsea e registro-ensaio
+BT2;DB snap manual;53;2100;db2100_BancoTeste2_SnapManual;o Node-RED lê/escreve estes: ajustar os fluxos servidor-deepsea e registro-ensaio
+BC595;DB chaves;(novo);3200;db3200_BC595_Chaves;criar
+BC595;DB setup por tensão;(novo);3202;db3202_BC595_SetupPorTensao;criar
+BC595;DB instância FB;(novo);3204;db3204i_BC595_SetupChaves;criar
+BC595;DB instância comunicação;(novo);3205;db3205i_BC595_ComEt200;criar
+BC550;DB chaves;(novo);3300;db3300_BC550_Chaves;criar
+BC550;DB setup por tensão;(novo);3302;db3302_BC550_SetupPorTensao;criar
+BC550;DB instância FB;(novo);3304;db3304i_BC550_SetupChaves;criar
+BC550;DB instância comunicação;(novo);3305;db3305i_BC550_ComEt200;criar
