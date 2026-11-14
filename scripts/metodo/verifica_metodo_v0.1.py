@@ -15,6 +15,7 @@ EXCECOES = {  # arquivo -> motivo (revisar a cada uso)
  'docs/licoes/REGISTRO_LICOES_v0.1.md': 'registro VIVO: o proprio documento manda acrescentar as licoes novas no fim (o nome v0.1 e a versao do formato)',
  'scripts/metodo/verifica_metodo_v0.1.py': 'o proprio verificador: a lista de EXCECOES cresce com motivo escrito (nao e logica nova)',
  'plc/bt2/gerador/verifica_pacote_scl_v0.1.py': 'VIOLACAO ASSUMIDA: recebeu a checagem do "i" no DB de instancia na mesma versao (commit da entrega 1200 v0.11) em vez de versao nova; o v0.2 tem tudo (inclui um DB por arquivo) e e o que vale',
+ 'scripts/pacote/gerar_pacote_implantacao_v1.9.py': 'VIOLACAO ASSUMIDA: a primeira versao commitada trocou por engano o nome do fluxo registro-ensaio (v1.8 -> v1.9) e parou; corrigida na mesma versao antes de qualquer entrega; a v1.10+ ja partem da corrigida',
  'docs/licoes/INVENTARIO_DEMO_X_REAL_v0.1.md': 'arquivo GERADO por scripts/inventario/inventario_demo_x_real_v0.1.js (regenerado de proposito a cada medidor; o nome v0.1 e a versao do script)',
  'docs/bt2/migracao/ROTEIRO_ATUALIZACAO_NOTEBOOK_v0.1.md': 'limpeza de IP/usuario do Windows (10/11), pedido do Reginaldo: IP nao fica no Git',
  'docs/bt2/modulos/INDEX_v0.2.md': 'limpeza de IP/usuario do Windows (10/11)',
