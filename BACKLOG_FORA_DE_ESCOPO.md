@@ -178,3 +178,11 @@ Documentos (.md/.scl) foram limpos: IPs viraram [IP_1515], [IP_ET200], [IP_PC_BT
 - **Para guardar de verdade:** campos novos no DB2100 (ex.: origem, tipo do NS, lista de alterados) = mudança de PLC. Exige backup (TIA), Etapa de PLC e OK explícito do Reginaldo; o fluxo muda junto (DB novo pede fluxo novo logo depois).
 - **Alternativa quando o SQL Server entrar:** gravar a origem na tabela do ensaio (assíncrono, fora do caminho de comando).
 - **Gravidade:** média (rastreabilidade do que foi digitado × vindo do MES). Não bloqueia o ensaio.
+
+## (15/11/2026) BK-DEMO-01 · CHV-006 "banco sem leitura do PLC" acende no DEMO (falso alarme)
+- **Achado (registro do ensaio no notebook pessoal, medidor 1.10.209, Demo ligado, Node-RED sem os fluxos importados):** ao final do ensaio, "Ocorrências ativas: 2 (CHV-006 BC56, CHV-006 BC400)" e o triângulo "Falhas 2", embora o Demo use simulador local e o ensaio tenha corrido normalmente (6 etapas gravadas).
+- **Causa (código):** em `varre()` do medidor, `COM-001` e `DSE-001` já deixam de valer no Demo/sem servidor real, mas o `CHV-006` é `liga(gr&&!LINK.bancoOk(b.id), 'CHV-006', ...)`: só espera a graça inicial e **não testa Demo nem servidor real**. Só BC56 e BC400 entram (são os `BANCOS_PLC`).
+- **Reprodução (Playwright, API respondendo 404):** Demo desligado → 4 falhas (COM-003, CHV-006 BC56, CHV-006 BC400, DSE-001); Demo ligado → 2 falhas (CHV-006 BC56 e BC400). Só o CHV-006 sobra no Demo.
+- **Gravidade:** baixa/média (alarme falso só no Demo com API fora do ar ou sem PLC; na produção a regra está certa). Pode mascarar leitura do Registro de ocorrências em testes.
+- **Como corrigir (quando autorizado):** versão nova do medidor com o CHV-006 condicionado ao mesmo critério do COM-001 (servidor das chaves em Node-RED real e fora do Demo); teste que liga o Demo com a API em 404 e exige 0 falhas.
+- **Achado relacionado (menor):** os dados padrão do Demo têm NS `DZFA00045`, que pela ETD 091 decodifica para diesel, motor SDEC, alternador **First All** e DSE 4520, mas a tabela de equipamento do Demo diz alternador **WEG**. Inconsistência só de dado de exemplo.
