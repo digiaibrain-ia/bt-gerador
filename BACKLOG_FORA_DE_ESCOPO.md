@@ -179,7 +179,7 @@ Documentos (.md/.scl) foram limpos: IPs viraram [IP_1515], [IP_ET200], [IP_PC_BT
 - **Alternativa quando o SQL Server entrar:** gravar a origem na tabela do ensaio (assíncrono, fora do caminho de comando).
 - **Gravidade:** média (rastreabilidade do que foi digitado × vindo do MES). Não bloqueia o ensaio.
 
-## (15/11/2026) BK-DEMO-01 · CHV-006 "banco sem leitura do PLC" acende no DEMO (falso alarme)
+## (15/11/2026) BK-DEMO-01 · [CORRIGIDO na 1.10.212 — alarme inteligente, ver docs/bt2/modulos/ALARME_INTELIGENTE_v0.1.md] CHV-006 "banco sem leitura do PLC" acende no DEMO (falso alarme)
 - **Achado (registro do ensaio no notebook pessoal, medidor 1.10.209, Demo ligado, Node-RED sem os fluxos importados):** ao final do ensaio, "Ocorrências ativas: 2 (CHV-006 BC56, CHV-006 BC400)" e o triângulo "Falhas 2", embora o Demo use simulador local e o ensaio tenha corrido normalmente (6 etapas gravadas).
 - **Causa (código):** em `varre()` do medidor, `COM-001` e `DSE-001` já deixam de valer no Demo/sem servidor real, mas o `CHV-006` é `liga(gr&&!LINK.bancoOk(b.id), 'CHV-006', ...)`: só espera a graça inicial e **não testa Demo nem servidor real**. Só BC56 e BC400 entram (são os `BANCOS_PLC`).
 - **Reprodução (Playwright, API respondendo 404):** Demo desligado → 4 falhas (COM-003, CHV-006 BC56, CHV-006 BC400, DSE-001); Demo ligado → 2 falhas (CHV-006 BC56 e BC400). Só o CHV-006 sobra no Demo.

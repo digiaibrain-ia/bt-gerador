@@ -23,6 +23,8 @@ const paginas = buf => (buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || 
     await p.evaluate(() => document.querySelector('[data-gd=rodar]').click()); await p.waitForTimeout(400);
     await p.evaluate(() => iniciaEnsaio()); await p.waitForTimeout(600); if (await p.evaluate(() => document.getElementById('dlgDados').open)) { await p.evaluate(() => document.getElementById('dOk').click()); await p.waitForTimeout(600); } await p.evaluate(() => iniciaEnsaio());
     await p.waitForTimeout(10000);   // ensaio rodando + ocorrencias (CHV-006) + eventos do mapa
+    // 1.10.212 (alarme inteligente): o Demo local nao gera mais o CHV-006 falso; o teste cria as ocorrencias para exercitar a exportacao (antes dependia do alarme falso)
+    await p.evaluate(() => { if (window.OCOR) { OCOR.set('bco', 'CHV-001', 'BC56: comando nao executado (ocorrencia criada pelo teste)', { ref: 'BC56', ev: true, expira: 120000 }); OCOR.set('bco', 'CHV-001', 'BC400: comando nao executado (ocorrencia criada pelo teste)', { ref: 'BC400', ev: true, expira: 120000 }); } }); await p.waitForTimeout(1500);
     await p.evaluate(() => { document.getElementById('dlgMapaFBs').close(); document.getElementById('dlgPatDet').close(); });
     // volume parecido com o registro do Reginaldo (3085 eventos, a maioria do Mapa; centenas de falhas de API repetidas). Compara-se: o "Imprimir agora" antigo deu 32 paginas e 236 mil caracteres neste mesmo volume.
     await p.evaluate(() => { for (let i = 0; i < 2700; i++) devObs.log('mapa', 'transicao', 'bloco ' + (i % 11) + ': estado ' + (i % 4) + ' → ' + ((i + 1) % 4), 'info', { campo: 'estado', de: i, para: i + 1 }); for (let i = 0; i < 380; i++) devObs.log('bco', 'api', 'GET /api/chaves/' + (i % 2 ? 56 : 400) + ' → 404', 'falha', { rota: 'GET /api/chaves/56', status: 404, ms: 5 }); });
@@ -47,7 +49,7 @@ const paginas = buf => (buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || 
     // ---- planilha de alertas ----
     [dl] = await Promise.all([p.waitForEvent('download', { timeout: 8000 }), item('Planilha de alertas')]);
     t = fs.readFileSync(await dl.path(), 'utf8');
-    ok('Planilha de alertas: .csv com cabecalho e as ocorrencias (CHV-006) — e abre no Excel (BOM + ;)', /_alertas\.csv$/.test(dl.suggestedFilename()) && t.startsWith('﻿Data e hora;Evento;Tipo;Card;Código;Referência;Texto;Modo') && /CHV-006/.test(t), dl.suggestedFilename());
+    ok('Planilha de alertas: .csv com cabecalho e as ocorrencias (CHV-001) — e abre no Excel (BOM + ;)', /_alertas\.csv$/.test(dl.suggestedFilename()) && t.startsWith('﻿Data e hora;Evento;Tipo;Card;Código;Referência;Texto;Modo') && /CHV-001/.test(t), dl.suggestedFilename());
     // ---- monitoramento ----
     [dl] = await Promise.all([p.waitForEvent('download', { timeout: 8000 }), item('Monitoramento')]);
     let j = null; try { j = JSON.parse(fs.readFileSync(await dl.path(), 'utf8')); } catch (e) { }
