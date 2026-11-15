@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.176.html';
+const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.210.html';   // v1.10.210: o botao "Imprimir agora" virou o menu Exportar ▾ (a bateria antiga, com #cenImprime, vale ate a 1.10.209)
 describe('D - Central de registros', () => {
   let h, b, ctx, p;
   const txt = f => p.evaluate(f);
@@ -65,9 +65,10 @@ describe('D - Central de registros', () => {
     assert.match(t, /# Registros do medidor/); assert.match(t, /alertas\/alertas_falhas_ativas\.txt/); assert.match(t, /monitoramento\/monitoramento_instantaneo\.json/);
   });
 
-  test('imprimir agora: monta a area de impressao e chama a impressao do navegador', async () => {
+  test('exportar ▾ > PDF organizado (era "imprimir agora", v1.10.210): monta a area de impressao e chama a impressao do navegador', async () => {
     const antes = await txt(() => window.__prints);
-    await p.click('#cenImprime');
+    await p.click('#cenExporta'); await p.waitForSelector('.expmenu');
+    await p.click('.expmenu button:has-text("PDF organizado")');
     assert.ok(await esperaAte(async () => (await txt(() => window.__prints)) === antes + 1, 4000), 'nao chamou a impressao');
     assert.match(await txt(() => document.getElementById('prCentral').textContent), /Registros do medidor/);
   });
