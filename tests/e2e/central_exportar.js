@@ -51,7 +51,7 @@ const paginas = buf => (buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || 
     // ---- monitoramento ----
     [dl] = await Promise.all([p.waitForEvent('download', { timeout: 8000 }), item('Monitoramento')]);
     let j = null; try { j = JSON.parse(fs.readFileSync(await dl.path(), 'utf8')); } catch (e) { }
-    ok('Monitoramento: .json valido com versao do medidor, Demo e ocorrencias ativas', !!j && /_monitoramento\.json$/.test(dl.suggestedFilename()) && j.medidor === '1.10.210' && j.demo === true && Array.isArray(j.ocorrenciasAtivas) && j.ocorrenciasAtivas.length > 0, j ? 'medidor ' + j.medidor + ', ' + (j.ocorrenciasAtivas || []).length + ' ocorrencia(s)' : 'JSON invalido');
+    ok('Monitoramento: .json valido com versao do medidor, Demo e ocorrencias ativas', !!j && /_monitoramento\.json$/.test(dl.suggestedFilename()) && j.medidor === (String(ARQ).match(/v(1\.10\.\d+)\.html/)||[])[1] && j.demo === true && Array.isArray(j.ocorrenciasAtivas) && j.ocorrenciasAtivas.length > 0, j ? 'medidor ' + j.medidor + ', ' + (j.ocorrenciasAtivas || []).length + ' ocorrencia(s)' : 'JSON invalido');
     // ---- PDF organizado ----
     let antes = await p.evaluate(() => window.__prints);
     await item('PDF organizado'); await p.waitForFunction(n => window.__prints === n + 1, antes, { timeout: 8000 });
