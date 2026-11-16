@@ -29,7 +29,7 @@ test('operacao: ☰ visivel com so Medidor e Grafico, sem funcoes de dev', async
   const r = await abre(''); assert.ok(r.vis, 'o botao ☰ nao aparece na operacao'); assert.deepEqual(r.itens, ['medidor', 'grafico']); assert.deepEqual(r.tem, { ver: false, up: false, es: false }); assert.equal(r.erros.length, 0, r.erros.join(';'));
 });
 test('dev (?dev=1): todas as ferramentas + Verificar/Atualizar/Esquecer + index', async () => {
-  const r = await abre('?dev=1'); assert.ok(r.vis); assert.deepEqual(r.itens, ['medidor', 'grafico', 'apivisor', 'maquete', 'mapa', 'gerenciador', 'amostras', 'index']); assert.deepEqual(r.tem, { ver: true, up: true, es: true }); assert.equal(r.erros.length, 0, r.erros.join(';'));
+  const r = await abre('?dev=1'); assert.ok(r.vis); assert.deepEqual(r.itens, ['medidor', 'grafico', 'apivisor', 'maquete', 'mapa', 'gerenciador', 'amostras', 'rnc_reparo', 'rnc_registro', 'index']); assert.deepEqual(r.tem, { ver: true, up: true, es: true }); assert.equal(r.erros.length, 0, r.erros.join(';'));
 });
 test('?dev=0 volta para a operacao', async () => {
   const r = await abre('?dev=0'); assert.ok(r.vis); assert.deepEqual(r.itens, ['medidor', 'grafico']);

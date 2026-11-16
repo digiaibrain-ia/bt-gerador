@@ -5,18 +5,18 @@
    NAO FAZ: nao le PLC, DSE nem Node-RED; nao grava nada. So descreve arquivos.
    ===================================================================================================================== */
 window.CATALOGO_FERRAMENTAS = {
-  atualizado: '16/11/2026 11:18 (gerado)',
+  atualizado: '16/11/2026 11:29 (gerado)',
   apoio: ['catalogo_ferramentas.js', 'menu_dev_v0.3.js'],   // .js que o medidor carrega da MESMA pasta; o index confere se estao la
   itens: [
-    { id: 'medidor', grupo: 'Operação', nome: 'Medidor do Gerador (ensaio)', arquivo: 'medidor_gerador_v1.10.215.html', desc: 'Tela principal: leitura do DSE, ensaio, registro, chaves e Patamar Guiado.' },
-    { id: 'rnc_reparo', grupo: 'Operação', nome: 'RNC · Reparo', arquivo: 'rnc_reparo_v0.3.html', desc: 'Quem conserta: assume o reparo, registra o que fez e o reteste (RNC, só informativo).' },
-    { id: 'rnc_registro', grupo: 'Operação', nome: 'RNC · Registro (tela avulsa)', arquivo: 'rnc_registro_v0.2.html', desc: 'Registro de defeito fora do medidor (com foto). No medidor use a área RNC.' },
+    { id: 'medidor', grupo: 'Operação', nome: 'Medidor do Gerador (ensaio)', arquivo: 'medidor_gerador_v1.10.216.html', desc: 'Tela principal: leitura do DSE, ensaio, registro, chaves e Patamar Guiado.' },
     { id: 'grafico', grupo: 'Operação', nome: 'Gráfico do ensaio', arquivo: 'grafico_ensaio_v0.13.html', desc: 'Ensaio ao vivo em tela cheia (2º monitor) ou ensaio salvo para análise.' },
     { id: 'apivisor', grupo: 'Desenvolvimento', nome: 'Visor da API dos cards', arquivo: 'api_cards_visor_v0.4.html', desc: 'Mostra tudo o que o medidor publica (cards, ensaio, etapas, gerador) — somente leitura.' },
     { id: 'maquete', grupo: 'Desenvolvimento', nome: 'Maquete de layout', arquivo: 'maquete_layout_v0.5.html', desc: 'Blocos arrastáveis dos cards da tela principal (com setinha, travar, presets) para testar arranjos e mandar o print.' },
     { id: 'mapa', grupo: 'Desenvolvimento', nome: 'Mapa dos FBs', arquivo: 'mapa_fbs_v0.19.html', desc: 'Esquema dos blocos (mãe + filhos) com valores ao vivo do Patamar Guiado.' },
     { id: 'gerenciador', grupo: 'Desenvolvimento', nome: 'Gerenciador de logs', arquivo: 'gerenciador_logs_v1.9.html', desc: 'Recebe os logs [DEV.OBS] do medidor, gráfico e mapa, em abas.' },
     { id: 'amostras', grupo: 'Desenvolvimento', nome: 'Simulador de amostras', arquivo: 'amostras_simulador_v0.7.html', desc: 'Registro de aprendizado e simulação de ensaios por modelo.' },
+    { id: 'rnc_reparo', grupo: 'RNC', nome: 'RNC · Reparo', arquivo: 'rnc_reparo_v0.3.html', desc: 'Quem conserta: assume o reparo, registra o que fez e o reteste (RNC, só informativo).' },
+    { id: 'rnc_registro', grupo: 'RNC', nome: 'RNC · Registro (tela avulsa)', arquivo: 'rnc_registro_v0.2.html', desc: 'Registro de defeito fora do medidor (com foto). No medidor use a área RNC.' },
   ]
 };
 /* v0.7.1 (07/11/2026): ESCOLHA PELO INDEX. O index.html tem o botão "Escolher arquivo…" em cada ferramenta; o nome escolhido fica guardado neste navegador
