@@ -1,7 +1,7 @@
 // Medidor 1.10.211: (1) botao "Registrar defeito" (RNC) grava via /api/rnc/abrir com contexto e chave de idempotencia (servidor SIMULADO por page.route);
 // (2) card Banco de Cargas mostra so os bancos selecionados (👁 n/N alterna para Todos). Abre o arquivo direto (file://). Uso: node tests/e2e/rnc_e_bancos_visiveis.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.211.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.216.html');
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch();
@@ -17,6 +17,7 @@ const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 
     });
     await p.goto('file://' + ARQ); await p.waitForTimeout(2200);
     await p.evaluate(() => { const d = document.getElementById('demo'); d.checked = true; d.dispatchEvent(new Event('change', { bubbles: true })); }); await p.waitForTimeout(800);
+    await p.evaluate(() => { if (window.RNC_DEFEITO && RNC_DEFEITO.ativa) RNC_DEFEITO.ativa(true); }); await p.waitForTimeout(300);   // 1.10.216: o RNC nasce desligado
     ok('botao "Registrar defeito" existe e esta visivel', await p.evaluate(() => { const e = document.getElementById('bRnc'); return !!e && e.getBoundingClientRect().width > 0; }));
     await p.evaluate(() => { SRVM.url = 'http://servidor-teste:1880'; }); await p.waitForTimeout(200);
     await p.evaluate(() => document.getElementById('bRnc').click()); await p.waitForTimeout(500);
