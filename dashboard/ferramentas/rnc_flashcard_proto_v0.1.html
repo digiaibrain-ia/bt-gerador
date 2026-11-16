@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="app-version" content="proto-0.1">
+<title>RNC em flash card — PROTÓTIPO (não grava)</title>
+<!-- =====================================================================================================================
+  rnc_flashcard_proto_v0.1.html — PROTÓTIPO CLICÁVEL do Registro e do Reparo de RNC em "flash card"  ·  16/11/2026
+  PARA QUE SERVE (leigo): mostrar COMO ficaria. Um cartão grande por pergunta, 1 toque por resposta, e no fim um cartão de conferência.
+  NÃO GRAVA NADA: não fala com o Node-RED, não usa PLC/chaves/DSE, não guarda no navegador. Os dados são de exemplo (série e modelo inventados).
+  O QUE É NOVO EM RELAÇÃO AO RNC v1.1 (precisa de OK antes de ligar): campos "componente" e "gravidade" (iriam DENTRO de data, opcionais — o fluxo antigo continua valendo).
+  Aprovado o visual, a versão ligada reaproveita as mesmas rotas /api/rnc/* já testadas (abrir, evento, foto).
+  ===================================================================================================================== -->
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--tx:#17202b;--mu:#5d6b7b;--bd:#d5dbe3;--ac:#1d5fd1;--acx:#fff;--ok:#1b7f45;--okb:#e3f4ea;--wa:#a35d00;--wab:#fff1d6;--ba:#b3261e;--bab:#fde7e5;--sel:#e7efff}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10151c;--card:#1a222d;--tx:#e8edf3;--mu:#9aa8b8;--bd:#33414f;--ac:#6ea1ff;--acx:#0b1220;--ok:#5fd18e;--okb:#12301f;--wa:#ffc266;--wab:#38280c;--ba:#ff8f87;--bab:#3a1613;--sel:#1d2d4a}}
+:root[data-theme=dark]{--bg:#10151c;--card:#1a222d;--tx:#e8edf3;--mu:#9aa8b8;--bd:#33414f;--ac:#6ea1ff;--acx:#0b1220;--ok:#5fd18e;--okb:#12301f;--wa:#ffc266;--wab:#38280c;--ba:#ff8f87;--bab:#3a1613;--sel:#1d2d4a}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.35 system-ui,Segoe UI,Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{min-height:100dvh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bd);background:var(--card);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+header h1{font-size:1rem;margin:0;flex:1 1 auto}
+.proto{background:var(--wab);color:var(--wa);border:1px solid var(--wa);border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:700}
+.abas{display:flex;gap:6px;padding:10px 16px 0}
+.abas button{flex:1;min-height:48px;border:1px solid var(--bd);border-radius:12px 12px 0 0;background:var(--card);color:var(--mu);font:inherit;font-weight:700}
+.abas button[aria-selected=true]{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+main{flex:1;padding:12px 16px 20px;width:100%;max-width:560px;margin:0 auto}
+.prog{display:flex;gap:6px;margin:6px 0 12px}
+.prog i{flex:1;height:6px;border-radius:3px;background:var(--bd)}
+.prog i.on{background:var(--ac)}.prog i.ok{background:var(--ok)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:18px 16px;box-shadow:0 6px 20px rgba(0,0,0,.08);animation:entra .22s ease-out}
+@keyframes entra{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.card{animation:none}}
+.pergunta{font-size:1.35rem;font-weight:800;margin:0 0 4px}
+.dica{color:var(--mu);font-size:.9rem;margin:0 0 14px}
+.auto{background:var(--sel);border-radius:12px;padding:8px 12px;font-size:.86rem;margin:0 0 14px;color:var(--tx)}
+.auto b{font-weight:700}
+.grade{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grade.um{grid-template-columns:1fr}
+.tile{min-height:72px;border:2px solid var(--bd);border-radius:16px;background:var(--card);color:var(--tx);font:inherit;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px;cursor:pointer;text-align:center}
+.tile small{font-weight:400;color:var(--mu);font-size:.78rem}
+.tile .ic{font-size:1.6rem;line-height:1}
+.tile:active{transform:scale(.98)}
+.tile[aria-pressed=true]{border-color:var(--ac);background:var(--sel)}
+.tile.g1[aria-pressed=true]{border-color:var(--ok);background:var(--okb)}
+.tile.g2[aria-pressed=true]{border-color:var(--wa);background:var(--wab)}
+.tile.g3[aria-pressed=true]{border-color:var(--ba);background:var(--bab)}
+.acoes{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;min-height:56px;border-radius:14px;border:2px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;font-weight:800;cursor:pointer}
+.btn.pri{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+.btn.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+.btn.ba{background:var(--ba);color:#fff;border-color:var(--ba)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.peq{flex:0 0 auto;padding:0 16px;min-height:48px}
+input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:2px solid var(--bd);border-radius:12px;padding:12px;min-height:52px}
+input:focus,textarea:focus,.tile:focus-visible,.btn:focus-visible,.abas button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+label.l{display:block;font-weight:700;margin:12px 0 4px}
+.serie{font-size:1.5rem;font-weight:800;letter-spacing:.04em;word-break:break-all;margin:6px 0 4px}
+.resumo{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0 0 6px}
+.resumo dt{color:var(--mu);font-size:.85rem}.resumo dd{margin:0;font-weight:700}
+.sel-g{display:inline-block;border-radius:999px;padding:1px 10px;font-weight:800;font-size:.85rem}
+.sel-g.g1{background:var(--okb);color:var(--ok)}.sel-g.g2{background:var(--wab);color:var(--wa)}.sel-g.g3{background:var(--bab);color:var(--ba)}
+.fim{border-radius:20px;padding:20px 16px;text-align:center}
+.fim.ok{background:var(--okb);border:2px solid var(--ok)}
+.fim h2{margin:0 0 6px;font-size:1.4rem}
+.fim .big{font-size:1.6rem;font-weight:900;margin:8px 0}
+.etiqueta{background:var(--bab);color:var(--ba);border-radius:12px;padding:10px;font-weight:800;margin:10px 0}
+.foto{display:flex;gap:10px;align-items:center;margin-top:10px}
+.foto img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--bd)}
+/* reparo */
+.filtros{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:thin}
+.filtros button{flex:0 0 auto;min-height:44px;border-radius:999px;border:2px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;font-weight:700;padding:0 14px}
+.filtros button[aria-pressed=true]{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+.pilha{display:grid;gap:12px}
+.fc{perspective:1000px}
+.fc .face{background:var(--card);border:2px solid var(--bd);border-radius:18px;padding:14px;cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit;display:block}
+.fc .topo{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.fc .id{font-weight:900}
+.est{border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:800}
+.est.ABERTA{background:var(--bab);color:var(--ba)}.est.EM_REPARO{background:var(--wab);color:var(--wa)}.est.AGUARDANDO_RETESTE{background:var(--sel);color:var(--ac)}.est.LIBERADO{background:var(--okb);color:var(--ok)}
+.fc.vira .face{animation:vira .45s ease}
+@keyframes vira{0%{transform:rotateY(0)}50%{transform:rotateY(90deg)}100%{transform:rotateY(0)}}
+@media (prefers-reduced-motion:reduce){.fc.vira .face{animation:none}}
+.det{margin-top:10px;border-top:1px dashed var(--bd);padding-top:10px}
+.hist{margin:8px 0 0;padding-left:18px;color:var(--mu);font-size:.88rem}
+.vazio{text-align:center;color:var(--mu);padding:30px 10px}
+.rodape{max-width:560px;margin:0 auto;padding:0 16px 22px;color:var(--mu);font-size:.8rem}
+</style>
+</head>
+<body>
+<header><h1>RNC · Registro de Não Conformidade</h1><span class="proto" title="Nada é gravado">PROTÓTIPO · não grava</span></header>
+<div class="abas" role="tablist" aria-label="Tela"><button role="tab" id="tReg" aria-selected="true">⚠ Registrar defeito</button><button role="tab" id="tRep" aria-selected="false">🔧 Reparo</button></div>
+<main id="main" aria-live="polite"></main>
+<p class="rodape">Protótipo para aprovar o visual. Dados de exemplo; ao fechar a página tudo some. Campos novos (<b>componente</b> e <b>gravidade</b>) só entram no sistema depois do seu OK.</p>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* ---------- dados de exemplo (inventados) ---------- */
+const CONTEXTO={serie:'EXEMPLO0000000001',modelo:'Grupo gerador 260 kVA · 60 Hz (exemplo)',etapa:'Etapa 3 — 50 %',demo:true,hora:'10:42'};
+const TIPOS=[['DEFEITO','🛠','Defeito','peça ou componente com problema'],['ERRO_MONTAGEM','🔩','Erro de montagem','montado ou ligado errado'],['FALHA_ENSAIO','📉','Falha no ensaio','não passou no ensaio'],['OUTRO','❓','Outro','não se encaixa']];
+// "componente": na versão ligada a lista vem da TABELA DE EQUIPAMENTO do modelo (motor, alternador, DSE...). Aqui é um exemplo fixo.
+const COMPS=[['Motor','⚙️','motor diesel'],['Alternador','🔋','alternador'],['Painel / DSE','🖥','controlador'],['Bateria / carga','🔌','sistema de partida'],['Refrigeração','💧','radiador, água'],['Combustível','⛽','tanque, filtros'],['Fiação / cabos','🧵','conexões'],['Outro','❓','não está na lista']];
+const GRAV=[['g1','🟢','Leve','segue o ensaio, corrige depois'],['g2','🟠','Média','corrigir antes de liberar'],['g3','🔴','Crítica','risco de segurança ou parada']];
+const VISTO=['Não liga','Superaquece','Vazamento','Ruído / vibração','Sem tensão','Sem carga','Alarme no DSE','Cheiro de queimado'];
+let ABA='reg',passo=0,F={};
+const PASSOS=['serie','tipo','comp','grav','visto','conf'];
+function zera(){passo=0;F={serie:CONTEXTO.serie,serieOk:false,tipo:'',comp:'',grav:'',visto:[],texto:'',foto:'',nome:'Técnico Exemplo',res:null}}
+zera();
+/* ---------- registro ---------- */
+function progresso(){return '<div class="prog" role="progressbar" aria-valuemin="1" aria-valuemax="'+PASSOS.length+'" aria-valuenow="'+(passo+1)+'" aria-label="Passo '+(passo+1)+' de '+PASSOS.length+'">'+PASSOS.map((_,i)=>'<i class="'+(i<passo?'ok':(i===passo?'on':''))+'"></i>').join('')+'</div>'}
+const auto='<p class="auto">📎 Já anexado automaticamente: <b>'+esc(CONTEXTO.modelo)+'</b> · '+esc(CONTEXTO.etapa)+' · '+esc(CONTEXTO.hora)+' · medidas e alarmes do DSE'+(CONTEXTO.demo?' · <b>[DEMO]</b>':'')+'</p>';
+const voltar=()=>passo>0?'<button class="btn peq" id="bVolta" aria-label="Voltar um passo">←</button>':'';
+function tiles(lista,chave,cls){return '<div class="grade'+(lista.length%2&&lista.length<4?' um':'')+'">'+lista.map(x=>{const v=Array.isArray(x)?x[0]:x;return '<button type="button" class="tile '+(cls?x[0]:'')+'" data-v="'+esc(v)+'" aria-pressed="'+(F[chave]===v)+'"><span class="ic">'+x[1]+'</span>'+esc(x[2]||x[0])+(x[3]?'<small>'+esc(x[3])+'</small>':'')+'</button>'}).join('')+'</div>'}
+function cartaoReg(){
+  const p=PASSOS[passo];let h=progresso();
+  if(p==='serie'){h+='<section class="card"><p class="pergunta">Este é o gerador?</p><p class="dica">O número de série veio do medidor.</p>'+auto+'<div class="serie" id="serieV">'+esc(F.serie)+'</div><div id="corr" hidden><label class="l" for="serieI">Digite o número de série</label><input id="serieI" autocomplete="off" autocapitalize="characters" maxlength="30" value="'+esc(F.serie)+'"></div><div class="acoes"><button class="btn" id="bCorr">Corrigir</button><button class="btn pri" id="bProx">Sim, é este →</button></div></section>'}
+  else if(p==='tipo'){h+='<section class="card"><p class="pergunta">Que tipo de problema?</p><p class="dica">Toque na resposta — avança sozinho.</p>'+tiles(TIPOS,'tipo')+'<div class="acoes">'+voltar()+'</div></section>'}
+  else if(p==='comp'){h+='<section class="card"><p class="pergunta">Onde está o problema?</p><p class="dica">Lista do equipamento deste modelo (exemplo).</p>'+tiles(COMPS.map(c=>[c[0],c[1],c[0],c[2]]),'comp')+'<div class="acoes">'+voltar()+'</div></section>'}
+  else if(p==='grav'){h+='<section class="card"><p class="pergunta">Qual a gravidade?</p><p class="dica">Só informa quem vai reparar. Não para o ensaio sozinho.</p>'+tiles(GRAV,'grav',true).replace('class="grade','class="grade um')+'<div class="acoes">'+voltar()+'</div></section>'}
+  else if(p==='visto'){h+='<section class="card"><p class="pergunta">O que você viu?</p><p class="dica">Toque nos que valem. Texto e foto são opcionais.</p><div class="grade">'+VISTO.map(v=>'<button type="button" class="tile" style="min-height:56px" data-m="'+esc(v)+'" aria-pressed="'+F.visto.includes(v)+'">'+esc(v)+'</button>').join('')+'</div><label class="l" for="tx">Em poucas palavras <small>(opcional)</small></label><textarea id="tx" rows="2" maxlength="300" placeholder="ex.: parou aos 50 % de carga">'+esc(F.texto)+'</textarea><div class="foto"><label class="btn peq" style="display:inline-flex;align-items:center;cursor:pointer">📷 Foto<input id="ft" type="file" accept="image/*" capture="environment" hidden></label><span id="ftM">'+(F.foto?'<img alt="foto anexada" src="'+F.foto+'">':'<small>sem foto</small>')+'</span></div><div class="acoes">'+voltar()+'<button class="btn pri" id="bProx" '+((F.visto.length||F.texto.trim().length>=3)?'':'disabled')+'>Conferir →</button></div></section>'}
+  else if(p==='conf'){const g=GRAV.find(x=>x[0]===F.grav);h+='<section class="card"><p class="pergunta">Confira e registre</p>'+auto+'<dl class="resumo"><dt>Série</dt><dd>'+esc(F.serie)+'</dd><dt>Tipo</dt><dd>'+esc((TIPOS.find(t=>t[0]===F.tipo)||[])[2])+'</dd><dt>Onde</dt><dd>'+esc(F.comp)+'</dd><dt>Gravidade</dt><dd><span class="sel-g '+esc(F.grav)+'">'+esc(g&&g[2])+'</span></dd><dt>Visto</dt><dd>'+esc(F.visto.join(', ')||'—')+(F.texto?' · “'+esc(F.texto)+'”':'')+'</dd>'+(F.foto?'<dt>Foto</dt><dd><img alt="foto" src="'+F.foto+'" style="width:56px;height:56px;object-fit:cover;border-radius:8px"></dd>':'')+'</dl><label class="l" for="nm">Seu nome</label><input id="nm" maxlength="60" value="'+esc(F.nome)+'"><div class="acoes">'+voltar()+'<button class="btn pri" id="bReg">Registrar RNC</button></div></section>'}
+  return h;
+}
+function cartaoFim(){return '<section class="card"><div class="fim ok" role="status"><h2>✔ Registrado (simulado)</h2><div class="big">'+esc(F.res.id)+'</div><div>Série <b>'+esc(F.serie)+'</b></div><div class="etiqueta">🏷 Gerador BLOQUEADO — coloque a etiqueta de bloqueio e encaminhe ao reparo.</div><small>Neste protótipo nada foi gravado.</small></div><div class="acoes"><button class="btn" id="bNovo">Registrar outro</button><button class="btn pri" id="bVaiRep">Ver no Reparo</button></div></section>'}
+function rendReg(){
+  const m=$('main');m.innerHTML=F.res?cartaoFim():cartaoReg();
+  const q=s=>m.querySelector(s),qa=s=>[...m.querySelectorAll(s)];
+  const vai=d=>{passo=Math.max(0,Math.min(PASSOS.length-1,passo+d));rendReg();const t=m.querySelector('.pergunta');if(t){t.setAttribute('tabindex','-1');t.focus({preventScroll:true})}};
+  if(F.res){$('bNovo').onclick=()=>{zera();rendReg()};$('bVaiRep').onclick=()=>{aba('rep')};return}
+  const bv=q('#bVolta');if(bv)bv.onclick=()=>vai(-1);
+  const p=PASSOS[passo];
+  if(p==='serie'){q('#bCorr').onclick=()=>{q('#corr').hidden=false;q('#serieV').hidden=true;q('#bCorr').hidden=true;q('#serieI').focus()};q('#bProx').onclick=()=>{const i=q('#serieI');if(!q('#corr').hidden){const v=i.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<15){i.setCustomValidity('x');i.style.borderColor='var(--ba)';i.placeholder='15 a 30 letras/números';return}F.serie=v}F.serieOk=true;vai(1)}}
+  if(p==='tipo')qa('.tile').forEach(b=>b.onclick=()=>{F.tipo=b.dataset.v;vai(1)});
+  if(p==='comp')qa('.tile').forEach(b=>b.onclick=()=>{F.comp=b.dataset.v;vai(1)});
+  if(p==='grav')qa('.tile').forEach(b=>b.onclick=()=>{F.grav=b.dataset.v;vai(1)});
+  if(p==='visto'){const atual=()=>{q('#bProx').disabled=!(F.visto.length||F.texto.trim().length>=3)};qa('[data-m]').forEach(b=>b.onclick=()=>{const v=b.dataset.m,i=F.visto.indexOf(v);if(i<0)F.visto.push(v);else F.visto.splice(i,1);b.setAttribute('aria-pressed',String(i<0));atual()});q('#tx').oninput=e=>{F.texto=e.target.value;atual()};q('#ft').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>3*1024*1024){q('#ftM').innerHTML='<small style="color:var(--ba)">foto acima de 3 MB</small>';return}const r=new FileReader();r.onload=()=>{F.foto=r.result;q('#ftM').innerHTML='<img alt="foto anexada" src="'+F.foto+'">'};r.readAsDataURL(f)};q('#bProx').onclick=()=>vai(1)}
+  if(p==='conf'){q('#nm').oninput=e=>{F.nome=e.target.value;q('#bReg').disabled=F.nome.trim().length<2};q('#bReg').onclick=()=>{const n=Math.max(...REP.map(r=>+r.id.slice(-4)))+1;F.res={id:'RNC-2026-'+String(n).padStart(4,'0')};REP.unshift({id:F.res.id,serie:F.serie,estado:'ABERTA',tipo:(TIPOS.find(t=>t[0]===F.tipo)||[])[2],comp:F.comp,grav:F.grav,visto:F.visto.join(', ')+(F.texto?' — '+F.texto:''),hist:[['Aberta',F.nome,'agora']]});rendReg()}}
+}
+/* ---------- reparo ---------- */
+const REP=[
+ {id:'RNC-2026-0006',serie:'EXEMPLO0000000002',estado:'ABERTA',tipo:'Defeito',comp:'Alternador',grav:'g3',visto:'Sem tensão, Cheiro de queimado',hist:[['Aberta','Técnico A','ontem 16:10']]},
+ {id:'RNC-2026-0005',serie:'EXEMPLO0000000003',estado:'EM_REPARO',tipo:'Erro de montagem',comp:'Fiação / cabos',grav:'g2',visto:'Sem carga — fase invertida',hist:[['Aberta','Técnico B','ontem 09:30'],['Reparo iniciado','Reparador C','ontem 14:00']]},
+ {id:'RNC-2026-0004',serie:'EXEMPLO0000000004',estado:'AGUARDANDO_RETESTE',tipo:'Defeito',comp:'Refrigeração',grav:'g2',visto:'Superaquece',hist:[['Aberta','Técnico A','12/11 08:00'],['Reparo: trocou válvula termostática','Reparador C','13/11 11:20']]},
+ {id:'RNC-2026-0003',serie:'EXEMPLO0000000005',estado:'LIBERADO',tipo:'Falha no ensaio',comp:'Painel / DSE',grav:'g1',visto:'Alarme no DSE',hist:[['Aberta','Técnico B','10/11 15:00'],['Reparo: atualizou parâmetros','Reparador C','11/11 09:00'],['Reteste aprovado','Técnico B','11/11 10:30']]}
+];
+const EST={ABERTA:'Aberta · bloqueada',EM_REPARO:'Em reparo',AGUARDANDO_RETESTE:'Aguardando reteste',LIBERADO:'Liberado'};
+let FILTRO='ATIVAS',ABERTO='',SUB='';
+function rendRep(){
+  const m=$('main');
+  const ativos=REP.filter(r=>r.estado!=='LIBERADO');
+  const lista=REP.filter(r=>FILTRO==='ATIVAS'?r.estado!=='LIBERADO':(FILTRO==='TODAS'?true:r.estado===FILTRO));
+  const cont=e=>REP.filter(r=>r.estado===e).length;
+  let h='<div class="filtros" role="group" aria-label="Filtrar">'+[['ATIVAS','Pendentes ('+ativos.length+')'],['ABERTA','Abertas ('+cont('ABERTA')+')'],['EM_REPARO','Em reparo ('+cont('EM_REPARO')+')'],['AGUARDANDO_RETESTE','Reteste ('+cont('AGUARDANDO_RETESTE')+')'],['LIBERADO','Liberadas ('+cont('LIBERADO')+')']].map(f=>'<button type="button" data-f="'+f[0]+'" aria-pressed="'+(FILTRO===f[0])+'">'+f[1]+'</button>').join('')+'</div>';
+  h+='<div class="pilha">'+(lista.length?lista.map(cartaoRep).join(''):'<div class="vazio">Nenhuma RNC aqui. 🎉</div>')+'</div>';
+  m.innerHTML=h;
+  m.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{FILTRO=b.dataset.f;ABERTO='';SUB='';rendRep()});
+  m.querySelectorAll('[data-abre]').forEach(b=>b.onclick=()=>{ABERTO=ABERTO===b.dataset.abre?'':b.dataset.abre;SUB='';rendRep()});
+  m.querySelectorAll('[data-ac]').forEach(b=>b.onclick=()=>acao(b.dataset.id,b.dataset.ac));
+  const fa=m.querySelector('#bFeito');if(fa){fa.onclick=()=>{const id=fa.dataset.id,r=REP.find(x=>x.id===id),a=$('fAcao').value.trim();if(a.length<3){$('fAcao').style.borderColor='var(--ba)';return}const p=$('fPeca').value.trim();r.estado='AGUARDANDO_RETESTE';r.hist.push(['Reparo: '+a+(p?' (peça: '+p+')':''),'Reparador C','agora']);SUB='';vira(id)}}
+  const ch=m.querySelectorAll('[data-chip]');ch.forEach(b=>b.onclick=()=>{const t=$('fAcao');t.value=(t.value?t.value+'; ':'')+b.dataset.chip;t.focus()});
+}
+function vira(id){rendRep();const el=document.querySelector('[data-card="'+id+'"]');if(el){el.classList.add('vira');el.scrollIntoView({block:'nearest'})}}
+function acao(id,a){
+  const r=REP.find(x=>x.id===id);
+  if(a==='assumir'){r.estado='EM_REPARO';r.hist.push(['Reparo iniciado','Reparador C','agora']);vira(id)}
+  else if(a==='registrar'){SUB='feito';rendRep()}
+  else if(a==='apr'){r.estado='LIBERADO';r.hist.push(['Reteste aprovado','Técnico B','agora']);ABERTO=id;FILTRO='LIBERADO';vira(id)}
+  else if(a==='rep'){r.estado='EM_REPARO';r.hist.push(['Reteste reprovado — volta ao reparo','Técnico B','agora']);ABERTO=id;vira(id)}
+}
+function cartaoRep(r){
+  const g=GRAV.find(x=>x[0]===r.grav),aberto=ABERTO===r.id;
+  let h='<div class="fc" data-card="'+esc(r.id)+'"><button type="button" class="face" data-abre="'+esc(r.id)+'" aria-expanded="'+aberto+'"><div class="topo"><span class="id">'+esc(r.id)+'</span><span class="est '+r.estado+'">'+EST[r.estado]+'</span></div><div style="margin-top:6px"><b>'+esc(r.serie)+'</b></div><div style="color:var(--mu);font-size:.9rem">'+esc(r.tipo)+' · '+esc(r.comp)+' · <span class="sel-g '+esc(r.grav)+'">'+esc(g[2])+'</span></div></button>';
+  if(aberto){
+    h+='<div class="card det" style="margin-top:-6px;border-top-left-radius:0;border-top-right-radius:0"><p style="margin:0 0 6px"><b>Visto:</b> '+esc(r.visto)+'</p><ul class="hist">'+r.hist.map(x=>'<li>'+esc(x[0])+' — '+esc(x[1])+', '+esc(x[2])+'</li>').join('')+'</ul>';
+    if(r.estado==='ABERTA')h+='<div class="acoes"><button class="btn pri" data-id="'+esc(r.id)+'" data-ac="assumir">🔧 Assumir reparo</button></div>';
+    else if(r.estado==='EM_REPARO'&&SUB!=='feito')h+='<div class="acoes"><button class="btn pri" data-id="'+esc(r.id)+'" data-ac="registrar">✍ Registrar reparo</button></div>';
+    else if(r.estado==='EM_REPARO')h+='<label class="l" for="fAcao">O que foi feito <small>(obrigatório)</small></label><div class="grade" style="margin-bottom:8px">'+['Troquei a peça','Refiz a ligação','Ajustei parâmetro','Limpei / apertei'].map(c=>'<button type="button" class="tile" style="min-height:48px" data-chip="'+c+'">'+c+'</button>').join('')+'</div><textarea id="fAcao" rows="2" maxlength="1000"></textarea><label class="l" for="fPeca">Peça trocada <small>(só se trocou)</small></label><input id="fPeca" maxlength="200"><div class="acoes"><button class="btn pri" id="bFeito" data-id="'+esc(r.id)+'">Reparo feito → reteste</button></div>';
+    else if(r.estado==='AGUARDANDO_RETESTE')h+='<p class="auto">O gerador volta ao banco para novo ensaio. Qual foi o resultado do reteste?</p><div class="acoes"><button class="btn ba" data-id="'+esc(r.id)+'" data-ac="rep">❌ Reprovado</button><button class="btn ok" data-id="'+esc(r.id)+'" data-ac="apr">✅ Aprovado</button></div>';
+    else h+='<div class="fim ok" style="padding:10px"><b>✔ Liberado para expedição</b></div>';
+    h+='</div>';
+  }
+  return h+'</div>';
+}
+/* ---------- abas ---------- */
+function aba(a){ABA=a;$('tReg').setAttribute('aria-selected',String(a==='reg'));$('tRep').setAttribute('aria-selected',String(a==='rep'));if(a==='reg')rendReg();else{ABERTO=F.res?F.res.id:'';rendRep()}}
+$('tReg').onclick=()=>aba('reg');$('tRep').onclick=()=>aba('rep');
+aba('reg');
+</script>
+</body>
+</html>
