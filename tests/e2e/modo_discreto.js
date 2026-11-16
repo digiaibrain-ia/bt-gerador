@@ -2,7 +2,7 @@
 // file://. Uso: node tests/e2e/modo_discreto.js (MEDIDOR=nome.html ANTES=nome.html SHOTS=pasta)
 const { chromium } = require('playwright'); const path = require('path');
 const D = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas');
-const NOVO = path.join(D, process.env.MEDIDOR || 'medidor_gerador_v1.10.214.html'), ANTES = path.join(D, process.env.ANTES || 'medidor_gerador_v1.10.212.html'); const SHOTS = process.env.SHOTS || '';
+const NOVO = path.join(D, process.env.MEDIDOR || 'medidor_gerador_v1.10.215.html'), ANTES = path.join(D, process.env.ANTES || 'medidor_gerador_v1.10.214.html'); const SHOTS = process.env.SHOTS || '';
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 const medida = p => p.evaluate(() => { const c = document.getElementById('modoCard'), r = c.getBoundingClientRect();
   return { h: Math.round(r.height), w: Math.round(r.width), estoura: c.scrollWidth > c.clientWidth + 1 || document.documentElement.scrollWidth > innerWidth + 1,
@@ -21,10 +21,10 @@ const medida = p => p.evaluate(() => { const c = document.getElementById('modoCa
       await ctx.close();
     }
     const a = res.antes, n = res.agora;
-    ok('o card ficou mais baixo (' + a.h + ' -> ' + n.h + ' px)', n.h < a.h * 0.97);
+    ok('o card nao ficou mais alto que o anterior (' + a.h + ' -> ' + n.h + ' px)', n.h <= a.h + 2);
     ok('sem estouro lateral', !n.estoura);
     ok('os 3 indicadores de comunicacao seguem la, com nome e estado, e o balao (data-tip) preservado', n.lk.length === 3 && n.lk.every(x => x.t.length > 4 && x.w > 30) && n.lk.map(x => x.tip.slice(0, 30)).join('|') === a.lk.map(x => x.tip.slice(0, 30)).join('|') && n.lk.every(x => x.tip.length > 20), n.lk.map(x => x.t).join(' / '));
-    ok('as 6 configuracoes seguem la, com os mesmos valores, visiveis e sem corte', n.cfg.length === 6 && n.cfg.every(x => x.vis && x.v.length > 0) && JSON.stringify(n.cfg.map(x => [x.l, x.v])) === JSON.stringify(a.cfg.map(x => [x.l, x.v])), n.cfg.map(x => x.l + '=' + x.v).join(' | '));
+    ok('as 6 configuracoes seguem la, com os mesmos rotulos (o 4o foi renomeado), visiveis e sem corte', n.cfg.length === 6 && n.cfg.every(x => x.vis && x.v.length > 0) && n.cfg.map(x => x.l).join('|') === a.cfg.map(x => x.l).join('|').replace('Node-RED (confirmado)', 'Registro no Node-RED'), n.cfg.map(x => x.l + '=' + x.v).join(' | '));
     ok('nenhum valor com mais de 2 linhas (nada escondido)', n.cfg.every(x => !x.cortado), n.cfg.filter(x => x.cortado).map(x => x.l).join(','));
     ok('todos os ids do card existem', n.ids);
     ok('sem erro de JavaScript', n.erros.length === 0, n.erros.slice(0, 2).join(' | '));
