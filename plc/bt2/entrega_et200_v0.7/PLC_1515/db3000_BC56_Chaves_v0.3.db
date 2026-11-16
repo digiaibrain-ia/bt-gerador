@@ -1,0 +1,72 @@
+DATA_BLOCK "db3000_BC56_Chaves"
+TITLE = db3000_BC56_Chaves v0.3 (DB3000)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'Reginaldo Lobo'
+VERSION : 0.3
+NON_RETAIN
+////====================================
+//// db3000_BC56_Chaves (DB3000) - GERADO por plc/bt2/gerador/gerar_banco_v0.2.py (03/11/2026) - nao compilado no TIA, nao testado
+//// O QUE FAZ : mesmo papel do db150_BC56_Chaves v0.3, arrays de 16 chaves. Banco BC56: 13 chaves reais, 3 reserva. FB: FB100/FB101.
+//// v0.3 (06/11/2026, Fase 4 / Portao A, RASCUNHO): so ACRESCENTA a struct sbRet no fim (X464.0..470.0). Nenhum offset existente muda.
+//// OFFSETS (calculados; CONFERIR na coluna "Deslocamento" do TIA): cb.ligar X0.0 | sb.ligada X2.0 | habilitada X4.0 | setupOk X6.0
+////    kwReal D8 | rMedidoOhm D72 | rTeoricoOhm D136 | setupData B200 (12 bytes cada) | nominal D392
+////    chaveSel W456 | salvar X458.0 | usarKwReal X458.1 | cbBanco.ligar X460.0 | sbBanco.seletoraAuto X462.0 | comEt200Ok X462.1
+//// kW nominal na ordem fisica das chaves (informado pelo operador em 30/10/2026).
+////=====================================
+   VAR
+      cb : Struct
+         ligar : Array[1..16] of Bool;
+      END_STRUCT;
+
+      sb : Struct
+         ligada : Array[1..16] of Bool;
+      END_STRUCT;
+
+      setup : Struct
+         habilitada   : Array[1..16] of Bool;
+         setupOk      : Array[1..16] of Bool;
+         kwReal       : Array[1..16] of Real;
+         rMedidoOhm   : Array[1..16] of Real;
+         rTeoricoOhm  : Array[1..16] of Real;
+         setupData    : Array[1..16] of DTL;
+         nominal      : Array[1..16] of Real;
+         chaveSel     : UInt;
+         salvar       : Bool;
+         usarKwReal   : Bool;
+      END_STRUCT;
+
+      cbBanco : Struct   // DBX460.0
+         ligar : Bool;
+      END_STRUCT;
+
+      sbBanco : Struct   // DBX462.0
+         seletoraAuto : Bool;
+         comEt200Ok : Bool;
+      END_STRUCT;
+
+      sbRet : Struct   // v0.3 (Fase 4 / Portao A): resposta do PLC do banco. Escritor unico: FB101 v0.8. CONFERIR offsets no TIA (esperado DBX464.0)
+         habResp        : Array[1..16] of Bool;   // X464.0 habilitacao confirmada pelo PLC do banco (pedido = setup.habilitada)
+         falhaRetorno   : Array[1..16] of Bool;   // X466.0 sem retorno (SB) por T = 2 s, TRAVADA ate novo comando
+         contatorColado : Array[1..16] of Bool;   // X468.0 contator colado (SB=1 sem comando), TRAVADO
+         respEcoOk      : Bool;                   // X470.0 eco do PLC do banco acompanha o seq (resposta fresca)
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+   setup.nominal[1] := 5.0;
+   setup.nominal[2] := 5.0;
+   setup.nominal[3] := 5.0;
+   setup.nominal[4] := 5.0;
+   setup.nominal[5] := 5.0;
+   setup.nominal[6] := 4.0;
+   setup.nominal[7] := 4.0;
+   setup.nominal[8] := 4.0;
+   setup.nominal[9] := 4.0;
+   setup.nominal[10] := 4.0;
+   setup.nominal[11] := 4.0;
+   setup.nominal[12] := 4.0;
+   setup.nominal[13] := 3.0;
+   // 14..16: reserva, 0.0
+
+END_DATA_BLOCK
