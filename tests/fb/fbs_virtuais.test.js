@@ -1,9 +1,9 @@
 // Testes da FB MAE virtual (maquina de estados) com um "host" simulado - rodar: node --test tests/fb/
 // Cada teste monta um host falso (relogio, DSE, chaves) e anda a maquina ciclo a ciclo, como um OB ciclico.
 // Itens marcados { todo } sao ACHADOS conhecidos (ver docs/bt2/analise/): o teste descreve o comportamento desejado e hoje falha.
-// Modulo testado: v0.13 por padrao. Para provar que um teste novo NAO e vacuo: FBV_MODULO=dashboard/modulos-fonte/fbs_virtuais_v0.12.js node --test tests/fb/fbs_virtuais.test.js
+// Modulo testado: v0.14 por padrao. Para provar que um teste novo NAO e vacuo: FBV_MODULO=dashboard/modulos-fonte/fbs_virtuais_v0.12.js node --test tests/fb/fbs_virtuais.test.js
 const test = require('node:test'), assert = require('node:assert/strict'), path = require('path'), fs = require('fs'), vm = require('vm');
-const MOD = process.env.FBV_MODULO ? path.resolve(process.env.FBV_MODULO) : path.join(__dirname, '../../dashboard/modulos-fonte/fbs_virtuais_v0.13.js');
+const MOD = process.env.FBV_MODULO ? path.resolve(process.env.FBV_MODULO) : path.join(__dirname, '../../dashboard/modulos-fonte/fbs_virtuais_v0.14.js');
 globalThis.BroadcastChannel = undefined; globalThis.BANCOS = [{ id: '56' }, { id: '400' }]; // evita canal aberto segurando o processo
 const { FBV } = (() => { require(MOD); return { FBV: globalThis.FBV }; })();
 
@@ -150,4 +150,10 @@ test('M5 sem a global BANCOS (fora do medidor) o ciclo nao lanca excecao', () =>
   const ctx = vm.createContext({ console }); vm.runInContext(fs.readFileSync(MOD, 'utf8'), ctx);
   const h = criaHost(), m = ctx.FBV.criaMae(h); m.arma();
   assert.doesNotThrow(() => anda(m, h, 3)); assert.equal(m.estado, 'ESCALONANDO');
+});
+
+test('v0.14: etapa SEM carga usa descarrega() (queda planejada) quando o host oferece; derruba() so para emergencia', () => {
+  const h = criaHost({ pcts: [0, 100] }); h.chamadas.descarrega = 0; h.descarrega = () => { h.chamadas.descarrega++; h.cmd = 0; h.conf = 0; };
+  const m = FBV.criaMae(h); m.arma(); for (let i = 0; i < 6; i++) { h.t += 1000; m.ciclo(); }
+  assert.equal(h.chamadas.descarrega, 1, 'descarrega nao foi chamada'); assert.equal(h.chamadas.derruba, 0, 'derruba foi usada numa queda planejada'); assert.equal(m.estado, 'SEM_CARGA');
 });
