@@ -203,3 +203,9 @@ Documentos (.md/.scl) foram limpos: IPs viraram [IP_1515], [IP_ET200], [IP_PC_BT
 - **BK-AUD-05 (Baixa):** o nome de quem registra (actor) e digitado, sem login (mesma raiz de D-4: login/`adminAuth`, TI).
 - **BK-AUD-09 (Info):** medidor HTML ~1,4 MB (UI + regra do Guiado + acesso a dados). Refatorar so depois da liberacao, um passo por vez, com testes de caracterizacao e OK.
 - **BK-PLC-02** (batimento do 1515) segue no backlog; o Gemini (2a opiniao) e o Claude concordam em 3 a 5 s e falha segura (chaves em "?" e COM-001).
+
+## (17/11/2026) Perfil de combustivel / modos — itens abertos (ver docs/bt2/auditoria/DECISOES_PERFIL_COMBUSTIVEL_E_ESCALONAMENTO_v0.1.md e MODOS_DE_OPERACAO_v0.1.md)
+- **BK-AUD-10 (Media):** o limite de degrau/pausa do perfil gas/biometano existe so no medidor. Levar para o PLC (FB filho com a mesma interface: passoMaxPct, pausaS, frequencia medida/nominal) para valer com o Node-RED fora ou comando direto; numero do bloco na planilha de numeracao. Depois da bancada, com OK.
+- **BK-PERF-01 (Media):** com perfil gas/biometano e o Patamar Guiado DESLIGADO, o clique chave a chave no card ignora o perfil. Proposta: aviso na tela (chip) e/ou limitar o clique a uma chave por pausa quando perfil != diesel.
+- **BK-PERF-02 (Baixa):** CONFIRMAR com o datasheet do motor os valores dos perfis (degrau 25/20 %, pausa 10/15 s, frequencia minima 97/97,5 %, descida) — hoje ASSUMIDOS.
+- **BK-PERF-03 (Baixa):** portao por frequencia + tensao (opcao D4) se a engenharia achar a frequencia insuficiente.
