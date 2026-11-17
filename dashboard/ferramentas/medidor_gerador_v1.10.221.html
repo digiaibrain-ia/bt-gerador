@@ -8262,6 +8262,7 @@ try{const dm=JSON.parse(localStorage.getItem('medidor.modeloEscolhido')||'null')
     if(PORPAT&&!G.guiadoOn&&!G.guiadoOff&&!T.fim)G.guiadoOn=true;
     if(G.guiadoOn&&!mae.armada&&!emCurso()&&(!T.fim||T.gravado))mae.arma();   // religa depois de ZERAR/gravar
     try{mae.ciclo()}catch(x){console.error('FBs virtuais',x)}
+    try{if(mae.armada)pinta()}catch(x){}   /* v1.10.221: reavalia o tracejado (some 10 s depois que a carga chegou ao degrau) */
     atualizaBtnRodar();   // 1 ciclo da mãe por segundo (como um OB cíclico)
     if(!emCurso())APL_ET=-1;
     {const ai=aplicarInfo(),ba=$('bAplicaPat');if(ba){ba.hidden=!ai.liberado;if(ai.liberado)ba.textContent='✔ Aplicar ('+ai.alvoPct+' %)'}}

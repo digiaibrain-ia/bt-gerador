@@ -37,6 +37,8 @@ t = troca(t, "if(a==='sug'){G.manualSug=true;sugere()}",
 a = t.index('<button type="button" data-gd="rodar"'); b = t.index('</button>', a) + 9
 t = t[:a] + "<span class=\"gd-estado\" title=\"Estado do Patamar Guiado. Para ligar ou desligar: ⚙ Modo › Salvamento › Por patamar.\">'+(mae.armada?'Patamar: On':'Patamar: Off')+'</span>" + t[b:]
 t = troca(t, "  if(PORPAT&&!G.guiadoOn)G.guiadoOn=true;\n", "  G.guiadoOff=false;   /* v1.10.221: sem botao Ligar/Desligar no dialogo, o que ficou guardado como desligado manualmente nao pode prender o Patamar */\n  if(PORPAT&&!G.guiadoOn)G.guiadoOn=true;\n", 'guiadoOff')
+# 2b) o tracejado precisa ser reavaliado a cada ciclo de 1 s (antes so repintava quando o dialogo mexia)
+t = troca(t, "    try{mae.ciclo()}catch(x){console.error('FBs virtuais',x)}\n", "    try{mae.ciclo()}catch(x){console.error('FBs virtuais',x)}\n    try{if(mae.armada)pinta()}catch(x){}   /* v1.10.221: reavalia o tracejado (some 10 s depois que a carga chegou ao degrau) */\n", 'ciclo')
 # versao
 t = troca(t, '<meta name="app-version" content="1.10.220">', '<meta name="app-version" content="1.10.221">', 'meta')
 hist = ("  {v:\"1.10.221\",d:\"17/11/2026\",i:[\n"
