@@ -1,7 +1,7 @@
 // Medidor 1.10.221: (a) Sugerir chaves fica bloqueado com o cronometro (Iniciar) ativo; (b) o tracejado some ~10 s DEPOIS que a carga chegou ao degrau; (c) o dialogo nao tem mais o botao Ligar/Desligar Patamar.
 // Demo local, so BC56, 40 kW a 100 %, ensaio acelerado (10x). file://. Uso: node tests/e2e/patamar_sugerir_e_tracejado_10s.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.221.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.222.html');
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1536, height: 900 } })).newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());
@@ -20,9 +20,11 @@ const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 
   await p.evaluate(() => document.getElementById('bIni').click()); await p.waitForTimeout(800); await pot(); await p.evaluate(() => { const o = document.getElementById('dOk'); if (o && o.offsetParent) o.click(); }); await p.waitForTimeout(800);
   // (a) com o ensaio iniciado, Sugerir chaves e bloqueado e avisa
   await p.evaluate(() => document.getElementById('bGuiado').click()); await p.waitForTimeout(500);
-  await p.evaluate(() => { GUIADO_DBG.G.msg = ''; document.querySelector('#dlgGuiado [data-gd=sug]').click(); }); await p.waitForTimeout(300);
-  const msg = await p.evaluate(() => (document.body.textContent.match(/Sugerir chaves só funciona[^.]*\./) || [''])[0] + ' | started=' + T.started + ' manualSug=' + GUIADO_DBG.G.manualSug);
-  ok('Sugerir chaves bloqueado com o cronometro ativo (aviso)', /Sugerir chaves só funciona/.test(msg) && /started=true/.test(msg) && /manualSug=(false|undefined)/.test(msg), msg.slice(0, 160));
+  // pausado: o botao volta; retomando: desliga de novo
+  await p.evaluate(() => document.getElementById('bPau').click()); await p.waitForTimeout(1300);
+  ok('com o cronometro PAUSADO o botao Sugerir volta a funcionar', await p.evaluate(() => { const b = document.querySelector('#dlgGuiado [data-gd=sug]'); return !!b && !b.disabled && T.run === false; }));
+  await p.evaluate(() => document.getElementById('bIni').click()); await p.waitForTimeout(1300);
+  ok('retomando o cronometro o botao Sugerir desliga de novo', await p.evaluate(() => { const b = document.querySelector('#dlgGuiado [data-gd=sug]'); return !!b && b.disabled && T.run === true; }));
   await p.evaluate(() => { const d = document.getElementById('dlgGuiado'); if (d && d.open) d.close(); });
   // (b) degrau 30 % (10 s de ensaio = 1 s real no Demo a 10x): aplica a sugestao e acompanha o tracejado ate a carga chegar e passar 10 s
   let aplicou = false, tAplicou = 0, tBanda = 0, tSumiu = 0, tracejadoViu = false, antes10 = false;
