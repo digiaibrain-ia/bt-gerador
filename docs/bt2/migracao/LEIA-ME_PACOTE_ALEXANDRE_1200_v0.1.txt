@@ -1,0 +1,25 @@
+PACOTE PARA O ALEXANDRE - PLC de Carga (S7-1214FC) + lado do 1515 - v0.17   [RASCUNHO: nao compilado no TIA, nao testado no PLC]
+
+O QUE E: os blocos que ligam as contatoras dos bancos BC56 e BC400 (13 chaves cada) a partir do comando do PLC 1515, mais o DB que recebe as grandezas do DSE para a tela.
+O Reginaldo carrega o que e do 1515. Voce programa a pasta 1_PLC_CARGA_1200.
+
+COMECE POR: COMO_USAR.txt (passo a passo e ordem de importacao).
+
+COMO LER OS COMENTARIOS (so nos blocos da 1200)
+  //[F] = FUNCIONAMENTO (barra =====): o que o codigo faz e por que.
+  //[M] = MONTAGEM NO TIA (barra -----): como importar, numerar, ligar os seus tags.
+  No TIA, Localizar por  //[M]  mostra so o roteiro de montagem.
+
+PASTAS
+  1_PLC_CARGA_1200   blocos para importar (fonte externa), na ordem do COMO_USAR. O unico que voce edita e o fc_bancosCarga1200 (onde ligar os SEUS tags: retornos,
+                     seletoras, saidas das contatoras e "Ligar Banco"). Os DBs 3007, 3107 e 2000 tem numero MANUAL e SEM acesso otimizado.
+  2_PLC_1515         so para consulta (o Reginaldo carrega): FB101, chamadas e DBs de chaves. Mostra o PUT/GET que chega nos DB3007/DB3107 e o PUT do DB2000.
+
+REGRAS QUE NAO PODEM SER QUEBRADAS
+  - So o fc_bancosCarga1200 escreve nas saidas das contatoras e no "Ligar Banco". Tire essa escrita do FC7/FC8 atuais (senao ha 2 escritores).
+  - Nao escreva nos DB3007, DB3107 e DB2000 (PEDIDO so pelo PUT do 1515; RESPOSTA so pelo fb_bancoCarga16).
+  - Teste de bancada com a carga de potencia DESACOPLADA.
+  - Nao ha IP, senha ou chave neste pacote. A conexao S7 com o 1515 e criada no 1515.
+
+HONESTO: a logica e a mesma que o Reginaldo validou no ET200 (com retorno provisorio). Na 1200 o retorno e o contato auxiliar REAL, que so aparece na sua bancada.
+Se o TIA der erro, mande a lista de mensagens e o nome do bloco.
