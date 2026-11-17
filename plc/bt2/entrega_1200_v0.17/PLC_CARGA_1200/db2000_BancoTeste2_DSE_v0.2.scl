@@ -1,0 +1,63 @@
+DATA_BLOCK "db2000_BancoTeste2_DSE"
+TITLE = db2000_BancoTeste2_DSE v0.2 (DB2000) - copia no PLC de Carga
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+NON_RETAIN
+//[F]==============================================================
+//[F] LEGENDA: //[F] (barra =====) = FUNCIONAMENTO: o que o codigo faz e por que.
+//[M]--------------------------------------------------------------
+//[M] LEGENDA: //[M] (barra -----) = MONTAGEM NO TIA: como importar, numerar, ligar tags.
+//[F]==============================================================
+//[F]==============================================================
+//[F] FUNCIONAMENTO - COPIA SO DE LEITURA das grandezas do DSE (136 bytes, DBB0..DBB135) para a tela (WinCC) do PLC de Carga.
+//[F]   O Node-RED grava o DB2000 no 1515; o fb104_putDseCarga do 1515 envia por PUT. Aqui so chega. MESMO numero e MESMOS offsets nos dois PLCs.
+//[F]   Dado desatualizado: se "heartbeat" parar de mudar por ~5 s, a tela deve mostrar "dados do DSE desatualizados". bitsStatus.0 = leitura OK.
+//[F]   Grandezas do card do operador: percCarga, tensaoL1L2/L2L3/L3L1, correnteL1/L2/L3, kw, tempAguaC, rpm, bateria.
+//[M]--------------------------------------------------------------
+//[M] MONTAGEM NO TIA - numero MANUAL 2000, SEM "Acesso otimizado". NAO escreva neste DB (so o PUT do 1515). Use os campos na tela WinCC apenas como leitura.
+//[M]--------------------------------------------------------------
+   STRUCT
+      bitsStatus : Byte;   //[F] DBB0 - bit0 leituraOk, bit1 http200, bit2 automatico, bit3 dadosAntigos, bit4 servidorOnline
+      bitsAlarmes : Byte;   //[F] DBB1 - bit0 temAlarme, bit1 aviso, bit2 desligamento, bit3 tripEletrico, bit4 desligamentoControlado
+      bitsLeds : Byte;   //[F] DBB2 - bit0 STOP, bit1 MANUAL, bit2 TESTE, bit3 AUTO, bit4 disjuntorGerador, bit5 geradorDisponivel
+      bitsSaidas : Byte;   //[F] DBB3 - bit0 saidaCombustivel, bit1 saidaPartida, bit2 falhaEcu
+      modoCodigo : Int;   //[F] DBB4
+      idadeSegundos : Int;   //[F] DBB6 - idade do dado do DSE [s]
+      seletor : Int;   //[F] DBB8
+      errosConsecutivos : Int;   //[F] DBB10
+      heartbeat : DInt;   //[F] DBB12 - soma 1 a cada resposta processada pelo Node-RED; se PARAR de mudar, o dado esta desatualizado
+      horasMotorSegundos : DInt;   //[F] DBB16 - [s]
+      partidas : DInt;   //[F] DBB20
+      qtdNulos : Int;   //[F] DBB24
+      qtdAlarmes : Int;   //[F] DBB26
+      tensaoL1L2 : Real;   //[F] DBB28
+      tensaoL2L3 : Real;   //[F] DBB32
+      tensaoL3L1 : Real;   //[F] DBB36
+      tensaoFFMedia : Real;   //[F] DBB40
+      tensaoL1N : Real;   //[F] DBB44
+      tensaoL2N : Real;   //[F] DBB48
+      tensaoL3N : Real;   //[F] DBB52
+      tensaoFNMedia : Real;   //[F] DBB56
+      correnteL1 : Real;   //[F] DBB60
+      correnteL2 : Real;   //[F] DBB64
+      correnteL3 : Real;   //[F] DBB68
+      corrente : Real;   //[F] DBB72
+      frequencia : Real;   //[F] DBB76
+      rpm : Real;   //[F] DBB80
+      kw : Real;   //[F] DBB84
+      kva : Real;   //[F] DBB88
+      kvar : Real;   //[F] DBB92
+      fp : Real;   //[F] DBB96
+      percCarga : Real;   //[F] DBB100
+      kwL1 : Real;   //[F] DBB104
+      kwL2 : Real;   //[F] DBB108
+      kwL3 : Real;   //[F] DBB112
+      fpL1 : Real;   //[F] DBB116
+      fpL2 : Real;   //[F] DBB120
+      fpL3 : Real;   //[F] DBB124
+      tempAguaC : Real;   //[F] DBB128
+      bateria : Real;   //[F] DBB132
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK
