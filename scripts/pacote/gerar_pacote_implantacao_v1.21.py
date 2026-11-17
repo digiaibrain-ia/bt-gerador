@@ -58,6 +58,8 @@ ARQ += [('scripts/catalogo/catalogo_dse_v0.1.py', '10_catalogo_dse/catalogo_dse_
         ('docs/bt2/arquitetura/arquitetura_bt2_v0.6_editavel.html', '05_documentos/arquitetura_bt2_v0.6_editavel.html'),
         ('docs/bt2/plc/INFOGRAFICO_CHAMADAS_BLOCOS_v0.7.html', '05_documentos/INFOGRAFICO_CHAMADAS_BLOCOS_v0.7.html'),
         ('docs/bt2/arquitetura/RESUMO_ARQUITETURA_REUNIAO_v0.1.md', '05_documentos/RESUMO_ARQUITETURA_REUNIAO_v0.1.md'),
+        ('docs/bt2/arquitetura/arquitetura_bt2_v0.6_editavel.html', '06_front_desenvolvimento/arquitetura_bt2_v0.6_editavel.html'),
+        ('docs/bt2/plc/INFOGRAFICO_CHAMADAS_BLOCOS_v0.7.html', '06_front_desenvolvimento/INFOGRAFICO_CHAMADAS_BLOCOS_v0.7.html'),
         ('docs/bt2/migracao/LEIA-ME_PACOTE_ALEXANDRE_1200_v0.1.txt', '12_para_alexandre/LEIA-ME_PACOTE_ALEXANDRE_1200_v0.1.txt'),
         ('plc/bt2/entrega_1200_v0.17/COMO_USAR.txt', '12_para_alexandre/COMO_USAR.txt'),
         ('plc/bt2/entrega_1200_v0.17/PLC_CARGA_1200/fb_bancosCarga1200_v0.1.scl', '12_para_alexandre/PLC_CARGA_1200/fb_bancosCarga1200_v0.1.scl')]
