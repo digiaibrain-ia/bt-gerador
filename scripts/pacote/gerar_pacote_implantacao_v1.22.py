@@ -111,7 +111,7 @@ def filtra(arq):
             continue   # substituidos abaixo (fontes atuais) e pelo zip do programador
         if d.startswith('08_rnc/') and d.endswith('.js') and not d.endswith('rnc_teste_bancada_v0.3.js'):
             continue   # so a versao atual do teste de bancada do RNC
-        if '/tests/' in o or o.startswith('tests/'):
+        if (o.startswith('tests/') or '/tests/' in o) and not d.startswith('08_rnc/'):   # o teste de bancada do RNC e usado na bancada: fica
             continue
         out.append((o, d))
     for k, f in sorted(js_atual.items()):
