@@ -209,3 +209,9 @@ Documentos (.md/.scl) foram limpos: IPs viraram [IP_1515], [IP_ET200], [IP_PC_BT
 - **BK-PERF-01 (Media):** com perfil gas/biometano e o Patamar Guiado DESLIGADO, o clique chave a chave no card ignora o perfil. Proposta: aviso na tela (chip) e/ou limitar o clique a uma chave por pausa quando perfil != diesel.
 - **BK-PERF-02 (Baixa):** CONFIRMAR com o datasheet do motor os valores dos perfis (degrau 25/20 %, pausa 10/15 s, frequencia minima 97/97,5 %, descida) — hoje ASSUMIDOS.
 - **BK-PERF-03 (Baixa):** portao por frequencia + tensao (opcao D4) se a engenharia achar a frequencia insuficiente.
+
+## (17/11/2026) BK-PLC-03 · Chave do HTML x PLC: 504 de confirmacao e quarentena (teste de bancada com PLC)
+- Dado (log bt2_logs_20261117_191439, 4222 eventos, medidor 1.10.220 a 1.10.223): 6 respostas **504** "comando enviado, sem confirmacao do PLC em 2000 ms" em 5 chaves diferentes do BC56 (3, 3, 4, 5, 11) e 1 no "Ligar banco" (18:37), com 2,1 a 4,2 s de espera. Cada 504 foi seguido de **503 de quarentena** da mesma variavel (CbLigar5, CbLigar11, LigarBanco) por ~4 s.
+- Nao e defeito de uma chave: o PLC demora mais de 2 s para confirmar de vez em quando (janela CONF_JANELA_MS = 2000 ms no fluxo chaves-56 v3.7). Aplicar manda varias chaves quase juntas; o fluxo serializa pela fila.
+- Ideias para depois (nada alterado): (1) escalonar o Aplicar (ex.: 300 ms entre chaves); (2) ajustar CONF_JANELA_MS com medicao; (3) reler o estado antes de repetir, para o medidor nao mostrar "nao consegui ligar" quando a chave na verdade ligou; (4) outras estrategias de atualizacao HTML x PLC.
+- Status: aberto. Decisao do Reginaldo: tratar com o tempo, depois da bancada.
