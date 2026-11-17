@@ -1,0 +1,10 @@
+﻿DATA_BLOCK "ibancosEt200"
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : RegLobo
+VERSION : 0.1
+"fb_bancosEt200"
+
+BEGIN
+
+END_DATA_BLOCK
+

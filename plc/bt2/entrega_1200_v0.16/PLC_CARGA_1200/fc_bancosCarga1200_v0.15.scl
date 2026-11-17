@@ -1,0 +1,61 @@
+FUNCTION "fc_bancosCarga1200" : Void
+TITLE = fc_bancosCarga1200 v0.15
+AUTHOR : 'RegLobo'
+VERSION : 0.6
+////====================================
+//// fc_bancosCarga1200 v0.15 (12/11/2026) - RASCUNHO, nao compilado. Chamar 1x por ciclo (OB1 ou OB de tempo fixo). BC56 e BC400 (13 chaves cada).
+//// NAO ha nomes de tag sugeridos: em cada REGION escreva os tags que JA existem no seu projeto (resistencias, contatoras, seletora). Leia o titulo e o comentario de cada REGION.
+//// Sem tags escritos o bloco compila, mas nada liga (retornos = FALSE e saidas nao sao copiadas).
+//// Os DBs de instancia NAO vem no pacote: crie ao inserir a chamada do FB (numero e nome no COMO_USAR.txt).
+////====================================
+   VAR_TEMP
+      saidaBC56 : Array[1..16] of Bool;
+      auxBC56 : Array[1..16] of Bool;
+      saidaBC400 : Array[1..16] of Bool;
+      auxBC400 : Array[1..16] of Bool;
+   END_VAR
+BEGIN
+
+   REGION BC56 - 1 de 3: RETORNO das contatoras (contato auxiliar REAL)
+      // Para cada resistencia n (1 a 13) escreva o SEU tag do contato auxiliar (retorno) da contatora:
+      //    #auxBC56[n] := "<seu tag do retorno da resistencia n>";
+      // Nao use o tag do comando como retorno: tem que ser o contato auxiliar real.
+      #auxBC56[14] := FALSE;
+      #auxBC56[15] := FALSE;
+      #auxBC56[16] := FALSE;
+   END_REGION
+
+   REGION BC56 - 2 de 3: CHAMADA do fb_bancoCarga16 (insira no TIA)
+      // Arraste o fb_bancoCarga16 para ca. No DB de instancia: numero MANUAL 3006, nome db3006i_BC56_BancoCarga.
+      // Parametros:  DbCom := "db3007_BC56_Com", NumChaves := 13, SeletoraEntrada := "<seu tag da seletora do BC56 em Auto (1 = Auto)>",
+      //              SaidaContatora := #saidaBC56, EntradaContatoAux := #auxBC56
+   END_REGION
+
+   REGION BC56 - 3 de 3: SAIDA das contatoras
+      // Para cada resistencia n (1 a 13) escreva o SEU tag da saida (bobina da contatora):
+      //    "<seu tag da saida da resistencia n>" := #saidaBC56[n];
+      // Depois disto, so este FC pode escrever nessas saidas (retire a escrita do FC7/FC8 atuais, senao ha 2 escritores).
+   END_REGION
+
+   REGION BC400 - 1 de 3: RETORNO das contatoras (contato auxiliar REAL)
+      // Para cada resistencia n (1 a 13) escreva o SEU tag do contato auxiliar (retorno) da contatora:
+      //    #auxBC400[n] := "<seu tag do retorno da resistencia n>";
+      // Nao use o tag do comando como retorno: tem que ser o contato auxiliar real.
+      #auxBC400[14] := FALSE;
+      #auxBC400[15] := FALSE;
+      #auxBC400[16] := FALSE;
+   END_REGION
+
+   REGION BC400 - 2 de 3: CHAMADA do fb_bancoCarga16 (insira no TIA)
+      // Arraste o fb_bancoCarga16 para ca. No DB de instancia: numero MANUAL 3106, nome db3106i_BC400_BancoCarga.
+      // Parametros:  DbCom := "db3107_BC400_Com", NumChaves := 13, SeletoraEntrada := "<seu tag da seletora do BC400 em Auto (1 = Auto)>",
+      //              SaidaContatora := #saidaBC400, EntradaContatoAux := #auxBC400
+   END_REGION
+
+   REGION BC400 - 3 de 3: SAIDA das contatoras
+      // Para cada resistencia n (1 a 13) escreva o SEU tag da saida (bobina da contatora):
+      //    "<seu tag da saida da resistencia n>" := #saidaBC400[n];
+      // Depois disto, so este FC pode escrever nessas saidas (retire a escrita do FC7/FC8 atuais, senao ha 2 escritores).
+   END_REGION
+
+END_FUNCTION

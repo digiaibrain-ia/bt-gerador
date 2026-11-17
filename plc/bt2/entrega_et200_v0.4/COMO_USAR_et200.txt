@@ -1,0 +1,14 @@
+COMO USAR - teste com o ET200 (IM151-8) - entrega ET200 v0.4   [rascunho: nao compilado]
+
+v0.4 (16/11/2026): (1) fb_bancoEt200_16 v0.4 (corrige "Invalid parameter assignment": se o seu FB2 ainda e o v0.3, IMPORTE POR CIMA este v0.4);
+  (2) NOVO fb_bancosEt200 v0.1: guarda as imagens de saida/retorno em STAT e chama o fb_bancoEt200_16 de cada banco (multi-instancia). O FC TEMP da v0.3 perdia a "imagem do ciclo anterior" das saidas;
+  (3) fc_bancosEt200 v0.4 (FC5) agora SO ORGANIZA os tags (copia retorno para o DB, chama o FB, copia saidas do DB). Baseado no arquivo que voce preencheu (BC56 retorno; BC400 saidas).
+  FALTA VOCE PREENCHER (marcado PREENCHER no FC5): retorno do BC400 (entradas do contato auxiliar) e saidas do BC56 (bobinas).
+
+ORDEM NO TIA (ET200 / Gerador_BC015)
+ 1. Importe (fonte externa, um por vez): db38_ComBC56, db39_ComBC400 (se ainda nao), fb_supervisaoChaves16, fb_bancoEt200_16 (v0.4, por cima do FB2), fb_bancosEt200 (novo).
+ 2. Insira o DB de instancia do fb_bancosEt200: nome  ibancosEt200  (numero livre). Os DBs de instancia avulsos ibc56_/ibc400_ NAO sao mais usados (multi-instancia): pode apagar.
+ 3. Importe o fc_bancosEt200_v0.4 por cima do FC5. Confira os tags: "Resistencia 1..13" (BC400, saida), "Resistencia 16..28" (BC56, retorno), seletoras, "ComOk_BC56".
+ 4. No FC4 antigo: apague as networks que escrevem a RESPOSTA no DB (31 e 32) e as que acionam "Resistencia n" a partir de db39.cmd[n] / db38.cmd[n] (escritor unico = fb_bancosEt200).
+ 5. Chame o fc_bancosEt200 1x por ciclo no OB1. Compile. Se der erro, mande a lista (bloco + linha).
+Depois siga o COMO SABER SE A COMUNICACAO SUBIU e o PASSO A PASSO do 1515 do COMO_USAR da v0.3 (nada mudou no 1515). Carga de potencia DESACOPLADA. Teste primeiro so o BC56.

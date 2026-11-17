@@ -1,0 +1,193 @@
+//// [v0.4 09/11/2026] DB_ANY: este bloco recebe SO o numero do DB (DbCom, DbCompet) e trata os campos por offset (PEEK/POKE) dentro. Logica igual a v0.3. NAO compilado: conferir nomes/parametros de PEEK/POKE no TIA. Offsets = tipos_ComBanco (ver verifica_offsets_dbany_v0.4.py).
+FUNCTION_BLOCK "fb_bancoCarga16"
+TITLE = fb_bancoCarga16 (DB_ANY) v0.1
+AUTHOR : 'RegLobo'
+VERSION : 0.4
+////====================================
+//// fb_bancoCarga16 v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// ONDE RODA : PLC de cargas (S7-1200 real). 1 INSTANCIA POR BANCO (um FB para cada banco), 1x por ciclo, de preferencia em OB de tempo fixo.
+//// O QUE FAZ (lado do banco do telegrama PUT/GET de ate 16 chaves):
+////    1) vidaET sobe a cada ~100 ms (prova ao 1515 que este PLC esta vivo).
+////    2) vida1515 parou por TempoPerdaMs (2 s < 3 s do 1515) -> ComOk=FALSE e TODAS as saidas vao a FALSE; cada chave so volta com novo comando (FALSE e TRUE).
+////    3) regra SB some -> CB cai (T = TempoRetornoMs = 2 s), falha TRAVADA, rearme so por novo comando; contator colado travado (fb_supervisaoChaves16).
+////    4) saida da contatora = Cmd E banco liberado E nao bloqueada E Permite. fbk = contato auxiliar REAL, nunca copia do comando.
+////    5) preenche o DB de competencia (liberado, contator geral, intertravamento, ventilador, alarmes, vida).
+//// ESCRITOR UNICO : le o PEDIDO (Com.cmd, vida1515, ligarBanco, habPed, seq); escreve a RESPOSTA e o DB de competencia. Nunca escreve o PEDIDO.
+//// FALHA/SEGURANCA : sem comunicacao, intertravamento aberto ou 1o ciclo apos partida da CPU = nada liga. IntertravamentoOk nasce FALSE (estado seguro):
+////    ligar ao sinal REAL de emergencia/protecoes; em bancada sem esse sinal, ligar TRUE de forma explicita e consciente (carga de potencia DESACOPLADA).
+//// ASSUMIDO - A CONFIRMAR: UsaVentilador (decisao de projeto, BANC-1), tempos (2 s / 3 s), tipo da instancia de temporizador no firmware.
+////====================================
+   VAR_INPUT
+      DbCom              : DB_ANY;              // NUMERO do DB do telegrama rapido (ex.: DB3007). O bloco trata os campos por offset (PEEK/POKE)
+      DbCompet           : DB_ANY;              // NUMERO do DB de competencia (ex.: DB3008)
+      NumChaves          : Int;                 // chaves reais do banco (1..16)
+      SeletoraEntrada    : Bool;                // entrada fisica: seletora do banco em Auto (1 = Auto)
+      IntertravamentoOk  : Bool := FALSE;       // emergencia/protecoes do banco OK. Nasce FALSE = nada liga (estado seguro)
+      UsaVentilador      : Bool := FALSE;       // TRUE = so libera com ventilador ok (BANC-1, decisao de projeto pendente)
+      VentiladorOk       : Bool;                // entrada do ventilador (so vale se UsaVentilador)
+      ContatorGeralAux   : Bool;                // retorno REAL do contator geral do banco (A PREENCHER; se nao existir, deixar FALSE)
+      TempoPerdaMs       : Time := T#2S;        // sem vida nova do 1515 por este tempo = comunicacao perdida (menor que os 3 s do 1515)
+      TempoRetornoMs     : Int := 2000;         // T de verificacao do retorno SB (decisao do Reginaldo: 2 s)
+   END_VAR
+   VAR_OUTPUT
+      ComOk              : Bool;
+      BancoLiberado      : Bool;
+   END_VAR
+   VAR_IN_OUT
+      SaidaContatora     : Array[1..16] of Bool;   // saidas fisicas (copiadas pelo fc_chamadasBancosCarga)
+      EntradaContatoAux  : Array[1..16] of Bool;   // contatos auxiliares fisicos
+   END_VAR
+   VAR
+      _tOsc100ms   : TON_TIME;
+      _tPerda      : TON_TIME;
+      _sup         : "fb_supervisaoChaves16";      // supervisao do retorno SB (multi-instancia)
+      _vida1515Ant : Int;
+      _vidaMudou   : Bool;
+      _bloq        : Array[1..16] of Bool;          // TRUE = caiu a comunicacao (ou partida); so solta com Cmd[i] = FALSE
+      _partiu      : Bool;                            // FALSE no 1o ciclo apos partida
+      _liberado    : Bool;
+      _n           : Int;
+      _algumaFalhaRet : Bool;
+      _algumColado : Bool;
+      i            : Int;
+      _com         : "typeComBanco16";                    // copia local do telegrama (PEDIDO lido do DB no inicio do ciclo; RESPOSTA escrita no DB no fim)
+      _compet      : "typeCompetenciaBanco";   // copia local da competencia (escrita no DB no fim)
+      _dbCom       : UInt;
+      _dbCmp       : UInt;
+      _k           : Int;
+      _w           : Word;
+   END_VAR
+   VAR CONSTANT
+      AREA_DB : Byte := 16#84;   // area "bloco de dados" para PEEK/POKE
+      OFS_CMD : UInt := 0;
+      OFS_VIDA : UInt := 2;
+      OFS_LIG : UInt := 4;
+      OFS_HAB : UInt := 6;
+      OFS_SEQ : UInt := 8;
+      OFS_FBK : UInt := 10;
+      OFS_VIDAET : UInt := 12;
+      OFS_SEL : UInt := 14;
+      OFS_HABR : UInt := 16;
+      OFS_ECO : UInt := 18;
+      OFS_FALHA : UInt := 20;
+      OFS_COL : UInt := 22;
+   END_VAR
+
+BEGIN
+   // 0) DB_ANY -> numero; DB invalido = nada liga (estado seguro)
+   #_dbCom := DB_ANY_TO_UINT(#DbCom);
+   #_dbCmp := DB_ANY_TO_UINT(#DbCompet);
+   IF #_dbCom = 0 OR #_dbCmp = 0 THEN
+      #ComOk := FALSE; #BancoLiberado := FALSE;
+      FOR #i := 1 TO 16 DO #SaidaContatora[#i] := FALSE; END_FOR;
+      RETURN;
+   END_IF;
+
+   // 0b) LE O PEDIDO do DB (so leitura): cmd, vida1515, ligarBanco, habPed, seq
+   FOR #_k := 1 TO 16 DO
+      #_com.cmd[#_k] := PEEK_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_CMD + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8);
+   END_FOR;
+   FOR #_k := 1 TO 16 DO
+      #_com.habPed[#_k] := PEEK_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_HAB + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8);
+   END_FOR;
+   #_com.vida1515 := WORD_TO_INT(PEEK_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_VIDA));
+   #_com.ligarBanco := PEEK_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_LIG, bitOffset := 0);
+   #_com.seq := WORD_TO_INT(PEEK_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_SEQ));
+
+   // 1) vida do PLC de cargas e do bloco de competencia (a cada ~100 ms)
+   #_tOsc100ms(IN := NOT #_tOsc100ms.Q, PT := T#100MS);
+   IF #_tOsc100ms.Q THEN
+      #_com.vidaET := #_com.vidaET + 1;
+      IF #_com.vidaET >= 32767 THEN #_com.vidaET := 0; END_IF;
+      #_compet.vidaCompet := #_compet.vidaCompet + 1;
+      IF #_compet.vidaCompet >= 32767 THEN #_compet.vidaCompet := 0; END_IF;
+   END_IF;
+
+   // 2) deteccao de perda de comunicacao: vida do 1515 parada por TempoPerdaMs
+   IF #_com.vida1515 <> #_vida1515Ant THEN
+      #_vida1515Ant := #_com.vida1515;
+      #_vidaMudou := TRUE;
+   ELSE
+      #_vidaMudou := FALSE;
+   END_IF;
+   #_tPerda(IN := NOT #_vidaMudou, PT := #TempoPerdaMs);
+   #ComOk := NOT #_tPerda.Q;
+
+   #_n := #NumChaves;
+   IF #_n < 0 THEN #_n := 0; END_IF;
+   IF #_n > 16 THEN #_n := 16; END_IF;
+
+   // 3) queda de comunicacao (ou 1o ciclo) TRAVA todas as chaves; cada uma so solta quando o 1515 manda Cmd = FALSE
+   FOR #i := 1 TO 16 DO
+      IF NOT #ComOk OR NOT #_partiu THEN
+         #_bloq[#i] := TRUE;
+      ELSIF NOT #_com.cmd[#i] THEN
+         #_bloq[#i] := FALSE;
+      END_IF;
+   END_FOR;
+   #_partiu := TRUE;
+
+   // 4) banco liberado
+   #_liberado := #ComOk AND #_com.ligarBanco AND #SeletoraEntrada AND #IntertravamentoOk AND (NOT #UsaVentilador OR #VentiladorOk);
+   #BancoLiberado := #_liberado;
+   #_com.seletoraAuto := #SeletoraEntrada;
+
+   // 5) supervisao do retorno SB (SB some -> CB cai, T = 2 s) e habilitar/desabilitar com resposta e eco do seq
+   #_sup(NumChaves := #_n, TempoRetornoMs := #TempoRetornoMs, ComOk := #ComOk, Seq := #_com.seq,
+         Cmd := #_com.cmd, HabPed := #_com.habPed, SaidaQ := #SaidaContatora, AuxIn := #EntradaContatoAux,
+         HabResp := #_com.habResp, FalhaRetorno := #_com.falhaRetorno, ContatorColado := #_com.contatorColado);
+   #_com.eco := #_sup.Eco;
+
+   // 6) saidas das contatoras e feedback REAL
+   #_algumaFalhaRet := FALSE;
+   #_algumColado := FALSE;
+   FOR #i := 1 TO 16 DO
+      IF #i <= #_n THEN
+         #_com.fbk[#i] := #EntradaContatoAux[#i];
+         IF #_liberado AND NOT #_bloq[#i] AND #_sup.Permite[#i] THEN
+            #SaidaContatora[#i] := #_com.cmd[#i];
+         ELSE
+            #SaidaContatora[#i] := FALSE;
+         END_IF;
+         IF #_com.falhaRetorno[#i] THEN #_algumaFalhaRet := TRUE; END_IF;
+         IF #_com.contatorColado[#i] THEN #_algumColado := TRUE; END_IF;
+      ELSE
+         #_com.fbk[#i] := FALSE;
+         #SaidaContatora[#i] := FALSE;
+      END_IF;
+   END_FOR;
+
+   // 7) DB de competencia (sinais do banco para o 1515)
+   #_compet.bancoLiberado := #_liberado;
+   #_compet.bancoLigadoFbk := #ContatorGeralAux;
+   #_compet.intertravamentoOk := #IntertravamentoOk;
+   #_compet.ventiladorOk := #VentiladorOk;
+   #_compet.alarmes.%X0 := NOT #ComOk;
+   #_compet.alarmes.%X1 := #_algumaFalhaRet;
+   #_compet.alarmes.%X2 := #_algumColado;
+   #_compet.alarmes.%X3 := NOT #IntertravamentoOk;
+   #_compet.alarmes.%X4 := #UsaVentilador AND NOT #VentiladorOk;
+
+   // 8) ESCREVE A RESPOSTA no DB (SO a faixa da RESPOSTA; o PEDIDO nunca e escrito aqui) e a competencia
+   FOR #_k := 1 TO 16 DO
+      POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_FBK + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8, value := #_com.fbk[#_k]);
+   END_FOR;
+   FOR #_k := 1 TO 16 DO
+      POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_HABR + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8, value := #_com.habResp[#_k]);
+   END_FOR;
+   FOR #_k := 1 TO 16 DO
+      POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_FALHA + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8, value := #_com.falhaRetorno[#_k]);
+   END_FOR;
+   FOR #_k := 1 TO 16 DO
+      POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_COL + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8, value := #_com.contatorColado[#_k]);
+   END_FOR;
+   POKE_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_VIDAET, value := INT_TO_WORD(#_com.vidaET));
+   POKE_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_ECO, value := INT_TO_WORD(#_com.eco));
+   POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_SEL, bitOffset := 0, value := #_com.seletoraAuto);
+   POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCmp, byteOffset := 0, bitOffset := 0, value := #_compet.bancoLiberado);
+   POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCmp, byteOffset := 0, bitOffset := 1, value := #_compet.bancoLigadoFbk);
+   POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCmp, byteOffset := 0, bitOffset := 2, value := #_compet.intertravamentoOk);
+   POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCmp, byteOffset := 0, bitOffset := 3, value := #_compet.ventiladorOk);
+   POKE_WORD(area := #AREA_DB, dbNumber := #_dbCmp, byteOffset := 4, value := #_compet.alarmes);
+   POKE_WORD(area := #AREA_DB, dbNumber := #_dbCmp, byteOffset := 6, value := INT_TO_WORD(#_compet.vidaCompet));
+END_FUNCTION_BLOCK

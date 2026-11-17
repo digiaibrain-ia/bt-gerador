@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="pt-BR">
+<!-- api_cards_visor_v0.3 · 29/10/2026 — AJUDA padrão (ajuda_v0.1.js). Resto igual à v0.2. -->
+<!-- api_cards_visor_v0.2 · 29/10/2026 — DICA DE INTERFACE (dica_ui_v0.1.js): Alt+I liga/desliga a etiqueta com tipo, id e coordenadas do elemento; Alt+clique fixa. Resto igual à v0.1. --><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="app-version" content="0.3">
+<title>Visor da API dos cards · BT2</title>
+<!-- api_cards_visor_v0.3.html · 29/10/2026 — PARA QUE SERVE (leigo): mostra, numa tabela, TUDO o que o medidor publica para os outros HTML (cada card, o ensaio, as etapas, o gerador e as comunicações).
+     Serve para conferir e para desenvolver novas telas. SOMENTE LEITURA. Precisa estar aberto no MESMO navegador do medidor (canal bt2-api). Contrato: modulos/API_CARDS_v0.1.md -->
+<style>
+:root{color-scheme:light dark;--bg:#f4f3f0;--sf:#fcfcfb;--ink:#0b0b0b;--mut:#6f6e69;--ln:#dedcd5;--ok:#006300;--bad:#d03b3b}
+@media(prefers-color-scheme:dark){:root{--bg:#0d0d0d;--sf:#1a1a19;--ink:#f0efec;--mut:#a09f98;--ln:#2c2c2a;--ok:#0ca30c;--bad:#ec5f5f}}
+body{margin:0;padding:12px 14px;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,sans-serif}
+h1{font-size:18px;margin:0 0 4px}h2{font-size:14px;margin:14px 0 4px}
+#st{display:inline-block;padding:3px 10px;border-radius:99px;background:var(--sf);border:1px solid var(--ln);font-size:13px}
+#st.ok{color:var(--ok)}#st.bad{color:var(--bad)}
+table{border-collapse:collapse;width:100%;background:var(--sf);border:1px solid var(--ln);font-size:13px}
+td,th{padding:4px 8px;border-bottom:1px solid var(--ln);text-align:left;vertical-align:top}th{color:var(--mut);font-weight:500}
+td.n{font-variant-numeric:tabular-nums}.m{color:var(--mut)}
+.w{overflow-x:auto}
+</style></head><body>
+<h1>Visor da API dos cards <span class="m">BT2</span></h1>
+<span id="st" role="status">Aguardando o medidor…</span> <span class="m" id="ts"></span>
+<div class="w"><h2>Cards (lidos da tela do medidor)</h2><table id="tc"></table>
+<h2>Ensaio</h2><table id="te"></table>
+<h2>Etapas</h2><table id="tt"></table>
+<h2>Gerador, nominais, operador e comunicações</h2><table id="tg"></table></div>
+<script>
+/* =====================================================================================================================
+   api_cards_v0.1.js — API INTERNA DOS CARDS (dentro do navegador) · projeto bancos de teste · 29/10/2026
+   Fonte dos trechos colados (inline) em: medidor_gerador_v1.10.112 (publicador) e grafico_ensaio_v0.7 / api_cards_visor_v0.1 (clientes).
+
+   PARA QUE SERVE (leigo): cada "card" da tela do medidor (tensões, correntes, potência, água, rotação, bateria, banco de cargas, modo, etapas...)
+   passa a ser também uma "tomada" que os outros HTML (gráfico, mapa dos FBs, visor) podem ler, em tempo real, SEM ligar no PLC/Node-RED de novo.
+   É SOMENTE LEITURA: nenhum HTML consegue comandar chave, gerador ou PLC por aqui.
+
+   POR QUÊ (técnico): não cria rota nova no Node-RED (nenhum endereço inventado). O medidor já lê tudo; este módulo só RE-PUBLICA o que a tela já tem:
+     (1) cards lidos do próprio DOM: cada <div class="card"> com um <div class="v" id="..."> vira {id, painel, rotulo, texto, valor, unidade, classes};
+     (2) blocos estruturados fornecidos pelo medidor (usaFonte): ensaio, etapas, gerador, links (PLC/Node-RED/HTML) e operador.
+   Canal: BroadcastChannel 'bt2-api' (mesmo navegador) — mesmo padrão do gráfico ('bt2-grafico'). O medidor só publica enquanto alguém "escuta":
+     cliente → medidor: {k:'oi'} (batimento a cada 3 s) · {k:'pede'} (quer o estado já)
+     medidor → cliente: {k:'snap', v:1, t, cards:{id:{...}}, links:{...}, ensaio:{...}, etapas:[...], gerador:{...}, operador:{...}}   (1 por segundo)
+   Cada snapshot é COMPLETO (não incremental): perder um não corrompe nada (prevenção de registros perdidos/duplicados = o cliente sempre sobrescreve).
+   Dado velho: o cliente marca "sem dados" se passar de 4 s sem snapshot (mesma regra do sinal do gráfico).
+   LIMITES: só funciona entre páginas do MESMO navegador/origem (BroadcastChannel). Notebook em outro aparelho continua usando a leitura direta /api/gerador.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  const CANAL = 'bt2-api', VERSAO_API = 1, PERIODO_MS = 1000, OUVINTE_MS = 6000, VELHO_MS = 4000;
+
+  /* ---------- números: "1.234,5" / "98,2" / "—" → número ou null ---------- */
+  function paraNumero(t) {
+    if (t == null) return null;
+    const m = String(t).replace(/\s/g, '').match(/-?\d+(?:[.,]\d+)*/);
+    if (!m) return null;
+    let s = m[0];
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.'); else if ((s.match(/\./g) || []).length > 1) s = s.replace(/\./g, '');
+    const n = parseFloat(s); return isFinite(n) ? n : null;
+  }
+
+  /* =======================  LADO DO MEDIDOR (publicador)  ======================= */
+  let fonte = null, canal = null, ultOi = 0, timer = null, ultSnap = null;
+  const assinantes = [];
+
+  /** Lê os cards direto da tela. Só leitura do DOM; nada é escrito nela. */
+  function leCards() {
+    const out = {};
+    document.querySelectorAll('section.panel .card').forEach(c => {
+      const v = c.querySelector('.v[id]'); if (!v) return;
+      const l = c.querySelector('.l'), u = v.querySelector('.u'), p = c.closest('section.panel');
+      const tx = Array.from(v.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();   // só o texto do valor (sem a unidade)
+      out[v.id] = { id: v.id, painel: p ? p.id : null, rotulo: l ? l.textContent.trim() : v.id, texto: tx || v.textContent.trim(), valor: paraNumero(tx), unidade: u ? u.textContent.trim() : '', classes: v.className || '' };
+    });
+    return out;
+  }
+  function leLinks() {
+    const o = {};
+    document.querySelectorAll('.lnk .lk[id]').forEach(e => { const s = e.querySelector('small'); o[e.id] = { estado: e.dataset.s || '', texto: s ? s.textContent.trim() : '' }; });
+    return o;
+  }
+  /** Monta o snapshot completo. Qualquer erro na fonte do medidor é engolido: a API nunca derruba a tela. */
+  function snapshot() {
+    let extra = {};
+    try { extra = fonte ? (fonte() || {}) : {}; } catch (e) { extra = { erroFonte: String(e && e.message || e) }; }
+    return Object.assign({ k: 'snap', v: VERSAO_API, t: Date.now(), cards: leCards(), links: leLinks() }, extra);
+  }
+  function publica() {
+    if (!canal) return;
+    ultSnap = snapshot();
+    try { canal.postMessage(ultSnap); } catch (e) { /* mensagem não clonável: ignora, o próximo ciclo reenvia */ }
+    assinantes.forEach(fn => { try { fn(ultSnap); } catch (e) {} });
+  }
+  /** Liga o publicador. fonteFn() devolve os blocos estruturados do medidor (ensaio, etapas, gerador, operador). */
+  function inicia(fonteFn) {
+    fonte = fonteFn;
+    try { if ('BroadcastChannel' in global) canal = new BroadcastChannel(CANAL); } catch (e) { canal = null; }
+    if (canal) canal.onmessage = ev => {
+      const m = ev.data; if (!m || typeof m !== 'object') return;
+      if (m.k === 'oi') { ultOi = Date.now(); if (!timer) timer = setInterval(ciclo, PERIODO_MS); }
+      else if (m.k === 'pede') { ultOi = Date.now(); publica(); }
+      // QUALQUER outra mensagem (inclusive comandos) é ignorada de propósito: esta API é somente leitura.
+    };
+    return true;
+  }
+  function ciclo() {
+    if (Date.now() - ultOi > OUVINTE_MS) { clearInterval(timer); timer = null; return; }   // ninguém escutando: não gasta nada
+    publica();
+  }
+
+  /* =======================  LADO DO CLIENTE (outros HTML)  ======================= */
+  /** cliente(fn, opc): chama fn(snapshot|null, info) a cada snapshot; fn(null,{semDados:true}) se passar de 4 s sem receber. */
+  function cliente(fn, opc) {
+    opc = opc || {}; let ch = null, ult = 0, ultS = null, velho = true;
+    try { if ('BroadcastChannel' in global) ch = new BroadcastChannel(CANAL); } catch (e) {}
+    if (!ch) { fn(null, { semCanal: true }); return { fecha() {}, ultimo: () => null }; }
+    ch.onmessage = ev => { const m = ev.data; if (m && m.k === 'snap' && m.v === VERSAO_API) { ult = Date.now(); ultS = m; velho = false; fn(m, {}); } };
+    const oi = () => { try { ch.postMessage({ k: 'oi' }); } catch (e) {} };
+    oi(); try { ch.postMessage({ k: 'pede' }); } catch (e) {}
+    const t1 = setInterval(oi, 3000), t2 = setInterval(() => { if (!velho && Date.now() - ult > VELHO_MS) { velho = true; fn(null, { semDados: true, ultimo: ultS }); } }, 1000);
+    return { fecha() { clearInterval(t1); clearInterval(t2); try { ch.close(); } catch (e) {} }, ultimo: () => ultS };
+  }
+
+  global.BT2_API = { versao: VERSAO_API, inicia, snapshot, card: id => leCards()[id] || null, assina: fn => { assinantes.push(fn); }, cliente, paraNumero };
+})(window);
+
+</script>
+<script>
+'use strict';
+const $=i=>document.getElementById(i), esc=s=>String(s==null?'—':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const kv=o=>'<tr><th>Campo</th><th>Valor</th></tr>'+Object.keys(o||{}).map(k=>'<tr><td>'+esc(k)+'</td><td class="n">'+esc(typeof o[k]==='object'&&o[k]?JSON.stringify(o[k]):o[k])+'</td></tr>').join('');
+BT2_API.cliente((s,i)=>{
+  const st=$('st');
+  if(!s){st.className='bad';st.textContent=i&&i.semCanal?'Este navegador não suporta o canal (BroadcastChannel)':'Sem dados do medidor (abra o medidor neste mesmo navegador)';return}
+  st.className='ok';st.textContent='Ao vivo · medidor '+((s.ensaio&&s.ensaio.versao)||'?');$('ts').textContent=new Date(s.t).toLocaleTimeString('pt-BR');
+  $('tc').innerHTML='<tr><th>Painel</th><th>Card</th><th>id</th><th>Texto</th><th>Valor</th><th>Un.</th><th>Classes</th></tr>'+Object.values(s.cards||{}).map(c=>'<tr><td>'+esc(c.painel)+'</td><td>'+esc(c.rotulo)+'</td><td class="m">'+esc(c.id)+'</td><td>'+esc(c.texto)+'</td><td class="n">'+esc(c.valor)+'</td><td>'+esc(c.unidade)+'</td><td class="m">'+esc(c.classes)+'</td></tr>').join('');
+  $('te').innerHTML=kv(s.ensaio);
+  $('tt').innerHTML='<tr><th>#</th><th>Alvo %</th><th>Min</th><th>Nome</th><th>Estado</th><th>Salva no PLC</th></tr>'+(s.etapas||[]).map(e=>'<tr><td>'+(e.i+1)+'</td><td>'+e.alvo+'</td><td>'+e.min+'</td><td>'+esc(e.nome)+'</td><td>'+e.estado+'</td><td>'+(e.salva?'sim':'não')+'</td></tr>').join('');
+  $('tg').innerHTML=kv(Object.assign({},s.gerador&&{['gerador.estado']:s.gerador.estado,['gerador.leituraValida']:s.gerador.leituraValida,['gerador.cargaPct']:s.gerador.cargaPct},s.nominal&&{['nominal.tensao']:s.nominal.tensao,['nominal.freq']:s.nominal.freq},s.operador&&{['operador.simples']:s.operador.simples},Object.fromEntries(Object.entries(s.links||{}).map(([k,x])=>['link.'+k,x.estado+' · '+x.texto]))));
+});
+</script><script>
+/* =====================================================================================================================
+   dica_ui_v0.1.js — DICA DE INTERFACE: "que elemento é este?" (nome do tipo + id de programação + coordenadas) · 29/10/2026
+   Colado (inline) em todos os HTML do projeto (medidor, gráfico, mapa dos FBs, gerenciador de logs, amostras, simulador de rodízio,
+   visor da API, painel BT2). Documento: modulos/DICA_UI_v0.1.md.
+
+   PARA QUE SERVE (leigo): para conversar com a programação sem dizer "aquele botãozinho lá". Ligando este modo, ao passar o mouse sobre
+   qualquer coisa da tela aparece uma etiqueta com (1) o NOME DO TIPO do elemento (Botão, Chip, Card, Janela…), (2) o ID usado no código
+   (ex.: #bAnalisar, #cardBancoCargas) e (3) as COORDENADAS na tela. Alt + clique "fixa" a etiqueta: ela fica aberta até você fechar (✕ ou Esc)
+   e tem o botão "Copiar" para colar numa mensagem. Um contorno tracejado mostra exatamente qual é o elemento.
+
+   COMO LIGAR: tecla  Alt + I  (liga/desliga; lembra a escolha) · ou abrir a página com  ?ui=1  · ou  DICAUI.liga(true)  pelo console.
+   Desligado por padrão: o operador não vê nada diferente (a dica é ferramenta de quem desenvolve/valida).
+
+   NOME CORRETO DOS ELEMENTOS (pergunta do operador): a etiqueta que aparece ao passar o mouse e some ao sair = "tooltip" (dica de ferramenta).
+   A que fica aberta até ser fechada, sem travar a tela = "popover" (é o que o Alt+clique cria, e o aviso de risco do módulo JANELAS).
+   A mensagem que aparece num canto e some sozinha = "toast" (snackbar). Janela que trava a tela de trás = "diálogo modal".
+
+   POR QUE ASSIM (técnico): usa o atributo popover="manual" (camada de cima do navegador) para a etiqueta aparecer ACIMA de <dialog> abertos; se o
+   navegador não tiver popover, cai para position:fixed com z-index alto. O contorno é uma <div> fixa sobre o retângulo do elemento — NÃO mexe no
+   elemento, então não muda o layout (REGRA_LAYOUT_ESTAVEL_v0.1). Enquanto o modo está ligado, o atributo title do elemento sob o mouse é guardado
+   e o texto vai para dentro da etiqueta (evita duas dicas empilhadas); é devolvido ao sair.
+   O que ele NÃO faz: não altera nenhum dado, não lê PLC/Node-RED, não envia nada para fora. Clique normal continua funcionando; só Alt+clique é
+   capturado (para fixar). Coordenadas: "tela" = posição na janela do navegador (px); "mouse" = cursor na janela; "monitor" = cursor no monitor.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.DICAUI) return;
+  const CHAVE = 'bt2.dicaui';
+  let ligado = false, tip = null, caixa = null, fixa = null, ult = null, tmr = 0;
+  try { ligado = localStorage.getItem(CHAVE) === '1'; } catch (e) {}
+  if (/[?&]ui=1\b/.test(location.search)) ligado = true;
+  const temPop = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
+
+  /* ---------- CSS próprio (injetado uma vez; cores neutras, legíveis em tema claro e escuro) ---------- */
+  const css = document.createElement('style');
+  css.textContent = `
+  .dicaui-tip,.dicaui-fixa{position:fixed;margin:0;inset:auto;z-index:2147483200;max-width:min(360px,92vw);padding:6px 9px;border-radius:7px;border:1px solid #5d6b7a;
+    background:#10202f;color:#eaf2fa;font:12px/1.35 system-ui,Segoe UI,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;overflow:visible}
+  .dicaui-fixa{pointer-events:auto;padding-right:30px}
+  .dicaui-tip b,.dicaui-fixa b{color:#8fd0ff}.dicaui-tip i,.dicaui-fixa i{font-style:normal;color:#ffd27a}
+  .dicaui-tip small,.dicaui-fixa small{display:block;color:#aebccb;font-size:11px}
+  .dicaui-fixa .x{position:absolute;top:3px;right:4px;width:20px;height:20px;border:0;border-radius:4px;background:transparent;color:#eaf2fa;cursor:pointer;font:700 13px/1 system-ui}
+  .dicaui-fixa .x:hover{background:rgba(255,255,255,.18)}
+  .dicaui-fixa .cp{margin-top:5px;font:600 11px system-ui;padding:2px 8px;border-radius:5px;border:1px solid #8fd0ff;background:transparent;color:#8fd0ff;cursor:pointer}
+  .dicaui-caixa{position:fixed;margin:0;inset:auto;z-index:2147483100;pointer-events:none;border:2px dashed #ff9f1c;background:rgba(255,159,28,.08);box-sizing:border-box;padding:0}
+  `;
+  (document.head || document.documentElement).appendChild(css);
+
+  /* ---------- nome do tipo (PT-BR) a partir da tag, do papel (role) e das classes ---------- */
+  const cls = e => { const c = e.getAttribute && e.getAttribute('class'); return c ? String(c) : ''; };
+  function tipoDe(e) {
+    const t = (e.tagName || '').toLowerCase(), c = cls(e), role = e.getAttribute && e.getAttribute('role');
+    if (e.classList && e.classList.contains('jwbtn')) return 'Botão de tamanho da janela (⤢)';
+    if (t === 'dialog') return e.hasAttribute('open') && e.classList.contains('jflut') ? 'Janela flutuante (dialog)' : 'Janela (dialog)';
+    if (/\b(chip|enschip|gchip|gd-chip)\b/.test(c)) return 'Chip';
+    if (t === 'section' && /\bpanel\b/.test(c)) return 'Painel (seção de cards)';
+    if (/\bcard\b/.test(c)) return 'Card';
+    if (/\bbx\b/.test(c)) return 'Bloco FB (cartão do mapa)';
+    if (/\binfo\b/.test(c) && e.closest && e.closest('.bx')) return 'Ícone de informação (i)';
+    if (/\bjt\b/.test(c)) return 'Barra de título da janela';
+    if (t === 'button' || role === 'button' || (t === 'input' && /^(button|submit|reset)$/.test(e.type))) return 'Botão';
+    if (t === 'select') return 'Lista suspensa (select)';
+    if (t === 'textarea') return 'Campo de texto longo';
+    if (t === 'input') return e.type === 'checkbox' ? 'Caixa de seleção' : e.type === 'radio' ? 'Opção (radio)' : e.type === 'range' ? 'Controle deslizante' : 'Campo de entrada (' + (e.type || 'text') + ')';
+    if (role === 'tab') return 'Aba';
+    if (t === 'a') return 'Link';
+    if (t === 'canvas') return 'Gráfico (canvas)';
+    if (t === 'table') return 'Tabela';
+    if (t === 'svg') return 'Desenho (svg)';
+    if (/^h[1-6]$/.test(t)) return 'Título (' + t + ')';
+    if (t === 'label') return 'Rótulo';
+    if (t === 'iframe') return 'Quadro embutido (iframe)';
+    if (/\b(popover|jwtip|expmenu)\b/.test(c) || e.hasAttribute && e.hasAttribute('popover')) return 'Popover / menu';
+    return 'Elemento <' + t + '>';
+  }
+  const conhecido = e => { const t = (e.tagName || '').toLowerCase(); return !!(e.id || /^(button|input|select|textarea|a|dialog|table|canvas|label|iframe)$/.test(t) || /\b(chip|enschip|gchip|card|bx|jwbtn|jt|panel)\b/.test(cls(e)) || (e.getAttribute && /^(button|tab)$/.test(e.getAttribute('role') || ''))); };
+  /* sobe da folha (um <span> de texto, por exemplo) até o primeiro elemento que tenha id ou seja de um tipo conhecido */
+  function alvoDe(e) { let x = e; for (let i = 0; x && i < 8; i++, x = x.parentElement) if (conhecido(x)) return x; return e; }
+
+  function descreve(e, ev) {
+    const r = e.getBoundingClientRect(), id = e.id || '', pai = !id && e.closest ? e.closest('[id]') : null;
+    const t = e.dataset && e.dataset.dicauiT != null ? e.dataset.dicauiT : (e.getAttribute && e.getAttribute('title')) || e.getAttribute && e.getAttribute('aria-label') || '';
+    const n = v => Math.round(v);
+    return { tipo: tipoDe(e), id, pai: pai ? pai.id : '', dica: t, x: n(r.left), y: n(r.top), w: n(r.width), h: n(r.height),
+             mx: ev ? n(ev.clientX) : null, my: ev ? n(ev.clientY) : null, sx: ev ? n(ev.screenX) : null, sy: ev ? n(ev.screenY) : null };
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function html(d) {
+    return '<b>' + esc(d.tipo) + '</b> · ' + (d.id ? '<i>#' + esc(d.id) + '</i>' : '<i>(sem id)</i>' + (d.pai ? ' dentro de <i>#' + esc(d.pai) + '</i>' : '')) +
+      '<small>tela x ' + d.x + ' · y ' + d.y + ' · ' + d.w + '×' + d.h + ' px</small>' +
+      (d.mx != null ? '<small>mouse ' + d.mx + ',' + d.my + ' · monitor ' + d.sx + ',' + d.sy + '</small>' : '') +
+      (d.dica ? '<small>dica: ' + esc(d.dica) + '</small>' : '');
+  }
+  const texto = d => d.tipo + ' ' + (d.id ? '#' + d.id : '(sem id)' + (d.pai ? ' dentro de #' + d.pai : '')) + ' | tela x=' + d.x + ' y=' + d.y + ' ' + d.w + 'x' + d.h + 'px' + (d.mx != null ? ' | mouse ' + d.mx + ',' + d.my + ' monitor ' + d.sx + ',' + d.sy : '') + (d.dica ? ' | dica: ' + d.dica : '') + ' | página ' + (location.pathname.split('/').pop() || '');
+
+  /* ---------- peças visuais ---------- */
+  function cria(classe, pop) {
+    const d = document.createElement('div'); d.className = classe; if (pop && temPop) d.setAttribute('popover', 'manual'); (document.body || document.documentElement).appendChild(d); return d;
+  }
+  const abre = d => { if (temPop) { try { if (!d.matches(':popover-open')) d.showPopover(); } catch (e) {} } else d.style.display = 'block'; };
+  const fecha = d => { if (!d) return; if (temPop) { try { d.hidePopover(); } catch (e) {} } else d.style.display = 'none'; };
+  function iniPecas() {
+    if (!tip) { tip = cria('dicaui-tip', true); caixa = cria('dicaui-caixa', true); fecha(tip); fecha(caixa); }
+  }
+  function posiciona(el, x, y) {
+    const w = el.offsetWidth || 240, h = el.offsetHeight || 60;
+    el.style.left = Math.max(4, Math.min(innerWidth - w - 4, x + 14)) + 'px';
+    el.style.top = Math.max(4, Math.min(innerHeight - h - 4, y + 18)) + 'px';
+  }
+  function contorna(e) { const r = e.getBoundingClientRect(); Object.assign(caixa.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }); abre(caixa); }
+
+  /* ---------- eventos ---------- */
+  function devolveTitle() { if (ult && ult.dataset && ult.dataset.dicauiT != null) { ult.setAttribute('title', ult.dataset.dicauiT); delete ult.dataset.dicauiT; } }
+  function mover(ev) {
+    if (!ligado) return;
+    const crua = ev.target; if (!crua || (crua.closest && crua.closest('.dicaui-tip,.dicaui-fixa,.dicaui-caixa'))) return;
+    const e = alvoDe(crua);
+    if (e !== ult) {
+      devolveTitle(); ult = e;
+      if (e.getAttribute && e.hasAttribute('title') && !(e.dataset && e.dataset.dicauiT != null)) { e.dataset.dicauiT = e.getAttribute('title'); e.removeAttribute('title'); }
+      contorna(e);
+    }
+    const d = descreve(e, ev); tip.innerHTML = html(d); abre(tip); posiciona(tip, ev.clientX, ev.clientY);
+  }
+  function sair() { fecha(tip); fecha(caixa); devolveTitle(); ult = null; }
+  function fixar(ev) {
+    if (!ligado || !ev.altKey) return;
+    const e = alvoDe(ev.target); if (e.closest && e.closest('.dicaui-fixa')) return;
+    ev.preventDefault(); ev.stopPropagation();                 // Alt+clique é só para fixar: não aciona o botão por baixo
+    const d = descreve(e, ev); fechaFixa();
+    fixa = cria('dicaui-fixa', true); fixa.innerHTML = html(d) + '<button type="button" class="cp">Copiar</button><button type="button" class="x" aria-label="Fechar">✕</button>';
+    fixa.querySelector('.x').onclick = fechaFixa;
+    fixa.querySelector('.cp').onclick = ev2 => { const t = texto(d); try { navigator.clipboard.writeText(t); ev2.target.textContent = 'Copiado'; } catch (x) { ev2.target.textContent = 'Selecione e copie'; } };
+    abre(fixa); posiciona(fixa, ev.clientX, ev.clientY); contorna(e);
+  }
+  function fechaFixa() { if (fixa) { fecha(fixa); fixa.remove(); fixa = null; } fecha(caixa); }
+  document.addEventListener('mousemove', mover, true);
+  document.addEventListener('mouseleave', sair, true);
+  document.addEventListener('click', fixar, true);
+  document.addEventListener('keydown', ev => {
+    if (ev.altKey && !ev.ctrlKey && !ev.metaKey && (ev.key === 'i' || ev.key === 'I')) { ev.preventDefault(); liga(!ligado, true); }
+    else if (ev.key === 'Escape' && fixa) fechaFixa();
+  }, true);
+
+  function liga(b, avisa) {
+    ligado = !!b; try { localStorage.setItem(CHAVE, ligado ? '1' : '0'); } catch (e) {}
+    iniPecas();
+    if (!ligado) { sair(); fechaFixa(); }
+    if (avisa) { tip.innerHTML = '<b>Dica de interface ' + (ligado ? 'ligada' : 'desligada') + '</b><small>Alt+I liga/desliga · Alt+clique fixa a etiqueta</small>'; abre(tip); posiciona(tip, innerWidth / 2 - 130, 40); setTimeout(() => { if (!ult) fecha(tip); }, 1800); }
+  }
+  const inicia = () => { iniPecas(); if (ligado) liga(true, false); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inicia); else inicia();
+  global.DICAUI = { liga, alterna: () => liga(!ligado, true), ativo: () => ligado, descreve, tipoDe };
+})(window);
+</script>
+<script>
+/* =====================================================================================================================
+   ajuda_v0.1.js — BOTÃO "AJUDA" PADRÃO + JANELA DE AJUDA, igual em todo HTML do projeto · 29/10/2026
+   Colado (inline) em: mapa_fbs_v0.11, gerenciador_logs_v1.6, api_cards_visor_v0.3, index.html v0.2 (o medidor, o gráfico e o simulador de amostras
+   já têm a própria Ajuda). Documento: modulos/AJUDA_v0.1.md.
+
+   REGRA DO PROJETO (decisão do operador, 29/10/2026): "toda HTML tem que vir com AJUDA". Este módulo é o jeito mais barato de cumprir a regra:
+   cada página só informa o TEXTO (AJUDA.inicia({...})); o botão, a janela, o fechar (✕ no canto direito, Esc) e a seção padrão da
+   "Dica de interface (Alt+I)" já vêm prontos.
+
+   PARA QUE SERVE (leigo): um botão "Ajuda" que abre uma janelinha dizendo, em português simples, para que serve a tela, como usar, o que cada
+   botão faz e o significado das palavras técnicas (glossário).
+
+   COMO USAR (programação):
+     AJUDA.inicia({ titulo:'Mapa dos FBs', resumo:'texto curto', secoes:[{t:'Como usar', l:['passo 1','passo 2']}], glossario:[['FB','bloco de função']],
+                    onde:'header' })      // onde = seletor CSS do lugar do botão; sem ele (ou não achado) o botão fica fixo no canto superior direito
+   POR QUE ASSIM (técnico): <dialog> aberto com show() (não modal): não trava a tela de trás, e quem tem o módulo JANELAS ganha o ⤢ automaticamente.
+   Sem JANELAS a janela ainda se redimensiona pelo canto (resize:both). Não altera dados, não lê PLC/Node-RED, não envia nada.
+   ===================================================================================================================== */
+(function (global) {
+  'use strict';
+  if (global.AJUDA) return;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let dlg = null;
+  const css = document.createElement('style');
+  css.textContent = `
+  #dlgAjuda{position:fixed;top:8vh;left:50%;transform:translateX(-50%);margin:0;width:min(640px,94vw);max-height:84vh;overflow:auto;resize:both;padding:0;
+    border:1px solid #7a8794;border-radius:10px;background:#fff;color:#16222e;font:14px/1.45 system-ui,"Segoe UI",sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:2147482000}
+  @media (prefers-color-scheme:dark){#dlgAjuda{background:#1b2229;color:#e8edf2;border-color:#4d5964}}
+  #dlgAjuda .jt{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid rgba(128,128,128,.4);position:sticky;top:0;background:inherit}
+  #dlgAjuda .jt b{flex:1;font-size:15px}
+  #dlgAjuda .jx{width:28px;height:28px;border:1px solid rgba(128,128,128,.55);border-radius:6px;background:transparent;color:inherit;cursor:pointer;font:700 14px/1 system-ui}
+  #dlgAjuda .jx:hover{background:rgba(128,128,128,.25)}
+  #dlgAjuda .cp{padding:6px 16px 14px}
+  #dlgAjuda h3{font-size:13px;margin:14px 0 4px;color:#2a6fb3}
+  @media (prefers-color-scheme:dark){#dlgAjuda h3{color:#7db7f0}}
+  #dlgAjuda ul{margin:4px 0 4px 18px;padding:0}#dlgAjuda li{margin:2px 0}
+  #dlgAjuda dt{font-weight:650;margin-top:4px}#dlgAjuda dd{margin:0 0 2px 0;color:inherit;opacity:.85}
+  #dlgAjuda kbd{border:1px solid rgba(128,128,128,.6);border-bottom-width:2px;border-radius:4px;padding:0 5px;font:12px system-ui}
+  #bAjudaPadrao{font:600 13px system-ui,sans-serif;padding:5px 12px;border:1px solid #7a8794;border-radius:7px;background:transparent;color:inherit;cursor:pointer}
+  #bAjudaPadrao:hover{background:rgba(128,128,128,.22)}
+  #bAjudaPadrao.fixo{position:fixed;top:8px;right:10px;z-index:2147481000;background:#fff;color:#16222e}
+  @media (prefers-color-scheme:dark){#bAjudaPadrao.fixo{background:#1b2229;color:#e8edf2}}`;
+  (document.head || document.documentElement).appendChild(css);
+
+  function inicia(c) {
+    c = c || {};
+    const corpo = '<p>' + esc(c.resumo || '') + '</p>' +
+      (c.secoes || []).map(s => '<h3>' + esc(s.t) + '</h3><ul>' + s.l.map(x => '<li>' + x + '</li>').join('') + '</ul>').join('') +
+      ((c.glossario && c.glossario.length) ? '<h3>Glossário</h3><dl>' + c.glossario.map(g => '<dt>' + esc(g[0]) + '</dt><dd>' + g[1] + '</dd>').join('') + '</dl>' : '') +
+      '<h3>Descobrir o nome de qualquer elemento da tela</h3><ul><li>Tecle <kbd>Alt</kbd>+<kbd>I</kbd>: ao passar o mouse aparece o tipo (Botão, Chip, Card…), o <b>id de programação</b> e as coordenadas. <kbd>Alt</kbd>+clique fixa a etiqueta e tem o botão Copiar. <kbd>Alt</kbd>+<kbd>I</kbd> de novo desliga.</li></ul>';
+    dlg = document.createElement('dialog'); dlg.id = 'dlgAjuda'; dlg.className = 'jan livre';
+    dlg.innerHTML = '<div class="jt"><b>Ajuda · ' + esc(c.titulo || document.title) + '</b><button type="button" class="jx" data-fecha aria-label="Fechar">✕</button></div><div class="cp">' + corpo + '</div>';
+    document.body.appendChild(dlg);
+    dlg.querySelector('.jx').onclick = fecha;
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dlg.open) fecha(); });
+    const b = document.createElement('button'); b.type = 'button'; b.id = 'bAjudaPadrao'; b.textContent = 'Ajuda'; b.setAttribute('aria-haspopup', 'dialog');
+    b.title = 'Para que serve esta tela e como usar'; b.onclick = () => (dlg.open ? fecha() : abre());
+    const onde = c.onde && document.querySelector(c.onde);
+    if (onde) onde.appendChild(b); else { b.classList.add('fixo'); document.body.appendChild(b); }
+  }
+  const abre = () => { if (dlg && !dlg.open) dlg.show(); };
+  const fecha = () => { if (dlg && dlg.open) dlg.close(); };
+  global.AJUDA = { inicia, abre, fecha };
+})(window);
+AJUDA.inicia({"titulo": "Visor da API dos cards", "resumo": "Mostra tudo que o medidor publica para as outras telas: os valores dos cards, o ensaio, as etapas, o gerador e as comunicações. É somente leitura: serve para conferir o que o gráfico e outras ferramentas estão recebendo.", "secoes": [{"t": "Como usar", "l": ["Abra o medidor e deixe-o funcionando; esta tela recebe os dados sozinha (aviso \"Aguardando o medidor…\" até chegar o primeiro).", "Esta página e o medidor precisam ser abertos no mesmo navegador e na mesma origem (mesmo endereço http://IP:1880).", "Se os valores pararem, o medidor foi fechado ou a aba dele está suspensa."]}], "glossario": [["API dos cards", "jeito padrão de o medidor entregar seus valores a outras telas, dentro do navegador (BroadcastChannel \"bt2-api\")"], ["Somente leitura", "esta tela não manda nenhum comando"]]});
+</script>
+</body></html>

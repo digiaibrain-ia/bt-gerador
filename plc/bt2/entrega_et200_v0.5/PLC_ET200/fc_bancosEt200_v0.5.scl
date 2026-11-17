@@ -1,0 +1,94 @@
+FUNCTION "fc_bancosEt200" : Void
+TITLE = fc_bancosEt200 v0.5
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : RegLobo
+VERSION : 0.5
+////====================================
+//// fc_bancosEt200 v0.5 (16/11/2026): PREENCHIDO. O FC so ORGANIZA os tags; a logica e as imagens (STAT) ficam no fb_bancosEt200 (DB de instancia: ibancosEt200). Chamar 1x por ciclo no OB1.
+//// *** RETORNO PROVISORIO ***  Ainda NAO existe o sinal real do contato auxiliar das contatoras. Por decisao do Reginaldo (teste de previsibilidade), o RETORNO e a PROPRIA SAIDA ("Resistencia n"):
+////     a leitura da saida vale como retorno. ISSO NAO DETECTA contatora travada/colada nem comando sem efeito: a protecao "sem retorno por 2 s" e "contator colado" fica SEM SENTIDO nesta fase.
+////     Na 1200 (bancos de carga apos o Retrofit) o retorno passa a ser o contato auxiliar REAL: trocar SO o bloco "1 de 3" (RETORNO) abaixo pelos tags de entrada (%I).
+//// Mapeamento (confirme): BC400 = "Resistencia 1..13" (vistas no FC4: %Q4.0 ...); BC56 = "Resistencia 16..28". Seletoras: BC56 "Banco de Carga 02 em Automatico" (%I5.3); BC400 "Banco de Carga 01 em Automatico" (%I5.2).
+//// ESCRITOR UNICO: depois disto o FC4 (e o que voce fez provisorio no 1500) NAO pode escrever nas mesmas saidas "Resistencia 1..13" e "Resistencia 16..28": apague essas networks.
+////====================================
+BEGIN
+
+	//=====================================================================
+	// 1 de 3: RETORNO (PROVISORIO = a propria saida) -> copia para o DB do FB. Na 1200 trocar por tags de ENTRADA do contato auxiliar.
+	//=====================================================================
+	// BC56:
+	"ibancosEt200".auxBC56[1] := "Resistencia 16";
+	"ibancosEt200".auxBC56[2] := "Resistencia 17";
+	"ibancosEt200".auxBC56[3] := "Resistencia 18";
+	"ibancosEt200".auxBC56[4] := "Resistencia 19";
+	"ibancosEt200".auxBC56[5] := "Resistencia 20";
+	"ibancosEt200".auxBC56[6] := "Resistencia 21";
+	"ibancosEt200".auxBC56[7] := "Resistencia 22";
+	"ibancosEt200".auxBC56[8] := "Resistencia 23";
+	"ibancosEt200".auxBC56[9] := "Resistencia 24";
+	"ibancosEt200".auxBC56[10] := "Resistencia 25";
+	"ibancosEt200".auxBC56[11] := "Resistencia 26";
+	"ibancosEt200".auxBC56[12] := "Resistencia 27";
+	"ibancosEt200".auxBC56[13] := "Resistencia 28";
+	"ibancosEt200".auxBC56[14] := FALSE;
+	"ibancosEt200".auxBC56[15] := FALSE;
+	"ibancosEt200".auxBC56[16] := FALSE;
+	// BC400:
+	"ibancosEt200".auxBC400[1] := "Resistencia 1";
+	"ibancosEt200".auxBC400[2] := "Resistencia 2";
+	"ibancosEt200".auxBC400[3] := "Resistencia 3";
+	"ibancosEt200".auxBC400[4] := "Resistencia 4";
+	"ibancosEt200".auxBC400[5] := "Resistencia 5";
+	"ibancosEt200".auxBC400[6] := "Resistencia 6";
+	"ibancosEt200".auxBC400[7] := "Resistencia 7";
+	"ibancosEt200".auxBC400[8] := "Resistencia 8";
+	"ibancosEt200".auxBC400[9] := "Resistencia 9";
+	"ibancosEt200".auxBC400[10] := "Resistencia 10";
+	"ibancosEt200".auxBC400[11] := "Resistencia 11";
+	"ibancosEt200".auxBC400[12] := "Resistencia 12";
+	"ibancosEt200".auxBC400[13] := "Resistencia 13";
+	"ibancosEt200".auxBC400[14] := FALSE;
+	"ibancosEt200".auxBC400[15] := FALSE;
+	"ibancosEt200".auxBC400[16] := FALSE;
+
+	//=====================================================================
+	// 2 de 3: CHAMADA do fb_bancosEt200 (DB de instancia ibancosEt200; ele chama o fb_bancoEt200_16 de cada banco)
+	//=====================================================================
+	// ComOk do BC56: o tag "ComOk_BC56" ja existe. Para o BC400 crie o tag "ComOk_BC400" (Bool) e acrescente  ComOkBC400 => "ComOk_BC400"  (ou deixe sem).
+	"ibancosEt200"(SeletoraBC56 := "Banco de Carga 02 em Automatico",
+	               SeletoraBC400 := "Banco de Carga 01 em Automatico",
+	               ComOkBC56 => "ComOk_BC56");
+
+	//=====================================================================
+	// 3 de 3: SAIDA das contatoras (bobinas) <- copia do DB do FB. Unico escritor destas saidas.
+	//=====================================================================
+	// BC400:
+	"Resistencia 1" := "ibancosEt200".saidaBC400[1];
+	"Resistencia 2" := "ibancosEt200".saidaBC400[2];
+	"Resistencia 3" := "ibancosEt200".saidaBC400[3];
+	"Resistencia 4" := "ibancosEt200".saidaBC400[4];
+	"Resistencia 5" := "ibancosEt200".saidaBC400[5];
+	"Resistencia 6" := "ibancosEt200".saidaBC400[6];
+	"Resistencia 7" := "ibancosEt200".saidaBC400[7];
+	"Resistencia 8" := "ibancosEt200".saidaBC400[8];
+	"Resistencia 9" := "ibancosEt200".saidaBC400[9];
+	"Resistencia 10" := "ibancosEt200".saidaBC400[10];
+	"Resistencia 11" := "ibancosEt200".saidaBC400[11];
+	"Resistencia 12" := "ibancosEt200".saidaBC400[12];
+	"Resistencia 13" := "ibancosEt200".saidaBC400[13];
+	// BC56:
+	"Resistencia 16" := "ibancosEt200".saidaBC56[1];
+	"Resistencia 17" := "ibancosEt200".saidaBC56[2];
+	"Resistencia 18" := "ibancosEt200".saidaBC56[3];
+	"Resistencia 19" := "ibancosEt200".saidaBC56[4];
+	"Resistencia 20" := "ibancosEt200".saidaBC56[5];
+	"Resistencia 21" := "ibancosEt200".saidaBC56[6];
+	"Resistencia 22" := "ibancosEt200".saidaBC56[7];
+	"Resistencia 23" := "ibancosEt200".saidaBC56[8];
+	"Resistencia 24" := "ibancosEt200".saidaBC56[9];
+	"Resistencia 25" := "ibancosEt200".saidaBC56[10];
+	"Resistencia 26" := "ibancosEt200".saidaBC56[11];
+	"Resistencia 27" := "ibancosEt200".saidaBC56[12];
+	"Resistencia 28" := "ibancosEt200".saidaBC56[13];
+
+END_FUNCTION

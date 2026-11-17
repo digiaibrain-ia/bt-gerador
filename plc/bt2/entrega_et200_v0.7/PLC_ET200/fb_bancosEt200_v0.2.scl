@@ -1,0 +1,92 @@
+FUNCTION_BLOCK "fb_bancosEt200"
+TITLE = fb_bancosEt200 v0.2
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+////====================================
+//// fb_bancosEt200 v0.2 (16/11/2026): NOVAS SAIDAS LigarBancoBC56 / LigarBancoBC400 = comando "Ligar banco" do 1515 E ComOk E (desde a ultima queda de comunicacao o comando CAIU a FALSE e foi dado de novo).
+////    Motivo (teste do Reginaldo, 1515 em STOP): as saidas das chaves cairam, mas a saida fisica "Ligar Banco" (ligada direto ao bit do DB, sem ComOk) ficou LIGADA. Agora o FC liga a saida fisica a ESTA saida.
+//// fb_bancosEt200 v0.1 (16/11/2026) - RASCUNHO, nao compilado. ET200 (IM151-8, familia S7-300). Pedido do Reginaldo: "FC com TEMP vai dar problema; FB com STAT".
+//// POR QUE FB COM STAT (e nao FC com TEMP): o fb_bancoEt200_16 usa SaidaContatora como IMAGEM DO CICLO ANTERIOR (a supervisao do retorno compara o comando com o que foi escrito no ciclo passado).
+////    Variavel TEMP de FC nasce com lixo a cada chamada: essa memoria se perderia. STAT guarda de um ciclo para o outro.
+//// O QUE FAZ: guarda as imagens de saida e de retorno (STAT) dos bancos BC56 e BC400 e chama o fb_bancoEt200_16 uma vez por banco (multi-instancia, sem DB de instancia avulso).
+//// COMO USAR: 1 DB de instancia deste FB: nome  ibancosEt200  (numero livre). O fc_bancosEt200 (FC5) so ORGANIZA: copia os tags fisicos para/de este DB e chama este FB 1x por ciclo no OB1.
+//// ESCRITOR UNICO: depois disto o FC4 nao pode escrever nas saidas Resistencia n destes bancos.
+////====================================
+   VAR_INPUT
+      SeletoraBC56  : Bool;          // entrada fisica: seletora do BC56 em Auto (1 = Auto)
+      SeletoraBC400 : Bool;          // entrada fisica: seletora do BC400 em Auto (1 = Auto)
+   END_VAR
+   VAR_OUTPUT
+      ComOkBC56  : Bool;
+      ComOkBC400 : Bool;
+      LigarBancoBC56  : Bool;        // v0.2: use ESTA saida para a saida fisica "Ligar Banco" do BC56
+      LigarBancoBC400 : Bool;        // v0.2: idem BC400
+   END_VAR
+   VAR
+      saidaBC56  : Array[1..16] of Bool;   // SAIDA das contatoras (o FC5 copia daqui para os tags Q). STAT: guarda o ciclo anterior.
+      auxBC56    : Array[1..16] of Bool;   // RETORNO real (contato auxiliar): o FC5 copia dos tags I para ca ANTES da chamada.
+      saidaBC400 : Array[1..16] of Bool;
+      auxBC400   : Array[1..16] of Bool;
+      _bc56      : "fb_bancoEt200_16";     // multi-instancia (nao precisa de DB avulso)
+      _bc400     : "fb_bancoEt200_16";
+      _bloqB56   : Bool;                   // v0.2: trava apos perda de comunicacao: so solta quando o comando "Ligar banco" cair a FALSE
+      _bloqB400  : Bool;
+   END_VAR
+
+BEGIN
+   #_bc56(NumChaves := 13,
+          SeletoraEntrada := #SeletoraBC56,
+          TempoPerdaMs := T#2S,
+          TempoRetornoMs := 2000,
+          ComOk => #ComOkBC56,
+          Cmd := "db38_ComBC56".cmd,
+          Vida1515 := "db38_ComBC56".vida1515,
+          LigarBanco := "db38_ComBC56".ligarBanco,
+          HabPed := "db38_ComBC56".habPed,
+          Seq := "db38_ComBC56".seq,
+          HabResp := "db38_ComBC56".habResp,
+          Eco := "db38_ComBC56".eco,
+          FalhaRetorno := "db38_ComBC56".falhaRetorno,
+          ContatorColado := "db38_ComBC56".contatorColado,
+          VidaET := "db38_ComBC56".vidaET,
+          Fbk := "db38_ComBC56".fbk,
+          SeletoraAuto := "db38_ComBC56".seletoraAuto,
+          SaidaContatora := #saidaBC56,
+          EntradaContatoAux := #auxBC56);
+
+   #_bc400(NumChaves := 13,
+           SeletoraEntrada := #SeletoraBC400,
+           TempoPerdaMs := T#2S,
+           TempoRetornoMs := 2000,
+           ComOk => #ComOkBC400,
+           Cmd := "db39_ComBC400".cmd,
+           Vida1515 := "db39_ComBC400".vida1515,
+           LigarBanco := "db39_ComBC400".ligarBanco,
+           HabPed := "db39_ComBC400".habPed,
+           Seq := "db39_ComBC400".seq,
+           HabResp := "db39_ComBC400".habResp,
+           Eco := "db39_ComBC400".eco,
+           FalhaRetorno := "db39_ComBC400".falhaRetorno,
+           ContatorColado := "db39_ComBC400".contatorColado,
+           VidaET := "db39_ComBC400".vidaET,
+           Fbk := "db39_ComBC400".fbk,
+           SeletoraAuto := "db39_ComBC400".seletoraAuto,
+           SaidaContatora := #saidaBC400,
+           EntradaContatoAux := #auxBC400);
+
+   // v0.2: "Ligar banco" seguro (mesma regra das chaves: apos queda de comunicacao so religa com novo comando).
+   // No 1o ciclo apos partida da CPU o ComOk e FALSE, entao a trava ja nasce ligada.
+   IF NOT #ComOkBC56 THEN
+      #_bloqB56 := TRUE;
+   ELSIF NOT "db38_ComBC56".ligarBanco THEN
+      #_bloqB56 := FALSE;
+   END_IF;
+   #LigarBancoBC56 := "db38_ComBC56".ligarBanco AND #ComOkBC56 AND NOT #_bloqB56;
+
+   IF NOT #ComOkBC400 THEN
+      #_bloqB400 := TRUE;
+   ELSIF NOT "db39_ComBC400".ligarBanco THEN
+      #_bloqB400 := FALSE;
+   END_IF;
+   #LigarBancoBC400 := "db39_ComBC400".ligarBanco AND #ComOkBC400 AND NOT #_bloqB400;
+END_FUNCTION_BLOCK

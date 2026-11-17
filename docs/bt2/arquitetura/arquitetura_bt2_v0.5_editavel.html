@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitetura BT2 Editável</title>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* MODULOS (mesma ordem do arquivo): CSS · DADOS (nos, ligacoes, analise) · ESTADO · ROTEAMENTO · DESENHO · INTERACAO · EXPORTAR · INICIO.
+   Um unico modelo de dados alimenta os 3 estilos: Blocos, Ilustrado e Agentes. Posicoes editadas ficam por estilo. */
+:root{--bg:#F9FAFB;--fg:#1F2937;--muted:#6B7280;--card:#FFFFFF;--line:#D5DAE1;--arrow:#64748B;--dash:#B9C0CC;--panel:#FFFFFF;
+ --blue:#E8F1FD;--blue-s:#3F82E8;--mint:#E7F7EF;--mint-s:#2FAE7C;--yellow:#FFF6DB;--yellow-s:#E0A21B;--pink:#FDEBEF;--pink-s:#E0507A;--purple:#F0EBFC;--purple-s:#6D4BD8;--gray:#EEF1F5;--gray-s:#64748B;--orange:#FF8C00;--plc:#374151;
+ --ok:#1E8E5A;--warn:#B7791F;--fut:#6B7280;--tipbg:#1F2937;--tipfg:#F9FAFB;--font:"Inter","Helvetica Neue",Roboto,Arial,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0F172A;--fg:#E5E7EB;--muted:#9CA3AF;--card:#1B2644;--line:#33406A;--arrow:#94A3B8;--dash:#45527A;--panel:#17213A;--blue:#14284A;--mint:#12332A;--yellow:#3A2F10;--pink:#3A1A26;--purple:#251B4A;--gray:#18213A;--plc:#475569;--ok:#4ADE80;--warn:#FBBF24;--fut:#9CA3AF;--tipbg:#E5E7EB;--tipfg:#111827;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F172A;--fg:#E5E7EB;--muted:#9CA3AF;--card:#1B2644;--line:#33406A;--arrow:#94A3B8;--dash:#45527A;--panel:#17213A;--blue:#14284A;--mint:#12332A;--yellow:#3A2F10;--pink:#3A1A26;--purple:#251B4A;--gray:#18213A;--plc:#475569;--ok:#4ADE80;--warn:#FBBF24;--fut:#9CA3AF;--tipbg:#E5E7EB;--tipfg:#111827;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);margin:0;font-size:14px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:14px 28px}
+.app{max-width:1280px;margin:0 auto}
+h1{font-size:clamp(20px,3.4vw,28px);margin:0;font-weight:700}
+.top{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.top .sub{color:var(--muted);font-size:13px}
+.abas{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.abas button,.bar button,.bar label.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:9px;padding:6px 11px;cursor:pointer}
+.abas button[aria-pressed="true"]{background:var(--purple-s);border-color:var(--purple-s);color:#fff;font-weight:600}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.bar button:hover,.abas button:hover{border-color:var(--arrow)}
+.bar button[aria-pressed="true"]{background:var(--mint-s);border-color:var(--mint-s);color:#fff}
+.bar .sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.bar .zoom{min-width:44px;text-align:center;color:var(--muted);font-size:12px}
+.bar details{position:relative}.bar summary{list-style:none;font-size:13px;border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:6px 11px;cursor:pointer}
+.bar details[open] .menu{position:absolute;z-index:30;top:34px;left:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:230px}
+.bar .menu button{text-align:left}
+.leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-bottom:8px;align-items:center}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.d-real{background:var(--ok)}.d-pend{background:var(--yellow-s)}.d-fut{background:#9CA3AF}.d-ban{background:var(--blue-s)}
+.vp{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--bg);max-height:calc(100vh - 210px);min-height:420px;position:relative}
+.esp{position:relative}
+#cena{position:absolute;left:0;top:0;transform-origin:0 0}
+#cena.edit{background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:20px 20px}
+svg.ed{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+svg.ed .hit{fill:none;stroke:transparent;stroke-width:16;pointer-events:stroke}
+.ln{fill:none;stroke:var(--arrow);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ln.pend{stroke:var(--yellow-s);stroke-dasharray:7 5}.ln.fut{stroke:#9CA3AF;stroke-dasharray:2 6}
+.ln.flow{stroke-dasharray:7 6;animation:dash 1.1s linear infinite}
+.ah{fill:var(--arrow)}.ah.pend{fill:var(--yellow-s)}.ah.fut{fill:#9CA3AF}
+.elab rect{fill:var(--panel);stroke:var(--line)}.elab text{fill:var(--muted);font-size:11px;font-weight:600;font-family:var(--font)}
+.gr{position:absolute;border:1.5px dashed var(--dash);border-radius:16px}
+.gr .tg{position:absolute;left:14px;top:10px;color:#fff;font-weight:700;font-size:12.5px;border-radius:6px;padding:3px 10px;white-space:nowrap}
+.c-blue{background:var(--blue)}.c-mint{background:var(--mint)}.c-yellow{background:var(--yellow)}.c-pink{background:var(--pink)}.c-purple{background:var(--purple)}.c-gray{background:var(--gray)}
+.t-blue{background:var(--blue-s)}.t-mint{background:var(--mint-s)}.t-yellow{background:var(--yellow-s)}.t-pink{background:var(--pink-s)}.t-purple{background:var(--purple-s)}.t-gray{background:var(--gray-s)}
+.nd{position:absolute;user-select:none}
+.edit .nd{cursor:grab;touch-action:none}.edit .nd.drag{cursor:grabbing}.edit .gr .tg{cursor:grab;touch-action:none}
+.nd .st{position:absolute;right:8px;top:8px;width:9px;height:9px;border-radius:50%}
+.s-real .st{background:var(--ok)}.s-pend .st,.s-diag .st{background:var(--yellow-s)}.s-fut .st{background:#9CA3AF}.s-ban .st{background:var(--blue-s)}
+.s-fut{opacity:.78}
+.sel{outline:2px solid var(--purple-s);outline-offset:2px}
+.tb{display:none;position:absolute;left:0;top:-30px;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:2px;z-index:999}
+.edit .nd:hover .tb,.edit .nd.sel .tb{display:flex}
+.tb button{font-size:12px;border:0;background:transparent;cursor:pointer;padding:2px 5px;border-radius:5px;color:var(--fg)}.tb button:hover{background:var(--gray)}
+.rz{position:absolute;right:0;bottom:0;width:14px;height:14px;cursor:nwse-resize;display:none;background:linear-gradient(135deg,transparent 50%,var(--arrow) 50%);border-radius:0 0 10px 0;touch-action:none}
+.edit .nd .rz{display:block}
+.med{position:absolute;left:4px;bottom:-16px;font-size:10px;color:var(--muted);white-space:nowrap;display:none}.medidas .med{display:block}
+.lock .tg{opacity:.7}
+.gl{width:60%;height:60%;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic{flex:none;border-radius:50%;display:grid;place-items:center;color:#fff}
+/* estilo BLOCOS */
+.sk-b .nd{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 3px rgba(16,24,40,.1);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;overflow:hidden}
+.sk-b .nd.s-fut{border-style:dashed}
+.sk-b .nd .ic{width:36px;height:36px}.sk-b .nd .tx b{display:block;font-size:13.5px;line-height:1.25;padding-right:12px}.sk-b .nd .tx span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.sk-b .nd.col .tx span{display:none}
+/* estilo ILUSTRADO */
+.sk-i .nd{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center}
+.sk-i .nd svg.fg{width:100%;flex:1 1 auto;min-height:0;overflow:visible}.sk-i .nd .lb{font-weight:600;font-size:13.5px;line-height:1.2;padding-top:2px}
+.sk-i .nd .st{right:14px;top:4px}
+/* estilo AGENTES */
+.sk-a .nd{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.08);padding:7px 9px;display:flex;gap:8px;align-items:center;overflow:hidden}
+.sk-a .nd .ic{width:30px;height:30px}.sk-a .nd .tx b{display:block;font-size:12px;line-height:1.2;padding-right:8px}
+.sk-a .nd.s-fut{border-style:dashed}
+.sk-a .nd.dir{background:var(--purple-s);border-color:var(--purple-s);color:#fff}.sk-a .nd.dir .ic{background:rgba(255,255,255,.2)!important}
+.sk-a .nd.res{background:var(--orange);border-color:var(--orange);color:#1F2937;justify-content:center;text-align:center}.sk-a .nd.res .ic{background:rgba(31,41,55,.85)!important}
+.sk-a .nd.col .tx{display:none}
+@keyframes dash{to{stroke-dashoffset:-13}}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.18}}
+@keyframes bar{from{transform:scaleY(.35)}to{transform:scaleY(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slide{0%,40%{transform:translateX(0)}50%,90%{transform:translateX(14px)}100%{transform:translateX(0)}}
+@keyframes draw{from{stroke-dashoffset:140}to{stroke-dashoffset:0}}
+@keyframes typing{0%{transform:scaleX(.2)}60%,100%{transform:scaleX(1)}}
+@keyframes heat{0%{transform:translateY(0);opacity:0}30%{opacity:.8}100%{transform:translateY(-14px);opacity:0}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.led{animation:blink 1.6s steps(1) infinite}.led.d1{animation-delay:.3s}.led.d2{animation-delay:.7s}.led.d3{animation-delay:1.1s}
+.bar_{transform-box:fill-box;transform-origin:bottom;animation:bar 1.8s ease-in-out infinite alternate}.bar_.d1{animation-delay:.4s}.bar_.d2{animation-delay:.9s}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 5s linear infinite}
+.knob{animation:slide 4s ease-in-out infinite}.knob.d1{animation-delay:1.1s}.knob.d2{animation-delay:2.2s}
+.chart{stroke-dasharray:140;animation:draw 3s ease-in-out infinite alternate}
+.type{transform-box:fill-box;transform-origin:left;animation:typing 2.4s ease-in-out infinite alternate}.type.d1{animation-delay:.5s}.type.d2{animation-delay:1s}
+.heat{animation:heat 2.2s ease-out infinite}.heat.d1{animation-delay:.7s}.heat.d2{animation-delay:1.4s}
+.beat{transform-box:fill-box;transform-origin:center;animation:pulse 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+.fcard{fill:var(--card);stroke:var(--line);stroke-width:1}
+#tip{position:fixed;z-index:60;max-width:330px;background:var(--tipbg);color:var(--tipfg);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 6px 20px rgba(0,0,0,.3);pointer-events:none}
+#tip b{display:block;font-size:13px;margin-bottom:3px}#tip i{display:block;font-style:normal;opacity:.8;margin-top:4px;font-size:11.5px}
+.an{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;max-width:100%}
+.an h2{font-size:16px;margin:18px 0 8px}.an h2:first-child{margin-top:0}
+.an .tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.an table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:620px}.an th,.an td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.an th{background:var(--gray);font-weight:600}
+.an p,.an li{line-height:1.5}
+.pill{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:0 7px;font-size:11px;font-weight:600}
+.p-real{color:var(--ok)}.p-pend{color:var(--warn)}.p-fut{color:var(--fut)}.p-ban{color:var(--blue-s)}
+#exp{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+#exp.on{display:flex}#exp .box{background:var(--panel);border-radius:14px;max-width:760px;width:100%;padding:14px;display:flex;flex-direction:column;gap:8px;max-height:90vh}
+#exp textarea{width:100%;height:46vh;font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px}
+#exp .row{display:flex;gap:8px;flex-wrap:wrap}#exp button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:9px;padding:6px 12px;cursor:pointer}
+.nota{font-size:12px;color:var(--muted);margin-top:8px}
+.hint{font-size:12px;color:var(--muted)}
+@media print{.top .sub,.abas,.bar,.leg,.nota,.hint{display:none}.vp{max-height:none;border:0}}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <div class="top"><h1>Arquitetura BT2</h1><span class="sub">Um modelo, três estilos. Edite, salve e exporte como na maquete.</span></div>
+  <div class="abas" role="tablist" id="abas"></div>
+  <div class="bar" id="bar"></div>
+  <div class="leg" id="leg"><span><i class="dot d-real"></i>em uso</span><span><i class="dot d-pend"></i>pendente ou em diagnóstico</span><span><i class="dot d-fut"></i>futuro</span><span><i class="dot d-ban"></i>só bancada</span><span class="hint" id="dica">Passe o mouse (ou toque) nas figuras e nas linhas para ver os detalhes.</span></div>
+  <div id="vistaCena"><div class="vp" id="vp"><div class="esp" id="esp"><div id="cena"></div></div></div></div>
+  <div id="vistaAn" hidden></div>
+  <div id="tip" hidden></div>
+</div>
+<div id="exp"><div class="box"><b id="expT">Exportar</b><textarea id="expTx" readonly></textarea><div class="row"><button id="expCopia">Copiar</button><button id="expFecha">Fechar</button><span class="hint" id="expMsg"></span></div></div></div>
+
+<script>
+/* ============================== DADOS ============================== */
+var ST={real:'em uso',pend:'pendente',diag:'em diagnóstico',fut:'futuro',ban:'só bancada'};
+var CAT={tela:'blue',pc:'purple',plc:'mint',et:'yellow',campo:'pink',fut:'gray'};
+/* nos: id,nome,sub,st,cor,gl(icone pequeno),fig(figura animada),det,g(grupo blocos/ilustrado),ga(grupo agentes),b[cx,cy],a[cx,cy],in('b'=blocos+ilustrado,'a'=agentes),sz */
+var N=[
+ {id:'medidor',nome:'Medidor gerador',sub:'v1.10.167 · PC e celular',st:'real',cor:'blue',gl:'monitor',fig:'medidor',g:'G_TELA',ga:'A_OP',b:[170,90],a:[140,100],in:'ba',
+  det:'Tela principal. Usa o endereço da própria página (sem IP digitado). Lê as chaves a cada 1 s (GET) e envia os comandos (POST). Publica eventos em /api/dev/log-evento e, no navegador, nos canais bt2-dev-obs e bt2-grafico.'},
+ {id:'gerenciador',nome:'Gerenciador de logs',sub:'v1.7',st:'real',cor:'blue',gl:'log',fig:'logs',g:'G_TELA',ga:'A_OP',b:[390,90],a:[320,100],in:'ba',
+  det:'Lê GET /api/dev/logs e GET /api/logs/{banco}; limpa com POST /api/dev/logs/limpar; recebe também o canal bt2-dev-obs. O campo Servidor precisa apontar para o mesmo endereço da página.'},
+ {id:'grafico',nome:'Gráfico do ensaio',sub:'v0.11',st:'real',cor:'blue',gl:'chart',fig:'graf',g:'G_TELA',ga:'A_OP',b:[610,90],a:[500,100],in:'ba',
+  det:'Ensaio ao vivo em tela cheia (2º monitor) ou ensaio salvo. Recebe os dados do medidor por canal do navegador (BroadcastChannel bt2-grafico). A origem do campo de diretório (dirUrl) ainda não foi verificada.'},
+ {id:'devtools',nome:'Ferramentas de apoio',sub:'visor · mapa · maquete · amostras',st:'real',cor:'blue',gl:'tools',fig:'tools',g:'G_TELA',ga:'A_OP',b:[830,90],a:[680,100],in:'ba',
+  det:'Visor da API dos cards 0.3, Mapa dos FBs 0.15, Maquete de layout 0.4 e Simulador de amostras 0.7. Falam entre si e com o medidor por canais do navegador; a maquete não usa rede.'},
+ {id:'guarda',nome:'Guarda de escrita',sub:'só a própria tela, em JSON (403)',st:'real',cor:'purple',gl:'shield',fig:'shield',g:'G_PC',ga:'A_ORQ',b:[590,262],a:[420,250],in:'ba',cls:'dir',
+  det:'Toda rota de escrita confere o cabeçalho Origin (ou Referer) e o Content-Type JSON. Origem externa ou sem origem recebe 403 (proteção D3). Não substitui login.'},
+ {id:'nodered',nome:'Node-RED',sub:'PC BT2 (.156)',st:'real',cor:'purple',gl:'hub',fig:'nr',g:'G_PC',ga:'A_ORQ',b:[590,392],a:[700,250],in:'ba',sz:{blocos:[220,92],ilustrado:[150,132]},
+  det:'Ponte entre a tela e o PLC. Fila de comandos, revalidação na saída da fila, janela de confirmação de 2 s e quarentena por variável. Testado no Node-RED 5.0.9; a versão do PC ainda precisa ser confirmada.'},
+ {id:'pm2',nome:'PM2',sub:'mantém o Node-RED rodando',st:'real',cor:'purple',gl:'refresh',fig:'refresh',g:'G_PC',b:[880,262],in:'b',
+  det:'Gerenciador de processos do PC BT2. Pode guardar variáveis de ambiente (PLC_IP, DSE_URL); hoje os JSON do PC trazem o IP escrito dentro.'},
+ {id:'chaves',nome:'Chaves BC56 · BC400',sub:'v3.4 · /api/chaves/{banco}',st:'real',cor:'mint',gl:'toggle',fig:'chaves',g:'G_PC',b:[130,540],in:'b',
+  det:'Rotas: GET /api/chaves/{banco}; POST habilitar, selecionar, salvar, usarKwReal, limpar, ligar, banco, tensao; GET /api/logs/{banco}. Fila, revalidação, janela de 2 s, quarentena e reafirmação.'},
+ {id:'logs',nome:'Logs de desenvolvedor',sub:'v1.3 · /api/dev/*',st:'real',cor:'yellow',gl:'term',fig:'term',g:'G_PC',b:[340,540],in:'b',
+  det:'POST /api/dev/log-evento, GET /api/dev/logs, POST /api/dev/logs/limpar. Buffer em memória; sinais cursorAdiante e reiniciado.'},
+ {id:'registro',nome:'Registro do ensaio',sub:'v1.8 · /api/ensaio/*',st:'real',cor:'blue',gl:'clip',fig:'reg',g:'G_PC',b:[550,540],in:'b',
+  det:'GET/POST /api/ensaio/modo; POST preenchimento (Dados de Ensaio), etapa e limpar; GET snap. O preenchimento é gravado em duas fases (dados e depois o flag de validade). No futuro os Dados de Ensaio também virão do MES por OPC.'},
+ {id:'cli156',nome:'Ler gerador (.156)',sub:'grava o DB2000 no PLC',st:'real',cor:'pink',gl:'play',fig:'pulse',g:'G_PC',b:[770,540],in:'b',
+  det:'Botões Automático (a cada 2 s), Ler agora e Desligar. Lê http://localhost:1880/api/gerador e grava o DB2000 do PLC. Só este fluxo grava o DB2000 (o cliente do servidor .31 não deve rodar junto).'},
+ {id:'dse_srv',nome:'Deep Sea → REST',sub:'v3.6 · /api/gerador',st:'diag',cor:'pink',gl:'pulse',fig:'pulse',g:'G_PC',b:[1030,540],in:'b',
+  det:'Lê o DSE por Modbus TCP (somente leitura) e expõe GET /api/gerador. Hoje o DSE está desligado, então a resposta vem sem dados (ok:false).'},
+ {id:'chaves2',nome:'Chaves BC550 · BC595',sub:'v1.5 · Etapas 2 e 3',st:'pend',cor:'mint',gl:'toggle',fig:'chaves',g:'G_PC',b:[340,655],in:'b',
+  det:'Mesmas rotas do BC56 e do BC400, em /api/chaves/550 e /api/chaves/595. Ainda não importados no PC.'},
+ {id:'sim',nome:'Simulador DSE',sub:'v7 · só em bancada',st:'ban',cor:'blue',gl:'bolt',fig:'dse',g:'G_PC',b:[1030,655],in:'b',
+  det:'POST /api/simulador/dse. Só funciona com BT2_BANCADA=1 na aba; nunca deve ser importado no PC de produção.'},
+ {id:'db_chaves',nome:'DB3000 · DB3100',sub:'chaves (cb e sb)',st:'real',cor:'mint',gl:'db',fig:'db',g:'G_PLC',b:[130,810],in:'b',
+  det:'Chaves do BC56 (DB3000) e do BC400 (DB3100). Lidas a cada 200 ms. Renumerados e carregados no 1515.'},
+ {id:'db_setup',nome:'DB3002 · DB3102',sub:'Setup por tensão',st:'real',cor:'mint',gl:'db',fig:'db',g:'G_PLC',b:[340,810],in:'b',
+  det:'Setup por tensão (220, 380 e 440 V) do BC56 e do BC400. Lido a cada 1 s.'},
+ {id:'db2100',nome:'DB2100',sub:'snapshot do ensaio',st:'real',cor:'mint',gl:'db',fig:'db',g:'G_PLC',b:[550,810],in:'b',
+  det:'Snapshot do registro do ensaio. Os dados só valem com preenchValido verdadeiro.'},
+ {id:'db2000',nome:'DB2000',sub:'dados do DSE',st:'real',cor:'mint',gl:'db',fig:'db',g:'G_PLC',b:[770,810],in:'b',
+  det:'Dados do DSE gravados pelo fluxo Ler gerador (.156).'},
+ {id:'plc',nome:'PLC 1500 · Ensaio',sub:'FB100 (setup) · FB101 (ET200)',st:'real',cor:'mint',gl:'cpu',fig:'plc',g:'G_PLC',ga:'A_SIS',b:[460,945],a:[150,830],in:'ba',sz:{blocos:[300,96],ilustrado:[170,120]},
+  det:'PLC 1500 do Ensaio (tudo o que foi desenvolvido até agora). Os DBs foram renumerados e carregados sem erro. FB100: setup das chaves. FB101: PUT/GET com o ET200 (vida do 1515 e do ET200, seletora do banco).'},
+ {id:'mes',nome:'MES Four Elements',sub:'dados de ensaio · OPC',st:'fut',cor:'gray',gl:'factory',fig:'mes',g:'G_PLC',ga:'A_FUT',b:[130,945],a:[330,965],in:'ba',
+  det:'MES da empresa. Vai preencher os Dados de Ensaio (série, versão, data, fase, frequência, tensão, temperatura ambiente, potência e equipamentos) por OPC. Hoje esses dados são digitados no medidor e gravados no DB2100 pelo registro. O caminho físico do OPC (direto no PLC 1500 ou pelo Node-RED) ainda é a definir.'},
+ {id:'sql',nome:'SQL Server',sub:'histórico (futuro)',st:'fut',cor:'gray',gl:'db',fig:'sql',g:'G_PLC',ga:'A_FUT',b:[950,945],a:[560,965],in:'ba',
+  det:'Histórico fora do caminho de comando: gravação assíncrona pelo Node-RED (logs, registro do ensaio, auditoria). Ainda não implementado.'},
+ {id:'et200',nome:'ET200 / 1200',sub:'provisório · comunicação em diagnóstico',st:'diag',cor:'yellow',gl:'server',fig:'et',g:'G_ET',ga:'A_SIS',b:[590,1110],a:[380,830],in:'ba',sz:{blocos:[250,86],ilustrado:[150,120]},
+  det:'Faz o papel do PLC do Banco de Carga. Fala com o PLC 1500 por PUT/GET (FB101). A vida do ET200 precisa mudar a cada 3 s; senão ComOk fica falso e o card do banco é bloqueado no medidor (é o que está em diagnóstico).'},
+ {id:'dse_sig',nome:'Sinais do DSE',sub:'para o banco de carga',st:'fut',cor:'gray',gl:'pulse',fig:'pulse',g:'G_ET',b:[930,1110],in:'b',
+  det:'Envio dos sinais do DSE ao banco de carga (futuro).'},
+ {id:'bc56',nome:'BC56',sub:'13 chaves · DB3000',st:'real',cor:'yellow',gl:'server',fig:'bc',g:'G_ET',b:[170,1240],in:'b',sz:{blocos:[170,70],ilustrado:[120,100]},det:'Banco BC56: 13 chaves, em uso.'},
+ {id:'bc400',nome:'BC400',sub:'13 chaves · DB3100',st:'real',cor:'yellow',gl:'server',fig:'bc',g:'G_ET',b:[390,1240],in:'b',sz:{blocos:[170,70],ilustrado:[120,100]},det:'Banco BC400: 13 chaves, em uso.'},
+ {id:'bc550',nome:'BC550',sub:'12 chaves · DB3300',st:'pend',cor:'yellow',gl:'server',fig:'bc',g:'G_ET',b:[610,1240],in:'b',sz:{blocos:[170,70],ilustrado:[120,100]},det:'Banco BC550: 12 chaves. Etapa 2, ainda não importado.'},
+ {id:'bc595',nome:'BC595',sub:'18 chaves · DB3200',st:'pend',cor:'yellow',gl:'server',fig:'bc',g:'G_ET',b:[830,1240],in:'b',sz:{blocos:[170,70],ilustrado:[120,100]},det:'Banco BC595: 18 chaves (bloco de 32). Etapa 3, ainda não importado.'},
+ {id:'bancos',nome:'Bancos de carga',sub:'contatores e resistores',st:'real',cor:'pink',gl:'res',fig:'res',g:'G_CAMPO',ga:'A_SIS',b:[400,1385],a:[610,830],in:'ba',sz:{blocos:[250,84],ilustrado:[150,110]},
+  det:'Contatores, chaves de potência e resistores. Na bancada a carga de potência fica desacoplada.'},
+ {id:'gerador',nome:'Gerador',sub:'em ensaio',st:'real',cor:'pink',gl:'bolt',fig:'ger',g:'G_CAMPO',ga:'A_SIS',b:[700,1385],a:[820,830],in:'ba',det:'Gerador em ensaio; alimenta os bancos de carga.'},
+ {id:'dse',nome:'DSE (controlador)',sub:'Modbus TCP · desligado hoje',st:'diag',cor:'pink',gl:'pulse',fig:'dse',g:'G_CAMPO',ga:'A_OP',b:[960,1385],a:[1010,100],in:'ba',
+  det:'Controlador do gerador. Fala Modbus TCP com o Node-RED (unit 10). Está desligado hoje.'},
+ {id:'srv31',nome:'Servidor virtual (.31)',sub:'sem uso hoje',st:'fut',cor:'gray',gl:'server',fig:'srv',g:'G_FUT',ga:'A_FUT',b:[130,1545],a:[780,965],in:'ba',det:'Reservado para o futuro. Não roda fluxo nenhum hoje.'},
+ /* so no estilo Agentes */
+ {id:'ch1',nome:'Fila e revalidação',st:'real',cor:'mint',gl:'list',ga:'A_CH',a:[450,400],in:'a',sz:{agentes:[180,54]},det:'Um comando por vez; revalida o estado ao sair da fila. O Desligar banco tem prioridade e cancela os "ligar" pendentes (409).'},
+ {id:'ch2',nome:'Confirma em até 2 s',st:'real',cor:'mint',gl:'clock',ga:'A_CH',a:[450,480],in:'a',sz:{agentes:[180,54]},det:'Lê de volta do PLC. Sem confirmação em 2 s, responde 504 "incerto" (confira o estado antes de repetir).'},
+ {id:'ch3',nome:'Quarentena e reafirmação',st:'real',cor:'mint',gl:'shield',ga:'A_CH',a:[450,560],in:'a',sz:{agentes:[180,54]},det:'Depois de um 504 a variável fica em quarentena (503 AGUARDE_CONFIRMACAO). Comandos de segurança passam e são reafirmados.'},
+ {id:'rg1',nome:'Fase 1: grava os dados',st:'real',cor:'blue',gl:'edit',ga:'A_RG',a:[170,400],in:'a',sz:{agentes:[180,54]},det:'Grava o preenchimento (Dados de Ensaio) com o flag de validade em falso. Hoje vem do medidor; no futuro, também do MES por OPC.'},
+ {id:'rg2',nome:'Confere a leitura',st:'real',cor:'blue',gl:'check',ga:'A_RG',a:[170,480],in:'a',sz:{agentes:[180,54]},det:'Lê de volta e compara com o que foi escrito.'},
+ {id:'rg3',nome:'Fase 2: valida o snapshot',st:'real',cor:'blue',gl:'check',ga:'A_RG',a:[170,560],in:'a',sz:{agentes:[180,54]},det:'Só então grava o flag de validade como verdadeiro.'},
+ {id:'lg1',nome:'Recebe o lote',st:'real',cor:'yellow',gl:'term',ga:'A_LG',a:[730,400],in:'a',sz:{agentes:[180,54]},det:'POST /api/dev/log-evento com até 200 eventos por lote.'},
+ {id:'lg2',nome:'Remove duplicados',st:'real',cor:'yellow',gl:'list',ga:'A_LG',a:[730,480],in:'a',sz:{agentes:[180,54]},det:'Descarta só a repetição exata (janela dos últimos 500 números por sessão).'},
+ {id:'lg3',nome:'Guarda em memória',st:'real',cor:'yellow',gl:'db',ga:'A_LG',a:[730,560],in:'a',sz:{agentes:[180,54]},det:'Buffer circular de 5000 eventos; some se o Node-RED reiniciar.'},
+ {id:'dg1',nome:'Lê o DSE (Modbus TCP)',st:'diag',cor:'pink',gl:'pulse',ga:'A_DG',a:[1010,400],in:'a',sz:{agentes:[180,54]},det:'Leitura somente leitura do DSE por Modbus TCP. Hoje o DSE está desligado.'},
+ {id:'dg2',nome:'Publica /api/gerador',st:'diag',cor:'pink',gl:'play',ga:'A_DG',a:[1010,480],in:'a',sz:{agentes:[180,54]},det:'GET /api/gerador devolve a última leitura.'},
+ {id:'dg3',nome:'Grava o DB2000',st:'real',cor:'pink',gl:'db',ga:'A_DG',a:[1010,560],in:'a',sz:{agentes:[180,54]},det:'O fluxo Ler gerador (.156) grava os dados no DB2000 do PLC.'},
+ {id:'res',nome:'Comando confirmado no PLC e estado devolvido à tela',st:'real',cor:'pink',gl:'check',ga:'A_RES',a:[590,680],in:'a',cls:'res',sz:{agentes:[660,50]},det:'Resultado do circuito: o PLC confirma, o Node-RED responde e a tela mostra o estado real.'},
+ {id:'tia',nome:'TIA Portal',st:'real',cor:'gray',gl:'cpu',ga:'A_FER',a:[150,1095],in:'a',det:'Programa e carrega os blocos no PLC 1500 e no ET200/1200.'},
+ {id:'pm2b',nome:'PM2',st:'real',cor:'gray',gl:'refresh',ga:'A_FER',a:[400,1095],in:'a',det:'Mantém o Node-RED rodando no PC BT2.'},
+ {id:'git',nome:'GitHub',st:'real',cor:'gray',gl:'git',ga:'A_FER',a:[620,1095],in:'a',det:'Repositório do projeto. O PC BT2 não alcança o GitHub: a entrega vai por pacote .zip, levado pelo notebook.'},
+ {id:'tests',nome:'Suíte de testes',st:'real',cor:'gray',gl:'check',ga:'A_FER',a:[840,1095],in:'a',det:'190 testes de integração (Node.js e Playwright) contra um PLC simulado. Não substitui a validação na bancada.'}
+];
+/* grupos: id,nome,cor,skins */
+var G=[
+ {id:'G_TELA',nome:'Tela (navegador do PC e do celular)',cor:'blue',sk:'bi'},{id:'G_PC',nome:'PC BT2 (.156) · Node-RED',cor:'purple',sk:'bi'},
+ {id:'G_PLC',nome:'PLC 1500 · Ensaio',cor:'mint',sk:'bi',tr:1},{id:'G_ET',nome:'ET200 / 1200 · Banco de Carga (provisório)',cor:'yellow',sk:'bi'},
+ {id:'G_CAMPO',nome:'Campo',cor:'pink',sk:'bi',tr:1},{id:'G_FUT',nome:'Reservado para o futuro',cor:'gray',sk:'bi'},
+ {id:'A_OP',nome:'Entradas e operação',cor:'blue',sk:'a'},{id:'A_ORQ',nome:'Orquestração · PC BT2 (.156)',cor:'purple',sk:'a',tr:1},
+ {id:'A_CH',nome:'Chaves',cor:'mint',sk:'a'},{id:'A_RG',nome:'Registro',cor:'blue',sk:'a'},{id:'A_LG',nome:'Logs',cor:'yellow',sk:'a'},{id:'A_DG',nome:'Gerador',cor:'pink',sk:'a'},
+ {id:'A_SIS',nome:'Sistemas conectados',cor:'mint',sk:'a',tr:1},{id:'A_FUT',nome:'Reservado para o futuro',cor:'gray',sk:'a',tr:1},{id:'A_FER',nome:'Ferramentas',cor:'gray',sk:'a',tr:1}
+];
+/* ligacoes: id,de,para,rot,st,det,sk('b'=blocos+ilustrado,'a'=agentes),opts */
+var E=[
+ {id:'e1',de:'medidor',pa:'guarda',rot:'HTTP',st:'real',sk:'b',det:'HTTP + JSON. Leitura (GET) a cada 1 s e comandos (POST) com o cabeçalho Origin da própria página.'},
+ {id:'e2',de:'gerenciador',pa:'guarda',rot:'',st:'real',sk:'b',det:'HTTP: lê /api/dev/logs e /api/logs/{banco}; POST /api/dev/logs/limpar.'},
+ {id:'e3',de:'grafico',pa:'guarda',rot:'',st:'real',sk:'b',det:'HTTP (leitura) quando precisa de dados do Node-RED. Os dados do ensaio chegam do medidor por canal do navegador.'},
+ {id:'e4',de:'devtools',pa:'guarda',rot:'',st:'real',sk:'b',det:'HTTP (leitura) usado pelo visor da API e pelas outras ferramentas de apoio.'},
+ {id:'e5',de:'guarda',pa:'nodered',rot:'',st:'real',sk:'b',det:'Pedido aceito segue para os fluxos.'},
+ {id:'e6',de:'pm2',pa:'nodered',rot:'mantém',st:'real',sk:'b',det:'O PM2 mantém o processo do Node-RED em execução.'},
+ {id:'e7',de:'nodered',pa:'chaves',rot:'',st:'real',sk:'b',det:'Fluxos chaves-56 e chaves-400.'},
+ {id:'e8',de:'nodered',pa:'logs',rot:'',st:'real',sk:'b',det:'Fluxo dev-logs.'},
+ {id:'e9',de:'nodered',pa:'registro',rot:'',st:'real',sk:'b',det:'Fluxo registro-ensaio.'},
+ {id:'e10',de:'nodered',pa:'cli156',rot:'',st:'real',sk:'b',det:'Fluxo Ler gerador (.156).'},
+ {id:'e11',de:'nodered',pa:'dse_srv',rot:'',st:'real',sk:'b',det:'Fluxo Deep Sea → REST.'},
+ {id:'e12',de:'nodered',pa:'chaves2',rot:'',st:'pend',sk:'b',det:'Fluxos chaves-550 e chaves-595, ainda não importados.',o:{sa:'l',sb:'l',via:14}},
+ {id:'e13',de:'cli156',pa:'dse_srv',rot:'HTTP',st:'real',sk:'b',det:'GET http://localhost:1880/api/gerador (a cada 2 s no modo automático).'},
+ {id:'e14',de:'chaves',pa:'db_chaves',rot:'S7 · 200 ms',st:'real',sk:'b',det:'S7 ISO-on-TCP: lê os DBs de chaves e escreve os comandos.'},
+ {id:'e15',de:'chaves',pa:'db_setup',rot:'S7 · 1 s',st:'real',sk:'b',det:'S7: lê e grava o Setup por tensão.'},
+ {id:'e16',de:'registro',pa:'db2100',rot:'S7',st:'real',sk:'b',det:'S7: grava o snapshot do ensaio em duas fases.'},
+ {id:'e17',de:'cli156',pa:'db2000',rot:'S7',st:'real',sk:'b',det:'S7: escreve os dados do DSE no DB2000.'},
+ {id:'e18',de:'nodered',pa:'sql',rot:'assíncrono',st:'fut',sk:'b',det:'Gravação assíncrona e com nova tentativa: a queda do SQL nunca atrasa um comando.',o:{sa:'r',sb:'r',via:1210}},
+ {id:'e19',de:'mes',pa:'db2100',rot:'OPC',st:'fut',sk:'b',det:'OPC: o MES Four Elements preenche os Dados de Ensaio (os mesmos campos do preenchimento do registro, gravados no DB2100). O caminho físico do OPC ainda é a definir.'},
+ {id:'e20',de:'plc',pa:'et200',rot:'PUT/GET',st:'diag',sk:'b',bi:1,det:'PUT/GET de 6 bytes: comando das chaves, vida do 1515 e Ligar banco; retorno com feedback, vida do ET200 e seletora em Auto. Hoje o ComOk está falso.'},
+ {id:'e21',de:'dse_sig',pa:'et200',rot:'futuro',st:'fut',sk:'b',det:'Sinais do DSE para o banco de carga (futuro).'},
+ {id:'e22',de:'et200',pa:'bc56',rot:'',st:'real',sk:'b',det:'Módulo do BC56.'},{id:'e23',de:'et200',pa:'bc400',rot:'',st:'real',sk:'b',det:'Módulo do BC400.'},
+ {id:'e24',de:'et200',pa:'bc550',rot:'',st:'pend',sk:'b',det:'Módulo do BC550 (Etapa 2).'},{id:'e25',de:'et200',pa:'bc595',rot:'',st:'pend',sk:'b',det:'Módulo do BC595 (Etapa 3).'},
+ {id:'e26',de:'bc56',pa:'bancos',rot:'contatores',st:'real',sk:'b',det:'Contatores e chaves de potência. Na bancada a carga fica desacoplada.'},
+ {id:'e27',de:'bc400',pa:'bancos',rot:'',st:'real',sk:'b',det:'Contatores do BC400.'},{id:'e28',de:'bc550',pa:'bancos',rot:'',st:'pend',sk:'b',det:'Contatores do BC550.'},{id:'e29',de:'bc595',pa:'bancos',rot:'',st:'pend',sk:'b',det:'Contatores do BC595.'},
+ {id:'e30',de:'dse_srv',pa:'dse',rot:'Modbus TCP',st:'diag',sk:'b',bi:1,det:'Modbus TCP (unit 10) entre o fluxo Deep Sea → REST e o DSE. Desligado hoje.',o:{sa:'r',sb:'r',via:1180}},
+ {id:'e31',de:'dse',pa:'gerador',rot:'controle',st:'real',sk:'b',bi:1,det:'Controle e medição do gerador.'},
+ {id:'e32',de:'gerador',pa:'bancos',rot:'potência',st:'real',sk:'b',det:'Alimentação de potência dos bancos de carga.'},
+ /* agentes */
+ {id:'a1',de:'medidor',pa:'guarda',rot:'HTTP',st:'real',sk:'a',det:'HTTP + JSON.'},{id:'a2',de:'gerenciador',pa:'guarda',rot:'',st:'real',sk:'a',det:'HTTP.'},
+ {id:'a3',de:'grafico',pa:'guarda',rot:'',st:'real',sk:'a',det:'HTTP.'},{id:'a4',de:'devtools',pa:'guarda',rot:'',st:'real',sk:'a',det:'HTTP.'},
+ {id:'a5',de:'guarda',pa:'nodered',rot:'',st:'real',sk:'a',det:'Pedido aceito segue para os fluxos.'},
+ {id:'a6',de:'nodered',pa:'ch1',rot:'',st:'real',sk:'a',det:'Fluxo de chaves.'},{id:'a7',de:'nodered',pa:'rg1',rot:'',st:'real',sk:'a',det:'Fluxo de registro.'},
+ {id:'a8',de:'nodered',pa:'lg1',rot:'',st:'real',sk:'a',det:'Fluxo de logs.'},{id:'a9',de:'nodered',pa:'dg1',rot:'',st:'real',sk:'a',det:'Fluxo do gerador.'},
+ {id:'a10',de:'ch1',pa:'ch2',rot:'',st:'real',sk:'a',det:'',nolab:1},{id:'a11',de:'ch2',pa:'ch3',rot:'',st:'real',sk:'a',det:''},
+ {id:'a12',de:'rg1',pa:'rg2',rot:'',st:'real',sk:'a',det:''},{id:'a13',de:'rg2',pa:'rg3',rot:'',st:'real',sk:'a',det:''},
+ {id:'a14',de:'lg1',pa:'lg2',rot:'',st:'real',sk:'a',det:''},{id:'a15',de:'lg2',pa:'lg3',rot:'',st:'real',sk:'a',det:''},
+ {id:'a16',de:'dg1',pa:'dg2',rot:'',st:'diag',sk:'a',det:''},{id:'a17',de:'dg2',pa:'dg3',rot:'',st:'real',sk:'a',det:''},
+ {id:'a18',de:'dse',pa:'dg1',rot:'Modbus TCP',st:'diag',sk:'a',det:'Modbus TCP (unit 10). Desligado hoje.'},
+ {id:'a19',de:'ch3',pa:'res',rot:'',st:'real',sk:'a',det:''},{id:'a20',de:'rg3',pa:'res',rot:'',st:'real',sk:'a',det:''},{id:'a21',de:'lg3',pa:'res',rot:'',st:'real',sk:'a',det:''},{id:'a22',de:'dg3',pa:'res',rot:'',st:'real',sk:'a',det:''},
+ {id:'a23',de:'res',pa:'plc',rot:'S7',st:'real',sk:'a',det:'Os fluxos falam com o PLC por S7 ISO-on-TCP.'},
+ {id:'a24',de:'plc',pa:'et200',rot:'PUT/GET',st:'diag',sk:'a',bi:1,det:'PUT/GET entre o PLC 1500 e o ET200. ComOk falso hoje.'},
+ {id:'a25',de:'et200',pa:'bancos',rot:'contatores',st:'real',sk:'a',det:'Contatores e chaves de potência.'},
+ {id:'a26',de:'gerador',pa:'bancos',rot:'potência',st:'real',sk:'a',det:'Alimentação dos bancos de carga.'},
+ {id:'a27',de:'res',pa:'sql',rot:'futuro',st:'fut',sk:'a',det:'Histórico no SQL Server (futuro), gravação assíncrona.'},
+ {id:'a28',de:'mes',pa:'rg1',rot:'OPC',st:'fut',sk:'a',det:'O MES Four Elements preenche os Dados de Ensaio por OPC (hoje digitados no medidor). O caminho físico do OPC ainda é a definir.',o:{sa:'l',sb:'l',via:30}},
+ {id:'a29',de:'tia',pa:'plc',rot:'carga dos blocos',st:'real',sk:'a',det:'O TIA Portal programa e carrega o PLC.'}
+];
+var ROTAS=[
+ ['chaves-56 / chaves-400 (v3.4)','GET /api/chaves/{56|400}','POST /api/chaves/{id}/habilitar · selecionar · salvar · usarKwReal · limpar · ligar · banco · tensao','GET /api/logs/{id}','em uso'],
+ ['chaves-550 / chaves-595 (v1.5)','GET /api/chaves/{550|595}','mesmas rotas POST','GET /api/logs/{id}','pendente'],
+ ['registro-ensaio (v1.8)','GET /api/ensaio/modo · GET /api/ensaio/snap','POST /api/ensaio/modo · snap/preenchimento · snap/etapa · snap/limpar','—','em uso'],
+ ['dev-logs (v1.3)','GET /api/dev/logs','POST /api/dev/log-evento · POST /api/dev/logs/limpar','—','em uso'],
+ ['Deep Sea → REST (v3.6)','GET /api/gerador','—','—','em diagnóstico (DSE desligado)'],
+ ['simulador-dse (v7)','—','POST /api/simulador/dse','—','só bancada']
+];
+var FERR=[['Node-RED','5.0.9 nos testes; versão do PC a confirmar','PC BT2 (.156)'],['PM2','mantém o Node-RED; pasta C:\\pm2-home','PC BT2'],['TIA Portal','programa o PLC 1500 e o ET200/1200','notebook'],['GitHub','repositório; o PC BT2 não o acessa (pacote .zip)','nuvem'],['Suíte de testes','190 testes (Node.js + Playwright), PLC simulado','repositório'],['Navegador','roda as telas HTML; canais bt2-dev-obs, bt2-grafico, fbv','PC e celular']];
+var PEND=[
+ ['Caminho físico do OPC (MES Four Elements)','O MES vai preencher os Dados de Ensaio por OPC (hoje digitados no medidor e gravados no DB2100). Falta definir se o OPC entra direto no PLC 1500 ou passa pelo Node-RED.'],
+ ['Comunicação PLC 1500 ↔ ET200','ComOk falso: a vida do ET200 não chega ao FB101. Diagnóstico no db3005i_BC56_ComEt200 (ComOk, StatusPut, StatusGet, FalhaPut, FalhaGet).'],
+ ['DSE desligado','O fluxo Deep Sea → REST responde sem dados. Os sinais do DSE para o ET200 são futuros.'],
+ ['Versão do Node-RED e PM2 do PC','O PM2 não respondeu ao pm2 list nesta sessão do notebook (pasta C:\\pm2-home).'],
+ ['Gráfico do ensaio','A origem do campo dirUrl ainda não foi verificada.'],
+ ['SQL Server','Futuro: gravação assíncrona, fora do caminho de comando.'],
+ ['BC550 e BC595','Etapas 2 e 3: blocos do ET200/1200 e fluxos v1.5 ainda não importados.']
+];
+/* ============================== ESTADO ============================== */
+var SKINS={blocos:{cl:'sk-b',nome:'Blocos',W:1240,H:1670},ilustrado:{cl:'sk-i',nome:'Ilustrado',W:1240,H:2190},agentes:{cl:'sk-a',nome:'Agentes',W:1180,H:1210}};
+var FY={blocos:1,ilustrado:1.3,agentes:1}; /* o estilo Ilustrado tem figuras mais altas: afasta as camadas na vertical */
+var SZ={blocos:[200,84],ilustrado:[134,124],agentes:[150,62]};
+var CHAVE='bt2.arquitetura.v1';
+var S={skin:'blocos',aba:'cena',zoom:1,edit:false,grid:true,medidas:false,fut:true,sel:null,per:{blocos:{},ilustrado:{},agentes:{}},ov:{}};
+function P(){var s=S.per[S.skin];if(!s.pos){s.pos={};s.hid={};s.lock={};s.col={};s.z={};}return s}
+function nodoPorId(i){for(var k=0;k<N.length;k++)if(N[k].id===i)return N[k]}
+function visivel(n){var sk=S.skin==='agentes'?'a':'b';if(n.in.indexOf(sk)<0)return false;if(!S.fut&&n.st==='fut')return false;return true}
+function ov(n){return S.ov[n.id]||{}}
+function nome(n){return ov(n).nome||n.nome}function sub(n){return ov(n).sub!==undefined?ov(n).sub:(n.sub||'')}function stat(n){return ov(n).st||n.st}
+function ret(n){var p=P(),r=p.pos[n.id];if(r)return r;var c=S.skin==='agentes'?n.a:n.b;var z=(n.sz&&n.sz[S.skin])||SZ[S.skin];return [Math.round(c[0]-z[0]/2),Math.round(c[1]*FY[S.skin]-z[1]/2),z[0],z[1]]}
+/* ============================== ROTEAMENTO ============================== */
+function grupoDe(n){return S.skin==='agentes'?n.ga:n.g}
+function grect(gid){var p=P(),ms=N.filter(function(n){return grupoDe(n)===gid&&visivel(n)&&!p.hid[n.id]});if(!ms.length)return null;var x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;
+  ms.forEach(function(n){var r=ret(n);x1=Math.min(x1,r[0]);y1=Math.min(y1,r[1]);x2=Math.max(x2,r[0]+r[2]);y2=Math.max(y2,r[1]+r[3])});return [x1-18,y1-44,x2-x1+36,y2-y1+62]}
+function rotas(){
+  var p=P(),sk=S.skin==='agentes'?'a':'b',res=[];
+  var por={};
+  E.forEach(function(e){ if(e.sk!==sk)return;var a=nodoPorId(e.de),b=nodoPorId(e.pa);if(!a||!b||!visivel(a)||!visivel(b)||p.hid[a.id]||p.hid[b.id])return;
+    var r1=ret(a),r2=ret(b),sa,sb;
+    if(e.o&&e.o.sa){sa=e.o.sa;sb=e.o.sb}
+    else if(r2[1]>r1[1]+r1[3]-4){sa='b';sb='t'}else if(r2[1]+r2[3]<r1[1]+4){sa='t';sb='b'}else if(r2[0]+r2[2]/2>r1[0]+r1[2]/2){sa='r';sb='l'}else{sa='l';sb='r'}
+    var o={e:e,a:a,b:b,r1:r1,r2:r2,sa:sa,sb:sb};res.push(o);
+    (por[a.id+sa]=por[a.id+sa]||[]).push({o:o,k:'s',oc:(sa==='t'||sa==='b')?r2[0]+r2[2]/2:r2[1]+r2[3]/2});
+    (por[b.id+sb]=por[b.id+sb]||[]).push({o:o,k:'t',oc:(sb==='t'||sb==='b')?r1[0]+r1[2]/2:r1[1]+r1[3]/2});
+  });
+  for(var k in por){var L=por[k];L.sort(function(x,y){return x.oc-y.oc});L.forEach(function(it,i){it.o['f'+it.k]=(i+1)/(L.length+1)})}
+  function ancora(r,s,f){f=f||.5;return s==='t'?[r[0]+r[2]*f,r[1]]:s==='b'?[r[0]+r[2]*f,r[1]+r[3]]:s==='l'?[r[0],r[1]+r[3]*f]:[r[0]+r[2],r[1]+r[3]*f]}
+  res.forEach(function(o){
+    var s=ancora(o.r1,o.sa,o.fs),t=ancora(o.r2,o.sb,o.ft),pts;
+    if(o.e.o&&o.e.o.via){var vx=o.e.o.via;pts=[s,[vx,s[1]],[vx,t[1]],t]}
+    else if(o.sa==='b'||o.sa==='t'){var my=Math.round((s[1]+t[1])/2),ga=o.a.id&&grupoDe(o.a),gb=grupoDe(o.b);
+      if(ga!==gb){var gr1=ga&&grect(ga),gr2=gb&&grect(gb),se,te;
+        if(o.sa==='b'){se=gr1?gr1[1]+gr1[3]:o.r1[1]+o.r1[3];te=gr2?gr2[1]:o.r2[1]}else{se=gr1?gr1[1]:o.r1[1];te=gr2?gr2[1]+gr2[3]:o.r2[1]+o.r2[3]}
+        if((o.sa==='b'&&te>se)||(o.sa==='t'&&te<se))my=Math.round((se+te)/2)}
+      pts=[s,[s[0],my],[t[0],my],t]}
+    else{var mx=Math.round((s[0]+t[0])/2);pts=[s,[mx,s[1]],[mx,t[1]],t]}
+    o.pts=pts;
+    var seg=pts.length===4?[pts[1],pts[2]]:[pts[0],pts[1]];o.lab=[(seg[0][0]+seg[1][0])/2,(seg[0][1]+seg[1][1])/2];
+    if(Math.abs(seg[0][0]-seg[1][0])<2&&Math.abs(seg[0][1]-seg[1][1])<2)o.lab=[pts[1][0],pts[1][1]];
+  });
+  return res;
+}
+/* ============================== DESENHO ============================== */
+var GL={monitor:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',log:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20V8"/>',
+ shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',hub:'<circle cx="6" cy="7" r="2.5"/><circle cx="6" cy="17" r="2.5"/><circle cx="18" cy="13" r="2.5"/><path d="M8.5 7H12q2 0 2 3t4 3M8.5 17H12"/>',
+ toggle:'<rect x="1" y="7" width="22" height="10" rx="5"/><circle cx="16" cy="12" r="3"/>',clip:'<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/>',
+ term:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 10l3 2-3 2M12 15h5"/>',pulse:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',db:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/>',
+ cpu:'<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>',server:'<rect x="2" y="3" width="20" height="8" rx="2"/><rect x="2" y="13" width="20" height="8" rx="2"/><path d="M6 7h.01M6 17h.01"/>',
+ bolt:'<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',factory:'<path d="M2 21V10l6 3V9l6 3V6h4v15z"/><path d="M2 21h20"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+ refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',git:'<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7M18 10.5c0 4-6 3-12 6"/>',
+ check:'<circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/>',list:'<path d="M4 6h16M4 12h16M4 18h10"/>',play:'<polygon points="6 4 20 12 6 20 6 4"/>',edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+ tools:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',res:'<path d="M3 12h4l2-6 4 12 3-9 2 3h3"/>'};
+function glifo(k){return '<svg class="gl" viewBox="0 0 24 24">'+(GL[k]||GL.cpu)+'</svg>'}
+var COR={blue:'var(--blue-s)',mint:'var(--mint-s)',yellow:'var(--yellow-s)',pink:'var(--pink-s)',purple:'var(--purple-s)',gray:'var(--gray-s)'};
+var FIG={
+ medidor:'<rect x="-40" y="-34" width="80" height="56" rx="8" class="fcard" style="stroke:#3F82E8;stroke-width:3"/><path d="M-12 22v10M-26 32h28" stroke="#3F82E8" stroke-width="3" fill="none" stroke-linecap="round"/><rect class="bar_" x="-28" y="-10" width="11" height="24" rx="2" fill="#3F82E8"/><rect class="bar_ d1" x="-7" y="-22" width="11" height="36" rx="2" fill="#2FAE7C"/><rect class="bar_ d2" x="14" y="-4" width="11" height="18" rx="2" fill="#E0A21B"/>',
+ logs:'<rect x="-30" y="-36" width="60" height="72" rx="8" class="fcard" style="stroke:#E0A21B;stroke-width:3"/><rect class="type" x="-19" y="-22" width="38" height="5" rx="2.5" fill="#E0A21B"/><rect class="type d1" x="-19" y="-10" width="30" height="5" rx="2.5" fill="#E0A21B"/><rect class="type d2" x="-19" y="2" width="38" height="5" rx="2.5" fill="#E0A21B"/><rect class="type d1" x="-19" y="14" width="24" height="5" rx="2.5" fill="#E0A21B"/>',
+ graf:'<rect x="-40" y="-34" width="80" height="62" rx="8" class="fcard" style="stroke:#2FAE7C;stroke-width:3"/><path d="M-28 12L-12-8L2 2L16-18L28-6" class="chart" stroke="#2FAE7C" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+ tools:'<g class="spin"><circle r="16" fill="none" stroke="#64748B" stroke-width="6"/><path d="M0-30V-20M0 20V30M-30 0H-20M20 0H30M-21-21l7 7M14 14l7 7M-21 21l7-7M14-14l7-7" stroke="#64748B" stroke-width="6" stroke-linecap="round"/></g><circle r="5" fill="#64748B"/>',
+ shield:'<path d="M0-38s30 12 30 30v22c0 18-18 30-30 36-12-6-30-18-30-36v-22c0-18 30-30 30-30z" class="fcard" style="stroke:#6D4BD8;stroke-width:3"/><path d="M-12-4l9 10 17-19" stroke="#2FAE7C" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+ nr:'<rect x="-48" y="-48" width="96" height="96" rx="20" fill="#8F0000"/><path d="M-26-12H0Q10-12 10 0Q10 12 20 12H26M-26 14H-6" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/><circle cx="-26" cy="-12" r="8" fill="#fff"/><circle cx="-26" cy="14" r="8" fill="#fff"/><circle cx="26" cy="12" r="8" fill="#fff"/><circle class="beat" cx="-26" cy="-12" r="3.5" fill="#8F0000"/><circle class="beat" cx="26" cy="12" r="3.5" fill="#8F0000" style="animation-delay:.5s"/>',
+ refresh:'<g class="spin"><path d="M-22 0a22 22 0 0 1 38-15M22 0a22 22 0 0 1-38 15" fill="none" stroke="#64748B" stroke-width="5" stroke-linecap="round"/><path d="M16-26v12h-12M-16 26v-12h12" fill="none" stroke="#64748B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>',
+ chaves:'<rect x="-28" y="-26" width="56" height="14" rx="7" class="fcard" style="stroke:#2FAE7C;stroke-width:2"/><circle class="knob" cx="-21" cy="-19" r="5" fill="#2FAE7C"/><rect x="-28" y="-6" width="56" height="14" rx="7" class="fcard" style="stroke:#2FAE7C;stroke-width:2"/><circle class="knob d1" cx="-21" cy="1" r="5" fill="#2FAE7C"/><rect x="-28" y="14" width="56" height="14" rx="7" class="fcard" style="stroke:#2FAE7C;stroke-width:2"/><circle class="knob d2" cx="-21" cy="21" r="5" fill="#2FAE7C"/>',
+ reg:'<rect x="-20" y="-28" width="40" height="54" rx="6" class="fcard" style="stroke:#3F82E8;stroke-width:3"/><rect x="-9" y="-34" width="18" height="9" rx="4" fill="#3F82E8"/><path d="M-11-8h22M-11 3h22M-11 14h12" stroke="#3F82E8" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+ term:'<rect x="-32" y="-26" width="64" height="52" rx="6" fill="#1F2937"/><path d="M-22-12l8 6-8 6" stroke="#E0A21B" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect class="type" x="-6" y="-8" width="22" height="4" rx="2" fill="#E0A21B"/><rect class="led" x="-22" y="12" width="8" height="4" fill="#E0A21B"/>',
+ pulse:'<rect x="-32" y="-26" width="64" height="52" rx="6" class="fcard" style="stroke:#E0507A;stroke-width:3"/><path d="M-24 0H-12L-6-14L4 12L10-4H24" class="chart" stroke="#E0507A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+ dse:'<rect x="-40" y="-34" width="80" height="68" rx="8" class="fcard" style="stroke:#E0507A;stroke-width:3"/><rect x="-31" y="-25" width="62" height="26" rx="3" fill="#0F172A"/><text class="beat" y="-7" text-anchor="middle" font-size="12" font-weight="700" fill="#4ADE80">60,0 Hz</text><circle class="led" cx="-22" cy="14" r="4" fill="#4ADE80"/><circle class="led d1" cx="-9" cy="14" r="4" fill="#FBBF24"/><rect x="6" y="9" width="24" height="10" rx="3" fill="#9CA3AF"/>',
+ db:'<path d="M-26-24v44c0 6 12 10 26 10s26-4 26-10v-44" fill="#2FAE7C"/><ellipse cx="0" cy="-24" rx="26" ry="9" fill="#58D3A6"/><path d="M-26-6c0 6 12 10 26 10s26-4 26-10M-26 10c0 6 12 10 26 10s26-4 26-10" fill="none" stroke="#1B7F58" stroke-width="2"/>',
+ plc:'<rect x="-48" y="-32" width="96" height="64" rx="8" fill="var(--plc)"/><rect x="-48" y="-32" width="96" height="18" rx="8" fill="#1F2937"/><text x="0" y="-19" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">PLC 1500</text><circle class="led" cx="-34" cy="-2" r="3.5" fill="#4ADE80"/><circle class="led d1" cx="-22" cy="-2" r="3.5" fill="#4ADE80"/><circle class="led d2" cx="-10" cy="-2" r="3.5" fill="#FBBF24"/><rect x="6" y="-8" width="34" height="12" rx="2" fill="#0F172A"/><rect x="-38" y="12" width="20" height="12" rx="2" fill="#9CA3AF"/><rect x="-14" y="12" width="20" height="12" rx="2" fill="#9CA3AF"/>',
+ et:'<rect x="-46" y="-26" width="92" height="52" rx="8" fill="var(--plc)"/><rect x="-46" y="-26" width="92" height="16" rx="8" fill="#1F2937"/><text x="0" y="-14" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">ET200 / 1200</text><circle class="led" cx="-32" cy="4" r="3.5" fill="#4ADE80"/><circle class="led d2" cx="-20" cy="4" r="3.5" fill="#FBBF24"/><rect x="-6" y="-2" width="12" height="12" rx="2" fill="#9CA3AF"/><rect x="10" y="-2" width="12" height="12" rx="2" fill="#9CA3AF"/><rect x="26" y="-2" width="12" height="12" rx="2" fill="#9CA3AF"/>',
+ bc:'<rect x="-36" y="-24" width="72" height="48" rx="8" class="fcard" style="stroke:#9CA3AF;stroke-width:2.5"/><rect class="led" x="-26" y="-14" width="10" height="10" rx="2" fill="#4ADE80"/><rect class="led d1" x="-10" y="-14" width="10" height="10" rx="2" fill="#4ADE80"/><rect class="led d2" x="6" y="-14" width="10" height="10" rx="2" fill="#4ADE80"/><rect x="-26" y="2" width="10" height="10" rx="2" fill="#9CA3AF"/><rect x="-10" y="2" width="10" height="10" rx="2" fill="#9CA3AF"/><rect x="6" y="2" width="10" height="10" rx="2" fill="#9CA3AF"/>',
+ mes:'<rect x="-44" y="-12" width="88" height="44" rx="6" class="fcard" style="stroke:#0E9DB8;stroke-width:3"/><path d="M-44 32V6l22-12v12l22-12v12l22-12v28" stroke="#0E9DB8" stroke-width="2.5" fill="none" stroke-linejoin="round"/><rect x="24" y="-40" width="12" height="28" rx="2" fill="#0E9DB8"/><circle class="heat" cx="30" cy="-46" r="5" fill="#9CA3AF"/><circle class="heat d1" cx="32" cy="-46" r="4" fill="#9CA3AF"/>',
+ sql:'<ellipse cx="0" cy="-22" rx="24" ry="8" class="fcard" style="stroke:#64748B;stroke-width:2.5;stroke-dasharray:5 3"/><path d="M-24-22v38c0 5 11 9 24 9s24-4 24-9v-38" class="fcard" style="stroke:#64748B;stroke-width:2.5;stroke-dasharray:5 3"/><path d="M-24-4c0 5 11 9 24 9s24-4 24-9M-24 10c0 5 11 9 24 9s24-4 24-9" fill="none" stroke="#64748B" stroke-width="2"/>',
+ srv:'<rect x="-26" y="-24" width="52" height="20" rx="4" class="fcard" style="stroke:#64748B;stroke-width:2;stroke-dasharray:4 3"/><rect x="-26" y="2" width="52" height="20" rx="4" class="fcard" style="stroke:#64748B;stroke-width:2;stroke-dasharray:4 3"/><path d="M-16-14h.01M-16 12h.01" stroke="#64748B" stroke-width="3" stroke-linecap="round"/>',
+ res:'<rect x="-36" y="-22" width="72" height="44" rx="10" fill="var(--orange)"/><path d="M-26 0H-18L-12-12L-4 12L4-12L12 12L18 0H26" stroke="#1F2937" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path class="heat" d="M-10-28q4-6 0-12" fill="none" stroke="var(--orange)" stroke-width="3" stroke-linecap="round"/><path class="heat d1" d="M2-28q4-6 0-12" fill="none" stroke="var(--orange)" stroke-width="3" stroke-linecap="round"/><path class="heat d2" d="M14-28q4-6 0-12" fill="none" stroke="var(--orange)" stroke-width="3" stroke-linecap="round"/>',
+ ger:'<circle r="38" class="fcard" style="stroke:#E0507A;stroke-width:3"/><g class="spin"><path d="M0-27V-6M23 14L5 3M-23 14L-5 3" stroke="#E0507A" stroke-width="4" stroke-linecap="round" fill="none"/></g><circle r="6" fill="#E0507A"/><path d="M5-19L-8 4H2L-3 21L11-6H2z" fill="#FF8C00"/>'
+};
+var elCena,elVp,elEsp,elTip;
+function esc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function desenha(){
+  var sk=SKINS[S.skin],p=P();elCena.className=sk.cl+(S.edit?' edit':'')+(S.medidas?' medidas':'');
+  elCena.style.width=sk.W+'px';elCena.style.height=sk.H+'px';elEsp.style.width=sk.W*S.zoom+'px';elEsp.style.height=sk.H*S.zoom+'px';elCena.style.transform='scale('+S.zoom+')';
+  var skn=S.skin==='agentes'?'a':'b',html='';
+  // grupos (retangulos calculados pelos nos visiveis)
+  G.forEach(function(g){if(g.sk.indexOf(skn)<0)return;var ms=N.filter(function(n){return (skn==='a'?n.ga:n.g)===g.id&&visivel(n)&&!p.hid[n.id]});if(!ms.length)return;
+    var x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;ms.forEach(function(n){var r=ret(n);x1=Math.min(x1,r[0]);y1=Math.min(y1,r[1]);x2=Math.max(x2,r[0]+r[2]);y2=Math.max(y2,r[1]+r[3])});
+    var pad=18,top=44;html+='<div class="gr c-'+g.cor+(ms.every(function(n){return p.lock[n.id]})?' lock':'')+'" data-g="'+g.id+'" style="left:'+(x1-pad)+'px;top:'+(y1-top)+'px;width:'+(x2-x1+pad*2)+'px;height:'+(y2-y1+pad+top)+'px"><span class="tg t-'+g.cor+'" data-gt="'+g.id+'"'+(g.tr?' style="left:auto;right:14px"':'')+'>'+esc(g.nome)+'</span></div>'});
+  // ligacoes
+  var R=rotas(),W=sk.W,H=sk.H;
+  html+='<svg class="ed" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><defs>'+['','pend','fut'].map(function(c){return '<marker id="ah'+c+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah '+c+'" d="M0 0L10 5L0 10z"/></marker>'}).join('')+'</defs>';
+  R.forEach(function(o){var e=o.e,cl=e.st==='fut'?'fut':(e.st==='pend'||e.st==='diag')?'pend':'';var d='M'+o.pts.map(function(q){return Math.round(q[0])+' '+Math.round(q[1])}).join(' L');
+    var flow=(S.skin==='ilustrado'&&!cl)?' flow':'';
+    html+='<g data-tt="'+esc(nome(o.a)+' → '+nome(o.b))+'" data-tip="'+esc(e.det||'')+'" data-sub="'+esc(ST[e.st]+(e.rot?' · '+e.rot:''))+'"><path class="hit" d="'+d+'"/><path class="ln '+cl+flow+'" d="'+d+'" marker-end="url(#ah'+cl+')"'+(e.bi?' marker-start="url(#ah'+cl+')"':'')+'/></g>';
+    if(e.rot&&!e.nolab){var tw=Math.round(e.rot.length*6.1+12);html+='<g class="elab"><rect x="'+Math.round(o.lab[0]-tw/2)+'" y="'+Math.round(o.lab[1]-9)+'" width="'+tw+'" height="18" rx="9"/><text x="'+Math.round(o.lab[0])+'" y="'+Math.round(o.lab[1]+4)+'" text-anchor="middle">'+esc(e.rot)+'</text></g>'}});
+  html+='</svg>';
+  // nos
+  N.forEach(function(n){if(!visivel(n)||p.hid[n.id])return;var r=ret(n),st=stat(n),cls='nd s-'+st+(p.col[n.id]?' col':'')+(S.sel===n.id?' sel':'')+(n.cls?' '+n.cls:'');
+    var z=p.z[n.id]||1,inner='';
+    if(S.skin==='ilustrado'){inner='<svg class="fg" viewBox="-54 -54 108 108" preserveAspectRatio="xMidYMid meet">'+(FIG[n.fig]||FIG.srv)+'</svg><div class="lb" data-ed="nome">'+esc(nome(n))+'</div>'}
+    else{var ic=48,corv=COR[n.cor]||COR.gray;inner='<span class="ic" style="background:'+corv+'">'+glifo(n.gl)+'</span><div class="tx"><b data-ed="nome">'+esc(nome(n))+'</b>'+(S.skin==='blocos'&&sub(n)?'<span data-ed="sub">'+esc(sub(n))+'</span>':'')+'</div>'}
+    html+='<div class="'+cls+'" data-id="'+n.id+'" tabindex="0" data-tt="'+esc(nome(n))+'" data-tip="'+esc(n.det||'')+'" data-sub="'+esc(ST[st]+(S.skin==='agentes'?'':''))+'" style="left:'+r[0]+'px;top:'+r[1]+'px;width:'+r[2]+'px;height:'+(p.col[n.id]?Math.min(r[3],54):r[3])+'px;z-index:'+(10+z)+'">'+inner+'<span class="st"></span>'+
+      '<div class="tb"><button data-a="col" title="recolher">▾</button><button data-a="hid" title="ocultar">👁</button><button data-a="lock" title="travar">'+(p.lock[n.id]?'🔓':'🔒')+'</button><button data-a="z" title="trazer para a frente">⇧</button><button data-a="rst" title="restaurar este item">↺</button><button data-a="st" title="trocar a situação (em uso, pendente, futuro)">◐</button></div>'+
+      '<span class="rz" data-rz="1"></span><span class="med">'+r[0]+','+r[1]+' · '+r[2]+'×'+r[3]+'</span></div>'});
+  elCena.innerHTML=html;
+}
+/* ============================== INTERACAO ============================== */
+var drag=null;
+function pt(e){var b=elCena.getBoundingClientRect();return [(e.clientX-b.left)/S.zoom,(e.clientY-b.top)/S.zoom]}
+function snap(v){return S.grid?Math.round(v/10)*10:Math.round(v)}
+function tooltip(){
+  elTip=document.getElementById('tip');
+  function put(el){elTip.innerHTML=(el.dataset.tt?'<b>'+esc(el.dataset.tt)+'</b>':'')+esc(el.dataset.tip||'')+(el.dataset.sub?'<i>'+esc(el.dataset.sub)+'</i>':'');elTip.hidden=false}
+  function pos(x,y){var w=elTip.offsetWidth,h=elTip.offsetHeight,vw=document.documentElement.clientWidth,vh=window.innerHeight,l=x+14,t=y+16;if(l+w>vw-8)l=Math.max(8,x-w-14);if(t+h>vh-8)t=Math.max(8,y-h-14);elTip.style.left=l+'px';elTip.style.top=t+'px'}
+  elCena.addEventListener('mousemove',function(e){if(drag){elTip.hidden=true;return}var el=e.target.closest('[data-tip]');if(!el||!(el.dataset.tip||el.dataset.tt)){elTip.hidden=true;return}put(el);pos(e.clientX,e.clientY)});
+  elCena.addEventListener('mouseleave',function(){elTip.hidden=true});
+}
+function selecionar(id){S.sel=id}
+function marca(id){S.sel=id;var a=elCena.querySelectorAll('.nd.sel');for(var i=0;i<a.length;i++)a[i].classList.remove('sel');var el=elCena.querySelector('.nd[data-id="'+id+'"]');if(el)el.classList.add('sel')}
+function muda(fn){fn();desenha()}
+function iniciaInteracao(){
+  elCena.addEventListener('pointerdown',function(e){
+    if(!S.edit)return;var tgt=e.target;
+    var tg=tgt.closest('[data-gt]');
+    if(tg){var gid=tg.dataset.gt,skn=S.skin==='agentes'?'a':'b',ids=N.filter(function(n){return (skn==='a'?n.ga:n.g)===gid&&visivel(n)&&!P().hid[n.id]&&!P().lock[n.id]}).map(function(n){return n.id});
+      var p0=pt(e);drag={t:'grupo',ids:ids,p0:p0,r0:ids.map(function(i){return ret(nodoPorId(i)).slice()})};tg.setPointerCapture(e.pointerId);e.preventDefault();return}
+    var nd=tgt.closest('.nd');if(!nd)return;var id=nd.dataset.id,n=nodoPorId(id);
+    var b=tgt.closest('button');if(b){acao(n,b.dataset.a);e.preventDefault();return}
+    if(tgt.isContentEditable)return;
+    selecionar(id);if(P().lock[id]){marca(id);return}
+    var p0=pt(e),r0=ret(n).slice();drag={t:tgt.dataset.rz?'tam':'mov',id:id,p0:p0,r0:r0,moved:false};marca(id);if(!tgt.closest('[data-ed]')||tgt.dataset.rz){nd.setPointerCapture(e.pointerId);e.preventDefault()}nd.classList.add('drag');
+  });
+  elCena.addEventListener('pointermove',function(e){if(!drag)return;var q=pt(e),dx=q[0]-drag.p0[0],dy=q[1]-drag.p0[1],p=P();if(!drag.moved&&Math.abs(dx)+Math.abs(dy)<4)return;drag.moved=true;
+    if(drag.t==='mov'){p.pos[drag.id]=[snap(drag.r0[0]+dx),snap(drag.r0[1]+dy),drag.r0[2],drag.r0[3]]}
+    else if(drag.t==='tam'){p.pos[drag.id]=[drag.r0[0],drag.r0[1],Math.max(70,snap(drag.r0[2]+dx)),Math.max(40,snap(drag.r0[3]+dy))]}
+    else{drag.ids.forEach(function(i,k){var r=drag.r0[k];p.pos[i]=[snap(r[0]+dx),snap(r[1]+dy),r[2],r[3]]})}
+    if(!drag.raf){drag.raf=requestAnimationFrame(function(){if(drag){drag.raf=0;desenha()}})}});
+  function fim(){if(!drag)return;var mv=drag.moved;drag=null;if(mv)desenha();else{var a=elCena.querySelectorAll('.nd.drag');for(var i=0;i<a.length;i++)a[i].classList.remove('drag')}}
+  elCena.addEventListener('pointerup',fim);elCena.addEventListener('pointercancel',fim);
+  elCena.addEventListener('dblclick',function(e){if(!S.edit)return;var el=e.target.closest('[data-ed]');if(!el)return;var nd=el.closest('.nd'),n=nodoPorId(nd.dataset.id),campo=el.dataset.ed;
+    el.contentEditable='true';el.focus();document.getSelection().selectAllChildren(el);
+    el.addEventListener('blur',function(){el.contentEditable='false';var o=S.ov[n.id]=S.ov[n.id]||{};o[campo]=el.textContent.trim();desenha()},{once:true});
+    el.addEventListener('keydown',function(k){if(k.key==='Enter'){k.preventDefault();el.blur()}})});
+}
+function acao(n,a){var p=P();
+  if(a==='col')p.col[n.id]=!p.col[n.id];
+  else if(a==='hid')p.hid[n.id]=true;
+  else if(a==='lock')p.lock[n.id]=!p.lock[n.id];
+  else if(a==='z'){var m=0;for(var k in p.z)m=Math.max(m,p.z[k]);p.z[n.id]=m+1}
+  else if(a==='rst'){delete p.pos[n.id];delete p.hid[n.id];delete p.lock[n.id];delete p.col[n.id];delete p.z[n.id];delete S.ov[n.id]}
+  else if(a==='st'){var ordem=['real','pend','diag','fut','ban'],o=S.ov[n.id]=S.ov[n.id]||{};var at=stat(n);o.st=ordem[(ordem.indexOf(at)+1)%ordem.length]}
+  desenha();
+}
+function barra(){
+  var bar=document.getElementById('bar'),abas=document.getElementById('abas');
+  abas.innerHTML=['blocos','ilustrado','agentes'].map(function(k){return '<button data-skin="'+k+'" aria-pressed="'+(S.aba==='cena'&&S.skin===k)+'">'+SKINS[k].nome+'</button>'}).join('')+'<button data-skin="analise" aria-pressed="'+(S.aba==='analise')+'">Análise</button>';
+  bar.innerHTML='<button data-b="edit" aria-pressed="'+S.edit+'">✎ Modo edição</button><span class="sep"></span><button data-b="zm">−</button><span class="zoom">'+Math.round(S.zoom*100)+'%</span><button data-b="zp">+</button><button data-b="fit">Ajustar</button><span class="sep"></span>'+
+   '<button data-b="grid" aria-pressed="'+S.grid+'">Grade</button><button data-b="medidas" aria-pressed="'+S.medidas+'">Medidas</button><button data-b="fut" aria-pressed="'+S.fut+'">Mostrar futuro</button><button data-b="abrir">Abrir tudo</button><button data-b="recolher">Recolher tudo</button><button data-b="ocultos">Mostrar ocultos</button><span class="sep"></span>'+
+   '<button data-b="salvar">💾 Salvar</button><button data-b="restaurar">Restaurar salvo</button><button data-b="layout">↺ Layout atual</button><details><summary>Exportar ▾</summary><div class="menu"><button data-b="x-txt">TXT — medidas (colar no chat)</button><button data-b="x-md">MD — tabelas do desenho</button><button data-b="x-json">JSON — posições (para reabrir)</button><button data-b="x-pdf">PDF — imprimir a tela</button><label class="btn" style="cursor:pointer">Abrir JSON salvo…<input type="file" id="arq" accept=".json,application/json" hidden></label></div></details>';
+  document.getElementById('dica').textContent=S.edit?'Edição: arraste os blocos, redimensione pelo canto, dê duplo clique para renomear. Salve ao terminar.':'Passe o mouse (ou toque) nas figuras e nas linhas para ver os detalhes.';
+}
+function salvaLocal(){try{localStorage.setItem(CHAVE,JSON.stringify({per:S.per,ov:S.ov,v:1}));return true}catch(e){return false}}
+function carregaLocal(){try{var j=JSON.parse(localStorage.getItem(CHAVE)||'null');if(j&&j.per){S.per=j.per;S.ov=j.ov||{};return true}}catch(e){}return false}
+function fit(){var sk=SKINS[S.skin],w=elVp.clientWidth-4;S.zoom=Math.max(.5,Math.min(1,w/sk.W))}
+function botoes(e){var b=e.target.closest('button');if(!b)return;var k=b.dataset.b,p=P();
+  if(k==='edit'){S.edit=!S.edit;S.sel=null}
+  else if(k==='zm')S.zoom=Math.max(.3,+(S.zoom-.1).toFixed(2));else if(k==='zp')S.zoom=Math.min(2,+(S.zoom+.1).toFixed(2));else if(k==='fit')fit();
+  else if(k==='grid')S.grid=!S.grid;else if(k==='medidas')S.medidas=!S.medidas;else if(k==='fut')S.fut=!S.fut;
+  else if(k==='abrir')p.col={};else if(k==='recolher'){N.forEach(function(n){if(visivel(n))p.col[n.id]=true})}
+  else if(k==='ocultos')p.hid={};
+  else if(k==='salvar'){var ok=salvaLocal();aviso(ok?'Salvo neste navegador.':'Não foi possível salvar aqui (armazenamento bloqueado). Use Exportar > JSON.')}
+  else if(k==='restaurar'){var ok2=carregaLocal();aviso(ok2?'Layout salvo restaurado.':'Não há layout salvo neste navegador.')}
+  else if(k==='layout'){S.per[S.skin]={};S.ov={}}
+  else if(k&&k.indexOf('x-')===0){exporta(k.slice(2));return}
+  barra();desenha();
+}
+function aviso(t){var h=document.getElementById('dica');h.textContent=t}
+/* ============================== EXPORTAR ============================== */
+function lista(){var p=P(),skn=S.skin==='agentes'?'a':'b';return N.filter(function(n){return visivel(n)})}
+function exporta(tipo){
+  var out='',p=P();
+  if(tipo==='pdf'){try{window.print()}catch(e){}aviso('Se a impressão não abrir (página dentro de um visualizador), use o arquivo HTML baixado.');return}
+  if(tipo==='txt'){out='ARQUITETURA BT2 — estilo '+SKINS[S.skin].nome+' (x, y, largura, altura em px)\n';lista().forEach(function(n){var r=ret(n);out+=(p.hid[n.id]?'[oculto] ':'')+nome(n)+' ['+ST[stat(n)]+']  '+r.join(', ')+(p.lock[n.id]?'  (travado)':'')+'\n'});}
+  else if(tipo==='md'){out='# Arquitetura BT2 — estilo '+SKINS[S.skin].nome+'\n\n| Item | Situação | x | y | largura | altura |\n|---|---|---|---|---|---|\n';lista().forEach(function(n){var r=ret(n);out+='| '+nome(n)+' | '+ST[stat(n)]+' | '+r.join(' | ')+' |\n'});
+    out+='\n## Ligações\n\n| De | Para | Rótulo | Situação |\n|---|---|---|---|\n';var sk=S.skin==='agentes'?'a':'b';E.forEach(function(e){if(e.sk===sk){var a=nodoPorId(e.de),b=nodoPorId(e.pa);if(visivel(a)&&visivel(b))out+='| '+nome(a)+' | '+nome(b)+' | '+(e.rot||'')+' | '+ST[e.st]+' |\n'}})}
+  else{out=JSON.stringify({versao:1,estilo:S.skin,per:S.per,ov:S.ov},null,1)}
+  document.getElementById('expT').textContent='Exportar · '+tipo.toUpperCase();document.getElementById('expTx').value=out;document.getElementById('exp').classList.add('on');document.getElementById('expMsg').textContent='';
+}
+/* ============================== ANALISE ============================== */
+function tabelaAnalise(){
+  var pill=function(s){return '<span class="pill p-'+({real:'real',pend:'pend',diag:'pend',fut:'fut',ban:'ban'}[s])+'">'+ST[s]+'</span>'};
+  var h='<div class="an"><h2>1. Quem conversa com quem</h2><div class="tw"><table><tr><th>De</th><th>Para</th><th>Como</th><th>Situação</th><th>Detalhe</th></tr>';
+  E.filter(function(e){return e.sk==='b'}).forEach(function(e){h+='<tr><td>'+esc(nodoPorId(e.de).nome)+'</td><td>'+esc(nodoPorId(e.pa).nome)+'</td><td>'+esc(e.rot||'—')+'</td><td>'+pill(e.st)+'</td><td>'+esc(e.det)+'</td></tr>'});
+  h+='</table></div><p class="nota">As telas também conversam entre si, no mesmo navegador, por canais (BroadcastChannel): bt2-dev-obs (logs), bt2-grafico (dados do ensaio) e fbv. Isso não passa pelo Node-RED.</p>';
+  h+='<h2>2. Rotas do Node-RED, por fluxo</h2><div class="tw"><table><tr><th>Fluxo</th><th>Leitura (GET)</th><th>Comando (POST)</th><th>Logs</th><th>Situação</th></tr>';
+  ROTAS.forEach(function(r){h+='<tr>'+r.map(function(c){return '<td>'+esc(c)+'</td>'}).join('')+'</tr>'});
+  h+='</table></div><p class="nota">Todas as rotas de escrita passam pela guarda (Origin da própria página e JSON; senão 403). As respostas novas: 409 (cancelado ou estado mudou), 503 (leitura velha ou aguarde), 504 (incerto).</p>';
+  h+='<h2>3. Ferramentas e infraestrutura</h2><div class="tw"><table><tr><th>Ferramenta</th><th>Para quê</th><th>Onde</th></tr>';FERR.forEach(function(r){h+='<tr>'+r.map(function(c){return '<td>'+esc(c)+'</td>'}).join('')+'</tr>'});
+  h+='</table></div><h2>4. Realidade e futuro</h2><div class="tw"><table><tr><th>Item</th><th>Situação</th></tr>';
+  N.filter(function(n){return n.in.indexOf('b')>=0}).forEach(function(n){h+='<tr><td>'+esc(n.nome)+'</td><td>'+pill(n.st)+'</td></tr>'});
+  h+='</table></div><h2>5. Pontos a confirmar</h2><ul>';PEND.forEach(function(r){h+='<li><b>'+esc(r[0])+'.</b> '+esc(r[1])+'</li>'});
+  return h+'</ul></div>';
+}
+/* ============================== INICIO ============================== */
+function mostra(){var an=S.aba==='analise';document.getElementById('vistaCena').hidden=an;var v=document.getElementById('vistaAn');v.hidden=!an;if(an)v.innerHTML=tabelaAnalise();
+  document.querySelector('.bar').style.display=an?'none':'flex';document.getElementById('leg').style.display=an?'none':'flex'}
+function inicio(){
+  elCena=document.getElementById('cena');elVp=document.getElementById('vp');elEsp=document.getElementById('esp');
+  carregaLocal();tooltip();iniciaInteracao();
+  document.getElementById('abas').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var k=b.dataset.skin;if(k==='analise'){S.aba='analise'}else{S.aba='cena';S.skin=k;S.sel=null;fit()}barra();mostra();if(S.aba==='cena')desenha()});
+  document.getElementById('bar').addEventListener('click',botoes);
+  document.getElementById('bar').addEventListener('change',function(e){if(e.target.id!=='arq')return;var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var j=JSON.parse(r.result);if(j.per){S.per=j.per;S.ov=j.ov||{};barra();desenha();aviso('Layout aberto do arquivo.')}else aviso('Arquivo sem layout reconhecido.')}catch(x){aviso('Arquivo inválido.')}};r.readAsText(f)});
+  document.getElementById('expFecha').onclick=function(){document.getElementById('exp').classList.remove('on')};
+  document.getElementById('expCopia').onclick=function(){var t=document.getElementById('expTx');t.select();var ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t.value);ok=true}}catch(e){}if(!ok){try{ok=document.execCommand('copy')}catch(e){}}document.getElementById('expMsg').textContent=ok?'Copiado.':'Selecionado: use Ctrl+C.'};
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')document.getElementById('exp').classList.remove('on')});
+  fit();barra();mostra();desenha();
+}
+inicio();
+</script>
+
+</body>
+</html>

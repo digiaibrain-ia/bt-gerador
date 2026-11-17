@@ -1,0 +1,32 @@
+// ============================================================================
+// chamadas_1515_PUTGET_para_1200 v0.1 (09/11/2026) - RASCUNHO, NAO compilado. Lado do 1515: aponta o FB101 v0.8 (telegrama rapido) e o FB104 (espelho/competencia) para o PLC de cargas 1200.
+// O FB101 v0.8 NAO muda: so mudam os enderecos remotos e o ID da conexao. Substitui, em cada banco, os parametros RemotoCmd/RemotoFb/ID_Conexao da chamada atual (ver chamadas_BC56_v0.3.scl).
+// ID_Conexao: ID LOCAL da conexao S7 do 1515 para o PLC de cargas = W#16#0 (A PREENCHER: anotar o ID real criado no TIA). IP/rack/slot: nao ficam aqui (configuracao de hardware).
+// ============================================================================
+
+// ---- BC56 ----
+"db3005i_BC56_ComEt200"(Hab := TRUE, ID_Conexao := W#16#0,   // A PREENCHER: ID da conexao S7 com o PLC de cargas
+    RemotoCmd := P#DB3007.DBX0.0 BYTE 10, RemotoFb := P#DB3007.DBX10.0 BYTE 14,   // era DB38/DB39/DB41 no ET200; agora o DB3007 do PLC de cargas
+    /* demais parametros: iguais a chamadas_BC56_v0.3.scl */ );
+"db3009i_BC56_Com1200Espelho"(Hab := TRUE, ID_Conexao := W#16#0,   // A PREENCHER (a mesma conexao do FB101 pode ser dividida; um job por vez)
+    LocalEspelho := P#DB3000.DBX4.0 BYTE 196, RemotoEspelho := P#DB3000.DBX4.0 BYTE 196,   // PUT: copia de mao unica do DB de chaves (habilitada..rTeoricoOhm)
+    RemotoCompet := P#DB3008.DBX0.0 BYTE 8,   // GET: DB de competencia do banco
+    Compet := "db3008_BC56_Competencia".compet);   // DB local de competencia no 1515 (mesmo numero e mesmo tipo)
+
+// ---- BC400 ----
+"db3105i_BC400_ComEt200"(Hab := TRUE, ID_Conexao := W#16#0,   // A PREENCHER: ID da conexao S7 com o PLC de cargas
+    RemotoCmd := P#DB3107.DBX0.0 BYTE 10, RemotoFb := P#DB3107.DBX10.0 BYTE 14,   // era DB38/DB39/DB41 no ET200; agora o DB3107 do PLC de cargas
+    /* demais parametros: iguais a chamadas_BC400_v0.3.scl */ );
+"db3109i_BC400_Com1200Espelho"(Hab := TRUE, ID_Conexao := W#16#0,   // A PREENCHER (a mesma conexao do FB101 pode ser dividida; um job por vez)
+    LocalEspelho := P#DB3100.DBX4.0 BYTE 196, RemotoEspelho := P#DB3100.DBX4.0 BYTE 196,   // PUT: copia de mao unica do DB de chaves (habilitada..rTeoricoOhm)
+    RemotoCompet := P#DB3108.DBX0.0 BYTE 8,   // GET: DB de competencia do banco
+    Compet := "db3108_BC400_Competencia".compet);   // DB local de competencia no 1515 (mesmo numero e mesmo tipo)
+
+// ---- BC550 ----
+"db3305i_BC550_ComEt200"(Hab := TRUE, ID_Conexao := W#16#0,   // A PREENCHER: ID da conexao S7 com o PLC de cargas
+    RemotoCmd := P#DB3307.DBX0.0 BYTE 10, RemotoFb := P#DB3307.DBX10.0 BYTE 14,   // era DB38/DB39/DB41 no ET200; agora o DB3307 do PLC de cargas
+    /* demais parametros: iguais a chamadas_BC550_v0.3.scl */ );
+"db3309i_BC550_Com1200Espelho"(Hab := TRUE, ID_Conexao := W#16#0,   // A PREENCHER (a mesma conexao do FB101 pode ser dividida; um job por vez)
+    LocalEspelho := P#DB3300.DBX4.0 BYTE 196, RemotoEspelho := P#DB3300.DBX4.0 BYTE 196,   // PUT: copia de mao unica do DB de chaves (habilitada..rTeoricoOhm)
+    RemotoCompet := P#DB3308.DBX0.0 BYTE 8,   // GET: DB de competencia do banco
+    Compet := "db3308_BC550_Competencia".compet);   // DB local de competencia no 1515 (mesmo numero e mesmo tipo)

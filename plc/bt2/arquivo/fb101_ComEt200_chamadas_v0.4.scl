@@ -1,0 +1,34 @@
+// Chamadas de fb101_ComEt200 (FB101) v0.4 no OB ciclico do 1515 - uma instancia por banco, ANTES do
+// fb100_setupChaves. ESTE ARQUIVO NAO E UM BLOCO: copie as 2 chamadas para o OB1 (ou o FC de comunicacao
+// que o OB1 ja chama). O bloco a importar e fb101_ComEt200_v0.4.scl.
+//
+// v0.4 (24/10/2026): remotos DB10/DB11 -> DB38 "ComBC56" / DB39 "ComBC400"; BYTE 4 -> BYTE 6;
+// GET agora comeca em DBX6.0 (opcao A). Novos parametros: LigarBanco (IN_OUT), SeletoraAuto e ComOk
+// ligados aos membros novos cbBanco/sbBanco do DB150/DB158 (db150_BC56_Chaves_v0.2.db).
+// ATENCAO: canal -> DB remoto escrito por NOME (BC56 -> DB38, BC400 -> DB39). Se a foto do ET200/FC4
+// mostrar o contrario, troque SO os literais DB38 <-> DB39 abaixo (o resto fica igual).
+// ID_Conexao = W#16#100 confirmado no TIA (S7_Connection_1, parceiro rack/slot 0/2, TSAP 03.02).
+
+"db155_BC56_ComEt200"(Hab          := TRUE,
+                      ID_Conexao   := W#16#100,
+                      RemotoCmd    := P#DB38.DBX0.0 BYTE 6,   // BC56: cmd+vida1515+ligarBanco
+                      RemotoFb     := P#DB38.DBX6.0 BYTE 6,   // BC56: fbk+vidaET+seletoraAuto
+                      ComOk        => "db150_BC56_Chaves".sbBanco.comEt200Ok,
+                      SeletoraAuto => "db150_BC56_Chaves".sbBanco.seletoraAuto,
+                      CbLigar      := "db150_BC56_Chaves".cb.ligar,
+                      SbLigada     := "db150_BC56_Chaves".sb.ligada,
+                      LigarBanco   := "db150_BC56_Chaves".cbBanco.ligar);
+
+"db163_BC400_ComEt200"(Hab          := TRUE,
+                       ID_Conexao   := W#16#100,
+                       RemotoCmd    := P#DB39.DBX0.0 BYTE 6,   // BC400: cmd+vida1515+ligarBanco
+                       RemotoFb     := P#DB39.DBX6.0 BYTE 6,   // BC400: fbk+vidaET+seletoraAuto
+                       ComOk        => "db158_BC400_Chaves".sbBanco.comEt200Ok,
+                       SeletoraAuto => "db158_BC400_Chaves".sbBanco.seletoraAuto,
+                       CbLigar      := "db158_BC400_Chaves".cb.ligar,
+                       SbLigada     := "db158_BC400_Chaves".sb.ligada,
+                       LigarBanco   := "db158_BC400_Chaves".cbBanco.ligar);
+
+// Chamadas existentes do FB100 continuam iguais, DEPOIS das duas acima:
+// "fb100_setupChaves_DB154"(...);   // BC56
+// "fb100_setupChaves_DB162"(...);   // BC400

@@ -1,0 +1,129 @@
+FUNCTION "fc_chamadasBancosCarga" : Void
+TITLE = fc_chamadasBancosCarga v0.1
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+////====================================
+//// fc_chamadasBancosCarga v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// ONDE RODA : PLC de cargas. Chamar 1x por ciclo (OB1 ou OB de tempo fixo). Chama um fb_bancoCarga16 por banco e liga as E/S fisicas.
+//// ATENCAO : os TAGS fisicos abaixo ("BC56_K01_Aux" etc.) sao NOMES PROPOSTOS; os enderecos reais vem do programador (tabela tags_IO_1200_A_PREENCHER_v0.1.csv). Nao inventar endereco.
+//// Instancias (DB de instancia do FB): criar no TIA como "dbNNNNi_<banco>_BancoCarga" (numeros propostos: base + 6).
+////====================================
+   VAR_TEMP
+      saidaBC56 : Array[1..16] of Bool;
+      auxBC56 : Array[1..16] of Bool;
+      comOkBC56 : Bool;
+      libBC56 : Bool;
+      saidaBC400 : Array[1..16] of Bool;
+      auxBC400 : Array[1..16] of Bool;
+      comOkBC400 : Bool;
+      libBC400 : Bool;
+      saidaBC550 : Array[1..16] of Bool;
+      auxBC550 : Array[1..16] of Bool;
+      comOkBC550 : Bool;
+      libBC550 : Bool;
+   END_VAR
+BEGIN
+
+   // ===== BC56 (13 chaves reais) =====
+   #auxBC56[1] := "BC56_K01_Aux";
+   #auxBC56[2] := "BC56_K02_Aux";
+   #auxBC56[3] := "BC56_K03_Aux";
+   #auxBC56[4] := "BC56_K04_Aux";
+   #auxBC56[5] := "BC56_K05_Aux";
+   #auxBC56[6] := "BC56_K06_Aux";
+   #auxBC56[7] := "BC56_K07_Aux";
+   #auxBC56[8] := "BC56_K08_Aux";
+   #auxBC56[9] := "BC56_K09_Aux";
+   #auxBC56[10] := "BC56_K10_Aux";
+   #auxBC56[11] := "BC56_K11_Aux";
+   #auxBC56[12] := "BC56_K12_Aux";
+   #auxBC56[13] := "BC56_K13_Aux";
+   "db3006_BC56_BancoCarga"(NumChaves := 13, SeletoraEntrada := "BC56_Seletora_Auto", IntertravamentoOk := "BC56_Intertravamento_Ok",
+        UsaVentilador := FALSE, VentiladorOk := "BC56_Ventilador_Ok", ContatorGeralAux := "BC56_ContatorGeral_Aux",
+        ComOk => #comOkBC56, BancoLiberado => #libBC56,
+        Com := "db3007_BC56_Com".com, Compet := "db3008_BC56_Competencia".compet, SaidaContatora := #saidaBC56, EntradaContatoAux := #auxBC56);
+   "BC56_K01_Saida" := #saidaBC56[1];
+   "BC56_K02_Saida" := #saidaBC56[2];
+   "BC56_K03_Saida" := #saidaBC56[3];
+   "BC56_K04_Saida" := #saidaBC56[4];
+   "BC56_K05_Saida" := #saidaBC56[5];
+   "BC56_K06_Saida" := #saidaBC56[6];
+   "BC56_K07_Saida" := #saidaBC56[7];
+   "BC56_K08_Saida" := #saidaBC56[8];
+   "BC56_K09_Saida" := #saidaBC56[9];
+   "BC56_K10_Saida" := #saidaBC56[10];
+   "BC56_K11_Saida" := #saidaBC56[11];
+   "BC56_K12_Saida" := #saidaBC56[12];
+   "BC56_K13_Saida" := #saidaBC56[13];
+   // espelho local para a IHM: comando e feedback ao vivo (os bytes 4..199 chegam pelo PUT do 1515)
+   "db3000_BC56_Chaves".cb.ligar := "db3007_BC56_Com".com.cmd;
+   "db3000_BC56_Chaves".sb.ligada := "db3007_BC56_Com".com.fbk;
+
+   // ===== BC400 (13 chaves reais) =====
+   #auxBC400[1] := "BC400_K01_Aux";
+   #auxBC400[2] := "BC400_K02_Aux";
+   #auxBC400[3] := "BC400_K03_Aux";
+   #auxBC400[4] := "BC400_K04_Aux";
+   #auxBC400[5] := "BC400_K05_Aux";
+   #auxBC400[6] := "BC400_K06_Aux";
+   #auxBC400[7] := "BC400_K07_Aux";
+   #auxBC400[8] := "BC400_K08_Aux";
+   #auxBC400[9] := "BC400_K09_Aux";
+   #auxBC400[10] := "BC400_K10_Aux";
+   #auxBC400[11] := "BC400_K11_Aux";
+   #auxBC400[12] := "BC400_K12_Aux";
+   #auxBC400[13] := "BC400_K13_Aux";
+   "db3106_BC400_BancoCarga"(NumChaves := 13, SeletoraEntrada := "BC400_Seletora_Auto", IntertravamentoOk := "BC400_Intertravamento_Ok",
+        UsaVentilador := FALSE, VentiladorOk := "BC400_Ventilador_Ok", ContatorGeralAux := "BC400_ContatorGeral_Aux",
+        ComOk => #comOkBC400, BancoLiberado => #libBC400,
+        Com := "db3107_BC400_Com".com, Compet := "db3108_BC400_Competencia".compet, SaidaContatora := #saidaBC400, EntradaContatoAux := #auxBC400);
+   "BC400_K01_Saida" := #saidaBC400[1];
+   "BC400_K02_Saida" := #saidaBC400[2];
+   "BC400_K03_Saida" := #saidaBC400[3];
+   "BC400_K04_Saida" := #saidaBC400[4];
+   "BC400_K05_Saida" := #saidaBC400[5];
+   "BC400_K06_Saida" := #saidaBC400[6];
+   "BC400_K07_Saida" := #saidaBC400[7];
+   "BC400_K08_Saida" := #saidaBC400[8];
+   "BC400_K09_Saida" := #saidaBC400[9];
+   "BC400_K10_Saida" := #saidaBC400[10];
+   "BC400_K11_Saida" := #saidaBC400[11];
+   "BC400_K12_Saida" := #saidaBC400[12];
+   "BC400_K13_Saida" := #saidaBC400[13];
+   // espelho local para a IHM: comando e feedback ao vivo (os bytes 4..199 chegam pelo PUT do 1515)
+   "db3100_BC400_Chaves".cb.ligar := "db3107_BC400_Com".com.cmd;
+   "db3100_BC400_Chaves".sb.ligada := "db3107_BC400_Com".com.fbk;
+
+   // ===== BC550 (12 chaves reais) =====
+   #auxBC550[1] := "BC550_K01_Aux";
+   #auxBC550[2] := "BC550_K02_Aux";
+   #auxBC550[3] := "BC550_K03_Aux";
+   #auxBC550[4] := "BC550_K04_Aux";
+   #auxBC550[5] := "BC550_K05_Aux";
+   #auxBC550[6] := "BC550_K06_Aux";
+   #auxBC550[7] := "BC550_K07_Aux";
+   #auxBC550[8] := "BC550_K08_Aux";
+   #auxBC550[9] := "BC550_K09_Aux";
+   #auxBC550[10] := "BC550_K10_Aux";
+   #auxBC550[11] := "BC550_K11_Aux";
+   #auxBC550[12] := "BC550_K12_Aux";
+   "db3306_BC550_BancoCarga"(NumChaves := 12, SeletoraEntrada := "BC550_Seletora_Auto", IntertravamentoOk := "BC550_Intertravamento_Ok",
+        UsaVentilador := FALSE, VentiladorOk := "BC550_Ventilador_Ok", ContatorGeralAux := "BC550_ContatorGeral_Aux",
+        ComOk => #comOkBC550, BancoLiberado => #libBC550,
+        Com := "db3307_BC550_Com".com, Compet := "db3308_BC550_Competencia".compet, SaidaContatora := #saidaBC550, EntradaContatoAux := #auxBC550);
+   "BC550_K01_Saida" := #saidaBC550[1];
+   "BC550_K02_Saida" := #saidaBC550[2];
+   "BC550_K03_Saida" := #saidaBC550[3];
+   "BC550_K04_Saida" := #saidaBC550[4];
+   "BC550_K05_Saida" := #saidaBC550[5];
+   "BC550_K06_Saida" := #saidaBC550[6];
+   "BC550_K07_Saida" := #saidaBC550[7];
+   "BC550_K08_Saida" := #saidaBC550[8];
+   "BC550_K09_Saida" := #saidaBC550[9];
+   "BC550_K10_Saida" := #saidaBC550[10];
+   "BC550_K11_Saida" := #saidaBC550[11];
+   "BC550_K12_Saida" := #saidaBC550[12];
+   // espelho local para a IHM: comando e feedback ao vivo (os bytes 4..199 chegam pelo PUT do 1515)
+   "db3300_BC550_Chaves".cb.ligar := "db3307_BC550_Com".com.cmd;
+   "db3300_BC550_Chaves".sb.ligada := "db3307_BC550_Com".com.fbk;
+END_FUNCTION
