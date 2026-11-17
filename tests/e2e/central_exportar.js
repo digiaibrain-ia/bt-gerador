@@ -20,7 +20,7 @@ const paginas = buf => (buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || 
     await p.evaluate(() => { const d = document.getElementById('demo'); d.checked = true; d.dispatchEvent(new Event('change', { bubbles: true })); }); await p.waitForTimeout(700);
     await p.evaluate(() => { const a = document.getElementById('mAuto'); if (a) a.click(); }); await p.waitForTimeout(300);
     await p.evaluate(() => document.getElementById('bPatDet').click()); await p.waitForTimeout(300); await p.evaluate(() => document.querySelector('[data-gd=mapa]').click()); await p.waitForTimeout(800);
-    await p.evaluate(() => document.querySelector('[data-gd=rodar]').click()); await p.waitForTimeout(400);
+    await p.evaluate(() => window.__setSalvaModo('P')); await p.waitForTimeout(400);   // 1.10.221: o Patamar liga pelo Modo (Salvamento Por patamar); o botao do dialogo saiu
     await p.evaluate(() => iniciaEnsaio()); await p.waitForTimeout(600); if (await p.evaluate(() => document.getElementById('dlgDados').open)) { await p.evaluate(() => document.getElementById('dOk').click()); await p.waitForTimeout(600); } await p.evaluate(() => iniciaEnsaio());
     await p.waitForTimeout(10000);   // ensaio rodando + ocorrencias (CHV-006) + eventos do mapa
     // 1.10.212 (alarme inteligente): o Demo local nao gera mais o CHV-006 falso; o teste cria as ocorrencias para exercitar a exportacao (antes dependia do alarme falso)

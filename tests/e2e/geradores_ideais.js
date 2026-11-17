@@ -46,7 +46,7 @@ for(const gi of sel){const [pasta,arq]=GERS[gi];const ctx=await b.newContext({vi
  await p.click('#bGuiado');await p.waitForTimeout(500);
  await p.evaluate(()=>{const d=document.getElementById('dlgGuiado');const ams=[...d.querySelectorAll('[data-gd=am]')];ams.forEach((a,i)=>{if(i%2===1)a.click()});});
  await p.waitForTimeout(300);
- await p.evaluate(()=>document.querySelector('#dlgGuiado [data-gd=rodar]').click());await p.waitForTimeout(500);
+ await p.evaluate(()=>window.__setSalvaModo('P'));await p.waitForTimeout(500);   // 1.10.221: liga pelo Modo
  await p.evaluate(()=>{const d=document.getElementById('dlgGuiado');if(d&&d.open)d.close()});
  const ligado=await p.evaluate(()=>window.PATAMAR_GUIADO_ON&&window.PATAMAR_GUIADO_ON());
  await p.waitForFunction(()=>SIM.gen==='operando',null,{timeout:60000}).catch(()=>{});

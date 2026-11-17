@@ -46,8 +46,8 @@ const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 
     const parado = await observa(3000);
     ok('PARADO (fotos reais do medidor, 3 s): nenhum bloco brilha', parado.blocos.length === 0, JSON.stringify(parado.blocos));
     // arma a mae e inicia o ensaio de verdade
-    await p.evaluate(() => document.querySelector('[data-gd=rodar]').click()); await p.waitForTimeout(500);
-    ok('Patamar Guiado ligado (botao vira "Desligar")', await p.evaluate(() => /Desligar Patamar Guiado/.test(document.querySelector('[data-gd=rodar]').textContent)));
+    await p.evaluate(() => window.__setSalvaModo('P')); await p.waitForTimeout(500);   // 1.10.221: o Patamar liga pelo Modo (Salvamento Por patamar); o botao do dialogo saiu
+    ok('Patamar Guiado ligado (sinalizacao Patamar: On)', await p.evaluate(() => !!GUIADO_MAE.armada && /Patamar: On/.test(document.body.textContent)));
     await p.evaluate(() => iniciaEnsaio()); await p.waitForTimeout(700);
     if (await p.evaluate(() => document.getElementById('dlgDados').open)) { await p.evaluate(() => document.getElementById('dOk').click()); await p.waitForTimeout(700); }
     const ativ = observa(3500); await p.waitForTimeout(300);
