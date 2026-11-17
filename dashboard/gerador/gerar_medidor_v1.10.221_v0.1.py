@@ -26,7 +26,7 @@ t = troca(t, "  function pinta(){bkNascimento();\n",
           "  let atingiuDesde=0,atingiuEt=-1;\n"
           "  function tracejadoVencido(){try{const ai=aplicarInfo();if(!T.started||T.fim||ai.liberado||typeof carga!=='number'||!dadoOk||!(ai.alvoPct>0)){atingiuDesde=0;return false}\n"
           "    const banda=window.PATAMAR_BANDA_PP?window.PATAMAR_BANDA_PP():3;if(atingiuEt!==ai.et){atingiuEt=ai.et;atingiuDesde=0}\n"
-          "    if(Math.abs(carga-ai.alvoPct)<=banda){if(!atingiuDesde)atingiuDesde=Date.now();return Date.now()-atingiuDesde>=10000}atingiuDesde=0;return false}catch(x){return false}}\n"
+          "    if(Math.abs(carga-ai.alvoPct)<=banda){if(!atingiuDesde)atingiuDesde=Date.now();return Date.now()-atingiuDesde>=10000/Math.max(1,T.sp||1)}   /* 10 s de ensaio: no acelerado (Demo 10x) encolhe junto com o relogio */atingiuDesde=0;return false}catch(x){return false}}\n"
           "  function pinta(){bkNascimento();\n", 'pinta1')
 t = troca(t, "document.querySelectorAll('#bancos .tile[data-i]').forEach(t=>t.classList.toggle('sug',(dlg.open||mae.armada)&&marca.has(+t.dataset.i)));",
           "{const venc=tracejadoVencido();document.querySelectorAll('#bancos .tile[data-i]').forEach(t=>t.classList.toggle('sug',(dlg.open||mae.armada)&&marca.has(+t.dataset.i)&&!venc))}", 'pinta2')
@@ -40,7 +40,7 @@ t = troca(t, "  if(PORPAT&&!G.guiadoOn)G.guiadoOn=true;\n", "  G.guiadoOff=false
 # versao
 t = troca(t, '<meta name="app-version" content="1.10.220">', '<meta name="app-version" content="1.10.221">', 'meta')
 hist = ("  {v:\"1.10.221\",d:\"17/11/2026\",i:[\n"
- "    'Teste de bancada (Patamar com PLC + SIDSE): (1) desmarcou uma chave, aplicou e clicou nela de novo: o tracejado (sugestão) não acompanhava o clique; agora acompanha a escolha do operador (desmarcar tira, marcar de novo devolve). (2) O tracejado some 10 s depois que a carga chegou ao degrau (aplicado e dentro da banda); volta se a carga sair da banda ou se o operador mexer numa chave. (3) Sugerir chaves só funciona com o cronômetro (Iniciar) desligado; durante o ensaio mostra aviso. Aplicar continua livre. (4) O Ligar/Desligar Patamar Guiado saiu do diálogo: o controle é só o do ⚙ Modo (Salvamento › Por patamar); o diálogo e o cabeçalho só sinalizam Patamar: On/Off.'\n"
+ "    'Teste de bancada (Patamar com PLC + SIDSE): (1) desmarcou uma chave, aplicou e clicou nela de novo: o tracejado (sugestão) não acompanhava o clique; agora acompanha a escolha do operador (desmarcar tira, marcar de novo devolve). (2) O tracejado some 10 s (de ensaio; no Demo acelerado encolhe com o relogio) depois que a carga chegou ao degrau (aplicado e dentro da banda); volta se a carga sair da banda ou se o operador mexer numa chave. (3) Sugerir chaves só funciona com o cronômetro (Iniciar) desligado; durante o ensaio mostra aviso. Aplicar continua livre. (4) O Ligar/Desligar Patamar Guiado saiu do diálogo: o controle é só o do ⚙ Modo (Salvamento › Por patamar); o diálogo e o cabeçalho só sinalizam Patamar: On/Off.'\n"
  "  ]},\n")
 t = troca(t, "const VERSAO='1.10.220', VERSAO_DATA='17/11/2026';\nconst HISTORICO=[\n", "const VERSAO='1.10.221', VERSAO_DATA='17/11/2026';\nconst HISTORICO=[\n" + hist, 'versao')
 open(d, 'w', encoding='utf-8').write(t); print('medidor_gerador_v1.10.221.html ok')

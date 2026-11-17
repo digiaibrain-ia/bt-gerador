@@ -24,7 +24,7 @@ const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 
   const msg = await p.evaluate(() => (document.body.textContent.match(/Sugerir chaves só funciona[^.]*\./) || [''])[0] + ' | started=' + T.started + ' manualSug=' + GUIADO_DBG.G.manualSug);
   ok('Sugerir chaves bloqueado com o cronometro ativo (aviso)', /Sugerir chaves só funciona/.test(msg) && /started=true/.test(msg) && /manualSug=(false|undefined)/.test(msg), msg.slice(0, 160));
   await p.evaluate(() => { const d = document.getElementById('dlgGuiado'); if (d && d.open) d.close(); });
-  // (b) degrau 30 %: aplica a sugestao e acompanha o tracejado ate a carga chegar e passar 10 s
+  // (b) degrau 30 % (10 s de ensaio = 1 s real no Demo a 10x): aplica a sugestao e acompanha o tracejado ate a carga chegar e passar 10 s
   let aplicou = false, tAplicou = 0, tBanda = 0, tSumiu = 0, tracejadoViu = false, antes10 = false;
   for (let i = 0; i < 160 && !tSumiu; i++) {
     await p.waitForTimeout(500);
@@ -36,7 +36,7 @@ const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 
     const banda = 3, dentro = typeof s.c === 'number' && Math.abs(s.c - s.a) <= banda;
     if (dentro && !tBanda) tBanda = Date.now();
     if (!dentro) tBanda = 0;
-    if (tracejadoViu && s.n === 0) { tSumiu = Date.now(); antes10 = tBanda && (tSumiu - tBanda) < 9000; }
+    if (tracejadoViu && s.n === 0) { tSumiu = Date.now(); antes10 = tBanda && (tSumiu - tBanda) < 900;   /* 10 s de ensaio = 1 s real a 10x */ }
   }
   ok('logo depois do Aplicar o tracejado aparece', tracejadoViu);
   ok('o tracejado sumiu depois que a carga chegou ao degrau', tSumiu > 0 && tBanda > 0, 'dentro da banda ha ' + (tBanda ? Math.round((tSumiu - tBanda) / 1000) : '?') + ' s');
