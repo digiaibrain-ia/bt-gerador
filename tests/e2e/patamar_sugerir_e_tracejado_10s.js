@@ -21,8 +21,8 @@ const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 
   // (a) com o ensaio iniciado, Sugerir chaves e bloqueado e avisa
   await p.evaluate(() => document.getElementById('bGuiado').click()); await p.waitForTimeout(500);
   await p.evaluate(() => { GUIADO_DBG.G.msg = ''; document.querySelector('#dlgGuiado [data-gd=sug]').click(); }); await p.waitForTimeout(300);
-  const msg = await p.evaluate(() => GUIADO_DBG.G.msg || '');
-  ok('Sugerir chaves bloqueado com o cronometro ativo (aviso)', /cron[oô]metro desligado/i.test(msg), msg.slice(0, 80));
+  const msg = await p.evaluate(() => (document.body.textContent.match(/Sugerir chaves só funciona[^.]*\./) || [''])[0] + ' | started=' + T.started + ' manualSug=' + GUIADO_DBG.G.manualSug);
+  ok('Sugerir chaves bloqueado com o cronometro ativo (aviso)', /Sugerir chaves só funciona/.test(msg) && /started=true/.test(msg) && /manualSug=(false|undefined)/.test(msg), msg.slice(0, 160));
   await p.evaluate(() => { const d = document.getElementById('dlgGuiado'); if (d && d.open) d.close(); });
   // (b) degrau 30 %: aplica a sugestao e acompanha o tracejado ate a carga chegar e passar 10 s
   let aplicou = false, tAplicou = 0, tBanda = 0, tSumiu = 0, tracejadoViu = false, antes10 = false;
@@ -30,6 +30,7 @@ const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 
     await p.waitForTimeout(500);
     const s = await p.evaluate(() => ({ et: T.et, mae: GUIADO_MAE.estado, n: document.querySelectorAll('#bancos .tile.sug').length, c: carga, a: aplicarInfo().alvoPct, ap: APL_ET }));
     if (!aplicou && s.et === 1 && s.mae === 'AGUARDA_APLICAR') { await p.evaluate(() => GUIADO_DBG.aplica()); aplicou = true; tAplicou = Date.now(); continue; }
+    if (process.env.DEBUG && aplicou) console.log('  amostra', i, JSON.stringify(s));
     if (!aplicou) continue;
     if (s.n > 0) tracejadoViu = true;
     const banda = 3, dentro = typeof s.c === 'number' && Math.abs(s.c - s.a) <= banda;
