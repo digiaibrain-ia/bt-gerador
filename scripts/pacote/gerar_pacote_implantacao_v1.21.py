@@ -64,7 +64,9 @@ ARQ += [('scripts/catalogo/catalogo_dse_v0.1.py', '10_catalogo_dse/catalogo_dse_
 # todos os .js do projeto (exceto dependencias de terceiros, node_modules e bibliotecas vendor)
 import subprocess
 _js = subprocess.run(['git', '-C', RAIZ, 'ls-files', '*.js'], capture_output=True, text=True, check=True).stdout.split()
-_js = [j for j in _js if '/node_modules/' not in j and not j.startswith('dashboard/vendor/')]
+# guardas de producao com IPs reais escritos no codigo: NAO vao para o pacote (ver BACKLOG: IP real no Git)
+_EXCLUIR_IP = {'tests/integracao/t0_trava_producao.test.js', 'tests/integracao/trava_producao.js'}
+_js = [j for j in _js if '/node_modules/' not in j and not j.startswith('dashboard/vendor/') and j not in _EXCLUIR_IP]
 ARQ += [(j, '09_todos_os_js/' + j) for j in _js]
 IP = re.compile(rb'\b(10|172\.(1[6-9]|2[0-9]|3[01])|192\.168)\.\d{1,3}\.\d{1,3}(\.\d{1,3})?\b')
 def _zip_alexandre(itens):
