@@ -1,7 +1,7 @@
 // Medidor 1.10.221: (a) Sugerir chaves fica bloqueado com o cronometro (Iniciar) ativo; (b) o tracejado some ~10 s DEPOIS que a carga chegou ao degrau; (c) o dialogo nao tem mais o botao Ligar/Desligar Patamar.
 // Demo local, so BC56, 40 kW a 100 %, ensaio acelerado (10x). file://. Uso: node tests/e2e/patamar_sugerir_e_tracejado_10s.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.222.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.223.html');
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1536, height: 900 } })).newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());
