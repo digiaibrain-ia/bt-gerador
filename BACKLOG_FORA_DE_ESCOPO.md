@@ -197,3 +197,9 @@ Documentos (.md/.scl) foram limpos: IPs viraram [IP_1515], [IP_ET200], [IP_PC_BT
 - **Achado (bancada, PC BT2):** com o PLC 1515 em STOP, as saidas das chaves do ET200 cairam (ComOk FALSE), mas o HTML continuou mostrando "Desligar banco" e "23 kW ligados". Causa: CPU em STOP continua respondendo leituras S7; o Node-RED serve os ULTIMOS valores do DB3000 como se fossem vivos (GET 200). O medidor so alarma leitura que falha (503).
 - **Correcao proposta (precisa de OK: mexe em PLC e fluxo):** contador de batimento do 1515 em campo novo do DB3000 (incrementado no OB1), e o fluxo chaves-56/400 (v3.8/v3.7) passa a tratar "contador parado ha N s" como leitura invalida (503 "PLC sem programa em execucao"), o que o medidor ja trata (chaves em "?", COM-001). Testar com o 1515 em STOP/RUN.
 - **Parte ja entregue no ET200 (entrega v0.7):** saida fisica "Ligar Banco" com ComOk e trava apos queda (antes ficava ligada).
+
+## (17/11/2026) Auditoria dos 5 fundamentos — itens NAO corrigidos nesta rodada (ver docs/bt2/auditoria/AUDITORIA_5_FUNDAMENTOS_v0.1.md)
+- **BK-AUD-04 (Media):** guarda de capacidade (limite de kW, 107 a 112 % do gerador) existe so no HTML; um POST direto em /api/chaves passa do limite. Correcao certa = no PLC (intertravamento nao pode ficar so no supervisorio); exige o kW do gerador no PLC/DB2100. Fazer depois da bancada, com OK.
+- **BK-AUD-05 (Baixa):** o nome de quem registra (actor) e digitado, sem login (mesma raiz de D-4: login/`adminAuth`, TI).
+- **BK-AUD-09 (Info):** medidor HTML ~1,4 MB (UI + regra do Guiado + acesso a dados). Refatorar so depois da liberacao, um passo por vez, com testes de caracterizacao e OK.
+- **BK-PLC-02** (batimento do 1515) segue no backlog; o Gemini (2a opiniao) e o Claude concordam em 3 a 5 s e falha segura (chaves em "?" e COM-001).

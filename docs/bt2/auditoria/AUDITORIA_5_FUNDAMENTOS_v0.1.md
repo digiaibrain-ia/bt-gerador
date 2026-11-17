@@ -3,6 +3,10 @@
 **Escopo:** o que mudou desde as Fases 1 a 3 (RNC, fila e area RNC do medidor, ET200, Patamar, alarme inteligente). **Modo: leitura + provas em simulador.** Nada foi alterado no Node-RED, no PLC nem no PC BT2. Sem login/senha nas rotas (D-4, TI): fora do escopo.
 Provas rodadas contra o fluxo REAL no Node-RED 5.x do harness (pasta de dados temporaria), nao contra mocks.
 
+## Status (17/11/2026, apos o OK do Reginaldo)
+**AUD-1, AUD-2 e AUD-3 CORRIGIDOS** em `nodered/flows/rnc-api-v1.2.json` (gerado por `nodered/gerador/gerar_rnc_v1.2.js`; core `rnc_core_v1.2.js`; a v1.1 fica intacta). Prova: `tests/integracao/seguranca/s4_rnc_d3.test.js` = **17 de 17 na v1.2 e 10 falhas na v1.1** (verificacao por mutacao); script de bancada `tests/rnc_teste_bancada_v0.3.js` 18 de 18; medidor x fluxo real `rnc_medidor_fila_real.js` 5 de 5. AUD-4, AUD-5 e AUD-9 no backlog (BK-AUD-04/05/09). Segunda opiniao tecnica (Gemini) concordou com as 4 recomendacoes; correcao minha: repeticao com o MESMO conteudo devolve 200 (nao 409).
+**Para usar no PC BT2:** medidor servido pelo Node-RED (mesma origem) funciona sem ajuste; medidor aberto como arquivo (Origin `null`) precisa da variavel `BT2_ORIGENS_OK=null` na aba/PM2. Scripts de teste precisam enviar `Origin` (v0.3).
+
 ## Resultado
 | ID | Fundamento | Gravidade | Achado | Prova | Acao proposta |
 |---|---|---|---|---|---|

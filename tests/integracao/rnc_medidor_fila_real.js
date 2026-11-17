@@ -3,11 +3,11 @@
 const path = require('path'), os = require('os'), fs = require('fs'); const { chromium } = require('playwright');
 const { ENV_TESTE, sobe } = require('./ajudas.js');
 const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.216.html');
-const FLUXO = path.resolve(__dirname, '..', '..', 'nodered', 'flows', 'rnc-api-v1.1.json');
+const FLUXO = path.resolve(__dirname, '..', '..', 'nodered', 'flows', 'rnc-api-v1.2.json');
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rnc-dados-teste-'));
-  const h = await sobe({ fluxos: [], fluxosCaminho: [FLUXO], env: Object.assign({}, ENV_TESTE, { RNC_DIR: dir }) });
+  const h = await sobe({ fluxos: [], fluxosCaminho: [FLUXO], env: Object.assign({}, ENV_TESTE, { RNC_DIR: dir, BT2_ORIGENS_OK: 'null' }) });
   const b = await chromium.launch();
   try {
     await new Promise(r => setTimeout(r, 1500));
