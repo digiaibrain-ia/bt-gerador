@@ -32,5 +32,5 @@ node dashboard/build/build.js     # gera dashboard/dist/medidor_gerador_vX.Y.Z.h
 
 ## Regras
 - BT1 e BT2 são sistemas distintos: pastas e fluxos separados.
-- Nunca commitar `.env`, `flows_cred.json`, IPs reais ou dados de ensaio.
+- Nunca commitar `.env`, `flows_cred.json`, senhas, tokens ou dados de ensaio.
 - Convenções de branch, commit e tag: [CONTRIBUTING.md](CONTRIBUTING.md).
