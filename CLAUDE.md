@@ -7,7 +7,7 @@ Estas regras valem para qualquer sessao neste repositorio. Escritas em portugues
 - Nenhuma mudanca em PLC ou Node-RED de producao sem backup antes e OK explicito do Reginaldo.
 - Carga de potencia sempre DESACOPLADA durante qualquer teste em bancada.
 - O simulador (`simulador-dse-demo-v7`) nunca vai para o PC de producao.
-- Nao colocar IP real, senha, token ou chave no Git. Enderecos vem de variavel do PM2 (`PLC_IP`, `DSE_URL`).
+- Nao colocar senha, token ou chave no Git.
 
 ## Metodo de trabalho
 - Antes de alterar arquivo de producao: mostrar plano e causa, e esperar OK.
