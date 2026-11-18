@@ -1,6 +1,6 @@
 // Toque longo (celular) abre o menu, nao aciona o botao por baixo, e toque curto/rolagem NAO abrem o menu. Medidor 1.10.164, porta 8790.
 const { chromium } = require('playwright');
-const URL = 'http://localhost:8790/' + (process.env.MEDIDOR || 'medidor_gerador_v1.10.164.html');
+const URL = 'http://localhost:8790/' + (process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const ok = (n, c, d) => console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : ''));
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });

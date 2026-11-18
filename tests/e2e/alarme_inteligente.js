@@ -1,7 +1,7 @@
 // Medidor 1.10.212 — ALARME INTELIGENTE: contexto (Demo local sem alarme de PLC), escopo (so banco em uso), causa-raiz (1 alarme + dependentes), seguranca nao suprimida, linha "Monitorando".
 // Abre o arquivo direto (file://), servidor SIMULADO por page.route. Uso: node tests/e2e/alarme_inteligente.js   (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.212.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 const ativos = p => p.evaluate(() => OCOR.ativas().map(o => o.cod + (o.ref ? '|' + o.ref : '')).sort());
 (async () => {

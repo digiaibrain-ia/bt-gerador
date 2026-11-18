@@ -1,7 +1,7 @@
 // Medidor (1.10.221 ou o nome em MEDIDOR): o operador DESMARCA uma chave no degrau e clica de novo nela. A chave tem de voltar a ficar
 // TRACEJADA (sugerida) e com a sinalizacao de ligada. Demo, so BC56, 40 kW a 100 %. Uso: node tests/e2e/patamar_desseleciona_tracejado.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.221.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1536, height: 900 } })).newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());

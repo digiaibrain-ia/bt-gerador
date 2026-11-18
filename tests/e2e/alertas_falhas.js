@@ -1,6 +1,6 @@
 // Alertas e Falhas: dois botoes independentes + chips de tipo na janela (medidor 1.10.166). Porta 8790.
 const { chromium } = require('playwright');
-const URL = 'http://localhost:8790/' + (process.env.MEDIDOR || 'medidor_gerador_v1.10.166.html');
+const URL = 'http://localhost:8790/' + (process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch();

@@ -10,11 +10,12 @@ const V = require('../verificador.js');
 
 const dorme = ms => new Promise(r => setTimeout(r, ms));
 const PASTA = path.join(__dirname, '..', '..', '..', 'nodered', 'flows', 'bt2');
+const { caminhoFluxo } = require('../../versoes.js');   // A3: pasta ativa e depois tests/fixtures/fluxos
 
 describe('C3 4a - estatico: os 4 fluxos novos tem o expurgo, a revalidacao e mantem a prioridade do desligar', () => {
   for (const id of Object.keys(BANCOS)) {
     test('BC' + id + ': nos novos ligados na ordem fila/libera -> revalida -> monta/watchdog; expurgo -> responder proprio', () => {
-      const fl = JSON.parse(fs.readFileSync(path.join(PASTA, BANCOS[id].flow + '.json'), 'utf8')), por = Object.fromEntries(fl.map(n => [n.id, n])), p = 'chv' + id + '_';
+      const fl = JSON.parse(fs.readFileSync(caminhoFluxo(BANCOS[id].flow), 'utf8')), por = Object.fromEntries(fl.map(n => [n.id, n])), p = 'chv' + id + '_';
       const fila = por[p + 'fila'], lib = por[p + 'libera_fila'], rev = por[p + 'revalida'], can = por[p + 'cancela_resp'];
       assert.ok(rev && can, 'faltam os nos novos');
       assert.deepEqual(fila.wires, [[rev.id], [can.id]]); assert.deepEqual(lib.wires, [[rev.id]]);
@@ -27,7 +28,7 @@ describe('C3 4a - estatico: os 4 fluxos novos tem o expurgo, a revalidacao e man
   }
   test('as versoes anteriores (v3.2/v1.3) nao foram alteradas pelo gerador da 4a', () => {
     for (const n of ['chaves-56-api-v3.2', 'chaves-400-api-v3.2', 'chaves-550-api-v1.3', 'chaves-595-api-v1.3'])
-      assert.ok(!fs.readFileSync(path.join(PASTA, n + '.json'), 'utf8').includes('CANCELADO_POR_DESLIGAR'), n);
+      assert.ok(!fs.readFileSync(caminhoFluxo(n), 'utf8').includes('CANCELADO_POR_DESLIGAR'), n);
   });
 });
 

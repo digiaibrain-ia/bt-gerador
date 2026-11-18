@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const http = require('http'), fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
 const FER = path.join(__dirname, '..', '..', '..', 'dashboard', 'ferramentas'), CAT = path.join(__dirname, '..', '..', '..', 'catalogo');
-const MED = process.env.BT2_MED || 'medidor_gerador_v1.10.199.html';
+const MED = process.env.BT2_MED || require('../../versoes.js').medidorAtual();
 let srv, port, b;
 before(async () => {
   srv = http.createServer((q, r) => { const u = q.url.split('?')[0].replace(/^\//, ''); const f = fs.existsSync(path.join(FER, u)) ? path.join(FER, u) : path.join(CAT, u); if (fs.existsSync(f) && fs.statSync(f).isFile()) { r.writeHead(200, { 'content-type': f.endsWith('.js') ? 'text/javascript' : f.endsWith('.csv') ? 'text/csv; charset=utf-8' : 'text/html; charset=utf-8' }); r.end(fs.readFileSync(f)); } else { r.writeHead(404); r.end(); } });

@@ -9,8 +9,9 @@ const assert = require('node:assert/strict');
 const { ENV_TESTE, BANCOS, enderecos, esperaAte, get, post, sobe } = require('../ajudas.js');
 const { parseAddr } = require('../plc_simulado.js');
 
-const VERSAO = process.env.BT2_FASE4_VERSAO || 'v1.6';
+const ULTIMA = { 550: 'v1.7', 595: 'v1.7' };   // A3 (18/11/2026): padrao = a versao mais nova de cada banco
 for (const id of ['550', '595']) {
+  const VERSAO = process.env.BT2_FASE4_VERSAO || ULTIMA[id];
   describe('A2 - chaves-' + id + '-api-' + VERSAO, () => {
     const flow = 'chaves-' + id + '-api-' + VERSAO;
     const B = BANCOS[id], e = enderecos(id);

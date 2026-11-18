@@ -9,12 +9,13 @@ const V = require('../verificador.js');
 
 const dorme = ms => new Promise(r => setTimeout(r, ms));
 const PASTA = path.join(__dirname, '..', '..', '..', 'nodered', 'flows', 'bt2');
+const { caminhoFluxo } = require('../../versoes.js');   // A3: pasta ativa e depois tests/fixtures/fluxos
 const ABAS = { CONF_JANELA_MS: 1000, QUARENTENA_MS: 3000 };   // reduzidos para o teste nao demorar (padrao de producao: 2000 / 10000)
 
 describe('C4 4b - estatico: os 4 fluxos novos', () => {
   for (const id of Object.keys(BANCOS)) {
     test('BC' + id + ': confere tem 3 saidas (retentativa), monta tem 5 (503 de quarentena), reafirma ligada a fila, variaveis da aba presentes', () => {
-      const fl = JSON.parse(fs.readFileSync(path.join(PASTA, BANCOS[id].flow + '.json'), 'utf8')), por = Object.fromEntries(fl.map(n => [n.id, n])), P = 'chv' + id;
+      const fl = JSON.parse(fs.readFileSync(caminhoFluxo(BANCOS[id].flow), 'utf8')), por = Object.fromEntries(fl.map(n => [n.id, n])), P = 'chv' + id;
       const conf = por[P + '_confere'], monta = por[P + '_monta'];
       assert.equal(conf.outputs, 3); assert.deepEqual(conf.wires, [[P + '_monta'], [P + '_responde'], [P + '_conf_retry']]);
       assert.deepEqual(por[P + '_conf_retry'].wires, [[P + '_retenta']]); assert.deepEqual(por[P + '_retenta'].wires, [[P + '_s7_read']]);
@@ -29,7 +30,7 @@ describe('C4 4b - estatico: os 4 fluxos novos', () => {
   }
   test('as versoes anteriores (v3.3/v1.4) nao foram alteradas pelo gerador da 4b', () => {
     for (const n of ['chaves-56-api-v3.3', 'chaves-400-api-v3.3', 'chaves-550-api-v1.4', 'chaves-595-api-v1.4'])
-      assert.ok(!fs.readFileSync(path.join(PASTA, n + '.json'), 'utf8').includes('AGUARDE_CONFIRMACAO'), n);
+      assert.ok(!fs.readFileSync(caminhoFluxo(n), 'utf8').includes('AGUARDE_CONFIRMACAO'), n);
   });
 });
 

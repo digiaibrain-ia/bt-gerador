@@ -1,7 +1,7 @@
 // Robo do ensaio completo no Demo (gerador ideal, Patamar Auto, 4 bancos). Uso: servir dashboard/ferramentas na porta 8772 e rodar
 //   NODE_PATH=$(npm root -g) node tests/e2e/geradores_ideais.js [indices, ex.: 0,3]   (MEDIDOR=medidor_gerador_v1.10.166.html para trocar a versao)
 const {chromium}=require('playwright');const fs=require('fs');const path=require('path');const RAIZ=path.join(__dirname,'..','..');
-const MEDIDOR=process.env.MEDIDOR||'medidor_gerador_v1.10.166.html';
+const MEDIDOR=process.env.MEDIDOR||require('../versoes.js').medidorAtual();
 const R=require(path.join(RAIZ,'dashboard/modulos-fonte/rodizio_chaves_v0.5.js'));
 const GERS=[['MWM_40KVA_eletr','G4501AMF_MWMe_40KVA_60HZ_380V_12V.dse'],['MWM_150KVA','G4501AMF_MWM_150KVA_60HZ_380V_12V.dse'],['SCA_500KVA','G4501AMF_SCA_500KVA_60HZ_380V_24V.dse'],['SCA_800KVA','G4501AMF_SCA_800KVA_60HZ_380V_24V.dse'],['380V','8660_1250KVA_60HZ_380V_24V_V7.7.dse']];
 const sel=process.argv[2]?process.argv[2].split(',').map(Number):[0,1,2,3,4];

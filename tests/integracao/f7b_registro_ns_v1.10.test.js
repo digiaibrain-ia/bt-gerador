@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { ENV_TESTE, esperaAte, get, post, sobe } = require('./ajudas.js');
 const fs = require('fs');
 const path = require('path');
-const lerFluxo = nome => JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'nodered', 'flows', 'bt2', nome + '.json'), 'utf8'));
+const lerFluxo = nome => JSON.parse(fs.readFileSync(require('../versoes.js').caminhoFluxo(nome), 'utf8'));
 
 const REG = 'registro-ensaio-db2100-api-v1.10';
 const endVar = nome => { for (const n of lerFluxo(REG)) for (const v of (n.vartable || [])) if (v.name === nome) return v.addr; throw new Error('variavel nao encontrada: ' + nome); };

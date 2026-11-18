@@ -12,7 +12,7 @@ describe('F11 front real contra o Node-RED de teste', () => {
   const temClasse = (sel, cls) => p.evaluate(([s, c]) => { const el = document.querySelector(s); return !!el && el.classList.contains(c); }, [sel, cls]);
 
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.4', 'chaves-400-api-v3.4', 'registro-ensaio-db2100-api-v1.8'], env: ENV_TESTE, servirHtml: true });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.7', 'chaves-400-api-v3.6', 'registro-ensaio-db2100-api-v1.10'], env: ENV_TESTE, servirHtml: true });
     e56 = enderecos('56'); e400 = enderecos('400');
     for (const e of [e56, e400]) { h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); }
     b = await chromium.launch();
@@ -23,7 +23,7 @@ describe('F11 front real contra o Node-RED de teste', () => {
       if (u.startsWith(h.url)) return r.continue();
       bloqueados.push(u); return r.abort();                 // trava no navegador: so o Node-RED de teste
     });
-    await p.goto(h.url + '/html/medidor_gerador_v1.10.176.html');
+    await p.goto(h.url + '/html/' + (process.env.BT2_FASE4_HTML || require('../versoes.js').medidorAtual()));   // A3: padrao = medidor mais novo
     assert.ok(await esperaAte(async () => (await txt('#lkPlc') || '').includes('leitura ok'), 12000), 'o chip do PLC nunca mostrou "leitura ok"');
   });
   after(async () => { if (b) await b.close(); if (h) await h.para(); });

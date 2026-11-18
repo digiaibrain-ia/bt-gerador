@@ -12,17 +12,19 @@
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
-const { ENV_TESTE, enderecos, esperaAte, sobe } = require('../ajudas.js');
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.228.html';
+const { ENV_TESTE, enderecos, esperaAte, get, sobe } = require('../ajudas.js');
+const HTML = process.env.BT2_FASE4_HTML || require('../../versoes.js').medidorAtual();
 
 describe('Passo 5 B1/B2: zerar o PLC com falha avisa (CHV-009) e só normaliza quando der certo', () => {
   let h, b, p, falhar = false, chamadas = [];
   const ativas = () => p.evaluate(() => window.OCOR.ativas().map(o => ({ cod: o.cod, ref: o.ref, tipo: o.tipo, txt: o.txt })));
   const cod = async c => (await ativas()).filter(o => o.cod === c);
   // simula "o operador comandou a chave 1 do BC56 e a deixou selecionada no PLC", depois pede a volta ao estado seguro
-  // (o PLC simulado também fica com a chave 1 comandada e selecionada, senão a leitura periódica da tela zera o CH_CMD no meio do teste)
+  // (o PLC simulado também fica com a chave 1 comandada, ligada (SB) e selecionada, senão a leitura periódica da tela zera o CH_CMD no meio do teste, sobretudo com a máquina carregada)
   const estadoSeguro = async () => {
-    const e = enderecos('56'); h.plc.escrever(e.cb(1), true); h.plc.escrever(e.hab(1), true); h.plc.escrever(e.chaveSel, 1);
+    const e = enderecos('56'); h.plc.escrever(e.cb(1), true); h.plc.escrever(e.sb(1), true); h.plc.escrever(e.hab(1), true); h.plc.escrever(e.chaveSel, 1);   // comando + retorno (SB): a leitura da tela confirma que a chave esta ligada
+    // espera o Node-RED REFLETIR o comando na leitura (ele le o PLC em ciclos); sem isso, com a maquina carregada, uma leitura antiga da tela zera o CH_CMD no meio do teste
+    assert.ok(await esperaAte(async () => { const r = await get(h, '/api/chaves/56'); return !!(r.j && r.j.cbLigar && r.j.cbLigar[0] === true); }, 8000), 'o Node-RED nao refletiu o cbLigar da chave 1');
     await p.evaluate(async () => { CH_CMD[0] = true; CH_SELPLC = 0; await window.chModoSeguro({ eraPlc: true, serPlc: false }); });
   };
 

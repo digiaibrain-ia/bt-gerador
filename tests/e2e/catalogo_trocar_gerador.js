@@ -1,7 +1,7 @@
 // Medidor 1.10.217: com gerador JA ESCOLHIDO, a mensagem do catalogo automatico nao pode apagar a ficha nem o botao "Trocar gerador"; "Trocar gerador" traz a busca de volta.
 // file://. Uso: node tests/e2e/catalogo_trocar_gerador.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.217.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch();

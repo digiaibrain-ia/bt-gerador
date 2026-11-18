@@ -1,7 +1,7 @@
 // Medidor 1.10.211: (1) botao "Registrar defeito" (RNC) grava via /api/rnc/abrir com contexto e chave de idempotencia (servidor SIMULADO por page.route);
 // (2) card Banco de Cargas mostra so os bancos selecionados (👁 n/N alterna para Todos). Abre o arquivo direto (file://). Uso: node tests/e2e/rnc_e_bancos_visiveis.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.216.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch();

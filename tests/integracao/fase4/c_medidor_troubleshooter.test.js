@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, enderecos, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.176.html';
+const HTML = process.env.BT2_FASE4_HTML || require('../../versoes.js').medidorAtual();
 
 describe('C - medidor: triangulos, troubleshooter, legenda, Cards x flow, DSE-001', () => {
   let h, b, ctx, p;
@@ -91,7 +91,7 @@ describe('C - medidor: triangulos, troubleshooter, legenda, Cards x flow, DSE-00
 describe('C7 - medidor com o PLC do banco (ET200) sem comunicacao', () => {
   let h, b, p; const e = enderecos('56');
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.5', 'chaves-400-api-v3.5'], env: ENV_TESTE, servirHtml: true });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.7', 'chaves-400-api-v3.6'], env: ENV_TESTE, servirHtml: true });
     const e4 = enderecos('400'); h.plc.escrever(e4.comOk, true); h.plc.escrever(e4.seletora, true);
     h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); h.plc.escrever(e.cbBanco, true); for (let i = 1; i <= 13; i++) h.plc.escrever(e.hab(i), true);
     b = await chromium.launch(); p = await b.newPage({ viewport: { width: 1280, height: 900 } });

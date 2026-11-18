@@ -4,7 +4,7 @@
 // Abre o arquivo direto (file://), sem servidor. Uso: node tests/e2e/mapa_fbs_no_medidor.js   (MEDIDOR=nome.html; SHOTS=pasta para salvar capturas)
 const { chromium } = require('playwright');
 const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.209.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const SHOTS = process.env.SHOTS || '';
 const fs = require('fs');
 // GUARDA (LL-059): a copia embutida do mapa tem que ser a versao MAIS NOVA que existe na pasta (a 1.10.206 embutia a v0.14 enquanto a pasta ja tinha a v0.16)

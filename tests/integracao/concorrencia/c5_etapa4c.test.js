@@ -7,7 +7,8 @@ const path = require('path');
 const { ENV_TESTE, esperaAte, get, post, sobe } = require('../ajudas.js');
 
 const PASTA = path.join(__dirname, '..', '..', '..', 'nodered', 'flows', 'bt2');
-const lerFluxo = n => JSON.parse(fs.readFileSync(path.join(PASTA, n + '.json'), 'utf8')), porId = fl => Object.fromEntries(fl.map(x => [x.id, x]));
+const { caminhoFluxo } = require('../../versoes.js');   // A3: pasta ativa e depois tests/fixtures/fluxos
+const lerFluxo = n => JSON.parse(fs.readFileSync(caminhoFluxo(n), 'utf8')), porId = fl => Object.fromEntries(fl.map(x => [x.id, x]));
 const lote = (sessao, ns) => ({ eventos: ns.map(n => ({ sessao, n, t: 't', v: '1', modo: 'm', card: 'c', tipo: 'api', acao: 'a' + n, res: 'ok' })) });
 const LOG = '/api/dev/log-evento';
 

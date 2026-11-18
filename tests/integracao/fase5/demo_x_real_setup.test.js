@@ -10,12 +10,12 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, enderecos, esperaAte, get, post, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.190.html';
+const HTML = process.env.BT2_FASE4_HTML || require('../../versoes.js').medidorAtual();
 describe('Fase 5 - Setup no modo REAL (simulado) x Demo', () => {
   let h, e, b, p;
   const txt = s => p.evaluate(x => { const el = document.querySelector(x); return el ? el.textContent.replace(/\s+/g, ' ').trim() : null; }, s);
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.5', 'simulador-dse-demo-v7', 'registro-ensaio-db2100-api-v1.8'], env: ENV_TESTE, envAbas: { BT2_BANCADA: '1' }, servirHtml: true });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.7', 'simulador-dse-demo-v7', 'registro-ensaio-db2100-api-v1.10'], env: ENV_TESTE, envAbas: { BT2_BANCADA: '1' }, servirHtml: true });
     e = enderecos('56');
     await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 5000);
     h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); h.plc.escrever(e.cbBanco, true);

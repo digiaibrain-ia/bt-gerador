@@ -2,7 +2,7 @@
 // Uso: servir a pasta de teste na porta 8790 (medidor + link para dashboard/vendor/tesseract) e rodar
 //   NODE_PATH=$(npm root -g) node tests/e2e/pacote_ia.js
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const URL = 'http://localhost:8790/' + (process.env.MEDIDOR || 'medidor_gerador_v1.10.164.html');
+const URL = 'http://localhost:8790/' + (process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push({ n, ok: !!c, d: d || '' }); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch();

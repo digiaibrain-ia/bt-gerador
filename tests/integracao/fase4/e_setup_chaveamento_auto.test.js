@@ -7,14 +7,14 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, enderecos, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.176.html';
+const HTML = process.env.BT2_FASE4_HTML || require('../../versoes.js').medidorAtual();
 describe('Setup: chaveamento vindo dos Dados do ensaio', () => {
   let h, b, p; const e = enderecos('56'), e4 = enderecos('400');
   const chip = () => p.evaluate(() => document.getElementById('stTensChip').textContent);
   const tens = () => h.plc.ler(e.tensaoSel);
   const dados = (v, conf = true) => p.evaluate(([v, conf]) => { DADOS.tensao = v; dadosConfMarca(conf); }, [v, conf]);
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.5', 'chaves-400-api-v3.5'], env: ENV_TESTE, servirHtml: true });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.7', 'chaves-400-api-v3.6'], env: ENV_TESTE, servirHtml: true });
     for (const x of [e, e4]) { h.plc.escrever(x.comOk, true); h.plc.escrever(x.seletora, true); }
     b = await chromium.launch(); p = await b.newPage({ viewport: { width: 1400, height: 900 } });
     p.on('pageerror', x => { throw new Error('erro de JavaScript na pagina: ' + x.message); });

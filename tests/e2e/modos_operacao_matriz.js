@@ -2,7 +2,7 @@
 // Para cada combinacao observa 40 s apos INICIAR e registra: estado da Mae, se as chaves entraram sozinhas, se a etapa avancou sozinha, se precisou clicar Aplicar/Salvar. NAO afirma o "certo": gera a tabela para revisao.
 // Uso: node tests/e2e/modos_operacao_matriz.js [saida.json]   (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path'); const fs = require('fs');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.220.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const KW = [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 3];
 (async () => {
   const b = await chromium.launch(); const out = [];

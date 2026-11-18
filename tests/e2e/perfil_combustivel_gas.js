@@ -2,7 +2,7 @@
 // Confere: (1) nenhum degrau de carga passa de 25 % (10 kW) e entre degraus ha >= 9 s; (2) frequencia baixa SEGURA o proximo degrau e ele sai quando a frequencia volta;
 // (3) sem recuperar no limite DESISTE sem adicionar carga; (4) a etapa final sem carga desce em degraus (nao tudo de uma vez). file://. Uso: node tests/e2e/perfil_combustivel_gas.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.220.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1536, height: 900 } })).newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());
