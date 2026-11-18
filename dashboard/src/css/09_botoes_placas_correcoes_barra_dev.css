@@ -1,0 +1,155 @@
+/* ===== v1.10.122: BOTÕES SEM BORDA =====
+   POR QUÊ: pedido do operador — "para todos os botões UI não quero bordas; usar uma cor num tom a mais que o fundo".
+   COMO: border-color transparente (a LARGURA da borda fica, então nada muda de tamanho — REGRA_LAYOUT_ESTAVEL) + fundo num tom acima do fundo.
+   NÃO MEXE: chaves do banco de carga (#bancos), campos de digitação, ibub e indicadores de estado (cor/animação = sinal, não botão). */
+:root{--btn-bg:#e4e9ef;--btn-bg-h:#d6dde6}
+html[data-tema=escuro]{--btn-bg:#34373d;--btn-bg-h:#41454c}
+.cfgbtn,.sapbar button,.chbar button,.btns button,.jan .bt.s,.expmenu button{border-color:transparent!important;background:var(--btn-bg)!important;color:var(--txt)}
+.cfgbtn:hover,.sapbar button:hover:not(:disabled),.chbar button:hover,.jan .bt.s:hover,.expmenu button:hover{background:var(--btn-bg-h)!important}
+.jan .bt.s{color:var(--jazul)!important}
+html[data-tema=escuro] .jan .bt.s{color:var(--txt)!important}
+.jan .bt.p,.jan .bt.c,.jan .bt.d,.jan .bt:disabled{border-color:transparent!important}
+.ensseg,.seg,.dseSeg{border-color:transparent!important;background:var(--btn-bg)!important;gap:2px}
+.ensseg button:not(.on):not(.ok):not(.cr),.seg button:not(.on),.dseSeg button:not(.on){background:transparent!important}
+.ensseg button+button{border-left-color:transparent!important}
+.jan .jtipo button:not(.on){border-color:transparent!important;background:var(--btn-bg)!important;color:var(--txt)!important}
+.jan .jtipo button.on{border-color:transparent!important}
+.chtabs button:not(.on){border-color:transparent!important;background:rgba(255,255,255,.16)!important}
+.chtabs button.on{border-color:transparent!important}
+.tools button{border-color:transparent!important;background:rgba(255,255,255,.14)}
+.tools button:hover{background:rgba(255,255,255,.24)}
+.tools button[aria-pressed=true]{background:#e8e8e4}
+.jan .jx{border-color:transparent!important;background:rgba(255,255,255,.16)}
+.jan .jx:hover{background:#fff;color:var(--jazul)}
+.gd-sv{border-color:transparent!important;background:var(--btn-bg)}
+.gbtn,.thbtn{border-color:transparent!important;background:var(--btn-bg)!important;color:var(--txt)}
+.thbtn{color:var(--ui-tinta)}
+html[data-tema=escuro] .thbtn{color:var(--blue)}
+.gbtn:hover,.thbtn:hover{background:var(--btn-bg-h)!important}
+.fimbtn,.svbtn,.bkbtn,.bkbtn.on,.bkbtn.nao,.cfg #bDemo,#opsBar button,.clock .salvbtn,.dlgbtn .prim{border-color:transparent!important}
+#stSalva,#chLimpaReal,#chImprimir{border-color:transparent!important;background:var(--btn-bg)}
+/* cabeçalho: "Modo guiado" e "Dados" saem (continuam no DOM, escondidos, porque o resto do código clica neles); chip MANUAL do DSE também */
+.tools #bModo,.tools #bDados,#pModo{display:none!important}
+/* ícone de tema */
+#bTema{display:inline-flex;align-items:center;justify-content:center;padding:3px 8px}
+#bTema svg{width:16px;height:16px;display:block}
+/* Alertas [triângulo] Falhas */
+#bOcor svg{width:17px;height:16px}
+/* link "Abrir Dados do ensaio" */
+.lnkbtn{border:0!important;background:none!important;padding:0;font-size:13px;font-weight:600;color:var(--ui-tinta);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+html[data-tema=escuro] .lnkbtn{color:var(--blue)}
+.lnkbtn:hover{color:var(--ui-acento)}
+/* ícone da placa no card Banco de Cargas */
+.plcBtn{border:0;background:var(--btn-bg);color:var(--mut);width:30px;height:22px;border-radius:11px;padding:0;margin-left:6px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.plcBtn:hover{background:var(--btn-bg-h);color:var(--txt)}
+.plcBtn svg{width:18px;height:14px;display:block}
+/* ===== réplica das placas ===== */
+.plGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:18px;margin-top:10px}
+.plWrap>.plTag{display:flex;align-items:center;gap:8px;margin:0 2px 6px;font-size:12px;color:var(--mut)}
+.plWrap>.plTag b{color:var(--txt);font-size:14px}
+.plWrap>.plTag .plSt{margin-left:auto;padding:1px 9px;border-radius:99px;font-size:11px;font-weight:700;background:var(--btn-bg)}
+.plWrap>.plTag .plSt.ok{background:#d8f1e2;color:#14663a}
+.plQ{position:relative;padding:16px 26px 14px;border-radius:9px;color:#1a1d21;font-family:"Arial Narrow",Arial,sans-serif;
+  background:linear-gradient(120deg,#e6e9ec 0%,#c5cad0 34%,#e1e4e7 58%,#b9bfc6 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.6),inset 0 0 0 4px rgba(0,0,0,.16),0 4px 12px rgba(0,0,0,.30)}
+.plQ .rv{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#8e959c 60%,#5d646b);box-shadow:0 1px 1px rgba(0,0,0,.4)}
+.plQ .rv:nth-of-type(1){left:9px;top:9px}.plQ .rv:nth-of-type(2){right:9px;top:9px}.plQ .rv:nth-of-type(3){left:9px;bottom:9px}.plQ .rv:nth-of-type(4){right:9px;bottom:9px}
+.plQ .fab{font-weight:700;font-size:19px;letter-spacing:.06em;text-align:center;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.plQ .fab small{display:block;font-size:10px;letter-spacing:.12em;font-weight:400}
+.plQ .tit{text-align:center;font-size:14px;font-weight:700;margin:6px 0 8px;padding:3px 0;border-top:1px solid rgba(0,0,0,.35);border-bottom:1px solid rgba(0,0,0,.35);text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.plQ .ln{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2.5px 0;border-bottom:1px dotted rgba(0,0,0,.35);font-size:13px}
+.plQ .ln span{color:#2b3138;text-transform:uppercase;font-size:11.5px;letter-spacing:.03em}
+.plQ .ln b{font-size:14px;text-align:right;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.plQ .ln.gr b{font-size:18px}
+.plQ .ln b .ibub{width:15px;height:15px;font-size:10px}
+.plQ .pat{margin-top:8px;text-align:right;font-size:11px;letter-spacing:.06em}
+/* v1.10.124: sub card de banco (Troca de resistência) */
+.tr-bk{margin:0 0 8px;border-radius:8px;background:var(--btn-bg)}
+.tr-bk>summary{cursor:pointer;padding:8px 10px;list-style:none;display:flex;align-items:center;gap:8px}
+.tr-bk>summary::-webkit-details-marker{display:none}
+.tr-bk>summary::before{content:'▸';font-size:12px;color:var(--mut);transition:transform .12s}
+.tr-bk[open]>summary::before{transform:rotate(90deg)}
+.tr-bk>summary small{color:var(--mut)}
+.tr-bk>.gd-ch{padding:0 10px 10px}
+.tr-ch:not(.on){border-color:transparent!important;background:var(--card)}
+.gd-row button:not(.on){border-color:transparent!important;background:var(--btn-bg);color:var(--txt)}
+/* v1.10.125: bancos só de consulta (BC59,5 e BC550) no card Banco de Cargas */
+/* v1.10.127: botões do Banco de Cargas SEM borda (tom acima do fundo) e controles alinhados à ESQUERDA */
+#bancos .bkchip,#bancos .bkbtn,#bancosVis .bkchip,#bancosVis .bkbtn{border:0;box-shadow:none}
+#bancos .bkchip{background:var(--btn-bg)}
+#bancos .bkchip.s-auto{background:#d7f0e1}#bancos .bkchip.s-man{background:#ffe9b8}
+html[data-tema=escuro] #bancos .bkchip.s-auto{background:#1d4d33}html[data-tema=escuro] #bancos .bkchip.s-man{background:#4a3c10}
+/* v1.10.129: no Banco de Cargas o NOME do banco fica onde está; seletora/Ligar banco vêm logo ao lado (esquerda), liberando a direita */
+#bancos .bkh{justify-content:flex-start;gap:6px 14px}
+#bancos .bkctl{margin-left:0}
+/* v1.10.131: BC56/BC400 como sub-cards com setinha, iguais aos de consulta */
+#bancos details.bk{border:0;background:var(--btn-bg);border-radius:8px;padding:0;margin-bottom:6px}
+#bancos details.bk>summary.bkh{list-style:none;cursor:pointer;padding:8px 10px;margin:0}
+#bancos details.bk>summary.bkh::-webkit-details-marker{display:none}
+#bancos details.bk>summary.bkh::before{content:'▸';font-size:10px;color:var(--mut);width:10px;flex:none}
+#bancos details.bk[open]>summary.bkh::before{content:'▾'}
+#bancos details.bk>.sw{padding:0 10px 8px}
+/* v1.10.132: Patamar Guiado inline dentro do card (substitui o diálogo flutuante) */
+#patCard #dlgGuiado,#patCard #dlgGuiado[open]{position:static;display:block;inset:auto;margin:0;width:auto;max-width:none;height:auto;max-height:none;border:0;background:transparent;box-shadow:none;resize:none;overflow:visible;color:inherit;z-index:auto}
+#patCard #dlgGuiado:not([open]){display:none}
+#patCard{flex:none;overflow:visible}   /* o corpo do Patamar define a altura do card (não recorta) */
+#patCard #dlgGuiado .jb{padding:4px 2px 2px;overflow:visible;background:transparent}
+#patCard #mgCorpo{column-count:1}   /* v1.10.150: uma coluna só, no arranjo pedido pelo operador (Gerador, Bancos, cartões, botões, resultado) */
+#patCard #mgCorpo>*{break-inside:avoid}
+#patCard #mgCorpo>.gd-p{break-after:avoid}
+#patCard #mgTop:empty{display:none}
+#patCard{position:relative}
+#patCard .gd-sub{display:none}
+#patCard .gd-top-emerg{margin:0;border:0;background:#fde7e5;color:#b32626;border-radius:6px;padding:4px 10px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+#patCard .gd-top-emerg:hover{background:#d03b3b;color:#fff}
+#patCard .gd-pc{min-height:0;padding:4px 4px 3px;gap:3px;border-radius:8px}
+#patCard .gd-pc .gd-chip{font-size:13px;padding:3px 2px}
+#patCard .gd-pc small{font-size:10.5px}
+#patCard .gd-sv{display:flex;border:1px solid #9aa5b1;border-radius:7px;overflow:hidden;background:#fff}
+#patCard .gd-sv button{flex:1;border:0;min-height:24px;padding:2px 0;font-size:13px;cursor:pointer;color:#16222e}
+#patCard .gd-sv button[data-m="M"]{background:#fff}
+#patCard .gd-sv button[data-m="A"]{background:#2f7fd8;color:#fff}
+#patCard .gd-sv button+button{border-left:1px solid #9aa5b1}
+#patCard .gd-sv button:not(.on){opacity:.5}
+#patCard .gd-sv button.on{opacity:1;box-shadow:inset 0 0 0 3px #16222e;font-weight:700}
+#patCard .gd-sv button:disabled{opacity:.35;cursor:default}
+#patCard .gd-2{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:0 14px}
+.bkv{border-radius:8px;background:var(--btn-bg);margin:0 0 6px}
+.bkv>summary{cursor:pointer;padding:8px 10px;list-style:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bkv>summary::-webkit-details-marker{display:none}
+.bkv>summary::before{content:'▸';font-size:12px;color:var(--mut);transition:transform .12s}
+.bkv[open]>summary::before{transform:rotate(90deg)}
+.bkv>summary b{font-size:13px}.bkv>summary small{color:var(--mut)}
+.bkv>summary .enschip{margin-left:auto}
+.bkv .sw{padding:0 10px 10px;display:flex;flex-wrap:wrap;gap:4px}
+.bkv .tile{cursor:default;opacity:.85}
+
+/* v1.10.126: bancos de consulta nos diálogos */
+.bkv>summary label{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--mut);cursor:pointer}
+.bkv>summary label input{margin:0}
+.chtabs button[data-cons] small{font-style:italic}
+dialog.modo-cons .jb.chpk>*:not(.consp){display:none!important}
+.consp{padding:4px 2px}.consp h4{margin:0 0 6px}.consp .sw{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.consp .tile{cursor:default;opacity:.9}
+.trcons{opacity:.9}.trcons .tile{cursor:default}
+
+  /* ===== v1.10.176 · correcoes da revisao universal (desktop + celular) ===== */
+  .jan .jt{touch-action:none}                                   /* arrastar a janela por TOQUE (antes a pagina rolava no lugar) */
+  .jan .jerr{pointer-events:none}                               /* a faixa de erro nao pode capturar clique de campo vizinho */
+  .jan .jerr:empty{display:none;min-height:0;margin:0}          /* vazia = nao ocupa lugar */
+  @media (pointer:coarse){                                      /* so celular/tablet: alvo de toque confortavel (o PC nao muda) */
+    button,.bt,.cfgbtn,summary,select{min-height:40px}
+    .jan .jx{width:40px;height:40px}
+    input[type=checkbox],input[type=radio]{width:22px;height:22px}
+    #bMenos,#bMais{min-width:44px}
+  }
+
+  /* ===== v1.10.179 · barra do Dev/Operador oculto: cronometro, arrastar, redimensionar, recolher ===== */
+  #opsBar{inset:auto 14px 14px auto;transform:none;resize:both;overflow:auto;min-width:250px;max-width:94vw}
+  #opsBar .opsGrip{cursor:move;font-size:18px;line-height:1;opacity:.8;padding:0 2px;user-select:none;touch-action:none}
+  #opsBar .opsCron{font-variant-numeric:tabular-nums;font-weight:700;background:#1e3a5f;border-radius:6px;padding:2px 8px;white-space:nowrap}
+  #opsBar #opsMin{background:transparent;border:1px solid #6b86a6;padding:2px 9px}
+  #opsBar.min .opsPasso,#opsBar.min .opsCnt{display:none}
+  #opsBar.min{min-width:0;resize:none}
+  /* v1.10.179: Visao do operador "Simples" nao mostra o card Patamar */
+  body.opsimples #patCard{display:none!important}
