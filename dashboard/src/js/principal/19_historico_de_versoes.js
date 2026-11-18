@@ -1,4 +1,7 @@
 const HISTORICO=[
+  {v:"1.10.229",d:"19/11/2026",i:[
+    'Passo 5 da auditoria (B3/B4): revisados todos os catch vazios da tela (283). 264 inofensivos (guardar preferência no navegador, fechar popover já fechado, redesenho opcional...) ganharam um comentário com o motivo dentro do bloco; um teste novo (tests/catch_vazio.test.js) barra qualquer catch vazio sem motivo. Dois deixaram de engolir erro: (1) se o motor de alarmes (varre) falhar, aparece SIS-001 Erro interno da tela, em vez de os alarmes pararem de atualizar em silêncio; (2) se desarmar a mãe do Patamar falhar (ela poderia continuar armada), o erro vai para o log de desenvolvimento. Nenhum comando mudou e nada é bloqueado.'
+  ]},
   {v:"1.10.228",d:"18/11/2026",i:[
     'Passo 5 da auditoria (B1): ao voltar ao estado seguro (troca de modo) a tela agora AVISA quando o PLC/Node-RED não confirma o desligamento das chaves ou o zerar da seleção. Novo Alerta CHV-009 por banco, que só sai quando o desligamento do mesmo banco der certo por inteiro (o CHV-001 saía com qualquer outro comando bem-sucedido). Nos desmarcados automáticos do Setup (gerador parado/STOP) o texto passa a dizer que o PLC não confirmou. Nenhum comando mudou, nada é bloqueado e o PLC não é tocado.'
   ]},

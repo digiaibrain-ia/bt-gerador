@@ -62,7 +62,7 @@ function demoDesliga(){ // v1.9.14: PARAR ENSAIO também desliga a simulação �
     // v1.10.113: o estado do gerador SIMULADO ('operando') ficava para trás e travava o popup ⚙ Modo / modos de operação (genLigado) até chegar leitura real.
     GEN={estado:'—',run:true};MED={};carga=null;dadoOk=false;
     SRVM.manual=true;start()}
-  try{if(window.__atualizaJanelas)__atualizaJanelas();if(window.__marcaModo)__marcaModo()}catch(x){}
+  try{if(window.__atualizaJanelas)__atualizaJanelas();if(window.__marcaModo)__marcaModo()}catch(x){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
   dmAtualiza();
 }
 function demoAplica(){ // sincroniza as checkboxes da popup Demo com o estado real (#demo, SRVM.plc, SIM_FALHA_MOTOR_ARMADA) e reinicia o motor do app se precisar
@@ -112,7 +112,7 @@ function desbloqueiaTestes(){
   $('bDemoLock').style.display='';
   $('bDevCards').style.display='';
   $('bDevObs').style.display='';
-  try{window.MENU_DEV&&MENU_DEV.mostra(true)}catch(e){}   // v1.10.109: menu ☰ de desenvolvimento acompanha o modo de testes
+  try{window.MENU_DEV&&MENU_DEV.mostra(true)}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }   // v1.10.109: menu ☰ de desenvolvimento acompanha o modo de testes
 }
 $('demoSenha').addEventListener('input',()=>{if($('demoSenha').value.trim().toLowerCase()==='mwm')desbloqueiaTestes()});
 $('demoSenha').addEventListener('keydown',e=>{
@@ -131,7 +131,7 @@ $('bDemoLock').onclick=()=>{ // desliga a senha: sai do Demo (se estiver nele) e
   $('bDemo').style.display='none';$('demoSenha').style.display='';   // v1.10.165: volta ao MODO OPERADOR (botão Demo some, a caixa de senha volta)
   $('bDemoLock').style.display='none';
   $('bDevCards').style.display='none';
-  try{window.MENU_DEV&&!MENU_DEV.automatico()&&MENU_DEV.mostra(false)}catch(e){}   // v1.10.109: travou os testes = esconde o menu ☰ (salvo se este navegador estiver marcado como dev)
+  try{window.MENU_DEV&&!MENU_DEV.automatico()&&MENU_DEV.mostra(false)}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }   // v1.10.109: travou os testes = esconde o menu ☰ (salvo se este navegador estiver marcado como dev)
   $('bDevObs').style.display='none';$('obsAbre').value='manual'; // v1.9.73: travou os testes = volta a abertura Manual e para de publicar (a publicação exige a senha)
   if($('dlgDevCards').open)$('dlgDevCards').close();
   SIM_FALHA_MOTOR=false;SIM_FALHA_MOTOR_ARMADA=false;SRVM.plc=false;
@@ -151,7 +151,7 @@ async function demoSondaDse(){
     if(!r.ok)return;
     const d=await r.json(),idade=Number(find(d,'idadeSegundos'));
     if(find(d,'ok')===true&&!isNaN(idade)&&idade<=MAX_IDADE&&$('demo').checked)demoDseRealDetectado(dseUrl());
-  }catch(e){}
+  }catch(e){ /* ignorado: texto inválido: segue com o valor padrão */ }
   finally{clearTimeout(t);_sondaBusy=false}
 }
 function demoDseRealDetectado(url){

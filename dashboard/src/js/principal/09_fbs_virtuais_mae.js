@@ -89,7 +89,7 @@
       const a9 = ap(); F[9].ent = { 'armada': on(armada), 'ensaio iniciado': on(ini), 'etapa': ini ? (et + 1) + ' (' + pct + ' %)' : '—', 'aplicação do patamar': a9 ? (a9.modo === 'M' ? 'Manual' : 'Auto') : '—' };
       F[9].sai = { 'estado': estado, 'mensagem': msg || '—', 'aguardando aplicar': a9 && a9.modo === 'M' ? on(a9.liberado) : '—' };
     }
-    function publica() { io(); const f = foto(); try { localStorage.setItem(LS, JSON.stringify(f)); } catch (e) {} if (canal) try { canal.postMessage(f); } catch (e) {} }
+    function publica() { io(); const f = foto(); try { localStorage.setItem(LS, JSON.stringify(f)); } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ } if (canal) try { canal.postMessage(f); } catch (e) { /* ignorado: janela ou canal já fechado */ } }
 
     function arma() { armada = true; etAplic = -1; previa = null; falhaExec = false; guarda = null; vai(h.iniciado() ? 'AGUARDA_ETAPA' : 'AGUARDA_INICIO', h.iniciado() ? '' : 'clique INICIAR (o operador inicia o ensaio)'); publica(); }
     function desarma(m) { armada = false; etAplic = -1; previa = null; falhaExec = false; vai('PARADO', m || ''); for (const k in F) set(k, 'idle'); publica(); }

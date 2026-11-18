@@ -33,7 +33,7 @@
 
   const lerSt = d => { let st = {}; try { st = JSON.parse(localStorage.getItem('bt2.jan2.' + APP + '.' + (d.id || '')) || '{}') || {}; } catch (e) { st = {}; }
     if (!Object.keys(st).length && CFG.padroes && CFG.padroes[d.id]) st = Object.assign({}, CFG.padroes[d.id]); return st; };
-  const gravaSt = (d, st) => { if (!d.id) return; try { localStorage.setItem('bt2.jan2.' + APP + '.' + d.id, JSON.stringify(st)); } catch (e) {} };
+  const gravaSt = (d, st) => { if (!d.id) return; try { localStorage.setItem('bt2.jan2.' + APP + '.' + d.id, JSON.stringify(st)); } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ } };
 
   /* ---------- CSS comum (injetado uma vez) ---------- */
   const css = document.createElement('style');
@@ -68,7 +68,7 @@
      Nome do elemento: "popover" (aviso não modal que permanece aberto); o "tooltip" comum some ao tirar o mouse. A 2ª linha traz o tipo + id
      de programação do elemento ao qual o aviso se refere (ex.: Janela #dlgModo) para facilitar a conversa com quem programa. */
   let tipAtivo = null;
-  function fechaDica() { if (tipAtivo) { try { tipAtivo.hidePopover(); } catch (e) {} tipAtivo.remove(); tipAtivo = null; } }
+  function fechaDica() { if (tipAtivo) { try { tipAtivo.hidePopover(); } catch (e) { /* ignorado: popover já no estado pedido ou sem suporte */ } tipAtivo.remove(); tipAtivo = null; } }
   function dica(txt, perto, ref) {
     fechaDica();
     const t = document.createElement('div'); t.className = 'jwtip'; t.setAttribute('role', 'status');
@@ -76,7 +76,7 @@
     const m = document.createElement('span'); m.textContent = txt; t.appendChild(m);
     if (ref && ref.id) { const q = document.createElement('small'); q.textContent = 'Janela (dialog) #' + ref.id; t.appendChild(q); }
     const x = document.createElement('button'); x.type = 'button'; x.className = 'jwtx'; x.textContent = '✕'; x.setAttribute('aria-label', 'Fechar aviso'); x.onclick = fechaDica; t.appendChild(x);
-    document.body.appendChild(t); tipAtivo = t; try { t.showPopover(); } catch (e) {}
+    document.body.appendChild(t); tipAtivo = t; try { t.showPopover(); } catch (e) { /* ignorado: popover já no estado pedido ou sem suporte */ }
     const r = (perto && perto.getBoundingClientRect) ? perto.getBoundingClientRect() : { left: innerWidth / 2 - 100, bottom: 80 };
     t.style.left = Math.max(6, Math.min(innerWidth - 290, r.left)) + 'px'; t.style.top = Math.min(innerHeight - 50, r.bottom + 6) + 'px';
     const fora = ev => { if (tipAtivo && !tipAtivo.contains(ev.target)) { fechaDica(); document.removeEventListener('pointerdown', fora, true); } };
@@ -132,7 +132,7 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && pop.matches(':popover-open')) fechaPop(); });
   }
   let salvoAte = 0;   // v0.5: até quando mostrar o "✔ Salvo" no painel
-  const fechaPop = () => { try { pop.hidePopover(); } catch (e) {} popDe = null; };
+  const fechaPop = () => { try { pop.hidePopover(); } catch (e) { /* ignorado: popover já no estado pedido ou sem suporte */ } popDe = null; };
   function atualizaPop() {
     if (!popDe) return; const d = popDe, z = zEf(d), r = d.getBoundingClientRect();
     pop.querySelector('[data-k=z]').textContent = Math.round(z * 100) + '%';
@@ -155,13 +155,13 @@
       st.w = Math.round(r.width / z); st.h = Math.round(r.height / z); st.x = Math.round(r.left); st.y = Math.round(r.top); if (own !== 1) st.z = own; else delete st.z;
       salvoAte = Date.now() + 3500; gravaSt(d, st); atualizaPop(); return;
     }
-    else if (a === 'cp') { const t = medidas(d); try { navigator.clipboard.writeText(t).then(() => { pop.querySelector('[data-k=t]').textContent = 'Copiado: ' + t; }, () => {}); } catch (e) {} return; }
+    else if (a === 'cp') { const t = medidas(d); try { navigator.clipboard.writeText(t).then(() => { pop.querySelector('[data-k=t]').textContent = 'Copiado: ' + t; }, () => {}); } catch (e) { /* ignorado: API opcional do navegador */ } return; }
     gravaSt(d, st); aplicaSt(d, st); atualizaPop();
   }
   function abrePop(d, btn) {
     if (!pop) montaPop();
     popDe = d; atualizaPop();
-    try { pop.showPopover(); } catch (e) {}
+    try { pop.showPopover(); } catch (e) { /* ignorado: popover já no estado pedido ou sem suporte */ }
     const r = btn.getBoundingClientRect();
     pop.style.left = Math.max(6, Math.min(innerWidth - 244, r.right - 232)) + 'px'; pop.style.top = Math.min(innerHeight - 150, r.bottom + 6) + 'px';
   }
@@ -203,7 +203,7 @@
   const ehModal = d => CFG.modais.includes(d.id);
   const ehRisco = d => CFG.risco && CFG.risco.ids.includes(d.id);
   function abre(d, comoModal, orig) {
-    if (ehRisco(d)) { let m = ''; try { m = CFG.risco.bloqueado(d) || ''; } catch (e) {} if (m) { dica(m, document.activeElement, d); return; } }
+    if (ehRisco(d)) { let m = ''; try { m = CFG.risco.bloqueado(d) || ''; } catch (e) { /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ } if (m) { dica(m, document.activeElement, d); return; } }
     prepara(d); const st = lerSt(d);
     if (comoModal && !ehModal(d) && CFG.livresPorPadrao) { showAnt.call(d); d.classList.add('jflut'); }   // vira flutuante: não trava a tela
     else orig.call(d);
@@ -212,7 +212,7 @@
   HTMLDialogElement.prototype.show = function () { abre(this, false, showAnt); };
   HTMLDialogElement.prototype.showModal = function () { abre(this, true, modalAnt); };
   document.addEventListener('keydown', e => {   // Esc fecha a janela flutuante em foco (as modais o navegador já fecha)
-    if (e.key !== 'Escape') return; const d = document.activeElement && document.activeElement.closest && document.activeElement.closest('dialog.jflut[open]'); if (d) { try { d.close(); } catch (x) {} }
+    if (e.key !== 'Escape') return; const d = document.activeElement && document.activeElement.closest && document.activeElement.closest('dialog.jflut[open]'); if (d) { try { d.close(); } catch (x) { /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ } }
   });
   const varre = () => document.querySelectorAll('dialog').forEach(prepara);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', varre); else varre();

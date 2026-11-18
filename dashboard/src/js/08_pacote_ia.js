@@ -77,8 +77,8 @@
 
   /* ------------------------------- peças flutuantes -------------------------------- */
   function cria(tag, classe) { const e = D.createElement(tag); e.className = classe; if (temPop) e.setAttribute('popover', 'manual'); D.body.appendChild(e); return e; }
-  const abre = e => { if (temPop) { try { if (!e.matches(':popover-open')) e.showPopover(); } catch (x) {} } else e.style.display = 'block'; };
-  const fecha = e => { if (!e) return; if (temPop) { try { e.hidePopover(); } catch (x) {} } else e.style.display = 'none'; };
+  const abre = e => { if (temPop) { try { if (!e.matches(':popover-open')) e.showPopover(); } catch (x) { /* ignorado: popover já no estado pedido ou sem suporte */ } } else e.style.display = 'block'; };
+  const fecha = e => { if (!e) return; if (temPop) { try { e.hidePopover(); } catch (x) { /* ignorado: popover já no estado pedido ou sem suporte */ } } else e.style.display = 'none'; };
 
   /* --------------------------- descrição de um objeto da tela --------------------------- */
   const ehSenha = e => e.tagName === 'INPUT' && /pass/i.test(e.type || '');
@@ -111,7 +111,7 @@
     if (e.getAttribute && e.getAttribute('aria-expanded')) est.push('expandido=' + e.getAttribute('aria-expanded'));
     const o = { sel: seletor(e), tipo: '', texto, x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height),
       estado: est.join(', '), cor: cs.color, fundo: cs.backgroundColor, fonte: cs.fontSize };
-    try { if (raiz.DICAUI && raiz.DICAUI.tipoDe) o.tipo = String(raiz.DICAUI.tipoDe(e) || ''); } catch (x) {}
+    try { if (raiz.DICAUI && raiz.DICAUI.tipoDe) o.tipo = String(raiz.DICAUI.tipoDe(e) || ''); } catch (x) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
     const t = e.getAttribute && e.getAttribute('title'); if (t) o.dica = t.slice(0, 120);
     if (ref) { o.xr = o.x - Math.round(ref.left); o.yr = o.y - Math.round(ref.top); }
     return o;
@@ -148,8 +148,8 @@
     const abertas = [...D.querySelectorAll('dialog[open]')].filter(d => d.id !== 'piaDlg').map(d => d.id).filter(Boolean);
     add('janelas', 'Janelas abertas', abertas.join(', ') || 'nenhuma');
     const T = g('T'); if (T && typeof T === 'object') add('ensaio', 'Ensaio', 'iniciado=' + !!T.started + ' · rodando=' + !!T.run + ' · etapa=' + ((T.et | 0) + 1) + ' · fim=' + !!T.fim);
-    try { const f = JSON.parse(localStorage.getItem('medidor.fbv.v1') || 'null'); if (f) add('mae', 'FB mãe (Patamar)', f.estado + (f.msg ? ' — ' + f.msg : '') + (f.kw ? ' · alvo ' + (+f.kw.alvo).toFixed(1) + ' kW · sugerido ' + (+f.kw.sel).toFixed(1) + ' · comandado ' + (+f.kw.cmd).toFixed(1) : '')); } catch (e) {}
-    try { const b = raiz.devObs && raiz.devObs.buf && raiz.devObs.buf(); if (b && b.length) L.push({ id: 'log', rot: 'Últimos eventos do log (' + Math.min(12, b.length) + ')', valor: b.slice(-12).map(x => { const t = v => (v != null && typeof v === 'object') ? JSON.stringify(v).slice(0, 160) : String(v == null ? '' : v); return Array.isArray(x) ? x.map(t).join(' | ') : (typeof x === 'object' ? [x.t || x.hora || '', x.card || '', x.tipo || '', x.acao || '', x.res || '', x.det || ''].map(t).filter(Boolean).join(' | ') : String(x)); }).join('\n'), on: false }); } catch (e) {}
+    try { const f = JSON.parse(localStorage.getItem('medidor.fbv.v1') || 'null'); if (f) add('mae', 'FB mãe (Patamar)', f.estado + (f.msg ? ' — ' + f.msg : '') + (f.kw ? ' · alvo ' + (+f.kw.alvo).toFixed(1) + ' kW · sugerido ' + (+f.kw.sel).toFixed(1) + ' · comandado ' + (+f.kw.cmd).toFixed(1) : '')); } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
+    try { const b = raiz.devObs && raiz.devObs.buf && raiz.devObs.buf(); if (b && b.length) L.push({ id: 'log', rot: 'Últimos eventos do log (' + Math.min(12, b.length) + ')', valor: b.slice(-12).map(x => { const t = v => (v != null && typeof v === 'object') ? JSON.stringify(v).slice(0, 160) : String(v == null ? '' : v); return Array.isArray(x) ? x.map(t).join(' | ') : (typeof x === 'object' ? [x.t || x.hora || '', x.card || '', x.tipo || '', x.acao || '', x.res || '', x.det || ''].map(t).filter(Boolean).join(' | ') : String(x)); }).join('\n'), on: false }); } catch (e) { /* ignorado: texto inválido: segue com o valor padrão */ }
     if (ERROS.length) L.push({ id: 'erros', rot: 'Erros de JavaScript (' + ERROS.length + ')', valor: ERROS.join('\n'), on: true });
     return L;
   }
@@ -238,7 +238,7 @@
     corpo.addEventListener('click', e => {
       const t = e.target;
       if (t.dataset.ocr != null) lerOcr(+t.dataset.ocr);
-      else if (t.dataset.rm != null) { const i = +t.dataset.rm; try { URL.revokeObjectURL(S.imgs[i].url); } catch (x) {} S.imgs.splice(i, 1); desenha(); }
+      else if (t.dataset.rm != null) { const i = +t.dataset.rm; try { URL.revokeObjectURL(S.imgs[i].url); } catch (x) { /* ignorado: API opcional do navegador */ } S.imgs.splice(i, 1); desenha(); }
       else if (t.dataset.todos != null) { S.objs.forEach(o => o.on = t.dataset.todos === '1'); desenha(); }
     });
     corpo.addEventListener('change', e => {
@@ -292,7 +292,7 @@
     const ok = () => { $('piaAviso').textContent = ''; fechaJanela(true); aviso('Pacote copiado (' + md.length + ' caracteres)'); };
     const plano = () => {   // plano B: o navegador bloqueia a área de transferência em páginas http:// — usa seleção + execCommand
       const ta = D.createElement('textarea'); ta.value = md; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; dlg.appendChild(ta); ta.select();
-      let r = false; try { r = D.execCommand('copy'); } catch (e) {} ta.remove();
+      let r = false; try { r = D.execCommand('copy'); } catch (e) { /* ignorado: API opcional do navegador */ } ta.remove();
       if (r) ok(); else { D.querySelector('#piaPrevD').open = true; const pre = $('piaPrev'); const rg = D.createRange(); rg.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(rg); $('piaAviso').textContent = 'Não consegui copiar sozinho: a prévia está selecionada, use Copiar do navegador (ou Salvar .md).'; }
     };
     if (navigator.clipboard && navigator.clipboard.writeText && isSecureContext) navigator.clipboard.writeText(md).then(ok, plano); else plano();
@@ -305,7 +305,7 @@
     if (sujo && !confirm('Fechar sem copiar? O que você escreveu e as imagens anexadas serão descartados.')) return;
     fechaJanela(false);
   }
-  function fechaJanela() { if (dlg && dlg.open) dlg.close(); if (S) S.imgs.forEach(i => { try { URL.revokeObjectURL(i.url); } catch (e) {} }); }
+  function fechaJanela() { if (dlg && dlg.open) dlg.close(); if (S) S.imgs.forEach(i => { try { URL.revokeObjectURL(i.url); } catch (e) { /* ignorado: API opcional do navegador */ } }); }
   function abrePacote(rect, objs) {
     monta(); if (!dlg.__lig) { ligaCorpo(); dlg.__lig = true; }
     carregaRefs().then(() => { if (S && dlg.open) { const sel = new Set(S.refs.filter(r => r.on).map(r => r.id)); S.refs = REFS.map(r => Object.assign({ on: sel.has(r.id) }, r)); desenha(); } });
@@ -325,7 +325,7 @@
     over = cria('div', 'pia-over'); abre(over);
     ret = D.createElement('div'); ret.className = 'pia-ret'; ret.hidden = true; over.appendChild(ret);
     let x0 = 0, y0 = 0, ativo = false;
-    over.addEventListener('pointerdown', e => { ativo = true; x0 = e.clientX; y0 = e.clientY; ret.hidden = false; pinta(e); try { over.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
+    over.addEventListener('pointerdown', e => { ativo = true; x0 = e.clientX; y0 = e.clientY; ret.hidden = false; pinta(e); try { over.setPointerCapture(e.pointerId); } catch (x) { /* ignorado: elemento ausente ou sem suporte */ } e.preventDefault(); });
     const pinta = e => { const l = Math.min(x0, e.clientX), t = Math.min(y0, e.clientY); Object.assign(ret.style, { left: l + 'px', top: t + 'px', width: Math.abs(e.clientX - x0) + 'px', height: Math.abs(e.clientY - y0) + 'px' }); };
     over.addEventListener('pointermove', e => { if (ativo) pinta(e); });
     over.addEventListener('pointerup', e => {
@@ -357,7 +357,7 @@
   /* ------------------------------------- o menu ------------------------------------- */
   let menu = null;
   function fechaMenu() { if (menu) { fecha(menu); menu.remove(); menu = null; } }
-  function copiaTexto(t) { const ta = D.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;left:0;top:0;opacity:0'; (D.querySelector('dialog[open]') || D.body).appendChild(ta); ta.select(); let r = false; try { r = D.execCommand('copy'); } catch (e) {} ta.remove(); if (!r && navigator.clipboard) navigator.clipboard.writeText(t).catch(() => {}); return r; }
+  function copiaTexto(t) { const ta = D.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;left:0;top:0;opacity:0'; (D.querySelector('dialog[open]') || D.body).appendChild(ta); ta.select(); let r = false; try { r = D.execCommand('copy'); } catch (e) { /* ignorado: API opcional do navegador */ } ta.remove(); if (!r && navigator.clipboard) navigator.clipboard.writeText(t).catch(() => {}); return r; }
   function abreMenu(x, y, alvo) {
     fechaMenu();
     const jan = alvo && alvo.closest && alvo.closest('dialog.jan'), jw = jan && jan.querySelector('.jwbtn');

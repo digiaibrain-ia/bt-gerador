@@ -15,7 +15,7 @@
   const CARD='DEV.OPS',ABORT={abortado:true};
   const OPS={rodando:false,parar:false,rel:[],fase:'',passo:'',modo:null,ini:0,fim:0,seq:0,erroJs:[],motivoAbort:''};
   const dorme=ms=>new Promise(r=>setTimeout(r,ms));
-  const lg=(res,acao,det)=>{try{if(window.devObs)window.devObs.log(CARD,'teste',acao,res,det)}catch(e){}};
+  const lg=(res,acao,det)=>{try{if(window.devObs)window.devObs.log(CARD,'teste',acao,res,det)}catch(e){ /* ignorado: o log de desenvolvimento é opcional */ }};
 
   /* ---------- registro das conferências ---------- */
   function reg(res,fase,nome,det){
@@ -34,7 +34,7 @@
     for(;;){
       if(OPS.parar)throw ABORT;
       if(OPS.modo&&srvChave()!==OPS.modo){OPS.motivoAbort='o modo da tela mudou durante o teste ('+OPS.modo+' → '+srvChave()+')';throw ABORT}
-      let v=false;try{v=cond()}catch(e){}
+      let v=false;try{v=cond()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
       if(v)return true;
       if(Date.now()-t0>=ms)return false;
       await dorme(passo||80);
@@ -241,7 +241,7 @@
     await soltaTudoPlc();
   }
   async function soltaTudoPlc(){ // best effort: tudo que estiver comandado/ligado é clicado de novo
-    for(let i=0;i<CH.length;i++)if(cmd(i)||lig(i)){try{clica(tile(i))}catch(e){}await pausa(120)}
+    for(let i=0;i<CH.length;i++)if(cmd(i)||lig(i)){try{clica(tile(i))}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }await pausa(120)}
     await ate(()=>idxAll().every(i=>!lig(i)&&!cmd(i)),8000);
   }
   const idxAll=()=>CH.map((c,i)=>i);
@@ -469,13 +469,13 @@
       if(est.auto!==auto){clica(est.auto?$('mAuto'):$('mMan'));}
       restauraSalvamento();restauraPatamar();   // v1.10.200: devolve o salvamento e religa o Patamar Guiado se o robô mudou
       if(est.gen==='parado'&&(SIM.gen==='operando'||SIM.gen==='partindo')&&!(T.started&&!T.fim)){clica($('stGenDemo'),'desligar gerador (Demo)');await pausa(200)}
-      const gd=est.dados;if(gd){Object.assign(DADOS,gd.DADOS);ULTIMO=gd.ULTIMO;try{for(const k in gd.ls){if(gd.ls[k]==null)localStorage.removeItem(k);else localStorage.setItem(k,gd.ls[k])}}catch(e){}}
+      const gd=est.dados;if(gd){Object.assign(DADOS,gd.DADOS);ULTIMO=gd.ULTIMO;try{for(const k in gd.ls){if(gd.ls[k]==null)localStorage.removeItem(k);else localStorage.setItem(k,gd.ls[k])}}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }}
     }catch(e){if(e!==ABORT)aviso('Restauração','falha ao restaurar',String(e&&e.message||e))}
   }
 
   /* =================== orquestração =================== */
   const snapEstado=()=>{
-    const ls={};try{['medidor.dados.'+DADOS_MODO,'medidor.dadosUltimo.'+DADOS_MODO].forEach(k=>{ls[k]=localStorage.getItem(k)})}catch(e){}
+    const ls={};try{['medidor.dados.'+DADOS_MODO,'medidor.dadosUltimo.'+DADOS_MODO].forEach(k=>{ls[k]=localStorage.getItem(k)})}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     const bks={};BANCOS.forEach(b=>{bks[b.id]={sel:BKS[b.id].sel,lig:BKS[b.id].lig}});
     return{auto,vel:T.sp,gen:SIM.gen,bks,dados:{DADOS:JSON.parse(JSON.stringify(DADOS)),ULTIMO:ULTIMO?JSON.parse(JSON.stringify(ULTIMO)):ULTIMO,ls}};
   };
@@ -501,10 +501,10 @@
   async function faseRncDurante(){
     const F='RNC · Registrar defeito';
     passo('RNC: conferindo o servidor (só roda com pasta de dados de TESTE)');
-    let base='';try{base=srvBase()}catch(e){}
+    let base='';try{base=srvBase()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
     if(!base){aviso(F,'fase pulada','sem URL do servidor (Node-RED) no medidor');return}
     let sa=null;
-    try{const r=await fetch(base+'/api/rnc/saude',{cache:'no-store'});sa=r.ok?await r.json():null}catch(e){}
+    try{const r=await fetch(base+'/api/rnc/saude',{cache:'no-store'});sa=r.ok?await r.json():null}catch(e){ /* ignorado: texto inválido: segue com o valor padrão */ }
     if(!sa||!sa.ok){aviso(F,'fase pulada','o serviço RNC não respondeu em /api/rnc/saude (fluxo rnc-api-v1.1 importado e URL do servidor certa?)');return}
     if(!/teste/i.test(String(sa.arquivo||''))){aviso(F,'fase pulada por segurança','a pasta de dados do RNC (…'+String(sa.arquivo||'').slice(-40)+') não tem "teste" no nome: o robô não grava na pasta real');return}
     if(window.RNC_DEFEITO&&window.RNC_DEFEITO.ativo&&!window.RNC_DEFEITO.ativo()){aviso(F,'fase pulada','o RNC está DESLIGADO (botão RNC › Usar RNC); o robô não liga sozinho');return}   // v0.5: respeita o interruptor
@@ -547,7 +547,7 @@
     passo('RNC: registrando o defeito');
     clica($('rncEnv'),'Registrar e bloquear gerador');
     const salvou=await ate(()=>/Salvo\./.test($('rncRes').textContent),8000);
-    if(!chk(F,'"Salvo" só aparece depois do servidor confirmar',salvou,$('rncRes').textContent.trim().slice(0,100))){try{$('dlgRnc').close()}catch(e){};return}
+    if(!chk(F,'"Salvo" só aparece depois do servidor confirmar',salvou,$('rncRes').textContent.trim().slice(0,100))){try{$('dlgRnc').close()}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ };return}
     // 5) o servidor realmente guardou (leitura de volta, sem confiar na tela)
     const s=await api('/api/rnc/serie/'+serie),r=(s.rncs||[])[0]||{},cx=r.contexto||{};
     chk(F,'servidor: série ficou BLOQUEADA com 1 RNC aberta',s.situacao==='BLOQUEADO'&&s.total===1&&r.estado==='ABERTA',s.situacao+' total='+s.total+' estado='+r.estado);
@@ -556,7 +556,7 @@
     chk(F,'servidor: o contexto da etapa '+(et+1)+' foi gravado (etapa, modelo, grandezas, alarmes)',cx.ensaio&&cx.ensaio.etapa===et&&cx.modelo&&Object.keys(cx.grandezas||{}).length>=6&&cx.alarmes&&cx.demo===true,JSON.stringify(cx.ensaio||null).slice(0,120));
     // 6) aviso: etiqueta + faixa aparecem para a série com RNC e somem para uma série limpa
     passo('RNC: conferindo o aviso "RNC: BLOQUEADO"');
-    try{$('dlgRnc').close()}catch(e){}
+    try{$('dlgRnc').close()}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ }
     window.RNC_DEFEITO.pausa(true);   // o vigia do botão fica quieto durante a conferência do aviso
     window.RNC_DEFEITO.consulta(serie);
     const vis=id=>{const e=document.getElementById(id);return !!e&&getComputedStyle(e).display!=='none'};
@@ -566,7 +566,7 @@
     const sumiu=await ate(()=>!vis('pRncAv')&&!vis('rncFaixa'),5000);
     chk(F,'aviso: some para uma série sem RNC',sumiu,'etiqueta='+vis('pRncAv')+' faixa='+vis('rncFaixa'));
     chk(F,'o ensaio simulado continuou rodando (o aviso não bloqueia o ensaio)',T.started&&!T.fim,'started='+T.started+' fim='+T.fim);
-    }finally{SB.rncPermite=false;SIM_FALHA_ALT=false;try{window.RNC_DEFEITO.pausa(false)}catch(e){}try{const d=$('dlgRnc');if(d&&d.open)d.close()}catch(e){}}   // (1) janela fechada em qualquer saída
+    }finally{SB.rncPermite=false;SIM_FALHA_ALT=false;try{window.RNC_DEFEITO.pausa(false)}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }try{const d=$('dlgRnc');if(d&&d.open)d.close()}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ }}   // (1) janela fechada em qualquer saída
     chk(F,'a falha simulada do alternador foi desarmada ao fim da fase (dados voltam ao normal)',await ate(()=>{const k=window.RNC_DEFEITO.captura();return k.alarmes&&k.alarmes.temAlarme===false&&(k.grandezas||{}).alternador>20},8000),JSON.stringify((window.RNC_DEFEITO.captura().grandezas||{}).alternador));
   }
 
@@ -589,7 +589,7 @@
     Object.assign(OPS,{rodando:true,parar:false,rel:[],fase:'',passo:'',modo,ini:Date.now(),fim:0,seq:0,erroJs:[],motivoAbort:''});
     const est=snapEstado();sandboxLiga();
     lg('info','Dev/Operador oculto: início',{modo,ensaio:ens,versao:VERSAO});
-    ui();try{if($('dlgDemo').open)$('dlgDemo').close()}catch(e){}
+    ui();try{if($('dlgDemo').open)$('dlgDemo').close()}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ }
     try{
       OPS.fase='0 · Chaves';ui();await preparaChaves();await estabilizaHabil();
       OPS.fase='A · Cargas';ui();
@@ -624,8 +624,8 @@
   }
   const ic={ok:'✔',falha:'✖',aviso:'⚠'};let ultSg='';
   /* ===== v1.10.182 · fim visível + relatório salvo no navegador ===== */
-  const LSREL='bt2.dev.ultimoRel';let PERS=null;try{PERS=JSON.parse(localStorage.getItem(LSREL)||'null')}catch(e){}
-  if(!PERS){try{if(/^BT2REL:/.test(window.name))PERS=JSON.parse(window.name.slice(7))}catch(e){}}   // v1.10.185: arquivo aberto de Downloads (content://) pode não ter localStorage
+  const LSREL='bt2.dev.ultimoRel';let PERS=null;try{PERS=JSON.parse(localStorage.getItem(LSREL)||'null')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
+  if(!PERS){try{if(/^BT2REL:/.test(window.name))PERS=JSON.parse(window.name.slice(7))}catch(e){ /* ignorado: texto inválido: segue com o valor padrão */ }}   // v1.10.185: arquivo aberto de Downloads (content://) pode não ter localStorage
   const FIMBAR={on:false,fechado:false,tit:'',msg:'',cnt:''};
   if(PERS&&PERS.rodando){FIMBAR.on=true;FIMBAR.tit='interrompido';FIMBAR.msg='a página recarregou ou fechou no meio do teste · último relatório salvo às '+new Date(PERS.t).toLocaleTimeString('pt-BR')+(function(){try{const u=localStorage.getItem('bt2.dev.ultimaAcao');return u?' · última ação antes de sair: '+u:''}catch(e){return ''}})();FIMBAR.cnt='✔ '+((PERS.cnt||{}).ok||0)+'  ✖ '+((PERS.cnt||{}).falha||0)+'  ⚠ '+((PERS.cnt||{}).aviso||0)}
   const textoRel=()=>OPS.rel.length?relatorioAv():((PERS&&PERS.md)||'');
@@ -646,8 +646,8 @@
               const sg=[...document.querySelectorAll('dialog[open]')].map(d=>d.id).join('|');
               if(!bar.matches(':popover-open')||sg!==ultSg){ultSg=sg;if(bar.matches(':popover-open'))bar.hidePopover();bar.showPopover()}
             }
-          }catch(e){}
-        }else{try{if(bar.hasAttribute('popover')&&bar.matches(':popover-open'))bar.hidePopover()}catch(e){}}
+          }catch(e){ /* ignorado: popover já no estado pedido ou sem suporte */ }
+        }else{try{if(bar.hasAttribute('popover')&&bar.matches(':popover-open'))bar.hidePopover()}catch(e){ /* ignorado: popover já no estado pedido ou sem suporte */ }}
       }
       if(btn){
         const real=!$('demo').checked||modoSim()==='real';
@@ -668,34 +668,34 @@
           +lista.map(r=>'<div class="opsLin '+r.res+'"><span>'+ic[r.res]+'</span><span><b>'+esc(r.fase)+'</b> · '+esc(r.nome)+(r.det?'<small> — '+esc(r.det.slice(0,160))+'</small>':'')+'</span></div>').join('');
         const bc=$('opsCopia');if(bc)bc.disabled=!OPS.rel.length&&!(PERS&&PERS.md);
       }
-    }catch(e){}
+    }catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   }
   async function copia(){
     const md=textoRel();let ok=false,via='';
-    try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(md);ok=true;via='área de transferência'}}catch(e){}
+    try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(md);ok=true;via='área de transferência'}}catch(e){ /* ignorado: API opcional do navegador */ }
     if(!ok){try{const host=document.querySelector('dialog[open]')||document.body;   // v1.10.181: com popup modal aberto o <body> é inerte: o campo temporário tem de nascer dentro do popup
-      const ta=document.createElement('textarea');ta.value=md;ta.setAttribute('readonly','');ta.style.cssText='position:absolute;left:0;top:0;width:1px;height:1px;opacity:0';host.appendChild(ta);ta.focus();ta.select();ta.setSelectionRange(0,md.length);ok=document.execCommand('copy');ta.remove();via='cópia alternativa'}catch(e){}}
+      const ta=document.createElement('textarea');ta.value=md;ta.setAttribute('readonly','');ta.style.cssText='position:absolute;left:0;top:0;width:1px;height:1px;opacity:0';host.appendChild(ta);ta.focus();ta.select();ta.setSelectionRange(0,md.length);ok=document.execCommand('copy');ta.remove();via='cópia alternativa'}catch(e){ /* ignorado: elemento ausente ou sem suporte */ }}
     const tx=$('opsTexto');if(tx){tx.value=md;tx.hidden=false}   // sempre mostra o texto: se a cópia falhar, é só tocar e segurar > Selecionar tudo > Copiar
     const b=$('opsCopia');if(b){const t=b.dataset.rot||b.textContent;b.dataset.rot=t;b.textContent=ok?'Copiado! (confira colando)':'Não consegui copiar — use o texto abaixo';setTimeout(()=>{b.textContent=t},2600)}
   }
-  async function compartilha(){try{await navigator.share({title:'Relatório Dev/Operador oculto',text:textoRel()})}catch(e){}}
-  const dsp=$('opsDisp');if(dsp){try{dsp.value=localStorage.getItem('bt2.dev.nomeDisp')||''}catch(e){}dsp.addEventListener('input',()=>{try{localStorage.setItem('bt2.dev.nomeDisp',dsp.value.trim())}catch(e){}})}
+  async function compartilha(){try{await navigator.share({title:'Relatório Dev/Operador oculto',text:textoRel()})}catch(e){ /* ignorado: API opcional do navegador */ }}
+  const dsp=$('opsDisp');if(dsp){try{dsp.value=localStorage.getItem('bt2.dev.nomeDisp')||''}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }dsp.addEventListener('input',()=>{try{localStorage.setItem('bt2.dev.nomeDisp',dsp.value.trim())}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }})}
   const ini=$('opsIni');if(ini)ini.onclick=()=>{const m=($('opsModo')||{}).value||'rapido';if(m==='rapido')rodar({ensaio:$('opsEnsaio').checked});else rodarAv({tipo:m==='monkey'?'monkey':m==='visual'?'visual':'avancado',semente:($('opsSemente')||{}).value,minutos:($('opsDur')||{}).value})};
   const pa=$('opsParar');if(pa)pa.onclick=()=>{if(OPS.rodando){OPS.parar=true;OPS.motivoAbort='botão Parar';ui()}};
   const co=$('opsCopia');if(co)co.onclick=copia;
   const sh=$('opsShare');if(sh){if(navigator.share)sh.hidden=false;sh.onclick=compartilha}
   (function(){ // v1.10.182: botões do fim, salvamento periódico do relatório e Central/Imprimir com o relatório salvo
     const rel=$('opsBRel'),cop=$('opsBCop'),fim=$('opsBFim');let salvoFim=false;
-    if(rel)rel.onclick=()=>{try{$('bDemo').click()}catch(e){}};
+    if(rel)rel.onclick=()=>{try{$('bDemo').click()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }};
     if(cop)cop.onclick=copia;
-    const bx=$('opsBBx');if(bx)bx.onclick=()=>{try{const nm=(((document.getElementById('opsDisp')||{}).value)||'dispositivo').replace(/[^\w\-]+/g,'_'),d=new Date(),dt=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'_'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([textoRel()],{type:'text/markdown'}));a.download='dev_operador_oculto_'+nm+'_'+dt+'.md';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}catch(e){}};
+    const bx=$('opsBBx');if(bx)bx.onclick=()=>{try{const nm=(((document.getElementById('opsDisp')||{}).value)||'dispositivo').replace(/[^\w\-]+/g,'_'),d=new Date(),dt=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'_'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([textoRel()],{type:'text/markdown'}));a.download='dev_operador_oculto_'+nm+'_'+dt+'.md';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}catch(e){ /* ignorado: API opcional do navegador */ }};
     if(fim)fim.onclick=()=>{FIMBAR.fechado=true;FIMBAR.on=false;ui()};
-    const dc=$('opsDica');if(dc){dc.onchange=()=>{try{window.DICAUI&&window.DICAUI.liga(dc.checked,false)}catch(e){}};setInterval(()=>{try{if(window.DICAUI&&document.activeElement!==dc)dc.checked=!!window.DICAUI.ativo()}catch(e){}},700)}
-    setInterval(()=>{if(OPS.rodando){try{const b=$('opsBar');if(b){const mods=[...document.querySelectorAll('dialog[open]')].filter(d=>{try{return d.matches(':modal')}catch(e){return false}}),alvo=mods.length?mods[mods.length-1]:document.body;if(b.parentElement!==alvo){const abertoAntes=b.matches(':popover-open');try{if(abertoAntes)b.hidePopover()}catch(e){}alvo.appendChild(b);try{if(abertoAntes)b.showPopover()}catch(e){}}let coberta=!b.matches(':popover-open');if(!coberta){const r=b.getBoundingClientRect(),t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);coberta=!t||!b.contains(t)}if(coberta){ui();if(b.matches(':popover-open')){b.hidePopover();b.showPopover()}}}}catch(e){}}},250);
+    const dc=$('opsDica');if(dc){dc.onchange=()=>{try{window.DICAUI&&window.DICAUI.liga(dc.checked,false)}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }};setInterval(()=>{try{if(window.DICAUI&&document.activeElement!==dc)dc.checked=!!window.DICAUI.ativo()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }},700)}
+    setInterval(()=>{if(OPS.rodando){try{const b=$('opsBar');if(b){const mods=[...document.querySelectorAll('dialog[open]')].filter(d=>{try{return d.matches(':modal')}catch(e){return false}}),alvo=mods.length?mods[mods.length-1]:document.body;if(b.parentElement!==alvo){const abertoAntes=b.matches(':popover-open');try{if(abertoAntes)b.hidePopover()}catch(e){ /* ignorado: popover já no estado pedido ou sem suporte */ }alvo.appendChild(b);try{if(abertoAntes)b.showPopover()}catch(e){ /* ignorado: popover já no estado pedido ou sem suporte */ }}let coberta=!b.matches(':popover-open');if(!coberta){const r=b.getBoundingClientRect(),t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);coberta=!t||!b.contains(t)}if(coberta){ui();if(b.matches(':popover-open')){b.hidePopover();b.showPopover()}}}}catch(e){ /* ignorado: popover já no estado pedido ou sem suporte */ }}},250);
     setInterval(()=>{try{
       if(OPS.rodando){salvoFim=false;FIMBAR.on=false;FIMBAR.fechado=false}
-      if(OPS.rodando||(OPS.fim&&!salvoFim&&OPS.rel.length)){const o={t:Date.now(),rodando:!!OPS.rodando,md:relatorioAv(),cnt:cont()};try{localStorage.setItem(LSREL,JSON.stringify(o))}catch(x){}try{window.name='BT2REL:'+JSON.stringify(o)}catch(x){}PERS=o;if(!OPS.rodando)salvoFim=true}
-    }catch(e){}},4000);
+      if(OPS.rodando||(OPS.fim&&!salvoFim&&OPS.rel.length)){const o={t:Date.now(),rodando:!!OPS.rodando,md:relatorioAv(),cnt:cont()};try{localStorage.setItem(LSREL,JSON.stringify(o))}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }try{window.name='BT2REL:'+JSON.stringify(o)}catch(x){ /* ignorado: texto inválido: segue com o valor padrão */ }PERS=o;if(!OPS.rodando)salvoFim=true}
+    }catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }},4000);
     ui();
   })();
 
@@ -718,14 +718,14 @@
   /* ---------- caixa de areia ---------- */
   const SB={ativo:false,orig:{},c:{print:0,janelaNova:0,alerta:0,confirmacao:0,prompt:0,redeBloqueada:0,seletor:0,download:0,navegacao:0}};
   const sbClique=e=>{if(e.target&&e.target.id==='chkPlcNovos'){e.preventDefault();e.stopImmediatePropagation();SB.c.navegacao++;return}const a=e.target&&e.target.closest&&e.target.closest('a[href]');if(a){if(a.hasAttribute('download')){e.preventDefault();SB.c.download++;return}if(!/^#/.test(a.getAttribute('href')||'')){e.preventDefault();if(a.target==='_blank')SB.c.janelaNova++;else SB.c.navegacao++}}};   // link que sairia da página
-  const sbSai=e=>{SB.c.navegacao++;try{localStorage.setItem('bt2.dev.ultimaAcao',AV.ultimoObj||'')}catch(x){}e.preventDefault();e.returnValue=''};   // reload/location: pede para ficar
+  const sbSai=e=>{SB.c.navegacao++;try{localStorage.setItem('bt2.dev.ultimaAcao',AV.ultimoObj||'')}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }e.preventDefault();e.returnValue=''};   // reload/location: pede para ficar
   function sandboxLiga(){
     if(SB.ativo)return;SB.ativo=true;Object.keys(SB.c).forEach(k=>SB.c[k]=0);const o=SB.orig;
     o.print=window.print;o.ai=window.__autoImprime;window.__autoImprime=function(){SB.c.print++};o.open=window.open;o.alert=window.alert;o.confirm=window.confirm;o.prompt=window.prompt;o.fetch=window.fetch;o.xo=XMLHttpRequest.prototype.open;o.xs=XMLHttpRequest.prototype.send;o.ac=HTMLAnchorElement.prototype.click;o.pk={};
     window.print=()=>{SB.c.print++};window.open=()=>{SB.c.janelaNova++;return null};window.alert=()=>{SB.c.alerta++};window.confirm=()=>{SB.c.confirmacao++;return true};window.prompt=(m,d)=>{SB.c.prompt++;return d||''};
     window.fetch=function(i,init){const m=String((init&&init.method)||(i&&i.method)||'GET').toUpperCase();if(m!=='GET'&&m!=='HEAD'&&!(SB.rncPermite&&m==='POST'&&/\/api\/rnc\/abrir(\?|$)/.test(String((i&&i.url)||i)))){SB.c.redeBloqueada++;return Promise.resolve(new Response('{"ok":false,"erro":"bloqueado pela caixa de areia do Dev/Operador oculto"}',{status:503,headers:{'Content-Type':'application/json'}}))}return o.fetch.apply(this,arguments)};
     XMLHttpRequest.prototype.open=function(m){this.__m=String(m).toUpperCase();return o.xo.apply(this,arguments)};
-    XMLHttpRequest.prototype.send=function(){if(this.__m&&this.__m!=='GET'&&this.__m!=='HEAD'){SB.c.redeBloqueada++;try{this.abort()}catch(e){}return}return o.xs.apply(this,arguments)};
+    XMLHttpRequest.prototype.send=function(){if(this.__m&&this.__m!=='GET'&&this.__m!=='HEAD'){SB.c.redeBloqueada++;try{this.abort()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }return}return o.xs.apply(this,arguments)};
     HTMLAnchorElement.prototype.click=function(){if(this.hasAttribute&&this.hasAttribute('download')){SB.c.download++;return}return o.ac.apply(this,arguments)};
     document.addEventListener('click',sbClique,true);window.addEventListener('beforeunload',sbSai);
     ['showDirectoryPicker','showOpenFilePicker','showSaveFilePicker'].forEach(k=>{if(window[k]){o.pk[k]=window[k];window[k]=async()=>{SB.c.seletor++;throw new DOMException('cancelado pela caixa de areia','AbortError')}}});
@@ -740,7 +740,7 @@
   /* ---------- leitura da tela ---------- */
   function perfil(){
     const toque=matchMedia('(pointer:coarse)').matches,menor=Math.min(screen.width||innerWidth,screen.height||innerHeight),movel=!!(navigator.userAgentData&&navigator.userAgentData.mobile)||/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-    let nome='';try{nome=(localStorage.getItem('bt2.dev.nomeDisp')||'').trim()}catch(e){}
+    let nome='';try{nome=(localStorage.getItem('bt2.dev.nomeDisp')||'').trim()}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     const tipo=(toque&&(movel||menor<600))?'celular':(toque&&menor<1100?'tablet':(toque?'PC/notebook com tela de toque':'PC/notebook (o navegador não distingue)'));
     const zoomNav=(outerWidth&&innerWidth)?Math.round(outerWidth/innerWidth*100):0;
     const p={larg:innerWidth,alt:innerHeight,dpr:+(devicePixelRatio||1).toFixed(2),toque,ua:navigator.userAgent.slice(0,90),nome,tipo,zoomNav,telaFisica:(screen.width||0)+'×'+(screen.height||0)};
@@ -765,7 +765,7 @@
   const estadoRapido=()=>({dlgs:[...document.querySelectorAll('dialog[open]')].map(d=>d.id).filter(Boolean),pops:[...document.querySelectorAll('[popover]')].filter(e=>{try{return e.id!=='opsBar'&&e.matches(':popover-open')}catch(x){return false}}).length,
     msg:(typeof gmsg==='function')?gmsg():'',ovx:document.documentElement.scrollWidth>innerWidth+1,sw:document.documentElement.scrollWidth,ev:(window.OBS_LOG?window.OBS_LOG.eventos().length:0),gen:SIM.gen,ens:T.started?(T.fim?'fim':'andamento'):'parado'});
   function sonda(el){ // dá para clicar? (nada cobre o centro do objeto). A barra flutuante do PRÓPRIO robô fica invisível durante a medida (não conta como cobertura).
-    try{el.scrollIntoView({block:'center',inline:'center'})}catch(e){}
+    try{el.scrollIntoView({block:'center',inline:'center'})}catch(e){ /* ignorado: elemento ausente ou sem suporte */ }
     const bar=$('opsBar'),vb=bar?bar.style.visibility:'';if(bar)bar.style.visibility='hidden';
     {const dt=el.closest('details');if(dt&&!dt.open&&!el.closest('summary')){if(bar)bar.style.visibility=vb;return{oculto:true,dentro:true,ok:true}}}   // grupo recolhido: não está na tela
     const r=el.getBoundingClientRect();
@@ -783,7 +783,7 @@
     return{l:Math.round(r.left),t:Math.round(r.top),w:Math.round(r.width),h:Math.round(r.height),tituloOk:vok(hr),fecharOk:fx?vok(fr):null,temFechar:!!fx,topo:!!top&&top.closest&&top.closest('dialog')===d,cabeLarg:r.width<=innerWidth+1,fx};
   }
   const achou=(fase,nome,det)=>{AV.achados++;return reg('falha',fase,nome,det)};
-  const fecharTudo=()=>{document.querySelectorAll('dialog[open]').forEach(d=>{if(d.id!=='dlgGuiado'){try{d.close()}catch(e){}}});document.querySelectorAll('[popover]').forEach(e=>{try{if(e.matches(':popover-open')&&e.id!=='opsBar')e.hidePopover()}catch(x){}})};
+  const fecharTudo=()=>{document.querySelectorAll('dialog[open]').forEach(d=>{if(d.id!=='dlgGuiado'){try{d.close()}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ }}});document.querySelectorAll('[popover]').forEach(e=>{try{if(e.matches(':popover-open')&&e.id!=='opsBar')e.hidePopover()}catch(x){ /* ignorado: popover já no estado pedido ou sem suporte */ }})};
   const esc_=()=>{const ev={key:'Escape',code:'Escape',keyCode:27,bubbles:true,cancelable:true};document.dispatchEvent(new KeyboardEvent('keydown',ev));document.dispatchEvent(new KeyboardEvent('keyup',ev))};
 
   /* ---------- janelas: onde abre, cabe, por cima, fecha (✕, Esc, fora), reabre ---------- */
@@ -801,15 +801,15 @@
     if(!$(id).open)return;
     // fechar: ✕
     let fechou=false;
-    if(g.fx){try{g.fx.scrollIntoView({block:'nearest'})}catch(e){}g.fx.click();await pausa(220);fechou=!$(id).open}
+    if(g.fx){try{g.fx.scrollIntoView({block:'nearest'})}catch(e){ /* ignorado: elemento ausente ou sem suporte */ }g.fx.click();await pausa(220);fechou=!$(id).open}
     if(!fechou){ // Esc com foco dentro da janela
-      try{const f=$(id).querySelector('button,input,select,summary');if(f)f.focus()}catch(e){}
+      try{const f=$(id).querySelector('button,input,select,summary');if(f)f.focus()}catch(e){ /* ignorado: elemento ausente ou sem suporte */ }
       esc_();await pausa(220);const porEsc=!$(id).open;
       if(porEsc&&g.fx)achou(fase,obj+': o ✕ NÃO fechou (só o Esc fechou)','clique no botão fechar sem efeito');
       fechou=porEsc;
     }
     if(!fechou&&!('nofora' in $(id).dataset)){$(id).click();await pausa(200);fechou=!$(id).open}  // clique fora
-    if(!fechou){achou(fase,obj+': NÃO fecha','nem ✕, nem Esc, nem clique fora');try{$(id).close()}catch(e){}}
+    if(!fechou){achou(fase,obj+': NÃO fecha','nem ✕, nem Esc, nem clique fora');try{$(id).close()}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ }}
     // reabrir pelo mesmo gatilho
     if(fechou&&gatilho){const t=gatilho();if(t&&vis(t)){clica(t,'reabrir '+id);await pausa(250);if(!$(id).open)aviso(fase,obj+': depois de fechada não reabre pelo mesmo botão','');fecharTudo();await pausa(100)}}
   }
@@ -837,15 +837,15 @@
   async function inspecionaLayout(el,obj,fase){ // foca/passa o mouse no objeto e confere que NADA se mexeu; devolve ao estado de antes
     try{
       const f0=fotoLayout();
-      try{el.focus({preventScroll:true})}catch(e){}
-      ['pointerover','mouseover'].forEach(t=>{try{el.dispatchEvent(new MouseEvent(t,{bubbles:true,cancelable:true,view:window}))}catch(e){}});
+      try{el.focus({preventScroll:true})}catch(e){ /* ignorado: elemento ausente ou sem suporte */ }
+      ['pointerover','mouseover'].forEach(t=>{try{el.dispatchEvent(new MouseEvent(t,{bubbles:true,cancelable:true,view:window}))}catch(e){ /* ignorado: API opcional do navegador */ }});
       await pausa(180);
       const f1=fotoLayout(),d=difLayout(f0,f1),tip=document.getElementById('ibubTip');
       if(tip&&getComputedStyle(tip).display!=='none'){const q=tip.getBoundingClientRect();if(q.left<0||q.top<0||q.right>innerWidth||q.bottom>innerHeight)aviso(fase,'balão fora da tela: '+obj,Math.round(q.left)+','+Math.round(q.top)+' '+Math.round(q.width)+'×'+Math.round(q.height)+' na tela '+innerWidth+'×'+innerHeight)}
-      ['pointerout','mouseout'].forEach(t=>{try{el.dispatchEvent(new MouseEvent(t,{bubbles:true,cancelable:true,view:window}))}catch(e){}});try{el.blur()}catch(e){}
+      ['pointerout','mouseout'].forEach(t=>{try{el.dispatchEvent(new MouseEvent(t,{bubbles:true,cancelable:true,view:window}))}catch(e){ /* ignorado: API opcional do navegador */ }});try{el.blur()}catch(e){ /* ignorado: elemento ausente ou sem suporte */ }
       await pausa(60);AV.insp=(AV.insp||0)+1;
       if(d.length){AV.inspRuim=(AV.inspRuim||0)+1;achou(fase,'layout muda ao passar o mouse/focar: '+obj,d.slice(0,4).join(' · ')+(d.length>4?' · …+'+(d.length-4):'')+' (tela '+innerWidth+'×'+innerHeight+')')}
-    }catch(e){}
+    }catch(e){ /* ignorado: elemento ausente ou sem suporte */ }
   }
   async function faseVisual(){ // modo "Inspeção visual (rápida)": só olha (foca/passa o mouse), não clica; página principal + janela ⚙ Modo
     const F='V · Inspeção visual';AV.insp=0;AV.inspRuim=0;
@@ -884,7 +884,7 @@
       if(el.disabled){AV.cob.nao.push(obj+' [desabilitado]');continue}
       if(!escopoDlg&&document.querySelector('dialog[open]:not(#dlgGuiado)')){fecharTudo();await pausa(70)}   // sobrou janela aberta de um passo anterior: fecha antes de medir (senão ela 'cobre' a tela)
       let s=sonda(el);
-      if(!s.ok&&/gmsg/.test(String(s.cob))){AV.toast=(AV.toast||0)+1;if(AV.toast===1)aviso(fase,'a faixa de mensagem (#gmsg) fica por cima de botões enquanto aparece','ex.: '+obj+' — some sozinha em alguns segundos; no celular cobre parte do fim da tela');try{msgGer('')}catch(e){}await pausa(150);s=sonda(el)}   // aviso transitório: limpa e mede de novo
+      if(!s.ok&&/gmsg/.test(String(s.cob))){AV.toast=(AV.toast||0)+1;if(AV.toast===1)aviso(fase,'a faixa de mensagem (#gmsg) fica por cima de botões enquanto aparece','ex.: '+obj+' — some sozinha em alguns segundos; no celular cobre parte do fim da tela');try{msgGer('')}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }await pausa(150);s=sonda(el)}   // aviso transitório: limpa e mede de novo
       if(s.oculto){AV.cob.nao.push(obj+' [escondido agora]');AV.cob.total--;continue}
       if(!s.dentro){achou(fase,'inalcançável (fora da tela): '+obj,'mesmo rolando, o centro fica fora da tela '+innerWidth+'×'+innerHeight);AV.cob.nao.push(obj+' [fora da tela]');continue}
       if(!s.ok){achou(fase,'coberto por outro elemento: '+obj,'o clique cairia em '+s.cob);AV.cob.nao.push(obj+' [coberto por '+s.cob+']');continue}
@@ -905,7 +905,7 @@
     }
     if(!escopoDlg&&prof===0&&!AV.segunda){AV.segunda=true;try{await varre('',0,null,fase)}finally{AV.segunda=false}}   // 2ª passada: objetos que só apareceram depois de abrir um grupo/lista
   }
-  async function pararSilencio(){try{if(typeof pararEnsaioSilencioso==='function')pararEnsaioSilencioso()}catch(e){}await pausa(120)}
+  async function pararSilencio(){try{if(typeof pararEnsaioSilencioso==='function')pararEnsaioSilencioso()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }await pausa(120)}
 
   /* ---------- menu do botão direito ---------- */
   async function faseMenuDireito(){
@@ -925,7 +925,7 @@
         if(!m){bad++;achou(F,'o menu NÃO abriu ('+nome+' em '+x+','+y+')','contextmenu sem efeito');continue}
         const r=m.getBoundingClientRect();
         if(r.left<-1||r.top<-1||r.right>innerWidth+1||r.bottom>innerHeight+1){bad++;achou(F,'o menu abre FORA da tela ('+nome+' em '+x+','+y+')','menu em '+Math.round(r.left)+','+Math.round(r.top)+' '+Math.round(r.width)+'×'+Math.round(r.height)+' tela '+innerWidth+'×'+innerHeight)}
-        try{if(window.PACOTE_IA&&PACOTE_IA.fechaMenu)PACOTE_IA.fechaMenu()}catch(e){}
+        try{if(window.PACOTE_IA&&PACOTE_IA.fechaMenu)PACOTE_IA.fechaMenu()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
         await pausa(40);
         if(document.querySelector('.pia-menu')){bad++;achou(F,'o menu NÃO fecha','fechaMenu() sem efeito')}
       }
@@ -980,7 +980,7 @@
       const b=document.querySelector('#velSeg button[data-v="'+v+'"]');if(b){b.click();await pausa(120)}
       OPS.fase='Ensaio '+v+'×';ui();
       await pararSilencio();fecharTudo();   // cada velocidade começa de um ensaio novo
-      try{dadosConfMarca(false)}catch(e){}   // 'Dados confirmados' vale por sessão: limpa para o INICIAR abrir o diálogo de novo
+      try{dadosConfMarca(false)}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }   // 'Dados confirmados' vale por sessão: limpa para o INICIAR abrir o diálogo de novo
       await garanteGerador();await faseEnsaio();
     }
   }
@@ -1007,7 +1007,7 @@
       const ab=document.querySelectorAll('dialog[open]').length;
       if(ab>9){aviso(F,'muitas janelas abertas ao mesmo tempo ('+ab+')','ação nº '+n);fecharTudo()}
       if(T.started&&!T.fim&&n%60===0)await pararSilencio();
-      if(n%40===0){fecharTudo();document.querySelectorAll('[popover]:popover-open').forEach(e=>{if(e.id!=='opsBar')try{e.hidePopover()}catch(x){}})}
+      if(n%40===0){fecharTudo();document.querySelectorAll('[popover]:popover-open').forEach(e=>{if(e.id!=='opsBar')try{e.hidePopover()}catch(x){ /* ignorado: popover já no estado pedido ou sem suporte */ }})}
     }
     fecharTudo();
     chk(F,n+' ações aleatórias sem erro de JavaScript',OPS.erroJs.length===erros0,OPS.erroJs.slice(erros0,erros0+3).join(' | '));
@@ -1017,10 +1017,10 @@
   /* ---------- orquestração dos modos avançados ---------- */
   /* Patamar Guiado: guarda a configuração do começo e devolve depois da varredura (a varredura marca/desmarca bancos, patamar, etc. e isso muda o ensaio seguinte) */
   const gSnap=()=>{try{return JSON.stringify(window.GUIADO_DBG.G)}catch(e){return null}};
-  function setSalva(m){try{if(!m||salvaModo()===m)return;PORPAT=m==='P';salvarManual=m==='M';try{localStorage.setItem('medidor.salvarManual',salvarManual?'1':'0');localStorage.setItem('medidor.porPatamar',PORPAT?'1':'0')}catch(e){}if(!salvarManual)T.aguarda=false;try{window.__aoMudarSalva&&window.__aoMudarSalva()}catch(e){}}catch(e){}}   // robô (só Demo local): troca o salvamento direto, mesmo com o gerador ligado
+  function setSalva(m){try{if(!m||salvaModo()===m)return;PORPAT=m==='P';salvarManual=m==='M';try{localStorage.setItem('medidor.salvarManual',salvarManual?'1':'0');localStorage.setItem('medidor.porPatamar',PORPAT?'1':'0')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }if(!salvarManual)T.aguarda=false;try{window.__aoMudarSalva&&window.__aoMudarSalva()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }}   // robô (só Demo local): troca o salvamento direto, mesmo com o gerador ligado
   const salvaModo=()=>(typeof PORPAT!=='undefined'&&PORPAT)?'P':(typeof salvarManual!=='undefined'&&salvarManual)?'M':'A';
   function restauraG(){try{if(!AV.g0)return;if(AV.salva0&&salvaModo()!==AV.salva0&&window.__setSalvaModo)window.__setSalvaModo(AV.salva0);
-    if(AV.salva0&&salvaModo()!==AV.salva0){PORPAT=AV.salva0==='P';salvarManual=AV.salva0==='M';try{localStorage.setItem('medidor.salvarManual',salvarManual?'1':'0');localStorage.setItem('medidor.porPatamar',PORPAT?'1':'0')}catch(e){}if(!salvarManual)T.aguarda=false;try{window.__aoMudarSalva&&window.__aoMudarSalva()}catch(e){}}const G=window.GUIADO_DBG.G;Object.assign(G,JSON.parse(AV.g0));G.guiadoOn=false;if(window.GUIADO_MAE&&window.GUIADO_MAE.armada)window.GUIADO_MAE.desarma('Dev/Operador oculto: base limpa');if(window.GUIADO&&window.GUIADO.pinta)window.GUIADO.pinta()}catch(e){}}
+    if(AV.salva0&&salvaModo()!==AV.salva0){PORPAT=AV.salva0==='P';salvarManual=AV.salva0==='M';try{localStorage.setItem('medidor.salvarManual',salvarManual?'1':'0');localStorage.setItem('medidor.porPatamar',PORPAT?'1':'0')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }if(!salvarManual)T.aguarda=false;try{window.__aoMudarSalva&&window.__aoMudarSalva()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }}const G=window.GUIADO_DBG.G;Object.assign(G,JSON.parse(AV.g0));G.guiadoOn=false;if(window.GUIADO_MAE&&window.GUIADO_MAE.armada)window.GUIADO_MAE.desarma('Dev/Operador oculto: base limpa');if(window.GUIADO&&window.GUIADO.pinta)window.GUIADO.pinta()}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }}
   async function rodarAv(opt){
     opt=opt||{};
     if(OPS.rodando)return false;
@@ -1038,7 +1038,7 @@
     reg('ok','Preparação','dispositivo',(p.nome?'"'+p.nome+'" · ':'(sem nome — digite no popup Demo) · ')+p.tipo+' · zoom do navegador ≈ '+p.zoomNav+' %');
     if(window.__semArmazenamento)aviso('Preparação','armazenamento do navegador bloqueado','arquivo aberto de Downloads (content://) ou WebView: preferências ficam só nesta aba; a tela funciona normalmente');
     reg('ok','Preparação','perfil da tela',p.larg+'×'+p.alt+' px (tela física '+p.telaFisica+') · DPR '+p.dpr+(p.toque?' · toque':' · mouse')+' · '+p.ua);
-    ui();try{if($('dlgDemo').open)$('dlgDemo').close()}catch(e){}
+    ui();try{if($('dlgDemo').open)$('dlgDemo').close()}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ }
     try{
       if(tipo==='avancado'){
         const fa=x=>!opt.fases||String(opt.fases).split(',').includes(x);   // opt.fases ('U1,U2,U3,U4'): roda só estas fases (diagnóstico)
@@ -1062,7 +1062,7 @@
       else reg('falha','Dev/Operador oculto','erro inesperado no próprio robô',String(e&&e.stack||e).slice(0,300));
     }
     OPS.fase='D · Restaurando';ui();
-    const pf=OPS.parar;OPS.parar=false;fecharTudo();await restaura(est);if(AV.salva0)setSalva(AV.salva0);try{if(window.DICAUI&&AV.dica0!==undefined&&window.DICAUI.ativo()!==AV.dica0)window.DICAUI.liga(AV.dica0,false)}catch(e){}OPS.parar=pf;
+    const pf=OPS.parar;OPS.parar=false;fecharTudo();await restaura(est);if(AV.salva0)setSalva(AV.salva0);try{if(window.DICAUI&&AV.dica0!==undefined&&window.DICAUI.ativo()!==AV.dica0)window.DICAUI.liga(AV.dica0,false)}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }OPS.parar=pf;
     const cb=AV.cob;
     reg('ok','Cobertura',tipo==='avancado'?cb.acionados+' de '+cb.total+' objetos acionados ('+(cb.total?Math.round(100*cb.acionados/cb.total):0)+' %); '+cb.nao.length+' não acionados':'monkey: sem contagem de cobertura','');
     reg('ok','Caixa de areia','efeitos bloqueados/contados',JSON.stringify(SB.c));
@@ -1087,8 +1087,8 @@
   /* ===== v1.10.179 · barra do robô: cronômetro, arrastar, redimensionar, recolher (posição e tamanho guardados neste navegador) ===== */
   (function(){
     const bar=$('opsBar'),cron=$('opsCron'),grip=$('opsGrip'),mn=$('opsMin');if(!bar||!cron)return;
-    const LS='bt2.dev.barra';let sv={};try{sv=JSON.parse(localStorage.getItem(LS)||'{}')||{}}catch(e){}
-    const grava=()=>{try{localStorage.setItem(LS,JSON.stringify(sv))}catch(e){}};
+    const LS='bt2.dev.barra';let sv={};try{sv=JSON.parse(localStorage.getItem(LS)||'{}')||{}}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
+    const grava=()=>{try{localStorage.setItem(LS,JSON.stringify(sv))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
     const zm=()=>{const r=bar.getBoundingClientRect();return(bar.offsetWidth?r.width/bar.offsetWidth:1)||1};
     const cabe=()=>{ // a barra inteira fica na tela
       const r=bar.getBoundingClientRect(),W=innerWidth,H=innerHeight,z=zm();let dx=0,dy=0;
@@ -1105,7 +1105,7 @@
     },500);
     grip.addEventListener('pointerdown',e=>{
       if(e.button!==0)return;const r=bar.getBoundingClientRect(),z=zm(),x0=e.clientX,y0=e.clientY;
-      bar.style.inset='auto';bar.style.left=r.left/z+'px';bar.style.top=r.top/z+'px';try{grip.setPointerCapture(e.pointerId)}catch(x){}
+      bar.style.inset='auto';bar.style.left=r.left/z+'px';bar.style.top=r.top/z+'px';try{grip.setPointerCapture(e.pointerId)}catch(x){ /* ignorado: elemento ausente ou sem suporte */ }
       const mv=ev=>{bar.style.left=(r.left+ev.clientX-x0)/z+'px';bar.style.top=(r.top+ev.clientY-y0)/z+'px';cabe()};
       const up=()=>{grip.removeEventListener('pointermove',mv);grip.removeEventListener('pointerup',up);const q=bar.getBoundingClientRect();sv.l=Math.round(q.left/z);sv.t=Math.round(q.top/z);grava()};
       grip.addEventListener('pointermove',mv);grip.addEventListener('pointerup',up);

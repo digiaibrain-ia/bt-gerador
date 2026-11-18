@@ -82,13 +82,13 @@
 (function(){
   const URL_PAG=(window.MENU_DEV&&MENU_DEV.arquivo('grafico'))||'grafico_ensaio_v0.9.html', NOME_JAN='bt2_grafico';
   let jan=null, canal=null, enviados=0, ultOi=0, ultEnvio=0;
-  try{if('BroadcastChannel' in window)canal=new BroadcastChannel('bt2-grafico')}catch(e){}
+  try{if('BroadcastChannel' in window)canal=new BroadcastChannel('bt2-grafico')}catch(e){ /* ignorado: navegador sem BroadcastChannel */ }
   const bt=$('graAnalisar'); if(!bt)return;
 
   /** Manda a mensagem pelos dois caminhos. Falha de um não derruba o outro. */
   function manda(m){
-    try{if(jan&&!jan.closed)jan.postMessage(m,'*')}catch(e){}
-    try{if(canal)canal.postMessage(m)}catch(e){}
+    try{if(jan&&!jan.closed)jan.postMessage(m,'*')}catch(e){ /* ignorado: janela ou canal já fechado */ }
+    try{if(canal)canal.postMessage(m)}catch(e){ /* ignorado: janela ou canal já fechado */ }
   }
   /** Ponto no formato enxuto da página: só o que o gráfico usa (tensões de linha, frequência, kW). */
   const enxuga=p=>{const m=p.m||{};return{t:p.t,c:p.c,s:p.s,e:p.e,n:p.n?1:0,va:m.va==null?null:m.va,vb:m.vb==null?null:m.vb,vc:m.vc==null?null:m.vc,hz:m.hz==null?null:m.hz,kw:m.kw==null?null:m.kw}};
@@ -129,7 +129,7 @@
 /* ===== RECOLHER / EXPANDIR CARDS ===== */
 (function(){
   const KEY='medidor.cardsRecolhidos';
-  let salvos=[];try{salvos=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
+  let salvos=[];try{salvos=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   document.querySelectorAll('.panel').forEach(p=>{
     const h=p.querySelector(':scope>.hrow, :scope>h2:first-child');if(!h)return; // a Simulação (só demo) não tem título
     h.classList.add('ph');h.tabIndex=0;h.setAttribute('role','button');
@@ -140,7 +140,7 @@
     set(p.id==='bco'?false:(p.id==='reg'?true:salvos.includes(p.id)));   // v1.10.151: o Registro nasce COMPACTO (degrau, status e carga real); clique no título alterna compacto/completo
     const alterna=()=>{
       set(!p.classList.contains('min'));
-      try{localStorage.setItem(KEY,JSON.stringify([...document.querySelectorAll('.panel.min')].map(x=>x.id)))}catch(e){}
+      try{localStorage.setItem(KEY,JSON.stringify([...document.querySelectorAll('.panel.min')].map(x=>x.id)))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
       fitZoom();drawScreen();
     };
     // v1.10.113: botões/campos dentro da faixa do título (Analisar, Popup, Patamar, Grandezas...) NÃO recolhem o card: só o clique na faixa em si.
@@ -173,16 +173,16 @@
       :'Relógio (clássico, v1.9.32): eixo = tempo real, com faixas amarelas de ajuste/estabilização e cinza de pausa.';
     rotulo();
   };
-  const aplicaGrafico=()=>{const g=$('gra');if(g)g.style.display=GRAF_MODO==='off'?'none':'';try{fitZoom();drawScreen()}catch(e){}};
+  const aplicaGrafico=()=>{const g=$('gra');if(g)g.style.display=GRAF_MODO==='off'?'none':'';try{fitZoom();drawScreen()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }};
   $('mdTipo').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled||b.dataset.m===MODO||genLigado())return;
     const p=Object.assign(paramAtuais(),{modo:b.dataset.m});
     if(T.fim&&T.gravado)novoEnsaio();
     aplicaParametros(p);
-    try{localStorage.setItem('medidor.params',JSON.stringify(p))}catch(x){}
+    try{localStorage.setItem('medidor.params',JSON.stringify(p))}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     marca()});
   $('mdSalva').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;window.__setSalvaModo(b.dataset.v==='P'?'P':b.dataset.v==='1'?'M':'A');marca()});
-  try{new MutationObserver(()=>document.querySelectorAll('#dlgModo [data-nota]').forEach(x=>{const p=$(x.dataset.nota);x.dataset.tip=p?p.textContent:''})).observe($('dlgModo'),{childList:true,characterData:true,subtree:true})}catch(e){}   // v1.10.120: o texto de cada nota alimenta o ícone i
-  $('mdGra').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;GRAF_MODO=b.dataset.v;try{localStorage.setItem('medidor.graficoModo',GRAF_MODO)}catch(x){}aplicaGrafico();marca()});
+  try{new MutationObserver(()=>document.querySelectorAll('#dlgModo [data-nota]').forEach(x=>{const p=$(x.dataset.nota);x.dataset.tip=p?p.textContent:''})).observe($('dlgModo'),{childList:true,characterData:true,subtree:true})}catch(e){ /* ignorado: API opcional do navegador */ }   // v1.10.120: o texto de cada nota alimenta o ícone i
+  $('mdGra').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;GRAF_MODO=b.dataset.v;try{localStorage.setItem('medidor.graficoModo',GRAF_MODO)}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }aplicaGrafico();marca()});
   $('bModo').onclick=()=>{marca();$('dlgModo').showModal()};
   window.__marcaModo=marca;
   aplicaGrafico();marca();

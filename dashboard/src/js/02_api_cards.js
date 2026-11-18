@@ -61,7 +61,7 @@
     if (!canal) return;
     ultSnap = snapshot();
     try { canal.postMessage(ultSnap); } catch (e) { /* mensagem não clonável: ignora, o próximo ciclo reenvia */ }
-    assinantes.forEach(fn => { try { fn(ultSnap); } catch (e) {} });
+    assinantes.forEach(fn => { try { fn(ultSnap); } catch (e) { /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ } });
   }
   /** Liga o publicador. fonteFn() devolve os blocos estruturados do medidor (ensaio, etapas, gerador, operador). */
   function inicia(fonteFn) {
@@ -84,13 +84,13 @@
   /** cliente(fn, opc): chama fn(snapshot|null, info) a cada snapshot; fn(null,{semDados:true}) se passar de 4 s sem receber. */
   function cliente(fn, opc) {
     opc = opc || {}; let ch = null, ult = 0, ultS = null, velho = true;
-    try { if ('BroadcastChannel' in global) ch = new BroadcastChannel(CANAL); } catch (e) {}
+    try { if ('BroadcastChannel' in global) ch = new BroadcastChannel(CANAL); } catch (e) { /* ignorado: navegador sem BroadcastChannel */ }
     if (!ch) { fn(null, { semCanal: true }); return { fecha() {}, ultimo: () => null }; }
     ch.onmessage = ev => { const m = ev.data; if (m && m.k === 'snap' && m.v === VERSAO_API) { ult = Date.now(); ultS = m; velho = false; fn(m, {}); } };
-    const oi = () => { try { ch.postMessage({ k: 'oi' }); } catch (e) {} };
-    oi(); try { ch.postMessage({ k: 'pede' }); } catch (e) {}
+    const oi = () => { try { ch.postMessage({ k: 'oi' }); } catch (e) { /* ignorado: janela ou canal já fechado */ } };
+    oi(); try { ch.postMessage({ k: 'pede' }); } catch (e) { /* ignorado: janela ou canal já fechado */ }
     const t1 = setInterval(oi, 3000), t2 = setInterval(() => { if (!velho && Date.now() - ult > VELHO_MS) { velho = true; fn(null, { semDados: true, ultimo: ultS }); } }, 1000);
-    return { fecha() { clearInterval(t1); clearInterval(t2); try { ch.close(); } catch (e) {} }, ultimo: () => ultS };
+    return { fecha() { clearInterval(t1); clearInterval(t2); try { ch.close(); } catch (e) { /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ } }, ultimo: () => ultS };
   }
 
   global.BT2_API = { versao: VERSAO_API, inicia, snapshot, card: id => leCards()[id] || null, assina: fn => { assinantes.push(fn); }, cliente, paraNumero };

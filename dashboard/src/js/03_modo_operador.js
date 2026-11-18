@@ -22,7 +22,7 @@
   const CH = 'medidor.opsimples', CH_ANT = 'medidor.opsimples.manualAnt';
   const OPS = { ativo: false };
   const ler = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-  const grava = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} };
+  const grava = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ } };
 
   function visual() {
     document.body.classList.toggle('opsimples', OPS.ativo); const mv = $('mcVisao'); if (mv) mv.textContent = OPS.ativo ? 'Simples (só INICIAR)' : 'Completa';
@@ -52,12 +52,12 @@
       grava(CH_ANT, null);
     }
     OPS.ativo = on; grava(CH, on ? '1' : '0'); visual(); marca();
-    try { window.__marcaModo && window.__marcaModo(); } catch (e) {}
+    try { window.__marcaModo && window.__marcaModo(); } catch (e) { /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
     return true;
   }
   $('mdOp').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; troca(b.dataset.v === '1'); });
   $('bModo').addEventListener('click', marca);
-  const m0 = window.__marcaModo; window.__marcaModo = () => { try { m0 && m0(); } catch (e) {} marca(); };   // o medidor chama isto a cada ciclo
+  const m0 = window.__marcaModo; window.__marcaModo = () => { try { m0 && m0(); } catch (e) { /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ } marca(); };   // o medidor chama isto a cada ciclo
   window.OPERADOR_SIMPLES = { ativo: () => OPS.ativo, troca };
 
   // estado inicial: ?op=1/0 manda; senão, o que ficou guardado — mas só vale se o medidor continua em Guiado + salvamento automático

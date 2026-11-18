@@ -16,9 +16,9 @@ const rgChave=(dse,ger)=>dse+' | '+ger;
 (function(){
   try{RG_IDX=JSON.parse(localStorage.getItem('medidor.aprend.indice')||'{}')||{}}catch(e){RG_IDX={}}
   try{const b=JSON.parse(localStorage.getItem('medidor.aprend.buf')||'null');
-    if(b&&Array.isArray(b.ses)){RG_SES=b.ses;RG_AMO=b.amo||[];RG_EV=b.ev||[];RG_SES.forEach(s=>{if(s.fim==null)s.fim=s.ult||s.ini})}}catch(e){}
+    if(b&&Array.isArray(b.ses)){RG_SES=b.ses;RG_AMO=b.amo||[];RG_EV=b.ev||[];RG_SES.forEach(s=>{if(s.fim==null)s.fim=s.ult||s.ini})}}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
 })();
-const rgSalvaIdx=()=>{try{localStorage.setItem('medidor.aprend.indice',JSON.stringify(RG_IDX))}catch(e){}};
+const rgSalvaIdx=()=>{try{localStorage.setItem('medidor.aprend.indice',JSON.stringify(RG_IDX))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
 function rgBackup(){
   if(!RG.sujo)return;
   try{localStorage.setItem('medidor.aprend.buf',JSON.stringify({ses:RG_SES,amo:RG_AMO,ev:RG_EV}));RG.bkErro=false;RG.sujo=false}
@@ -295,14 +295,14 @@ function abreReg(msg){
   if(!$('dlgReg').open)$('dlgReg').showModal();
 }
 ['rgDse','rgGer'].forEach(i=>$(i).addEventListener('input',()=>{
-  try{localStorage.setItem('medidor.aprend.ids',JSON.stringify({dse:$('rgDse').value,ger:$('rgGer').value}))}catch(e){}
+  try{localStorage.setItem('medidor.aprend.ids',JSON.stringify({dse:$('rgDse').value,ger:$('rgGer').value}))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   rgErro('');atualizaReg(true);
 }));
-$('rgMeta').addEventListener('input',()=>{const n=parseInt($('rgMeta').value,10);if(n>0){try{localStorage.setItem('medidor.aprend.meta',String(n))}catch(e){}atualizaReg(true)}});
-$('rgAuto').onchange=()=>{try{localStorage.setItem('medidor.aprend.auto',$('rgAuto').checked?'1':'0')}catch(e){}};
-try{$('rgAuto').checked=(localStorage.getItem('medidor.aprend.auto')||'1')==='1'}catch(e){}
-$('rgSemDemo').onchange=()=>{try{localStorage.setItem('medidor.aprend.semDemo',$('rgSemDemo').checked?'1':'0')}catch(e){}rgBotao()};
-try{$('rgSemDemo').checked=(localStorage.getItem('medidor.aprend.semDemo')||'1')==='1'}catch(e){}
+$('rgMeta').addEventListener('input',()=>{const n=parseInt($('rgMeta').value,10);if(n>0){try{localStorage.setItem('medidor.aprend.meta',String(n))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }atualizaReg(true)}});
+$('rgAuto').onchange=()=>{try{localStorage.setItem('medidor.aprend.auto',$('rgAuto').checked?'1':'0')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
+try{$('rgAuto').checked=(localStorage.getItem('medidor.aprend.auto')||'1')==='1'}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
+$('rgSemDemo').onchange=()=>{try{localStorage.setItem('medidor.aprend.semDemo',$('rgSemDemo').checked?'1':'0')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }rgBotao()};
+try{$('rgSemDemo').checked=(localStorage.getItem('medidor.aprend.semDemo')||'1')==='1'}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
 const rgBloqDemo=()=>$('rgSemDemo').checked&&$('demo').checked; // true = REC não pode ligar agora (demo + trava ativada)
 $('rgFecha').onclick=()=>$('dlgReg').close();
 $('rgBaixaTudo').onclick=()=>rgBaixa('tudo');$('rgBaixaTxt').onclick=()=>rgBaixa('txt');$('rgBaixaCsv').onclick=()=>rgBaixa('csv');
@@ -313,8 +313,8 @@ $('rgBaixaTudo').onclick=()=>rgBaixa('tudo');$('rgBaixaTxt').onclick=()=>rgBaixa
    O handle da pasta é guardado no IndexedDB deste navegador; depois de reabrir pode ser preciso "Autorizar pasta" (exige um clique). */
 (function(){
   const LS='medidor.autoImp',CFG={on:false,prt:false,cam:''};
-  try{Object.assign(CFG,JSON.parse(localStorage.getItem(LS)||'{}'))}catch(e){}
-  const salva=()=>{try{localStorage.setItem(LS,JSON.stringify(CFG))}catch(e){}};
+  try{Object.assign(CFG,JSON.parse(localStorage.getItem(LS)||'{}'))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
+  const salva=()=>{try{localStorage.setItem(LS,JSON.stringify(CFG))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
   const idb=(op,v)=>new Promise(ok=>{try{const r=indexedDB.open('medidor-auto',1);r.onupgradeneeded=()=>r.result.createObjectStore('k');
     r.onsuccess=()=>{const t=r.result.transaction('k',op==='get'?'readonly':'readwrite'),st=t.objectStore('k'),q=op==='get'?st.get('pasta'):st.put(v,'pasta');q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null)};r.onerror=()=>ok(null)}catch(e){ok(null)}});
   const sup='showDirectoryPicker' in window;
@@ -335,10 +335,10 @@ $('rgBaixaTudo').onclick=()=>rgBaixa('tudo');$('rgBaixaTxt').onclick=()=>rgBaixa
   $('aimpCam').oninput=e=>{CFG.cam=e.target.value.trim();salva()};
   $('aimpCopia').onclick=async()=>{try{await navigator.clipboard.writeText(CFG.cam||'');msgGer('Caminho copiado.',3000)}catch(e){$('aimpCam').select()}};
   $('aimpPasta').onclick=()=>$('rgPasta').click();   // mesma pasta e mesma lógica do Registro
-  $('aimpAut').onclick=async()=>{try{perm=await RG_DIR.requestPermission({mode:'readwrite'})}catch(e){}atualiza()};
+  $('aimpAut').onclick=async()=>{try{perm=await RG_DIR.requestPermission({mode:'readwrite'})}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ }atualiza()};
   document.getElementById('bModo').addEventListener('click',()=>setTimeout(atualiza,0));
   if(sup)idb('get').then(h=>{if(h&&!RG_DIR){RG_DIR=h;atualiza()}});
-  const log=(r,t,d)=>{try{window.devObs&&window.devObs.log('ens','sistema',t,r,d)}catch(e){}};
+  const log=(r,t,d)=>{try{window.devObs&&window.devObs.log('ens','sistema',t,r,d)}catch(e){ /* ignorado: o log de desenvolvimento é opcional */ }};
   window.__autoImprime=async function(){
     if(!CFG.on||T.autoImp)return;
     await consulta();
@@ -351,7 +351,7 @@ $('rgBaixaTudo').onclick=()=>rgBaixa('tudo');$('rgBaixaTxt').onclick=()=>rgBaixa
     }else baixa(r.blob,r.nome);
     if(CFG.prt){
       try{const u=URL.createObjectURL(r.blob),f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0;visibility:hidden';f.src=u;
-        f.onload=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.open(u)}};document.body.appendChild(f);setTimeout(()=>{f.remove();URL.revokeObjectURL(u)},120000)}catch(e){}
+        f.onload=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.open(u)}};document.body.appendChild(f);setTimeout(()=>{f.remove();URL.revokeObjectURL(u)},120000)}catch(e){ /* ignorado: elemento ausente ou sem suporte */ }
     }
     msgGer('Relatório gerado automaticamente: '+r.nome+' → '+onde+(CFG.cam?'. Destino de referência: '+CFG.cam:'')+(CFG.prt?'. Impressão aberta.':'.'),15000);
     log('ok','impressão automática: '+r.nome+' → '+onde,{pasta:RG_DIR?RG_DIR.name:null,permissao:perm,referencia:CFG.cam||null,imprimir:!!CFG.prt});

@@ -7,10 +7,10 @@ let salvarManual=true; // ensaio 100% manual: cada etapa só é salva (e avança
    POR QUE ASSIM (técnico): salvarManual continua sendo o único gatilho do "esperar SALVAR" (false em Automático e em Por patamar), então o núcleo do ensaio
    não muda. PORPAT liga a regra nova; APLICA_PAT guarda o modo de cada patamar {índice da etapa: 'M'|'A'}, padrão 'M' (o operador decide). */
 let PORPAT=false;
-try{PORPAT=localStorage.getItem('medidor.porPatamar')==='1'}catch(e){}
+try{PORPAT=localStorage.getItem('medidor.porPatamar')==='1'}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
 if(PORPAT)salvarManual=false;
 const APLICA_PAT={};
-try{Object.assign(APLICA_PAT,JSON.parse(localStorage.getItem('medidor.aplicaPat.v1')||'{}'))}catch(e){}
+try{Object.assign(APLICA_PAT,JSON.parse(localStorage.getItem('medidor.aplicaPat.v1')||'{}'))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
 let APL_ET=-1;   // etapa cujas chaves o operador (ou a mãe) já aplicou neste ensaio
 const salvaManualEt=i=>salvarManual;
 const modoAplicaEt=i=>PORPAT?(APLICA_PAT[i]==='A'?'A':'M'):'A';
@@ -19,7 +19,7 @@ function setAplicaEt(i,m){
   if(!PORPAT||MODO==='carga')return false;
   if(T.started&&!T.fim&&i<=T.et){msgGer(i===T.et?'Este patamar está em andamento: o modo dele não muda agora.':'Este patamar já passou.',5000);return false}
   APLICA_PAT[i]=m==='A'?'A':'M';
-  try{localStorage.setItem('medidor.aplicaPat.v1',JSON.stringify(APLICA_PAT))}catch(e){}
+  try{localStorage.setItem('medidor.aplicaPat.v1',JSON.stringify(APLICA_PAT))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   return true}
 /** Situação do APLICAR (usada pelo botão do cabeçalho e publicada pela mãe virtual). liberado = há sugestão esperando o operador. */
 function aplicarInfo(){
@@ -40,14 +40,14 @@ window.PATAMAR_AGUARDA_APLICAR=()=>{try{
   return Math.abs(carga-ETAPAS[i].alvo)>banda;   // v1.10.219: aplicado, mas a carga ainda nao chegou ao degrau
 }catch(e){return false}};
 (function(){
-  try{const v=localStorage.getItem('medidor.salvarManual');if(v!==null)salvarManual=v==='1'}catch(e){}
+  try{const v=localStorage.getItem('medidor.salvarManual');if(v!==null)salvarManual=v==='1'}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   // v1.9.33: o botão "Salvar etapa: manual/automático" foi para o popup "⚙ Modo" (mdSalva); aqui só o estado
   /* v1.10.120: três modos — 'M' manual, 'A' automático, 'P' por patamar (grava e avança sozinho; o patamar escolhe como as chaves entram). */
   window.__setSalvaModo=m=>{if(genLigado()){msgGer(MSG_GEN_LIGADO);return}
     PORPAT=m==='P';salvarManual=m==='M';
-    try{localStorage.setItem('medidor.salvarManual',salvarManual?'1':'0');localStorage.setItem('medidor.porPatamar',PORPAT?'1':'0')}catch(e){}
+    try{localStorage.setItem('medidor.salvarManual',salvarManual?'1':'0');localStorage.setItem('medidor.porPatamar',PORPAT?'1':'0')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     if(!salvarManual)T.aguarda=false;
-    try{window.__aoMudarSalva&&window.__aoMudarSalva()}catch(e){}};
+    try{window.__aoMudarSalva&&window.__aoMudarSalva()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }};
   window.__setSalvarManual=v=>window.__setSalvaModo(v?'M':'A');
   $('bSalv').onclick=()=>{ // salvar a etapa em andamento (dentro da tolerância); fora dela abre o registro explicando
     if(!T.started||T.fim)return;
@@ -56,7 +56,7 @@ window.PATAMAR_AGUARDA_APLICAR=()=>{try{
   };
 })();
 window.__atualizaJanelas=()=>{
-  try{const gl=genLigado();if(gl!==window.__gl){window.__gl=gl;ensDesenhaBarra()}if($('dlgModo').open&&window.__marcaModo)window.__marcaModo()}catch(e){} // v1.9.35/36: trava/destrava os modos conforme o gerador (defensivo: nunca trava o resto da tela)
+  try{const gl=genLigado();if(gl!==window.__gl){window.__gl=gl;ensDesenhaBarra()}if($('dlgModo').open&&window.__marcaModo)window.__marcaModo()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ } // v1.9.35/36: trava/destrava os modos conforme o gerador (defensivo: nunca trava o resto da tela)
   const bf=$('bFim');bf.classList.toggle('pede',!!T.aguardaFim&&!T.fim);
   /* v1.10.103: FINALIZAR na mesma condição do SALVAR. Salvamento AUTOMÁTICO: cumpridas e gravadas (conferidas no PLC) todas as etapas, o ensaio
      finaliza sozinho. Salvamento manual: continua no clique. Se alguma etapa não foi gravada, nada é feito sozinho (o botão segue disponível).

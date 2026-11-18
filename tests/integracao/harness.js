@@ -9,7 +9,7 @@ const { PlcSimulado } = require('./plc_simulado.js');
 const { verificaAmbiente, verificaFlows, instalaGuardaRede } = require('./trava_producao.js');
 
 const RUNTIME = path.join(__dirname, 'runtime');
-const { caminhoFluxo, FERRAMENTAS, FIXTURES } = require('../versoes.js');   // A3: pasta ativa primeiro, depois tests/fixtures/fluxos
+const { caminhoFluxo, FERRAMENTAS, FERRAMENTAS_ARQUIVO, FIXTURES } = require('../versoes.js');   // A3: pasta ativa primeiro, depois tests/fixtures/fluxos
 const RED = require(path.join(RUNTIME, 'node_modules', 'node-red'));
 const express = require(path.join(RUNTIME, 'node_modules', 'express'));
 
@@ -52,7 +52,7 @@ async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), 
   capta.on('log', m => { if (m.level <= RED.log.WARN) logs.push({ nivel: m.level, msg: String(m.msg && m.msg.message ? m.msg.message : m.msg), tipo: m.type, nome: m.name, t: Date.now() }); });
   RED.log.addHandler(capta);
   // (opcional, so para o F11) serve o HTML do medidor a partir da copia de DISCO do repositorio, na mesma origem do Node-RED de teste
-  if (servirHtml) { app.use('/html', express.static(FERRAMENTAS, { index: false })); app.use('/html', express.static(path.join(FIXTURES, 'ferramentas'), { index: false })); }
+  if (servirHtml) { app.use('/html', express.static(FERRAMENTAS, { index: false })); app.use('/html', express.static(FERRAMENTAS_ARQUIVO, { index: false })); app.use('/html', express.static(path.join(FIXTURES, 'ferramentas'), { index: false })); }
   app.use(settings.httpNodeRoot, RED.httpNode);
   await RED.start();
   server.listen(0, '127.0.0.1');

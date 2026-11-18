@@ -1,12 +1,12 @@
 /* ===== v1.9.36: POPUP DAS CHAVES — card 1: habilitar/desabilitar · card 2: Setup (kW real + resistência Ω, chave a chave, sem passos manuais) ===== */
 (function(){
-  const salvaDis=()=>{try{localStorage.setItem('medidor.chavesDes',JSON.stringify(DIS))}catch(e){}};
-  const salvaReal=()=>{try{localStorage.setItem('medidor.chavesReal',JSON.stringify(KWR));localStorage.setItem('medidor.usarReal',USAR_REAL?'1':'0');localStorage.setItem('medidor.chavesRealT',JSON.stringify(KWRT));localStorage.setItem('medidor.chavesTens',JSON.stringify(TENS))}catch(e){}};
+  const salvaDis=()=>{try{localStorage.setItem('medidor.chavesDes',JSON.stringify(DIS))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
+  const salvaReal=()=>{try{localStorage.setItem('medidor.chavesReal',JSON.stringify(KWR));localStorage.setItem('medidor.usarReal',USAR_REAL?'1':'0');localStorage.setItem('medidor.chavesRealT',JSON.stringify(KWRT));localStorage.setItem('medidor.chavesTens',JSON.stringify(TENS))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
   const nomeCh=i=>{let k=0;for(const b of BANCOS){if(i<k+b.chaves.length)return b.nome.replace('Banco de ','')+' · Ch '+(i-k+1);k+=b.chaves.length}return 'Ch '+(i+1)};
   // v1.9.40: abas por banco - offset(bi) = índice global (em CH) da 1ª chave do banco bi
   const offsetBanco=bi=>{let k=0;for(let j=0;j<bi;j++)k+=BANCOS[j].chaves.length;return k};
   let BANCO_ATIVO=0;
-  try{const v=+localStorage.getItem('medidor.chavesBanco');if(BANCOS[v])BANCO_ATIVO=v}catch(e){}
+  try{const v=+localStorage.getItem('medidor.chavesBanco');if(BANCOS[v])BANCO_ATIVO=v}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   /* v1.9.42: Banco de Carga - comunicação real com o Node-RED (rotas /api/chaves/56/... do flow chaves-56-db150-v1.json,
      confirmadas em claude/REGISTRO_FLOW_CHAVES_BC56_DB150.md e no próprio JSON do flow). Fonte independente de ①/②/③
      (popup Demo) — só o Banco de 56 kW tem flow; o Banco de 400 kW (DB158) continua só no simulador local. */
@@ -37,7 +37,7 @@
       if(r)KWR[q]={kw:r.kw,ohm:r.ohm,ohmTeo:null,data:r.data};else delete KWR[q]}
   }
   BANCOS.forEach(b=>{if(!(b.id in TENS))TENS[b.id]=0});
-  try{BANCOS.forEach(b=>tensAplicaLocal(b.id))}catch(e){} // v1.9.78: dados antigos do Demo local (sem chaveamento) não aparecem como se valessem para alguma tensão
+  try{BANCOS.forEach(b=>tensAplicaLocal(b.id))}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ } // v1.9.78: dados antigos do Demo local (sem chaveamento) não aparecem como se valessem para alguma tensão
   const bidAtivo=()=>BANCOS[BANCO_ATIVO].id;           // id do banco da aba ativa nos popups
   const bidDeCh=q=>BANCOS[CH[q].b].id;                  // id do banco a que pertence a chave global q
   const rotaCh=(id,s)=>'/api/chaves/'+rotaDe(id)+(s?'/'+s:'');  // rota SEMPRE por banco
@@ -98,7 +98,7 @@
       if(sel==='semcom')window.OCOR.set('modo','COM-005','BC'+id+': PLC sem comunicação com o ET200 (FB101 ComOk = FALSE) — banco desligado pelo PLC',{ref:'BC'+id});else window.OCOR.limpa('modo','COM-005','BC'+id);
       if(antes&&!bkLiberado(id))window.OCOR.set('bco','CHV-005','BC'+id+': banco bloqueado pelo PLC — '+bkMotivo(id),{ref:'BC'+id,ev:true});else if(bkLiberado(id))window.OCOR.limpa('bco','CHV-005','BC'+id);
     }
-    if($('dlgChSetup').open){try{grade()}catch(e){}}
+    if($('dlgChSetup').open){try{grade()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }}
   }
   async function chAtualizaUm(id){
     const bi=BANCOS.findIndex(x=>x.id===id);if(bi<0)return;
@@ -208,7 +208,7 @@
   }
   window.chModoSeguro=async function(o){
     o=o||{};
-    document.querySelectorAll('dialog[open]').forEach(d=>{if(o.manterDemo&&d.id==='dlgDemo')return;try{d.close()}catch(e){}});
+    document.querySelectorAll('dialog[open]').forEach(d=>{if(o.manterDemo&&d.id==='dlgDemo')return;try{d.close()}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ }});
     const selAntigo=SEL;SEL=null;BASE=null;BASE_OK=false;liga(null);CH_PEND.clear();
     // v1.9.75: troca de modo volta ao estado seguro. Fora do Demo local (real ou Demo+PLC) o sinal da seletora ainda não existe
     // no PLC -> regra INATIVA ("sem sinal"), como antes. No Demo local a seletora passa a nascer em Manual (bloqueado), como a
@@ -219,8 +219,8 @@
     if(o.serPlc&&!o.eraPlc)BANCOS.forEach(b=>{zerarPend[b.id]=true});else if(!o.serPlc)Object.keys(zerarPend).forEach(k=>delete zerarPend[k]);
     if(o.eraPlc&&chBase()){try{await chZeraPlc(selAntigo)}catch(e){/* chZeraPlc já trata cada POST e abre o CHV-009; aqui só um erro inesperado de programação */}}
     else CH_CMD.fill(false);
-    try{grade();resumo();renderTabs();live()}catch(e){}
-    try{drawBanco(bancoDados(window.__ultimoDado||{}))}catch(e){}
+    try{grade();resumo();renderTabs();live()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
+    try{drawBanco(bancoDados(window.__ultimoDado||{}))}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
     if(o.serPlc)chAtualizaDoPlc();
     chAtualizaChip();
   };
@@ -240,7 +240,7 @@
     // v1.9.44: a pedido do operador, troca de banco agora é BLOQUEADA (não mais cancelada em silêncio)
     // se tiver uma chave selecionada/ligada pra calibração no banco atual.
     if(SEL!=null){alert('Tem a '+nomeCh(SEL)+' selecionada/ligada para calibração. Clique nela de novo para desligar antes de trocar de banco.');return}
-    BANCO_ATIVO=bi;try{localStorage.setItem('medidor.chavesBanco',BANCO_ATIVO)}catch(x){}
+    BANCO_ATIVO=bi;try{localStorage.setItem('medidor.chavesBanco',BANCO_ATIVO)}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     renderTabs();grade();resumo();live();chAtualizaChip();
     if(chPlcAtivo())chAtualizaDoPlc();
   }));
@@ -251,7 +251,7 @@
     for(let i=0;i<CH.length;i++)if(DIS[i])SIM.ch[i]=0;
     for(const k in _ms)delete _ms[k];
     SIM.refill=true;bancoSig='';
-    try{drawBanco($('demo').checked?bancoSim():null)}catch(e){}
+    try{drawBanco($('demo').checked?bancoSim():null)}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
   }
   // v1.9.41: selo "real" sem a palavra "real" repetida (fica só a legenda única no topo do popup) - selo verde transparente
   const tile=(q,kw,extra,inner)=>`<div class="tile${DIS[q]?' dis':''}${KWR[q]?' real':''}${extra||''}" title="${nomeCh(q)}${KWR[q]?' · kW real '+fmtKw(KWR[q].kw)+' (Setup '+KWR[q].data+')':''}">${inner}${fmtKw(kw)} kW${KWR[q]?`<span class="realval"><b>${fmtKw(KWR[q].kw)}</b> <small>kW</small></span>`:''}</div>`;
@@ -308,7 +308,7 @@
     tensAutoUlt[id]={v:vd,t:Date.now(),busy:true};
     try{await tensSet(vd)}finally{tensAutoUlt[id].busy=false}
   }
-  setInterval(()=>{try{tensAuto()}catch(e){}},2000);
+  setInterval(()=>{try{tensAuto()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }},2000);
   async function tensSet(v){
     const id=bidAtivo(),f=tensFeat(id),st=$('stTxt');
     if(SEL!=null){st.textContent='Desmarque a chave antes de mudar o chaveamento.';return}
@@ -446,7 +446,7 @@
       if(chPlcAtivo())chFetch('POST',rotaCh(bidDeCh(selAntigo),'selecionar'),{indice:0}).catch(()=>{const s2=$('stTxt');if(s2)s2.textContent+=' O PLC NÃO confirmou a desmarcação (veja CHV-001).'});
       const st=$('stTxt');if(st)st.textContent='Chave '+nomeCh(selAntigo)+' desmarcada: gerador parado (STOP).';
     }
-    try{grade();live()}catch(e){}
+    try{grade();live()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
   }; // v1.9.69: leitura do SEL pelo simulador (fora desta IIFE)
   function liga(i){ // liga só a chave i (as demais, respeitando DIS, ficam desligadas) — Demo: direto; real: a chave física já deve estar sendo ligada manualmente pelo operador
     SIM.ch.fill(0);if(i!=null)SIM.ch[i]=1;
@@ -454,12 +454,12 @@
     // (que zera as chaves via liga(null)), o slider ficava com o valor antigo, destoando das chaves na tela.
     const v=Math.min(120,Math.round(kwChaves()/KW_NOM*100*2)/2);
     SIM.sw=v;SIM.tgt=v;SIM.lastTgt=v;
-    try{$('simCarga').value=v;$('simVal').textContent=pt(v)+'%'}catch(e){}
+    try{$('simCarga').value=v;$('simVal').textContent=pt(v)+'%'}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
     try{ // v1.9.69: com chave selecionada no Setup, a carga simulada é a dela — potenciômetro e Auto ficam travados (senão apagavam a chave e a fórmula congelava em 0)
       const trav=i!=null,msg=trav?'Travado: há uma chave selecionada no Setup. Desmarque a chave (ou feche o Setup) para usar.':'';
       ['simCarga','mAuto'].forEach(id=>{const el=$(id);if(el){if(el.dataset.t0===undefined)el.dataset.t0=el.title||'';el.disabled=trav;el.title=trav?msg:el.dataset.t0}});
-    }catch(e){}
-    try{drawBanco($('demo').checked?bancoSim():null)}catch(e){}
+    }catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
+    try{drawBanco($('demo').checked?bancoSim():null)}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
   }
   $('chSel').addEventListener('click',async e=>{
     const t=e.target.closest('.tile');if(!t)return;
@@ -685,7 +685,7 @@
       for(const k in _ms)delete _ms[k];
       msgGer('BC'+id+' '+(ligar?'ligado: chaves liberadas.':'desligado: chaves abertas.'),6000);
     }catch(err){msgGer('Não consegui '+(ligar?'ligar':'desligar')+' o banco BC'+id+' no PLC: '+(err instanceof ErroCh?err.message:String(err)))}
-    finally{delete BK_PEND[id];window.BK_HOLD[id]=Date.now()+1500;try{drawBanco(bancoDados(window.__ultimoDado||{}))}catch(e){}if($('dlgChSetup').open){try{grade()}catch(e){}}}
+    finally{delete BK_PEND[id];window.BK_HOLD[id]=Date.now()+1500;try{drawBanco(bancoDados(window.__ultimoDado||{}))}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }if($('dlgChSetup').open){try{grade()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }}}
   }
   function bkCliqueCtl(act,id){
     const s=BKS[id];if(!s)return;
@@ -709,16 +709,16 @@
     if(!bkLiberado(id)&&SEL!=null&&bidDeCh(SEL)===id){
       const selAntigo=SEL;SEL=null;liga(null);
       const st=$('stTxt');if(st)st.textContent='Chave '+nomeCh(selAntigo)+' desmarcada: banco BC'+id+' bloqueado (seletora/"Ligar banco").';
-      try{grade()}catch(e){}
+      try{grade()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
     }
     for(const k in _ms)delete _ms[k]; // o cache de combinações depende de quais bancos estão liberados
     // v1.9.76 (achado do Operador secreto): com o popup Setup ABERTO e nenhuma chave selecionada, a seletora/"Ligar banco" mudava o estado mas a nota e as chaves cinza
     // do popup só atualizavam no próximo grade() — a regra valia no clique, mas a tela mostrava o banco ainda liberado. Agora redesenha sempre que o popup está aberto.
-    if($('dlgChSetup').open){try{grade()}catch(e){}}
+    if($('dlgChSetup').open){try{grade()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }}
     const v=Math.min(120,Math.round(kwChaves()/KW_NOM*100*2)/2);
     $('simCarga').value=v;$('simVal').textContent=pt(v)+'%';
     msgGer(act==='sel'?'Seletora do BC'+id+' (simulada): '+(s.sel===null?'sem sinal — chaves liberadas como antes.':s.sel==='auto'?'Auto (remoto) — acione "Ligar banco" para operar as chaves.':'Manual (local) — comando bloqueado.'):'BC'+id+' '+(s.lig?'ligado (Ligar banco simulado): chaves liberadas.':'desligado: chaves soltas.'),6000);
-    try{drawBanco(bancoSim())}catch(x){}
+    try{drawBanco(bancoSim())}catch(x){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
   }
   $('bancos').addEventListener('click',async e=>{
     const ab=e.target.closest('button[data-act][data-b]');if(ab){bkCliqueCtl(ab.dataset.act,ab.dataset.b);return}
@@ -744,7 +744,7 @@
         CH_PEND.delete(i);
       }
       // liga/desliga CADA chave (POST /api/chaves/{banco}/ligar -> cb.ligar[n]); atualização OTIMISTA: pinta na hora e reverte se o PLC recusar
-      const novo=!CH_CMD[i],idx=i-off+1,redesenha=()=>{try{drawBanco(bancoDados(window.__ultimoDado||{}))}catch(x){}};
+      const novo=!CH_CMD[i],idx=i-off+1,redesenha=()=>{try{drawBanco(bancoDados(window.__ultimoDado||{}))}catch(x){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }};
       if(novo&&FALHA_RET[i])msgGer('Rearmando '+nomeCh(i)+' depois da falha de retorno (o PLC só rearma com novo comando e retorno em 0).',5000); // v1.10.168
       CH_CMD[i]=novo;CH_PEND.add(i);CH_PEND_T[i]=Date.now();redesenha();
       try{
@@ -765,7 +765,7 @@
     SIM.ch[i]=SIM.ch[i]?0:1;
     const v=Math.min(120,Math.round(kwChaves()/KW_NOM*100*2)/2);
     $('simCarga').value=v;$('simVal').textContent=pt(v)+'%';
-    try{drawBanco(bancoSim())}catch(x){}
+    try{drawBanco(bancoSim())}catch(x){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
   });
   $('simCarga').addEventListener('input',()=>{SIM.refill=true});
   chAtualizaChip(); // v1.9.42: mostra o chip "Banco de Carga: simulador local / Node-RED real" desde o carregamento, mesmo com o popup Chaves fechado

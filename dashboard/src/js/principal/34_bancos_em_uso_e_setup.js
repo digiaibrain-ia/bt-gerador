@@ -11,12 +11,12 @@
      window.BCONS = lista; window.bancosUso() = ids marcados. Quem consome (abas, Troca, Guiado) só DESENHA — nunca comanda. */
   const BV=[];   // v1.10.140: BC59,5/BC550 agora estão em BANCOS (bancos de verdade no Demo local) — a camada só-consulta fica vazia
   const KEY='medidor.bancosUso.v1';
-  let USO=new Set();try{(JSON.parse(localStorage.getItem(KEY)||'[]')||[]).forEach(i=>{if(BV.some(b=>b.id===i))USO.add(i)})}catch(e){}
+  let USO=new Set();try{(JSON.parse(localStorage.getItem(KEY)||'[]')||[]).forEach(i=>{if(BV.some(b=>b.id===i))USO.add(i)})}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   const f=n=>String(+n.toFixed(2)).replace('.',',');
   window.BCONS=BV;window.bancosUso=()=>BV.filter(b=>USO.has(b.id));window.fKwC=f;
   /* v1.10.135: toggle único (chamado daqui e também da linha "Bancos" do Patamar, ver chkBancosCons/data-gd="uc") */
   window.bancosUsoToggle=(id,on)=>{if(!BV.some(b=>b.id===id))return;on?USO.add(id):USO.delete(id);
-    try{localStorage.setItem(KEY,JSON.stringify([...USO]))}catch(x){}
+    try{localStorage.setItem(KEY,JSON.stringify([...USO]))}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     const c=document.querySelector('[data-uso="'+id+'"]');if(c)c.checked=on;
     if(typeof msgGer==='function')msgGer('BC'+id+(on?' incluído no ensaio.':' retirado do ensaio.'),5000);
     document.dispatchEvent(new CustomEvent('bancosuso'))};
@@ -97,7 +97,7 @@
    FONTE DOS DADOS DAS PLACAS: fotos enviadas pelo operador em 30/10/2026 (transcrição). Campo que não estava legível NÃO foi inventado (marcado com ?).
    Só informativo: não comanda PLC, não lê/grava DB e não mexe em BANCOS/chaves. */
 (function(){
-  try{$('stAbreDados').addEventListener('click',()=>$('bDados').click())}catch(e){}
+  try{$('stAbreDados').addEventListener('click',()=>$('bDados').click())}catch(e){ /* ignorado: elemento ausente ou sem suporte */ }
   /* cada placa: id (nome usado pelo projeto), integrado (já existe no sistema?), fab, sub, titulo, linhas [rótulo, valor, destaque?], pat */
   const PLACAS=[
     {id:'BC56',integrado:true,fab:'Eletele',sub:'',titulo:'Resistor de carga trifásica',

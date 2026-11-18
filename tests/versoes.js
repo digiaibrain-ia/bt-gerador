@@ -9,12 +9,13 @@
 
    COMO FUNCIONA (técnico): medidorAtual() = maior medidor_gerador_v1.10.N.html em dashboard/ferramentas.
    caminhoFluxo(nome) procura primeiro em nodered/flows/bt2 e depois em tests/fixtures/fluxos.
-   caminhoFerramenta(nome) procura em dashboard/ferramentas e depois em tests/fixtures/ferramentas.
+   caminhoFerramenta(nome) procura em dashboard/ferramentas, depois em dashboard/ferramentas/arquivo e depois em tests/fixtures/ferramentas.
    NÃO FAZ: não abre arquivo (só resolve caminhos), não depende de Node-RED nem de navegador.
    ===================================================================================================================== */
 const fs = require('fs'), path = require('path');
 const RAIZ = path.join(__dirname, '..');
 const FERRAMENTAS = path.join(RAIZ, 'dashboard', 'ferramentas');
+const FERRAMENTAS_ARQUIVO = path.join(FERRAMENTAS, 'arquivo');   // versões antigas arquivadas: a contra-prova por variável de ambiente (BT2_FASE4_HTML=...) continua achando o arquivo
 const FLUXOS = path.join(RAIZ, 'nodered', 'flows', 'bt2');
 const FIXTURES = path.join(__dirname, 'fixtures');
 const num = s => s.split('.').map(Number);
@@ -30,5 +31,5 @@ const achar = (nome, dirs) => { for (const d of dirs) { const f = path.join(d, n
 /** Caminho completo de um fluxo (nome sem .json): pasta ativa primeiro, depois tests/fixtures/fluxos. */
 const caminhoFluxo = nome => achar(nome + '.json', [FLUXOS, path.join(FIXTURES, 'fluxos')]);
 /** Caminho completo de uma ferramenta (ex.: 'medidor_gerador_v1.10.176.html'): pasta ativa primeiro, depois tests/fixtures/ferramentas. */
-const caminhoFerramenta = nome => achar(nome, [FERRAMENTAS, path.join(FIXTURES, 'ferramentas')]);
-module.exports = { medidorAtual, caminhoFluxo, caminhoFerramenta, FERRAMENTAS, FLUXOS, FIXTURES };
+const caminhoFerramenta = nome => achar(nome, [FERRAMENTAS, FERRAMENTAS_ARQUIVO, path.join(FIXTURES, 'ferramentas')]);
+module.exports = { medidorAtual, caminhoFluxo, caminhoFerramenta, FERRAMENTAS, FERRAMENTAS_ARQUIVO, FLUXOS, FIXTURES };

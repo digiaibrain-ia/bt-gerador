@@ -58,7 +58,7 @@ function drawBanco(B){
   const semLeit=id=>{const L=(window.LINK&&LINK.banco[id])||{};return ' — SEM LEITURA do PLC, estado das chaves DESCONHECIDO ('+(L.ts?'última tentativa há '+Math.round((Date.now()-L.ts)/1000)+' s':'nunca lido')+(L.erro?': '+L.erro:(L.ok?': leitura com mais de 5 s':''))+')'};
   window.__bkOffAnt=window.__bkOffAnt||{};
   B.forEach((b,bi)=>{const id=bancoIdPorNome(b.nome);if(!id)return;const ant=window.__bkOffAnt[id];
-    if(ant!==undefined&&ant!==!!b.off){try{window.devObs&&window.devObs.log('bco','sistema','BC'+id+(b.off?': PERDEU a leitura do PLC (chaves em "?")':': leitura do PLC VOLTOU'),b.off?'aviso':'ok',{motivo:((LINK.banco[id]||{}).erro)||'',idadeMs:(LINK.banco[id]||{}).idadeMs})}catch(e){}}
+    if(ant!==undefined&&ant!==!!b.off){try{window.devObs&&window.devObs.log('bco','sistema','BC'+id+(b.off?': PERDEU a leitura do PLC (chaves em "?")':': leitura do PLC VOLTOU'),b.off?'aviso':'ok',{motivo:((LINK.banco[id]||{}).erro)||'',idadeMs:(LINK.banco[id]||{}).idadeMs})}catch(e){ /* ignorado: o log de desenvolvimento é opcional */ }}
     window.__bkOffAnt[id]=!!b.off});
   // v1.9.74: só os dois bancos de verdade (BANCOS, mesma ordem e nomes) ganham os controles de seletora/"Ligar banco"; o formato antigo d.bancos[] (sem id de banco) não
   const ids=B.map(b=>bancoIdPorNome(b.nome));
@@ -66,7 +66,7 @@ function drawBanco(B){
     let fj=0;box.innerHTML=B.map((b,bi)=>{const id=ids[bi];
       return `<details class="bk"${id?` data-bk="${id}"`:''}${bkAberto(id)?' open':''}><summary class="bkh"><span>${esc(b.nome)}</span>${id?`<span class="bkctl"><button type="button" class="bkchip" data-act="sel" data-b="${id}"></button><button type="button" class="bkbtn" data-act="lig" data-b="${id}"></button></span>`:''}<b></b></summary><div class="sw">${b.chaves.map(c=>`<div class="tile" data-i="${fj++}"><i></i>${fmtKw(c.kw)} kW</div>`).join('')}</div></details>`}).join('');
     // v1.10.131: lembra aberto/fechado de cada banco (padrão: ABERTO — são os bancos operacionais)
-    box.querySelectorAll('details.bk[data-bk]').forEach(d=>d.addEventListener('toggle',()=>{try{const m=JSON.parse(localStorage.getItem('medidor.bkAberto.v1')||'{}');m[d.dataset.bk]=d.open;localStorage.setItem('medidor.bkAberto.v1',JSON.stringify(m))}catch(e){}}));
+    box.querySelectorAll('details.bk[data-bk]').forEach(d=>d.addEventListener('toggle',()=>{try{const m=JSON.parse(localStorage.getItem('medidor.bkAberto.v1')||'{}');m[d.dataset.bk]=d.open;localStorage.setItem('medidor.bkAberto.v1',JSON.stringify(m))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }}));
     bancoSig=sig;
     fitZoom();
   }

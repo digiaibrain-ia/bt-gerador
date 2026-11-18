@@ -28,7 +28,7 @@ window.CATDSE=(function(){
   function carrega(txt){
     const lista=csv(txt);if(!lista.length||!('arquivo' in lista[0]))throw new Error('o arquivo não tem a coluna "arquivo" — é o catalogo_modelos_*.csv?');
     L=lista.map(m=>prep(Object.fromEntries(CAMPOS.map(k=>[k,m[k]==null?'':m[k]]))));
-    try{localStorage.setItem(LS,JSON.stringify(L.map(m=>CAMPOS.map(k=>m[k]))))}catch(e){}
+    try{localStorage.setItem(LS,JSON.stringify(L.map(m=>CAMPOS.map(k=>m[k]))))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     vistas.forEach(v=>v.refresh());return L.length;
   }
   try{const j=JSON.parse(localStorage.getItem(LS)||'null');if(Array.isArray(j))L=j.map(a=>prep(Object.fromEntries(CAMPOS.map((k,i)=>[k,a[i]]))))}catch(e){L=[]}
@@ -63,7 +63,7 @@ window.CATDSE=(function(){
 (async()=>{
   if(!/^https?:$/.test(location.protocol))return;
   for(const u of ['catalogo_modelos_v0.1.csv','CATALOGO_GERADORES_v0.1/catalogo_modelos_v0.1.csv']){
-    try{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)continue;const k=window.CATDSE.carrega(await r.text());window.CATDSE.avisa('Catálogo atualizado sozinho ('+u+'): '+k+' modelos.');return}catch(e){}
+    try{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)continue;const k=window.CATDSE.carrega(await r.text());window.CATDSE.avisa('Catálogo atualizado sozinho ('+u+'): '+k+' modelos.');return}catch(e){ /* ignorado: sondagem opcional: a próxima tentativa refaz */ }
   }
 })();
 
@@ -90,7 +90,7 @@ window.fichaModelo=function(d){
   box.classList.add('escolhido');
 };
 window.CATDSE.monta($('dCat'),{aoEscolher:m=>{
-  const pm=window.potModelo(m);window.DADOS_MODELO={arquivo:m.arquivo,pasta:m.pasta_modelo,kVA:m.kVA_nome,V:m.V_nome,Hz:m.Hz_xml,kW:(pm&&pm.kw>0?pm.kw:m.kW_xml),kWdse:m.kW_xml,origemKw:pm?pm.origem:'',vFF:m.V_ff_comentario};try{localStorage.setItem('medidor.modeloEscolhido',JSON.stringify(window.DADOS_MODELO))}catch(x){} // v1.9.87: o Manual guiado só LÊ isto (a escolha do modelo é feita só aqui)
+  const pm=window.potModelo(m);window.DADOS_MODELO={arquivo:m.arquivo,pasta:m.pasta_modelo,kVA:m.kVA_nome,V:m.V_nome,Hz:m.Hz_xml,kW:(pm&&pm.kw>0?pm.kw:m.kW_xml),kWdse:m.kW_xml,origemKw:pm?pm.origem:'',vFF:m.V_ff_comentario};try{localStorage.setItem('medidor.modeloEscolhido',JSON.stringify(window.DADOS_MODELO))}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ } // v1.9.87: o Manual guiado só LÊ isto (a escolha do modelo é feita só aqui)
   const set=(id,v)=>{const el=$(id);if(!el||v==null||v==='')return;el.value=v;el.classList.remove('duv');el.dispatchEvent(new Event('input',{bubbles:true}))};
   const nz=v=>{const n=window.CATDSE.num(v);return n==null?'':String(n)};
   set('dFreq',nz(m.Hz_xml)||nz(m.Hz_nome));set('dTens',nz(m.V_nome)||nz(m.V_ff_comentario));
@@ -100,4 +100,4 @@ window.CATDSE.monta($('dCat'),{aoEscolher:m=>{
   window.fichaModelo(window.DADOS_MODELO);
 }});
 
-try{const dm=JSON.parse(localStorage.getItem('medidor.modeloEscolhido')||'null');if(dm&&dm.arquivo){window.DADOS_MODELO=dm;window.fichaModelo(dm)}}catch(x){}   // v1.10.0: lembra o gerador escolhido ao recarregar
+try{const dm=JSON.parse(localStorage.getItem('medidor.modeloEscolhido')||'null');if(dm&&dm.arquivo){window.DADOS_MODELO=dm;window.fichaModelo(dm)}}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }   // v1.10.0: lembra o gerador escolhido ao recarregar

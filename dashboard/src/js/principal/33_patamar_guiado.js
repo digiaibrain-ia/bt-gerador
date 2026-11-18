@@ -40,16 +40,16 @@
     modelo:'',
     guiadoOn:false,fonteDse:'SIDSE',tolDseS:5,                                                  // segundos sem DSE antes de abrir as chaves. ASSUMIDO — a confirmar
     sel:Object.fromEntries(BANCOS.map(b=>[b.id,[]])),sug:Object.fromEntries(BANCOS.map(b=>[b.id,null])),selCons:{},msg:'',plano:null};   // v1.10.134: selCons = seleção sugerida para os bancos só-consulta (BC59,5/BC550) — nunca persistida, nunca comandada
-  try{const j=JSON.parse(localStorage.getItem(LS)||'null');if(j)['kw100','pctLim','exc','deg','pausa','desl','tolDseS','modelo','fonteDse','esc','comb'].forEach   /* v1.10.1: guiadoOn NÃO é restaurado: o guiado automático sempre nasce desligado */(k=>{if(j[k]!==undefined)G[k]=j[k]});if(G.exc===2)G.exc=2.5 /* v1.9.88: o valor antigo (2) vira o novo padrão (2,5) */;if(j&&j.usa&&typeof j.usa==='object')BANCOS.forEach(b=>{if(typeof j.usa[b.id]==='boolean')G.usa[b.id]=j.usa[b.id]})}catch(e){}   // v1.10.153: a seleção dos bancos também é lembrada
+  try{const j=JSON.parse(localStorage.getItem(LS)||'null');if(j)['kw100','pctLim','exc','deg','pausa','desl','tolDseS','modelo','fonteDse','esc','comb'].forEach   /* v1.10.1: guiadoOn NÃO é restaurado: o guiado automático sempre nasce desligado */(k=>{if(j[k]!==undefined)G[k]=j[k]});if(G.exc===2)G.exc=2.5 /* v1.9.88: o valor antigo (2) vira o novo padrão (2,5) */;if(j&&j.usa&&typeof j.usa==='object')BANCOS.forEach(b=>{if(typeof j.usa[b.id]==='boolean')G.usa[b.id]=j.usa[b.id]})}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }   // v1.10.153: a seleção dos bancos também é lembrada
   G.esc=escNorm(G.esc);
-  const salva=()=>{try{localStorage.setItem(LS,JSON.stringify(G))}catch(e){}};
+  const salva=()=>{try{localStorage.setItem(LS,JSON.stringify(G))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
   const sugVazio=()=>Object.fromEntries(BANCOS.map(b=>[b.id,null]));
   const RD=Object.fromEntries(BANCOS.map(b=>[b.id,{acion:[],horas:[]}]));   // desgaste por chave (rodízio)
-  try{const j=JSON.parse(localStorage.getItem(LSR)||'null');if(j)for(const k in RD)if(j[k])RD[k]=j[k]}catch(e){}
-  const salvaR=()=>{try{localStorage.setItem(LSR,JSON.stringify(RD))}catch(e){}};
+  try{const j=JSON.parse(localStorage.getItem(LSR)||'null');if(j)for(const k in RD)if(j[k])RD[k]=j[k]}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
+  const salvaR=()=>{try{localStorage.setItem(LSR,JSON.stringify(RD))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
   let ultA='';                                           // cache do último HTML desenhado (ultH: legado, usado para forçar redesenho)
   const DATAS=Object.fromEntries(BANCOS.map(b=>[b.id,[]]));                                        // v1.9.82: data da última troca de resistência por chave (ISO)
-  try{const j=JSON.parse(localStorage.getItem('medidor.guiado.trocas.v1')||'null');if(j)for(const k in DATAS)if(Array.isArray(j[k]))DATAS[k]=j[k]}catch(e){}
+  try{const j=JSON.parse(localStorage.getItem('medidor.guiado.trocas.v1')||'null');if(j)for(const k in DATAS)if(Array.isArray(j[k]))DATAS[k]=j[k]}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
 
   /* ---- ponte com o resto do medidor (leitura) ---- */
   const off=bi=>{let k=0;for(let j=0;j<bi;j++)k+=BANCOS[j].chaves.length;return k};
@@ -59,7 +59,7 @@
   /* v1.10.153: o card Banco de Cargas segue a seleção de Detalhes: banco selecionado = subcard ABERTO, não selecionado = FECHADO (continua visível e operável:
      a liberação das chaves — seletora Auto + Ligar banco — não depende de o subcard estar aberto). Abrir/fechar à mão continua livre. */
   window.bancoUsado=id=>!!G.usa[id];
-  const bancoNasce=(id,aberto)=>{try{const m=JSON.parse(localStorage.getItem('medidor.bkAberto.v1')||'{}');m[id]=!!aberto;localStorage.setItem('medidor.bkAberto.v1',JSON.stringify(m))}catch(e){}
+  const bancoNasce=(id,aberto)=>{try{const m=JSON.parse(localStorage.getItem('medidor.bkAberto.v1')||'{}');m[id]=!!aberto;localStorage.setItem('medidor.bkAberto.v1',JSON.stringify(m))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     const d=document.querySelector('#bancos details.bk[data-bk="'+id+'"]');if(d)d.open=!!aberto};
   const bancosAtivos=()=>BANCOS.map((b,bi)=>({b,bi})).filter(x=>G.usa[x.b.id]&&bancoElegivel(x.b));   // v1.10.108: só bancos que atendem a tensão do gerador
   /* v1.10.134: bancos SÓ CONSULTA (BC59,5/BC550) — a pedido do operador, agora ENTRAM na sugestão e no total do Patamar,
@@ -111,7 +111,7 @@
     if(!f.dataset.ok){f.srcdoc=window.EMB.mapa;f.dataset.ok='1'   // v1.10.118: começa com a cópia embutida e troca pelo arquivo real assim que confirmar que ele existe
       window.arquivoReal('mapa').then(u=>{if(u){f.removeAttribute('srcdoc');f.src=u}})}
     if(!d.open)d.show();
-    return{get closed(){return !d.open},postMessage:(m,o)=>{try{if(f.contentWindow)f.contentWindow.postMessage(m,'*')}catch(x){}}};
+    return{get closed(){return !d.open},postMessage:(m,o)=>{try{if(f.contentWindow)f.contentWindow.postMessage(m,'*')}catch(x){ /* ignorado: janela ou canal já fechado */ }}};
   }
   /* v1.10.106: o mapa também pode ir para uma JANELA PRÓPRIA (segunda tela), como o gráfico. O painel dentro da página continua existindo.
      A foto da mãe chega por postMessage (daqui) e também pelo canal 'fbv'/localStorage que o mapa já escuta. */
@@ -119,7 +119,7 @@
   function abreMapaJanela(){
     try{janMapaExt=window.abreEmb(window.EMB&&window.EMB.mapa,'bt2_mapa_fbs','popup=yes,width=1280,height=820','mapa')}catch(e){janMapaExt=null}
     if(!janMapaExt){msgGer('O navegador bloqueou a janela do mapa. Permita pop-ups para esta página e clique de novo.',9000);return}
-    try{janMapaExt.postMessage(mae.foto(),'*')}catch(x){}
+    try{janMapaExt.postMessage(mae.foto(),'*')}catch(x){ /* ignorado: janela ou canal já fechado */ }
     const d=$('dlgMapaFBs');if(d&&d.open)d.close();   // não deixa dois mapas abertos ao mesmo tempo
   }
   {const bj=$('mapaJan');if(bj)bj.onclick=abreMapaJanela}
@@ -187,7 +187,7 @@
     if(inter.length){
       const ef=entrada(true);ef.bancos.forEach(b=>{b.atual=(prev[b.id]||[]).slice()});ef.alvoKw=alvoKw();ef.pesoMudanca=+E.pesoMudanca;
       if(pctAlvo()>100){ef.modoAlvo='minimo';ef.excessoMaxKw=(+G.exc)/100*kw100}else ef.modoAlvo='abaixo';
-      try{const r=R.sugere(ef);if(Math.abs(kwSel(ef,r.selecao)-totFin)<1e-6)finSel=r.selecao}catch(x){}
+      try{const r=R.sugere(ef);if(Math.abs(kwSel(ef,r.selecao)-totFin)<1e-6)finSel=r.selecao}catch(x){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
     }
     seq.push({rot:null,pct:null,sel:finSel});
     /* TETO da sobreposição (antigas + novas ligadas juntas) de CADA trecho: nível do sub-degrau + sobrePts pontos %, e nunca acima do limite de segurança.
@@ -221,14 +221,14 @@
     {const fs=G.plano&&G.plano.finalSel;if(fs&&fs!==selObj()&&Object.keys(fs).every(k=>(G.sel[k]||[]).length===fs[k].length)){bancosAtivos().forEach(({b})=>{G.sel[b.id]=fs[b.id].slice();if(G.sug[b.id])G.sug[b.id]=fs[b.id].slice()});pinta()}}   // v1.10.106: a seleção final do plano (mesmo total) vira a seleção/tracejado
     const pl=G.plano;if(!pl.passos.length){G.msg='Nada a mudar: as chaves já estão como a seleção.';return desenha()}
     escAte=pl.nSub>1?Date.now()+pl.duracaoS*1000+500:0;
-    try{if(window.devObs)window.devObs.log('bco','sistema','Escalonador: plano com '+pl.passos.length+' passo(s) em '+pl.duracaoS+' s'+(pl.nSub>1?' · '+pl.nSub+' trechos ('+pl.rots+')':''),(pl.avisos&&pl.avisos.length)?'aviso':'info',{duracaoS:pl.duracaoS,trechos:pl.nSub,avisos:pl.avisos})}catch(x){}
+    try{if(window.devObs)window.devObs.log('bco','sistema','Escalonador: plano com '+pl.passos.length+' passo(s) em '+pl.duracaoS+' s'+(pl.nSub>1?' · '+pl.nSub+' trechos ('+pl.rots+')':''),(pl.avisos&&pl.avisos.length)?'aviso':'info',{duracaoS:pl.duracaoS,trechos:pl.nSub,avisos:pl.avisos})}catch(x){ /* ignorado: o log de desenvolvimento é opcional */ }
     const clica=(banco,idx)=>{const bi=BANCOS.findIndex(b=>b.id===banco),i=off(bi)+idx,t=document.querySelector('#bancos .tile[data-i="'+i+'"]');if(t)t.click()};
     const passoFn=(p,n)=>{
       const g2=guardaAtual();if(!g2.ok){G.msg='Interrompido: '+g2.mensagem;desenha();return}
       {/* v1.10.106: com 'liga antes, desliga depois' a carga passa por um valor MAIOR que o da seleção final; confere esse transitório contra o limite de segurança antes de mexer nas chaves */
        const lim=R.limiteKw(+G.kw100,+G.pctLim),idx=c=>off(BANCOS.findIndex(b=>b.id===c.banco))+c.idx;let tot=somaKw(cmdDe);
        p.desliga.forEach(c=>{if(cmdDe(idx(c)))tot-=kwEf(idx(c))});p.liga.forEach(c=>{if(!cmdDe(idx(c)))tot+=kwEf(idx(c))});
-       if(lim!=null&&tot>lim+1e-9){G.msg='Interrompido: o passo '+(n+1)+' levaria a carga a '+fmtKw(tot)+' kW, acima do limite de segurança de '+fmtKw(lim)+' kW.';try{if(window.devObs)window.devObs.log('bco','sistema','Escalonador: passo interrompido pela guarda (transitório acima do limite)','falha',{passo:n+1,kw:tot,limite:lim})}catch(x){}desenha();return}}
+       if(lim!=null&&tot>lim+1e-9){G.msg='Interrompido: o passo '+(n+1)+' levaria a carga a '+fmtKw(tot)+' kW, acima do limite de segurança de '+fmtKw(lim)+' kW.';try{if(window.devObs)window.devObs.log('bco','sistema','Escalonador: passo interrompido pela guarda (transitório acima do limite)','falha',{passo:n+1,kw:tot,limite:lim})}catch(x){ /* ignorado: o log de desenvolvimento é opcional */ }desenha();return}}
       p.desliga.forEach(c=>{const i=off(BANCOS.findIndex(b=>b.id===c.banco))+c.idx;if(cmdDe(i))clica(c.banco,c.idx)});
       p.liga.forEach(c=>{const i=off(BANCOS.findIndex(b=>b.id===c.banco))+c.idx;if(!cmdDe(i))clica(c.banco,c.idx)});
       if(n===pl.passos.length-1){G.msg='Aplicado: patamar '+pctAlvo()+' % ('+fmtKw(g2.total)+' kW). Aguarde a confirmação física das chaves.';
@@ -244,7 +244,7 @@
         const tenta=()=>{
           if(p.liga.length){
             const r=window.PERFIL_COMB.liberaProximo(pfG,{esperouS:(Date.now()-ultAddPerfil)/1000,freqHz:freqPerfil(),freqNomHz:freqNomPerfil()});
-            if(r.desiste){fimEsc();G.msg='Interrompido: '+r.motivo+'. Nenhuma carga nova foi adicionada; confira o gerador e clique em Aplicar de novo.';try{if(window.devObs)window.devObs.log('bco','sistema','Perfil '+pfG.nome+': degrau '+(n+1)+' desistiu — '+r.motivo,'falha',{passo:n+1})}catch(x){}desenha();return}
+            if(r.desiste){fimEsc();G.msg='Interrompido: '+r.motivo+'. Nenhuma carga nova foi adicionada; confira o gerador e clique em Aplicar de novo.';try{if(window.devObs)window.devObs.log('bco','sistema','Perfil '+pfG.nome+': degrau '+(n+1)+' desistiu — '+r.motivo,'falha',{passo:n+1})}catch(x){ /* ignorado: o log de desenvolvimento é opcional */ }desenha();return}
             if(!r.libera){G.msg='Aguardando para o degrau '+(n+1)+' de '+pl.passos.length+': '+r.motivo;desenha();tm.push(setTimeout(tenta,1000));return}
             ultAddPerfil=Date.now();
           }
@@ -345,8 +345,10 @@
   window.GUIADO_MAE=mae;   // para testes/diagnóstico
   window.GUIADO_DBG={G,planoDe:()=>{planoDe();return G.plano},inter:()=>pctsIntermediarios(),sugere:()=>sugere(),aplica:()=>aplica(),esc:()=>G.esc};   // v1.10.106: só leitura/diagnóstico do escalonador (testes e Log)
   window.PATAMAR_GUIADO_ON=()=>!!G.guiadoOn&&mae.armada;
-  window.PATAMAR_ENSAIO_GRAVADO=()=>{try{mae.desarma('ensaio gravado')}catch(x){}limpaManual();G.plano=null;G.msg='';G.pat=-1;previaEt=null;APL_ET=-1;salva();atualizaBtnRodar();desenha()};   // v1.10.195: gravar o ensaio devolve o card Patamar ao inicial (sem patamar escolhido); o liga/desliga fica como o operador deixou
-  window.PATAMAR_GUIADO_PARA=m=>{try{mae.desarma(m||'ensaio parado')}catch(x){}limpaManual();G.plano=null;G.msg='';atualizaBtnRodar();desenha()};   // v1.10.103: PARAR ENSAIO restabelece o Patamar (o liga/desliga continua como o operador deixou: religa sozinho no próximo ensaio)   // v1.10.2: o simulador consulta isto para não escolher chaves por conta própria
+  /* v1.10.229 (Passo 5, B3): se desarmar a "mãe" falhar, o Patamar pode continuar armado e voltar a comandar chaves. Antes o erro era engolido; agora vai para o log de desenvolvimento (DEV.OBS) como erro. */
+  const maeFalhaDesarmar=x=>{try{if(window.devObs)window.devObs.log('bco','sistema','Patamar: falha ao DESARMAR a mãe (ela pode continuar armada) — '+(x&&x.message?x.message:x),'erro')}catch(y){/* o próprio log é opcional */}};
+  window.PATAMAR_ENSAIO_GRAVADO=()=>{try{mae.desarma('ensaio gravado')}catch(x){maeFalhaDesarmar(x)}limpaManual();G.plano=null;G.msg='';G.pat=-1;previaEt=null;APL_ET=-1;salva();atualizaBtnRodar();desenha()};   // v1.10.195: gravar o ensaio devolve o card Patamar ao inicial (sem patamar escolhido); o liga/desliga fica como o operador deixou
+  window.PATAMAR_GUIADO_PARA=m=>{try{mae.desarma(m||'ensaio parado')}catch(x){maeFalhaDesarmar(x)}limpaManual();G.plano=null;G.msg='';atualizaBtnRodar();desenha()};   // v1.10.103: PARAR ENSAIO restabelece o Patamar (o liga/desliga continua como o operador deixou: religa sozinho no próximo ensaio)   // v1.10.2: o simulador consulta isto para não escolher chaves por conta própria
   /* ---- catálogo: agora é o módulo CATDSE (acima), compartilhado com "Dados do ensaio" ---- */
 
   /* ---- tela ---- */
@@ -472,7 +474,7 @@
     else if(a==='lim'){trSel.clear();trMsg=''}
     else if(a==='ok'){const hoje=new Date().toISOString().slice(0,10);let n=0;
       trSel.forEach(k=>{const [id,j]=k.split(':');R.chaveTrocada(RD[id],+j);(DATAS[id]=DATAS[id]||[])[+j]=hoje;n++});
-      salvaR();try{localStorage.setItem('medidor.guiado.trocas.v1',JSON.stringify(DATAS))}catch(x){}
+      salvaR();try{localStorage.setItem('medidor.guiado.trocas.v1',JSON.stringify(DATAS))}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
       if(typeof msgGer==='function')msgGer('Troca de resistência registrada em '+n+' chave(s): desgaste zerado.',8000);
       trMsg='Registrado: '+n+' chave(s) com desgaste zerado em '+dataBr(hoje)+'.';trSel.clear();ultA=''}
     trH='';desenhaTroca()});
@@ -489,7 +491,7 @@
   /** Desenha a sugestão (borda tracejada) nas chaves do card Cargas. */
   let bkNasceu=false;
   function bkNascimento(){if(bkNasceu)return;const caixa=document.querySelectorAll('#bancos details.bk[data-bk]');if(!caixa.length)return;bkNasceu=true;
-    let m={};try{m=JSON.parse(localStorage.getItem('medidor.bkAberto.v1')||'{}')}catch(e){}
+    let m={};try{m=JSON.parse(localStorage.getItem('medidor.bkAberto.v1')||'{}')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     caixa.forEach(d=>{const id=d.dataset.bk;if(m[id]===undefined)d.open=!!G.usa[id]})}
   /* v1.10.221: o tracejado (sugestao) some 10 s depois que a carga CHEGOU ao degrau (aplicado e dentro da banda); volta se a carga sair da banda ou o operador mexer numa chave. */
   let atingiuDesde=0,atingiuEt=-1;
@@ -510,7 +512,7 @@
   window.PATAMAR_PENDENTE=()=>{try{return aplicarInfo().liberado}catch(x){return false}};
   /** v1.10.221: clique do operador numa chave com o Patamar ligado: a sugestao (tracejado) passa a refletir o novo estado desejado. Nao comanda nada (o comando segue o caminho de sempre). */
   window.PATAMAR_SINC_CLIQUE=i=>{try{if(!mae.armada)return;const alvo=bancosAtivos().find(({b,bi})=>i>=off(bi)&&i<off(bi)+b.chaves.length);if(!alvo||DIS[i])return;const b=alvo.b,j=i-off(alvo.bi);
-    const s=(G.sug[b.id]=G.sug[b.id]||b.chaves.map(()=>false));s[j]=!cmdDe(i);atingiuDesde=0;ultA='';pinta()}catch(x){}};
+    const s=(G.sug[b.id]=G.sug[b.id]||b.chaves.map(()=>false));s[j]=!cmdDe(i);atingiuDesde=0;ultA='';pinta()}catch(x){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }};
   window.PATAMAR_EDITA=i=>{
     const alvo=bancosAtivos().find(({b,bi})=>i>=off(bi)&&i<off(bi)+b.chaves.length);if(!alvo)return;
     const b=alvo.b,j=i-off(alvo.bi);
@@ -536,7 +538,7 @@
     else if(a==='uc'){if(window.bancosUsoToggle)window.bancosUsoToggle(t.dataset.b,t.checked);desenha()}   // v1.10.135: toggle dos bancos manuais (BC59,5/BC550) direto na linha "Bancos" do Patamar
     else if(a==='rodar')alternaRodar();
     else if(a==='mapaJan')abreMapaJanela();
-    else if(a==='mapa'){janMapa=abrePainelMapa();try{if(janMapa)janMapa.postMessage(mae.foto(),'*')}catch(x){}}   // v1.10.103: painel dentro da página (a janela separada ia para trás ao clicar em SALVAR)
+    else if(a==='mapa'){janMapa=abrePainelMapa();try{if(janMapa)janMapa.postMessage(mae.foto(),'*')}catch(x){ /* ignorado: janela ou canal já fechado */ }}   // v1.10.103: painel dentro da página (a janela separada ia para trás ao clicar em SALVAR)
     };
   const detDlg=$('dlgPatDet');
   dlg.addEventListener('click',onClickGd);detDlg.addEventListener('click',onClickGd);   // v1.10.151: a janela Detalhes usa os mesmos botões
@@ -548,7 +550,7 @@
     else if(a==='p'){G.pat=+t.value}
     salva();planoDe();desenha();pinta()};
   dlg.addEventListener('change',onChangeGd);detDlg.addEventListener('change',onChangeGd);
-  detDlg.addEventListener('change',e=>{if(e.target&&e.target.id==='chkPlcNovos'){try{localStorage.setItem('medidor.plcNovos',e.target.checked?'1':'0')}catch(x){}location.reload()}});   // v1.10.156
+  detDlg.addEventListener('change',e=>{if(e.target&&e.target.id==='chkPlcNovos'){try{localStorage.setItem('medidor.plcNovos',e.target.checked?'1':'0')}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }location.reload()}});   // v1.10.156
   /* v1.10.132: o diálogo virou o CORPO do card Patamar (inline). O botão "Patamar Guiado" recolhe/abre esse corpo. Quando outro código fecha
      todos os dialog[open] (ex.: ligar o Demo), o corpo volta sozinho — só fica fechado se o operador o recolheu. */
   let patRec=false;
@@ -577,13 +579,13 @@
     if(PORPAT&&!G.guiadoOn&&!G.guiadoOff&&!T.fim)G.guiadoOn=true;
     if(G.guiadoOn&&!mae.armada&&!emCurso()&&(!T.fim||T.gravado))mae.arma();   // religa depois de ZERAR/gravar
     try{mae.ciclo()}catch(x){console.error('FBs virtuais',x)}
-    try{if(mae.armada)pinta()}catch(x){}   /* v1.10.221: reavalia o tracejado (some 10 s depois que a carga chegou ao degrau) */
+    try{if(mae.armada)pinta()}catch(x){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }   /* v1.10.221: reavalia o tracejado (some 10 s depois que a carga chegou ao degrau) */
     atualizaBtnRodar();   // 1 ciclo da mãe por segundo (como um OB cíclico)
     if(!emCurso())APL_ET=-1;
     {const ai=aplicarInfo(),ba=$('bAplicaPat');if(ba){ba.hidden=!ai.liberado;if(ai.liberado)ba.textContent='✔ Aplicar ('+ai.alvoPct+' %)'}}
    // v1.10.120: só aparece quando há sugestão esperando o operador
-    try{if(janMapa&&!janMapa.closed)janMapa.postMessage(mae.foto(),'*')}catch(x){}   // v1.9.97: mapa dos FBs ao vivo (sem servidor)
-    try{if(janMapaExt&&!janMapaExt.closed)janMapaExt.postMessage(mae.foto(),'*')}catch(x){}   // v1.10.106: mapa em janela própria
+    try{if(janMapa&&!janMapa.closed)janMapa.postMessage(mae.foto(),'*')}catch(x){ /* ignorado: janela ou canal já fechado */ }   // v1.9.97: mapa dos FBs ao vivo (sem servidor)
+    try{if(janMapaExt&&!janMapaExt.closed)janMapaExt.postMessage(mae.foto(),'*')}catch(x){ /* ignorado: janela ou canal já fechado */ }   // v1.10.106: mapa em janela própria
     desenha();pinta();desenhaTroca();
   },1000);
 })();

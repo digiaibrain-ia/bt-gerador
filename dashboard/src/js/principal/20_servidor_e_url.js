@@ -45,7 +45,7 @@ const srvLimpaUrl=u=>String(u||'').trim().replace(/\/+$/,'');
   const ler=k=>{try{return srvLimpaUrl(localStorage.getItem(k))}catch(e){return ''}};
   const salvo=ler('medidor.srvUrl'),antiga=ler('medidor.chUrl')||ler('medidor.ensUrl'),pad=srvLimpaUrl(srvUrlPadrao());
   if(salvo){SRVM.url=salvo;SRVM.urlOrigem='salva'}
-  else if(antiga){SRVM.url=antiga;SRVM.urlOrigem='migrada';try{localStorage.setItem('medidor.srvUrl',antiga)}catch(e){}}
+  else if(antiga){SRVM.url=antiga;SRVM.urlOrigem='migrada';try{localStorage.setItem('medidor.srvUrl',antiga)}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }}
   else if(pad){SRVM.url=pad;SRVM.urlOrigem='origem'}
 })();
 const srvBase=()=>srvLimpaUrl(SRVM.url);
@@ -53,16 +53,16 @@ const srvBase=()=>srvLimpaUrl(SRVM.url);
    (/api/gerador no mesmo Node-RED que serve esta tela). Uma customização vai só para o localStorage do navegador (chave medidor.dseUrl). */
 const DSE_CHAVE='medidor.dseUrl';
 const dseUrlPadrao=()=>(location.protocol==='http:'||location.protocol==='https:')&&location.origin&&location.origin!=='null'?location.origin+'/api/gerador':'';
-const dseUrl=()=>{try{const c=srvLimpaUrl(localStorage.getItem(DSE_CHAVE));if(c)return c}catch(e){}return dseUrlPadrao()};
+const dseUrl=()=>{try{const c=srvLimpaUrl(localStorage.getItem(DSE_CHAVE));if(c)return c}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }return dseUrlPadrao()};
 function dseSalvaUrl(v){ // v vazio ou igual ao padrão = volta ao padrão (remove a customização)
   const t=srvLimpaUrl(v);
-  try{if(!t||t===dseUrlPadrao())localStorage.removeItem(DSE_CHAVE);else localStorage.setItem(DSE_CHAVE,t)}catch(e){}
+  try{if(!t||t===dseUrlPadrao())localStorage.removeItem(DSE_CHAVE);else localStorage.setItem(DSE_CHAVE,t)}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   $('url').value=dseUrl();
 }
 (()=>{const i=$('url');if(i){i.value=dseUrl();i.addEventListener('change',()=>dseSalvaUrl(i.value))}})();   // campo mostra o endereço efetivo; edição manual vai ao localStorage
 function srvSalvaUrl(v){ // v vazio = volta ao padrão (mesma origem da página)
   v=srvLimpaUrl(v);
-  try{if(v)localStorage.setItem('medidor.srvUrl',v);else localStorage.removeItem('medidor.srvUrl')}catch(e){}
+  try{if(v)localStorage.setItem('medidor.srvUrl',v);else localStorage.removeItem('medidor.srvUrl')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   if(v){SRVM.url=v;SRVM.urlOrigem='salva'}
   else{const p=srvLimpaUrl(srvUrlPadrao());SRVM.url=p;SRVM.urlOrigem=p?'origem':'nenhuma'}
   if(typeof ensDesenhaBarra==='function'){ensDesenhaBarra();ensPoll()}
@@ -79,7 +79,7 @@ function srvVerModo(){
   SRVM.mk=novo;
   SIM_FALHA_MOTOR=false;if(novo==='real')SIM_FALHA_MOTOR_ARMADA=false;
   if(typeof window.chModoSeguro==='function')window.chModoSeguro({eraPlc:antes!=='demoLocal',serPlc:novo!=='demoLocal',manterDemo:manual});
-  else document.querySelectorAll('dialog[open]').forEach(d=>{if(!(manual&&d.id==='dlgDemo')){try{d.close()}catch(e){}}});
+  else document.querySelectorAll('dialog[open]').forEach(d=>{if(!(manual&&d.id==='dlgDemo')){try{d.close()}catch(e){ /* ignorado: diálogo/seletor já fechado, cancelado ou sem permissão */ }}});
   return true;
 }
 

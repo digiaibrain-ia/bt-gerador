@@ -32,16 +32,16 @@
 
   function monitoramento() {
     const o = { gerado: new Date().toISOString(), medidor: sel('VERSAO', null) };
-    try { o.demo = !!$('demo').checked; } catch (e) { }
-    try { const l = sel('LINK', null); o.link = { dse: { ok: l.dse.ok, http: l.dse.http, ts: l.dse.ts, diag: l.dse.diag || null }, chv: { ok: l.chv.ok, http: l.chv.http, ts: l.chv.ts, msg: l.chv.msg }, banco: l.banco }; } catch (e) { }
-    try { o.bancos = sel('BANCOS_PLC', []).map(b => ({ id: b.id, leituraOk: !!sel('LINK').bancoOk(b.id), seletora: sel('BKS')[b.id].sel, bancoLigado: sel('BKS')[b.id].lig })); } catch (e) { }
+    try { o.demo = !!$('demo').checked; } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
+    try { const l = sel('LINK', null); o.link = { dse: { ok: l.dse.ok, http: l.dse.http, ts: l.dse.ts, diag: l.dse.diag || null }, chv: { ok: l.chv.ok, http: l.chv.http, ts: l.chv.ts, msg: l.chv.msg }, banco: l.banco }; } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
+    try { o.bancos = sel('BANCOS_PLC', []).map(b => ({ id: b.id, leituraOk: !!sel('LINK').bancoOk(b.id), seletora: sel('BKS')[b.id].sel, bancoLigado: sel('BKS')[b.id].lig })); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
     try {
       const CH = sel('CH', []), BANCOS = sel('BANCOS', []), DIS = sel('DIS', []), CMD = sel('CH_CMD', []), LIG = sel('CH_LIG', []), FR = sel('FALHA_RET', []), FC = sel('FALHA_COL', []);
       o.chaves = CH.map((c, i) => ({ i, banco: BANCOS[c.b] && BANCOS[c.b].id, kw: c.kw, habilitada: !DIS[i], comando: !!CMD[i], retorno: !!LIG[i], falhaRetorno: !!FR[i], contatorColado: !!FC[i] }));
-    } catch (e) { }
-    try { o.ocorrenciasAtivas = raiz.OCOR.ativas().map(x => ({ cod: x.cod, tipo: x.tipo, card: x.card, ref: x.ref, txt: x.txt, desde: new Date(x.desde).toISOString(), vezes: x.vezes })); } catch (e) { }
-    try { o.ensaio = { iniciado: !!sel('T').started, rodando: !!sel('T').run, finalizado: !!sel('T').fim, etapa: sel('T').et }; } catch (e) { }
-    try { o.dse = raiz.__ultimoDado || null; } catch (e) { }
+    } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
+    try { o.ocorrenciasAtivas = raiz.OCOR.ativas().map(x => ({ cod: x.cod, tipo: x.tipo, card: x.card, ref: x.ref, txt: x.txt, desde: new Date(x.desde).toISOString(), vezes: x.vezes })); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
+    try { o.ensaio = { iniciado: !!sel('T').started, rodando: !!sel('T').run, finalizado: !!sel('T').fim, etapa: sel('T').et }; } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
+    try { o.dse = raiz.__ultimoDado || null; } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
     return o;
   }
 
@@ -84,19 +84,19 @@
       ok: () => !!sel('DADOS', null),
       gera: async () => {
         const T = sel('T', {}), r = { gerado: new Date().toISOString(), dados: sel('DADOS', null), estado: { iniciado: !!T.started, rodando: !!T.run, finalizado: !!T.fim, parcial: !!T.parcial, etapa: T.et }, etapasGravadas: null };
-        try { r.etapasGravadas = (sel('SNAP', []) || []).map((s, i) => ({ etapa: i + 1, gravada: !!s })); } catch (e) { }
+        try { r.etapasGravadas = (sel('SNAP', []) || []).map((s, i) => ({ etapa: i + 1, gravada: !!s })); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
         return [{ nome: 'dados_do_ensaio.json', conteudo: JSON.stringify(r, null, 2) }];
       } }
   ];
 
   /* ----------------------------- escolha lembrada ----------------------------- */
-  const lerSel = () => { try { const j = JSON.parse(localStorage.getItem(LS) || 'null'); if (j && typeof j === 'object') return j; } catch (e) { } return { alertas: true, monit: true, amostras: true, logs: true, robo: true, dados: true, destino: 'pasta', agrupado: true }; };
-  const gravaSel = s => { try { localStorage.setItem(LS, JSON.stringify(s)); } catch (e) { } };
+  const lerSel = () => { try { const j = JSON.parse(localStorage.getItem(LS) || 'null'); if (j && typeof j === 'object') return j; } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */  } return { alertas: true, monit: true, amostras: true, logs: true, robo: true, dados: true, destino: 'pasta', agrupado: true }; };
+  const gravaSel = s => { try { localStorage.setItem(LS, JSON.stringify(s)); } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */  } };
 
   /* ----------------------------- pasta (guardada no IndexedDB) ----------------------------- */
   const idb = () => new Promise((res, rej) => { try { const q = indexedDB.open(DB, 1); q.onupgradeneeded = () => q.result.createObjectStore('h'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); } catch (e) { rej(e); } });
   const idbGet = async k => { try { const d = await idb(); return await new Promise(r => { const q = d.transaction('h').objectStore('h').get(k); q.onsuccess = () => r(q.result || null); q.onerror = () => r(null); }); } catch (e) { return null; } };
-  const idbSet = async (k, v) => { try { const d = await idb(); await new Promise(r => { const t = d.transaction('h', 'readwrite'); t.objectStore('h').put(v, k); t.oncomplete = () => r(); t.onerror = () => r(); }); } catch (e) { } };
+  const idbSet = async (k, v) => { try { const d = await idb(); await new Promise(r => { const t = d.transaction('h', 'readwrite'); t.objectStore('h').put(v, k); t.oncomplete = () => r(); t.onerror = () => r(); }); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  } };
   let PASTA = null;
   const temSeletor = () => typeof raiz.showDirectoryPicker === 'function';
   async function permissao(h, pede) {
@@ -106,7 +106,7 @@
   /* ----------------------------- montagem dos arquivos ----------------------------- */
   const nomeEnsaio = () => {
     let m = 'sem_modelo';
-    try { const id = sel('rgIds')(); m = slug(id.dse) + '_' + slug(id.ger); } catch (e) { }
+    try { const id = sel('rgIds')(); m = slug(id.dse) + '_' + slug(id.ger); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
     return 'ensaio_' + stamp() + '_' + m;
   };
   async function coleta(s) {
@@ -122,10 +122,10 @@
     L.push('# Registros do medidor — ' + ens);
     L.push('');
     L.push('- Gerado em: ' + new Date().toLocaleString('pt-BR') + ' · Medidor v' + sel('VERSAO', '?') + ' · Central de registros v' + VER);
-    try { L.push('- Modo: ' + ($('demo').checked ? 'DEMO' : 'REAL')); } catch (e) { }
+    try { L.push('- Modo: ' + ($('demo').checked ? 'DEMO' : 'REAL')); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
     L.push('- Destino: ' + destino);
-    try { const T = sel('T', {}); L.push('- Ensaio: ' + (T.started ? (T.fim ? 'finalizado' : (T.run ? 'em andamento' : 'armado')) : 'não iniciado')); } catch (e) { }
-    try { const at = raiz.OCOR.ativas(); L.push('- Ocorrências ativas: ' + at.length + (at.length ? ' (' + at.map(x => x.cod + (x.ref ? ' ' + x.ref : '')).join(', ') + ')' : '')); } catch (e) { }
+    try { const T = sel('T', {}); L.push('- Ensaio: ' + (T.started ? (T.fim ? 'finalizado' : (T.run ? 'em andamento' : 'armado')) : 'não iniciado')); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
+    try { const at = raiz.OCOR.ativas(); L.push('- Ocorrências ativas: ' + at.length + (at.length ? ' (' + at.map(x => x.cod + (x.ref ? ' ' + x.ref : '')).join(', ') + ')' : '')); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
     L.push('');
     L.push('## Arquivos');
     arqs.forEach(a => L.push('- `' + a.pasta + '/' + a.nome + '` (' + String(a.conteudo).length + ' caracteres)'));
@@ -216,7 +216,7 @@
   function secLogs(arqs) {
     let c = ''; const ev = arqs.find(x => x.nome === 'eventos_tela.jsonl');
     if (ev) {
-      const E = []; String(ev.conteudo).split('\n').forEach(l => { if (l) { try { E.push(JSON.parse(l)); } catch (e) { } } });
+      const E = []; String(ev.conteudo).split('\n').forEach(l => { if (l) { try { E.push(JSON.parse(l)); } catch (e) { /* ignorado: texto inválido: segue com o valor padrão */  } } });
       const cnt = k => { const m = {}; E.forEach(e => { m[e[k]] = (m[e[k]] || 0) + 1; }); return Object.keys(m).sort((a, b) => m[b] - m[a]).map(x => x + ' ' + m[x]).join(' · '); };
       c += '<p>' + E.length + ' evento(s)' + (E.length ? ' de ' + dh(E[0].t) + ' a ' + dh(E[E.length - 1].t) : '') + '.<br>Por resultado: ' + esc(cnt('res')) + '.<br>Por tipo: ' + esc(cnt('tipo')) + '.</p>';
       const g = {}; E.filter(e => e.res === 'falha' || e.res === 'aviso').forEach(e => { const k = e.res + '|' + e.acao; const r = g[k] = g[k] || { res: e.res, acao: e.acao, n: 0, a: e.t, z: e.t }; r.n++; r.z = e.t; });
@@ -242,9 +242,9 @@
     msg('Preparando o PDF…');
     const ens = nomeEnsaio(), { arqs, falhas } = await coleta(s);
     let pr = $('prCentral'); if (!pr) { pr = D.createElement('div'); pr.id = 'prCentral'; D.body.appendChild(pr); }
-    let at = []; try { at = raiz.OCOR.ativas(); } catch (e) { }
-    let modo = '—'; try { modo = $('demo').checked ? 'DEMO' : 'REAL'; } catch (e) { }
-    let ensT = '—'; try { const T = sel('T', {}); ensT = T.started ? (T.fim ? 'finalizado' : (T.run ? 'em andamento' : 'armado')) : 'não iniciado'; } catch (e) { }
+    let at = []; try { at = raiz.OCOR.ativas(); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
+    let modo = '—'; try { modo = $('demo').checked ? 'DEMO' : 'REAL'; } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
+    let ensT = '—'; try { const T = sel('T', {}); ensT = T.started ? (T.fim ? 'finalizado' : (T.run ? 'em andamento' : 'armado')) : 'não iniciado'; } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
     let h = '<h2>Registros do medidor — ' + esc(ens) + '</h2>' + htmlTab(['Item', 'Valor'], [['Gerado em', new Date().toLocaleString('pt-BR')], ['Medidor', 'v' + sel('VERSAO', '?') + ' · Central de registros v' + VER], ['Modo', modo], ['Ensaio', ensT],
       ['Ocorrências ativas', at.length ? at.length + ' (' + at.map(x => x.cod + (x.ref ? ' ' + x.ref : '')).join(', ') + ')' : 'nenhuma'], ['Itens incluídos', ITENS.filter(it => s[it.id] && it.ok()).map(it => it.rot).join(' · ')]]);
     const B = { alertas: () => secAlertas(), monit: () => secMonit(arqs), amostras: () => secTexto('Amostras (registro de aprendizado)', arqs.find(a => /_resumo\.txt$/.test(a.nome)), 60), logs: () => secLogs(arqs), robo: () => secTexto('Dev/Operador oculto (relatório do robô)', arqs.find(a => /^dev_operador_oculto/.test(a.nome)), 60), dados: () => secDados(arqs) };
@@ -283,7 +283,7 @@
       { rot: 'Planilha de alertas (.csv)', dica: 'histórico de alertas e falhas, para o Excel', fn: () => run(baixaCsvAlertas) },
       { rot: 'Monitoramento (.json)', dica: 'estado agora: DSE, PLC, bancos, chaves, ensaio e ocorrências ativas', fn: () => run(baixaJsonMonit) }
     ];
-    try { if (ITENS.find(i => i.id === 'amostras').ok()) itens.push({ rot: 'Amostras (.csv)', dica: 'registro de aprendizado: sessões pendentes, para planilha', fn: () => run(baixaAmostras) }); } catch (e) { }
+    try { if (ITENS.find(i => i.id === 'amostras').ok()) itens.push({ rot: 'Amostras (.csv)', dica: 'registro de aprendizado: sessões pendentes, para planilha', fn: () => run(baixaAmostras) }); } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
     const E = sel('EXPO', null);
     if (E && typeof E.menu === 'function') E.menu(btn, itens); else itens[0].fn();
   }
@@ -355,8 +355,8 @@
     banner = D.createElement('div'); banner.setAttribute('popover', 'manual'); banner.id = 'cenAviso';
     banner.style.cssText = 'position:fixed;inset:auto auto 16px 50%;transform:translateX(-50%);margin:0;max-width:min(92vw,560px);padding:10px 14px;border:2px solid #1a4a78;background:#0f2438;color:#fff;font:13px/1.35 system-ui,sans-serif;border-radius:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap';
     banner.innerHTML = '<b style="flex:1 1 220px">Ensaio finalizado. Salvar os registros agora?</b><button type="button" id="cenAvSim" style="padding:6px 12px;font-weight:700;cursor:pointer">Salvar registros…</button><button type="button" id="cenAvNao" style="padding:6px 12px;cursor:pointer">Agora não</button>';
-    D.body.appendChild(banner); try { banner.showPopover(); } catch (e) { }
-    const fecha = () => { try { banner.hidePopover(); } catch (e) { } banner.remove(); banner = null; };
+    D.body.appendChild(banner); try { banner.showPopover(); } catch (e) { /* ignorado: popover já no estado pedido ou sem suporte */  }
+    const fecha = () => { try { banner.hidePopover(); } catch (e) { /* ignorado: popover já no estado pedido ou sem suporte */  } banner.remove(); banner = null; };
     $('cenAvSim').onclick = () => { fecha(); abre('Ensaio finalizado: confira o que salvar. Nada é gravado até você clicar em Salvar.'); };
     $('cenAvNao').onclick = fecha;
   }
@@ -367,7 +367,7 @@
       if (fimVisto) return;
       const f = $('dlgFim'); if (f && f.open) return;   // espera o resultado do ensaio fechar
       fimVisto = true; if (raiz.CEN_PERGUNTA_FIM !== false) mostraAviso();   // v1.10.191: chave em ⚙ Modo
-    } catch (e) { }
+    } catch (e) { /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */  }
   }, 1000);
 
   /* ----------------------------- entradas: chip e menu do botão direito ----------------------------- */
@@ -386,7 +386,7 @@
     const n=document.getElementById('mdPfNota');if(n)n.textContent=v==='1'?'Ao terminar o ensaio a tela pergunta "Salvar os registros agora?". Nada é gravado sozinho.':'Ao terminar o ensaio a tela NÃO pergunta. Os registros continuam disponíveis no botão "Registros".'}
   try{window.CEN_PERGUNTA_FIM=localStorage.getItem(K)!=='0'}catch(e){window.CEN_PERGUNTA_FIM=true}
   const w=document.getElementById('mdPf');
-  if(w){w.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;window.CEN_PERGUNTA_FIM=b.dataset.v==='1';try{localStorage.setItem(K,window.CEN_PERGUNTA_FIM?'1':'0')}catch(x){}pinta()});pinta()}
+  if(w){w.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;window.CEN_PERGUNTA_FIM=b.dataset.v==='1';try{localStorage.setItem(K,window.CEN_PERGUNTA_FIM?'1':'0')}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }pinta()});pinta()}
 })();
 
 /* ===== v1.10.176 · GUARDA "JANELA NA TELA" =====

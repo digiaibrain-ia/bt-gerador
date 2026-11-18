@@ -40,7 +40,7 @@ function aplicaParametros(p){
   if(window.__marcaModo)window.__marcaModo(); // v1.9.33: atualiza o rótulo/seletores do popup Modo
 }
 try{const j=JSON.parse(localStorage.getItem('medidor.params')||'null');
-    if(j&&Array.isArray(j.etapas)&&j.etapas.length===6)aplicaParametros(Object.assign({},PARAM_ISO,j))}catch(e){}
+    if(j&&Array.isArray(j.etapas)&&j.etapas.length===6)aplicaParametros(Object.assign({},PARAM_ISO,j))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
 
 const travaTipo=()=>T.started&&!(T.fim&&T.gravado); // depois de iniciar, só zerando/gravando é possível trocar de tipo
 // Trocar de aba (ISO / Só teste de carga) NUNCA mexe nos valores dos campos: só mostra ou esconde
@@ -113,7 +113,7 @@ function aplicaFaixas(){ // botão Aplicar: salva os valores da aba selecionada 
   if(muda&&T.fim&&T.gravado)novoEnsaio(); // histórico do ensaio gravado sai da tela ao trocar o tipo
   aplicaParametros(p);
   defineFaixaAgua(at,cr);
-  try{localStorage.setItem('medidor.params',JSON.stringify(p));localStorage.setItem('medidor.faixaAgua',JSON.stringify({atencao:at,critico:cr}))}catch(x){}
+  try{localStorage.setItem('medidor.params',JSON.stringify(p));localStorage.setItem('medidor.faixaAgua',JSON.stringify({atencao:at,critico:cr}))}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   if(window.__ultimoDado)aplicaAlarmes(window.__ultimoDado);
   erro(''); // limpa qualquer erro anterior; a popup continua aberta
 }

@@ -21,7 +21,7 @@ const AGUA_PADRAO={atencao:90,critico:95};   // °C — v1.9.29: padrão 85->90 
 const FAIXAS={tempAguaC:{ok:[0,AGUA_PADRAO.atencao],av:[0,AGUA_PADRAO.critico],un:'°C'}};
 function defineFaixaAgua(at,cr){FAIXAS.tempAguaC.ok=[0,at];FAIXAS.tempAguaC.av=[0,cr]}
 try{const j=JSON.parse(localStorage.getItem('medidor.faixaAgua')||'null');
-    if(j&&isFinite(j.atencao)&&isFinite(j.critico)&&j.atencao<j.critico)defineFaixaAgua(+j.atencao,+j.critico)}catch(e){}
+    if(j&&isFinite(j.atencao)&&isFinite(j.critico)&&j.atencao<j.critico)defineFaixaAgua(+j.atencao,+j.critico)}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
 const MAX_IDADE=10; // dado mais velho que isso = sem dado
 /* ============================== */
 const DEC={tensaoL1L2:1,tensaoL2L3:1,tensaoL3L1:1,correnteL1:0,correnteL2:0,correnteL3:0,kw:1,tempAguaC:1,rpm:0,bateria:2};
@@ -101,7 +101,7 @@ function passoUnit(dt,sp){
   registra(dt);
 }
 function desenha(){
-  try{botoesGer()}catch(x){}   // v1.10.0: recalcula INICIAR/PARAR ENSAIO a cada atualização (antes só quando o estado do gerador mudava)
+  try{botoesGer()}catch(x){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }   // v1.10.0: recalcula INICIAR/PARAR ENSAIO a cada atualização (antes só quando o estado do gerador mudava)
   let dec=0; for(let i=0;i<T.et;i++)dec+=durS(i);
   $('clk').textContent=fmt(T.gravado?0:dec+T.el);
   ETAPAS.forEach((e,i)=>{
@@ -187,7 +187,7 @@ $('bZerTudo').onclick=async()=>{ // opcional: só aparece depois do ensaio final
 const C={t:0,pts:[],starts:[0],stopped:0,lastEt:0};
 // v1.9.34: 3 opções de gráfico — 'off' (sem), 'ensaio' (tempo de ensaio/cronômetro, sem faixas de ajuste/pausa) e 'classico' (v1.9.32: relógio, com ajuste e pausa)
 let SETUP=null; // v1.9.34: calibração de uma chave em andamento {i,fase:0|1,base}
-let GRAF_MODO='ensaio';try{const v=localStorage.getItem('medidor.graficoModo');if(['off','ensaio','classico'].includes(v))GRAF_MODO=v}catch(e){}
+let GRAF_MODO='ensaio';try{const v=localStorage.getItem('medidor.graficoModo');if(['off','ensaio','classico'].includes(v))GRAF_MODO=v}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
 const gModo=()=>GRAF_MODO==='classico'?'classico':'ensaio'; // exportações (PNG/PDF) usam o modo escolhido; 'sem gráfico' exporta o de tempo de ensaio
 const SNAP=[]; // espelho da LEITURA DE VOLTA do PLC (GET /ensaio/snap): só tem a etapa quando o Node-RED a devolveu como salva
 var ENS=null; // estado da ligação com o Node-RED de seleção (definido mais abaixo)

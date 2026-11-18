@@ -16,7 +16,7 @@
   document.querySelectorAll('input[name=srvFalha]').forEach(r=>r.onchange=()=>{if(r.checked)MOCK.falha=r.value});
   $('srvModoTroca').onchange=()=>{MOCK.modoTroca=$('srvModoTroca').checked};
   $('srvSemIdx').onchange=()=>{MOCK.semIdx=$('srvSemIdx').checked};
-  $('srvLimpa').onclick=()=>{try{localStorage.removeItem('medidor.mock.plc')}catch(e){}$('srvPre').style.display='none';ensPoll()};
+  $('srvLimpa').onclick=()=>{try{localStorage.removeItem('medidor.mock.plc')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }$('srvPre').style.display='none';ensPoll()};
   $('srvVer').onclick=()=>{const p=$('srvPre');p.textContent=JSON.stringify(mockSnap(mockEstado()),null,1);p.style.display='block'};
   setInterval(ensVerFonte,500);
   setInterval(ensPoll,5000);

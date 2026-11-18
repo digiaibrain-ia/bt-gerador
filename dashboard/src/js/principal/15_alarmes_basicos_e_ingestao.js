@@ -102,7 +102,7 @@ async function pollPlcPrincipal(){
   if(_pollPlcBusy||typeof CH_SRV==='undefined'||CH_SRV.fonte!=='nodered'||typeof chAtualizaDoPlc!=='function')return;
   _pollPlcBusy=true;
   try{await chAtualizaDoPlc(true);drawBanco(bancoDados(window.__ultimoDado||{}))}
-  catch(e){}
+  catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
   finally{_pollPlcBusy=false}
 }
 /* v1.9.65: o relógio do poll agora vem de um Web Worker. Motivo: aba escondida > 5 min => o Chrome limita setInterval da página a ~1x/min
@@ -114,7 +114,7 @@ let _ultTickW=0;
     const src='let t=null;onmessage=function(e){if(e.data==="start"&&!t)t=setInterval(function(){postMessage(1)},1000);if(e.data==="stop"){clearInterval(t);t=null}}';
     const w=new Worker(URL.createObjectURL(new Blob([src],{type:'application/javascript'})));
     w.onmessage=function(){_ultTickW=Date.now();pollPlcPrincipal()};
-    w.onerror=function(){_ultTickW=0;try{w.terminate()}catch(e){}};   // Worker não carregou (ex.: política do navegador): vale o setInterval
+    w.onerror=function(){_ultTickW=0;try{w.terminate()}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }};   // Worker não carregou (ex.: política do navegador): vale o setInterval
     w.postMessage('start');
     window.__tickWorker=w;
   }catch(e){_ultTickW=0}

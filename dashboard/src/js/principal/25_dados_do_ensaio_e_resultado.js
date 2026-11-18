@@ -39,7 +39,7 @@ $('bDados').onclick=()=>abreDados(false);
 // v1.10.103: Carregar gerador padrão — volta ao gerador do Demo (único preenchimento completo) e esquece o modelo do catálogo
 $('dPadrao').onclick=()=>{
   window.DADOS_MODELO=null;window.__potAnterior='';
-  try{localStorage.removeItem('medidor.modeloEscolhido')}catch(x){}
+  try{localStorage.removeItem('medidor.modeloEscolhido')}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   const box=$('dCat'),f=box&&box.querySelector('[data-c=m]');
   if(f)f.innerHTML='Gerador padrão do Demo carregado (sem modelo do catálogo). Para outro gerador, digite abaixo parte do nome (ex.: 260 220 60).';
   if(box)box.classList.remove('escolhido');
@@ -63,7 +63,7 @@ function iniciaEnsaio(){ // primeiro início de um ensaio novo confirma os dados
 /* v1.10.0: "Dados do ensaio" confirmados -> INICIAR não reabre o diálogo. Guardado em sessionStorage (vale para esta aba/sessão, inclusive ao recarregar;
    não vale em outra aba nem no dia seguinte). Apaga-se ao GRAVAR o ensaio (gerador novo = dados novos). Para mudar: botão "Dados do ensaio". */
 const dadosConfirmados=()=>{try{return sessionStorage.getItem('medidor.dadosConf.'+DADOS_MODO)==='1'}catch(x){return false}};
-const dadosConfMarca=v=>{try{if(v)sessionStorage.setItem('medidor.dadosConf.'+DADOS_MODO,'1');else sessionStorage.removeItem('medidor.dadosConf.'+DADOS_MODO)}catch(x){}};
+const dadosConfMarca=v=>{try{if(v)sessionStorage.setItem('medidor.dadosConf.'+DADOS_MODO,'1');else sessionStorage.removeItem('medidor.dadosConf.'+DADOS_MODO)}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
 function iniciaComDadosSalvos(){ // mesmo caminho do botão "Iniciar ensaio" do diálogo, com os campos preenchidos pelos dados já salvos
   if(ENS.subm)return;ENS.subm=true;
   preencheDados(Object.assign({},DADOS,{data:DADOS.data||hojeTxt()}));if(DADOS.data)$('dData').value=DADOS.data;
@@ -92,9 +92,9 @@ async function fDadosSubmit(){
   const fase=($('fDados').querySelector('input[name=dFase]:checked')||{}).value||DADOS.fase;
   const dataNorm=dataOk&&data?(data.replace(/\//g,'.')===hojeTxt()?'':data.replace(/\//g,'.')):'';
   Object.assign(DADOS,{serie,versao,data:dataNorm,equip,fase,freq,tensao:tens,tamb,pot});
-  try{localStorage.setItem('medidor.dados.'+DADOS_MODO,JSON.stringify({serie:DADOS.serie,versao:DADOS.versao,data:DADOS.data,equip:DADOS.equip,fase:DADOS.fase,freq,tensao:tens,tamb,pot}))}catch(x){}
+  try{localStorage.setItem('medidor.dados.'+DADOS_MODO,JSON.stringify({serie:DADOS.serie,versao:DADOS.versao,data:DADOS.data,equip:DADOS.equip,fase:DADOS.fase,freq,tensao:tens,tamb,pot}))}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   ULTIMO={serie:DADOS.serie,versao:DADOS.versao,equip:DADOS.equip,fase:DADOS.fase,freq,tensao:tens,tamb,pot};
-  try{localStorage.setItem('medidor.dadosUltimo.'+DADOS_MODO,JSON.stringify(ULTIMO))}catch(x){}
+  try{localStorage.setItem('medidor.dadosUltimo.'+DADOS_MODO,JSON.stringify(ULTIMO))}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   dadosConfMarca(true);
   $('dlgDados').close();
   if(ini){ // ensaio novo: limpa o histórico do anterior, mas NÃO começa a contar ainda — fica "armado" esperando o operador dar START de novo (quando ligar o gerador, por exemplo)

@@ -2,8 +2,8 @@
 /* ----- simulador local do Node-RED de seleção (teste da interface, sem PLC) ----- */
 const MOCK={falha:'nenhuma',semIdx:false,modoTroca:false,lat:300};
 const espera=ms=>new Promise(r=>setTimeout(r,ms));
-function mockEstado(){let s=null;try{s=JSON.parse(localStorage.getItem('medidor.mock.plc')||'null')}catch(e){}if(!s||typeof s!=='object')s={modo:'manual',pre:null,etapas:{}};return s}
-function mockSalva(s){try{localStorage.setItem('medidor.mock.plc',JSON.stringify(s))}catch(e){}}
+function mockEstado(){let s=null;try{s=JSON.parse(localStorage.getItem('medidor.mock.plc')||'null')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }if(!s||typeof s!=='object')s={modo:'manual',pre:null,etapas:{}};return s}
+function mockSalva(s){try{localStorage.setItem('medidor.mock.plc',JSON.stringify(s))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }}
 function mockSnap(s){
   const ets=Object.keys(s.etapas).map(Number).sort((a,b)=>a-b).map(k=>{const e=s.etapas[k],o={etapa:e.etapa,salva:true,valores:e.valores};if(!MOCK.semIdx&&e.indice!=null)o.indice=e.indice;return o});
   return {modo:s.modo,preenchimento:s.pre?{campos:s.pre}:null,etapas:ets,lidoEm:new Date().toISOString()};

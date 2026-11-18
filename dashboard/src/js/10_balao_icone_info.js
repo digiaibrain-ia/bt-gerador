@@ -11,8 +11,8 @@
   function posiciona(){if(!alvo||!tip)return;const r=alvo.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight;
     let x=Math.min(Math.max(8,r.left),Math.max(8,innerWidth-w-8)),y=r.bottom+6;if(y+h>innerHeight-8)y=Math.max(8,r.top-h-6);tip.style.left=x+'px';tip.style.top=y+'px'}
   function mostra(el){const t=el.getAttribute('data-tip');if(!t)return;if(!tip)cria();clearTimeout(tFecha);alvo=el;
-    if(tip.textContent!==t)tip.textContent=t;tip.style.display='block';try{if(!tip.matches(':popover-open'))tip.showPopover()}catch(e){}posiciona()}
-  function fecha(){clearTimeout(tFecha);if(!tip)return;tip.style.display='none';try{if(tip.matches(':popover-open'))tip.hidePopover()}catch(e){}alvo=null}
+    if(tip.textContent!==t)tip.textContent=t;tip.style.display='block';try{if(!tip.matches(':popover-open'))tip.showPopover()}catch(e){ /* ignorado: popover já no estado pedido ou sem suporte */ }posiciona()}
+  function fecha(){clearTimeout(tFecha);if(!tip)return;tip.style.display='none';try{if(tip.matches(':popover-open'))tip.hidePopover()}catch(e){ /* ignorado: popover já no estado pedido ou sem suporte */ }alvo=null}
   function agenda(){clearTimeout(tFecha);tFecha=setTimeout(()=>{if(!sel())fecha()},350)}
   const acha=e=>e.target&&e.target.closest?e.target.closest('.ibub,#modoCard .lk'):null;
   document.addEventListener('mouseover',e=>{const el=acha(e);if(el)mostra(el)},true);

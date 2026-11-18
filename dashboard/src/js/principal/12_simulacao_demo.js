@@ -10,9 +10,9 @@ const KWR={};const KWRT={};const TENS={};let USAR_REAL=false; // v1.9.78: KWRT[q
 // (comentário original:) // v1.9.34: kW REAL de cada chave (Setup: gerador em START, uma chave por vez, kW lido do DSE menos o kW sem carga). Por ora só no navegador; depois vira FB no PLC.
 // v1.9.74: a ordem das chaves mudou (chave 1 = menor carga). Os índices guardados no navegador (habilitadas e kW real, por posição) da ordem
 // antiga não valem mais: são descartados UMA vez. No modo PLC os dois voltam do PLC na 1ª leitura; no Demo local eram só dados de teste.
-try{if(localStorage.getItem('medidor.chavesOrdem')!=='fisica-2026-10-27'){['medidor.chavesReal','medidor.chavesDes','medidor.usarReal'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('medidor.chavesOrdem','fisica-2026-10-27')}}catch(e){}
-try{Object.assign(KWR,JSON.parse(localStorage.getItem('medidor.chavesReal')||'{}'));USAR_REAL=localStorage.getItem('medidor.usarReal')==='1'}catch(e){}
-try{Object.assign(KWRT,JSON.parse(localStorage.getItem('medidor.chavesRealT')||'{}'));Object.assign(TENS,JSON.parse(localStorage.getItem('medidor.chavesTens')||'{}'))}catch(e){} // v1.9.78
+try{if(localStorage.getItem('medidor.chavesOrdem')!=='fisica-2026-10-27'){['medidor.chavesReal','medidor.chavesDes','medidor.usarReal'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('medidor.chavesOrdem','fisica-2026-10-27')}}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
+try{Object.assign(KWR,JSON.parse(localStorage.getItem('medidor.chavesReal')||'{}'));USAR_REAL=localStorage.getItem('medidor.usarReal')==='1'}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
+try{Object.assign(KWRT,JSON.parse(localStorage.getItem('medidor.chavesRealT')||'{}'));Object.assign(TENS,JSON.parse(localStorage.getItem('medidor.chavesTens')||'{}'))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ } // v1.9.78
 const kwEf=i=>USAR_REAL&&KWR[i]?KWR[i].kw:CH[i].kw;
 const fmtKw=x=>Number.isInteger(x)?String(x):pt(x,1);
 const DIS=CH.map(()=>false);
@@ -24,7 +24,7 @@ const LINK={banco:{},dse:{ok:false,ts:0},chv:{ok:false,ts:0,http:0,msg:''}, // v
   bancoOk(id){const L=this.banco[id];return !!(L&&L.ok&&Date.now()-L.ts<5000)}};window.LINK=LINK;
 const FALHA_RET=CH.map(()=>false), FALHA_COL=CH.map(()=>false); // v1.10.168: falha de retorno / contator colado por chave (do PLC do banco, flow v3.5)
 const CH_LIG=CH.map(()=>false); // v1.9.53: estado real "ligada" de cada chave (sb.ligada[], vindo do GET /api/chaves/56) — fonte única pra tela principal, Setup e Habilitar/Desabilitar baterem com o PLC de verdade
-try{const j=JSON.parse(localStorage.getItem('medidor.chavesDes')||'null');if(Array.isArray(j)&&j.length===CH.length)j.forEach((v,i)=>DIS[i]=!!v)}catch(e){}
+try{const j=JSON.parse(localStorage.getItem('medidor.chavesDes')||'null');if(Array.isArray(j)&&j.length===CH.length)j.forEach((v,i)=>DIS[i]=!!v)}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
 function setCh(i,v){SIM.ch[i]=(DIS[i]||!bkLiberado(bkDeCh(i)))?0:v} // v1.9.74: banco bloqueado (seletora em Manual / banco desligado) também não fecha chave
 function melhorConjunto(alvo){ // alvo em DÉCIMOS de kW; chaves cuja soma chega mais perto do alvo; empate: menos chaves (v1.9.34: usa o kW efetivo — real, se habilitado)
   const W=CH.map((c,i)=>Math.round(kwEf(i)*10));

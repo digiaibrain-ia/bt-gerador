@@ -22,7 +22,7 @@
   'use strict';
   const LS = 'medidor.bancosTodos';
   const ler = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
-  const grava = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const grava = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ } };
   const R = { todos: ler(LS) === '1' };
   const st = document.createElement('style');
   st.textContent = '#bancos details.bk.bk-oculto{display:none}#bBkTodos.on{outline:2px solid var(--ui-acento,#ec7000)}#bkNenhum{margin:8px 0;font-size:13px;opacity:.85}';

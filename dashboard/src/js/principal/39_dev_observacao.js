@@ -10,7 +10,7 @@
   const MAXBUF=4000,SESSAO='s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),T0=performance.now();
   const BUF=[],OCSET=new Set(),GETF={},OUV=new Set();
   let N=0,DESCART=0,ENV_ATE=0,pubOk=null,flowVisto=null,ultErro='',pubBusy=false,obsWin=null,prev=null,prevLib=false;
-  let CAN=null;try{if(typeof BroadcastChannel==='function')CAN=new BroadcastChannel('bt2-dev-obs')}catch(e){}
+  let CAN=null;try{if(typeof BroadcastChannel==='function')CAN=new BroadcastChannel('bt2-dev-obs')}catch(e){ /* ignorado: navegador sem BroadcastChannel */ }
   const trunc=(s,n)=>{s=String(s==null?'':s);return s.length>n?s.slice(0,n-1)+'…':s};
   const lib=()=>testeDesbloqueado===true;
   const limpa=o=>{if(o==null)return null;try{const x=JSON.stringify(o);return x.length<=800?JSON.parse(x):{_truncado:x.slice(0,799)+'…'}}catch(e){return null}};
@@ -40,9 +40,9 @@
     let ens='sem ensaio';
     if(T.started)ens=!T.fim?(T.run?'rodando':'armado'):(T.gravado?'finalizado+gravado':'finalizado');
     const tl=cl=>[...document.querySelectorAll('#bancos .tile[data-i]')].filter(t=>t.classList.contains(cl)).map(t=>+t.dataset.i);
-    let setup=null;try{if(typeof window.chSetupSel==='function')setup=window.chSetupSel()}catch(e){}
+    let setup=null;try{if(typeof window.chSetupSel==='function')setup=window.chSetupSel()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
     const com=Object.assign({dse:null},Object.fromEntries(BANCOS_PLC.map(b=>['b'+rotaDe(b.id),null])));   // v1.10.157: um por banco no PLC
-    try{com.dse=!!LINK.dse.ok;if(srvUsaPlc())BANCOS_PLC.forEach(b=>{com['b'+rotaDe(b.id)]=!!LINK.bancoOk(b.id)})}catch(e){}
+    try{com.dse=!!LINK.dse.ok;if(srvUsaPlc())BANCOS_PLC.forEach(b=>{com['b'+rotaDe(b.id)]=!!LINK.bancoOk(b.id)})}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
     const ch=tl('s1'),cmd=tl('cmd');
     return{modo:srvChave(),gen:demo?SIM.gen:GEN.estado,sim:demo?(auto?'AUTO':'MANUAL'):null,ens,et:T.started?T.et:null,
       ch,cmd,chL:chL(ch),cmdL:chL(cmd), // v1.9.74: chL/cmdL = o mesmo conteúdo em texto "BC56 1,2 · BC400 1" (banco + posição no banco)
@@ -72,12 +72,12 @@
   }
   function emite(e){ // canal local (mesmo navegador) e janela aberta pelo botão — só com a senha do Demo
     if(!lib())return;
-    try{if(CAN)CAN.postMessage({k:'ev',e})}catch(x){}
+    try{if(CAN)CAN.postMessage({k:'ev',e})}catch(x){ /* ignorado: janela ou canal já fechado */ }
     OUV.forEach(w=>{try{if(w.closed)OUV.delete(w);else w.postMessage({k:'ev',e},'*')}catch(x){OUV.delete(w)}});
   }
   function responde(dest){ // pedido de backlog do gerenciador
     const m=lib()?{k:'backlog',sessao:SESSAO,eventos:BUF.slice()}:{k:'bloqueado',sessao:SESSAO};
-    try{if(dest)dest.postMessage(m,'*');else if(CAN)CAN.postMessage(m)}catch(x){}
+    try{if(dest)dest.postMessage(m,'*');else if(CAN)CAN.postMessage(m)}catch(x){ /* ignorado: janela ou canal já fechado */ }
   }
   if(CAN)CAN.onmessage=m=>{const d=m&&m.data;if(d&&d.k==='pede')responde(null)};
   window.addEventListener('message',m=>{const d=m&&m.data;if(!d||d.k!=='pede'||!obsWin||m.source!==obsWin)return;OUV.add(obsWin);responde(obsWin)}); // só responde à janela que ESTE botão abriu
@@ -110,7 +110,7 @@
       prev=s;
       const l=lib();if(l&&!prevLib)responde(null); // acabou de destravar: oferece o que já aconteceu
       prevLib=l;
-    }catch(e){}
+    }catch(e){ /* ignorado: texto inválido: segue com o valor padrão */ }
   }
 
   /* ---- cliques e alterações do operador (captura: vem antes dos handlers da tela) ---- */
@@ -130,7 +130,7 @@
         if(el.dataset&&el.dataset.act){det.act=el.dataset.act;det.banco=el.dataset.b||null} // v1.9.74: botões da seletora / "Ligar banco" de cada banco
       }
       log(cardDe(el),'clique',acao,'info',det);
-    }catch(x){}
+    }catch(x){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
   },true);
   document.addEventListener('change',e=>{
     try{
@@ -139,19 +139,19 @@
       if(el.type==='password')return;
       const v=(el.type==='checkbox'||el.type==='radio')?(el.checked?'marcado':'desmarcado'):trunc(el.value,80);
       log(cardDe(el),'alteracao','alterou '+(el.id?'#'+el.id:(el.name||el.type||el.tagName))+' = '+v,'info',{id:el.id||null,name:el.name||null,valor:v,area:area(el)});
-    }catch(x){}
+    }catch(x){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
   },true);
 
   /* ---- mensagens ao operador: #gmsg (msgGer), alert e confirm. prompt NÃO é tocado (é a senha) ---- */
   try{
     const g=$('gmsg');let ult='';
     if(g&&window.MutationObserver)new MutationObserver(()=>{const t=(g.textContent||'').trim();if(t&&t!==ult)log('app','mensagem',trunc(t,300),'aviso',{onde:'gmsg'});ult=t}).observe(g,{childList:true,characterData:true,subtree:true});
-  }catch(e){}
+  }catch(e){ /* ignorado: API opcional do navegador */ }
   try{
     const al=window.alert.bind(window),cf=window.confirm.bind(window);
     window.alert=function(m){log('app','mensagem','alert: '+trunc(m,300),'aviso',{onde:'alert'});return al(m)};
     window.confirm=function(m){const r=cf(m);log('app','mensagem','confirm: '+trunc(m,200)+' → '+(r?'SIM':'NÃO'),'info',{onde:'confirm',resposta:r});return r};
-  }catch(e){}
+  }catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
 
   /* ---- ocorrências (módulo OCOR): nova ocorrência, repetição (no máx. 1 a cada 10 s) e "normalizou" ---- */
   try{
@@ -163,16 +163,16 @@
           const k=cod+'|'+((opc&&opc.ref)||''),ag=Date.now();
           if(!OCSET.has(k)||(opc&&opc.ev&&ag-(ult[k]||0)>10000)){OCSET.add(k);ult[k]=ag;
             log(card||(r&&r.card)||'app','ocorrencia',cod+': '+trunc(texto||(r&&r.txt),200),r&&r.tipo==='i'?'info':(r&&r.tipo==='m'?'aviso':'falha'),{cod,ref:(opc&&opc.ref)||null,vezes:r&&r.vezes})}
-        }catch(x){}
+        }catch(x){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
         return r;
       };
       window.OCOR.limpa=function(card,cod,ref){
         const r=l0(card,cod,ref);
-        try{const k=cod+'|'+(ref||'');if(OCSET.has(k)){OCSET.delete(k);log(card||'app','ocorrencia',cod+': normalizou','ok',{cod,ref:ref||null})}}catch(x){}
+        try{const k=cod+'|'+(ref||'');if(OCSET.has(k)){OCSET.delete(k);log(card||'app','ocorrencia',cod+': normalizou','ok',{cod,ref:ref||null})}}catch(x){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
         return r;
       };
     }
-  }catch(e){}
+  }catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
 
   /* ---- chamadas /api/: todo POST (ok ou falha) e GET que falhou. Nunca registra /api/dev/ (o próprio log). ---- */
   const F0=window.fetch.bind(window);
@@ -192,16 +192,16 @@
       if(j&&typeof j==='object'){if('ok' in j)det.ok=j.ok;if(j.erro)det.erroSrv=trunc(j.erro,160);if(j.flow)det.flow=j.flow}
       log(cardRota(c),'api',m+' '+c+' → '+(st||'sem resposta'),(ok&&det.ok!==false)?'ok':'falha',det,{ts});
     };
-    if(r){try{r.clone().text().then(tx=>{let j=null;try{j=JSON.parse(tx)}catch(x){}fim(j)},()=>fim(null))}catch(x){fim(null)}}else fim(null);
+    if(r){try{r.clone().text().then(tx=>{let j=null;try{j=JSON.parse(tx)}catch(x){ /* ignorado: texto inválido: segue com o valor padrão */ }fim(j)},()=>fim(null))}catch(x){fim(null)}}else fim(null);
   }
   window.fetch=function(input,init){
     let url='',m='GET';
-    try{url=typeof input==='string'?input:((input&&input.url)||'');m=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase()}catch(e){}
+    try{url=typeof input==='string'?input:((input&&input.url)||'');m=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase()}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }
     if(url.indexOf('/api/')<0||url.indexOf('/api/dev/')>=0)return F0(input,init);
     const t0=performance.now(),c=url.replace(/^https?:\/\/[^/]+/,'').replace(/\?.*$/,''),corpo=init&&typeof init.body==='string'?init.body:null,ts=Date.now();
     const p=F0(input,init);
-    p.then(r=>{try{if(m!=='GET'||!r.ok)apiEvt(m,c,r.status,r.ok,Math.round(performance.now()-t0),corpo,r,null,ts)}catch(x){}},
-           er=>{try{apiEvt(m,c,0,false,Math.round(performance.now()-t0),corpo,null,er,ts)}catch(x){}});
+    p.then(r=>{try{if(m!=='GET'||!r.ok)apiEvt(m,c,r.status,r.ok,Math.round(performance.now()-t0),corpo,r,null,ts)}catch(x){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }},
+           er=>{try{apiEvt(m,c,0,false,Math.round(performance.now()-t0),corpo,null,er,ts)}catch(x){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }});
     return p;
   };
 
@@ -228,7 +228,7 @@
   /* ---- abrir o gerenciador (botão do popup Demo, ou automático ao finalizar o ensaio) ---- */
   function abreGerenciador(origem){
     if(!lib())return false;
-    if(obsWin&&!obsWin.closed){try{obsWin.focus()}catch(e){}return true}
+    if(obsWin&&!obsWin.closed){try{obsWin.focus()}catch(e){ /* ignorado: elemento ausente ou sem suporte */ }return true}
     obsWin=window.open(((window.MENU_DEV&&MENU_DEV.arquivo('gerenciador'))||'gerenciador_logs_v1.6.html')+'?srv='+encodeURIComponent(srvBase()||'')+'&sessao='+SESSAO,'bt2_gerenciador_logs');
     if(!obsWin){
       log('DEV.DEM','sistema','o navegador bloqueou o pop-up do gerenciador ('+origem+')','aviso');
@@ -239,7 +239,7 @@
     return true;
   }
   const bo=$('bDevObs');if(bo)bo.onclick=()=>abreGerenciador('botão');
-  try{window.MENU_DEV&&MENU_DEV.monta($('menuDevHost'),{atual:'medidor'})}catch(e){}   // v1.10.109: monta o botão ☰ (escondido até o modo de testes ou ?dev=1)
+  try{window.MENU_DEV&&MENU_DEV.monta($('menuDevHost'),{atual:'medidor'})}catch(e){ /* ignorado: ferramenta de diagnóstico/teste: a falha não afeta a operação */ }   // v1.10.109: monta o botão ☰ (escondido até o modo de testes ou ?dev=1)
 
   /* ---- texto de estado na caixa do popup Demo ---- */
   function infoObs(){

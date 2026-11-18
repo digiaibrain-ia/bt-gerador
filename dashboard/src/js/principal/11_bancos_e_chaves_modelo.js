@@ -77,5 +77,5 @@ const bkMotivoEnsaio='Ensaio em andamento: a seletora e o "Ligar banco" ficam tr
 function bkAutoLibera(){
   BANCOS.forEach(b=>{BKS[b.id].sel='auto';BKS[b.id].lig=true});
   for(const k in _ms)delete _ms[k];
-  try{drawBanco(bancoSim())}catch(e){}
+  try{drawBanco(bancoSim())}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }
 }

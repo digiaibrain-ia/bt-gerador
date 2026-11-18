@@ -28,10 +28,10 @@
   if (global.DICAUI) return;
   const CHAVE = 'bt2.dicaui';
   let ligado = false, tip = null, caixa = null, fixa = null, ult = null, tmr = 0;
-  try { ligado = localStorage.getItem(CHAVE) === '1'; } catch (e) {}
-  try { if (matchMedia('(pointer:coarse)').matches) ligado = false; } catch (e) {}   // v1.10.186: celular/tablet: a escolha guardada não vale (recurso de PC)
+  try { ligado = localStorage.getItem(CHAVE) === '1'; } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
+  try { if (matchMedia('(pointer:coarse)').matches) ligado = false; } catch (e) { /* ignorado: API opcional do navegador */ }   // v1.10.186: celular/tablet: a escolha guardada não vale (recurso de PC)
   if (/[?&]ui=1\b/.test(location.search)) ligado = true;
-  if (/[?&]ui=0\b/.test(location.search)) { ligado = false; try { localStorage.setItem(CHAVE, '0'); } catch (e) {} }   // v1.10.184: ?ui=0 desliga e apaga a escolha guardada
+  if (/[?&]ui=0\b/.test(location.search)) { ligado = false; try { localStorage.setItem(CHAVE, '0'); } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ } }   // v1.10.184: ?ui=0 desliga e apaga a escolha guardada
   const temPop = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
 
   /* ---------- CSS próprio (injetado uma vez; cores neutras, legíveis em tema claro e escuro) ---------- */
@@ -112,8 +112,8 @@
   function cria(classe, pop) {
     const d = document.createElement('div'); d.className = classe; if (pop && temPop) d.setAttribute('popover', 'manual'); (document.body || document.documentElement).appendChild(d); return d;
   }
-  const abre = d => { if (temPop) { try { if (!d.matches(':popover-open')) d.showPopover(); } catch (e) {} } else d.style.display = 'block'; };
-  const fecha = d => { if (!d) return; if (temPop) { try { d.hidePopover(); } catch (e) {} } else d.style.display = 'none'; };
+  const abre = d => { if (temPop) { try { if (!d.matches(':popover-open')) d.showPopover(); } catch (e) { /* ignorado: popover já no estado pedido ou sem suporte */ } } else d.style.display = 'block'; };
+  const fecha = d => { if (!d) return; if (temPop) { try { d.hidePopover(); } catch (e) { /* ignorado: popover já no estado pedido ou sem suporte */ } } else d.style.display = 'none'; };
   function iniPecas() {
     if (!tip) { tip = cria('dicaui-tip', true); caixa = cria('dicaui-caixa', true); fecha(tip); fecha(caixa); }
   }
@@ -166,7 +166,7 @@
   }, true);
 
   function liga(b, avisa) {
-    ligado = !!b; try { localStorage.setItem(CHAVE, ligado ? '1' : '0'); } catch (e) {}
+    ligado = !!b; try { localStorage.setItem(CHAVE, ligado ? '1' : '0'); } catch (e) { /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     iniPecas();
     if (!ligado) { sair(); fechaFixa(); }
     if (avisa) { tip.innerHTML = '<b>Dica de interface ' + (ligado ? 'ligada' : 'desligada') + '</b><small>Alt+I liga/desliga · Alt+clique fixa a etiqueta</small>'; abre(tip); posiciona(tip, innerWidth / 2 - 130, 40); setTimeout(() => { if (!ult) fecha(tip); }, 1800); }

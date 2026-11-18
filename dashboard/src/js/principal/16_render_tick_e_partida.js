@@ -25,7 +25,7 @@ async function tick(){
     else{
       const r=await fetch(dseUrl(),{cache:'no-store'});
       LINK.dse.http=null;LINK.dse.diag=null;
-      if(!r.ok){LINK.dse.http=r.status;try{const jb=await r.json();LINK.dse.diag=(jb&&jb.diag)||null}catch(e){}throw new Error('HTTP '+r.status+' do servidor de telemetria')} // v1.10.170: o 503 do /api/gerador traz o diag (status do Modbus) // v1.9.29 (ACH-13): antes não checava r.ok
+      if(!r.ok){LINK.dse.http=r.status;try{const jb=await r.json();LINK.dse.diag=(jb&&jb.diag)||null}catch(e){ /* ignorado: texto inválido: segue com o valor padrão */ }throw new Error('HTTP '+r.status+' do servidor de telemetria')} // v1.10.170: o 503 do /api/gerador traz o diag (status do Modbus) // v1.9.29 (ACH-13): antes não checava r.ok
       d=await r.json();
     }
     const idadeRaw=find(d,'idadeSegundos');
@@ -60,7 +60,7 @@ function start(){
 (function(){
   const R=document.documentElement;
   const ler=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
-  const gravar=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+  const gravar=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
   // modo escuro
   const setTema=(esc,salva)=>{
     if(esc)R.dataset.tema='escuro';else delete R.dataset.tema;
@@ -96,7 +96,7 @@ function start(){
     if(at<0||cr>200){msg('Use valores entre 0 e 200 °C.');return}
     if(at>=cr){msg('O limite crítico precisa ser maior que o de atenção.');return}
     defineFaixaAgua(at,cr);
-    try{localStorage.setItem('medidor.faixaAgua',JSON.stringify({atencao:at,critico:cr}))}catch(x){}
+    try{localStorage.setItem('medidor.faixaAgua',JSON.stringify({atencao:at,critico:cr}))}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
     if(window.__ultimoDado)aplicaAlarmes(window.__ultimoDado);
     msg('✓ Salvo.',true); // v1.9.29: popup continua aberta — operador fecha pelo ✕ quando quiser
   };

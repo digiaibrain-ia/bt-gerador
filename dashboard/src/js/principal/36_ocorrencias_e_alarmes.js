@@ -95,8 +95,8 @@ const OCOR=(function(){
   const KEY=o=>o.cod+'|'+(o.ref||'');
   const ABERTOS=new Set();
   const ONDE={pc:'No PC / Node-RED',tela:'Na tela',bancada:'Depende de bancada/TI'};
-  function causasDe(o){const T=TROUBLE[o.cod];if(!T)return [];let c=T.causas;if(typeof T.ordena==='function'){try{c=T.ordena(c.slice(),o)}catch(e){}}return c}
-  function dinDe(o){const T=TROUBLE[o.cod];if(T&&typeof T.dyn==='function'){try{return T.dyn(o)||[]}catch(e){}}return []}
+  function causasDe(o){const T=TROUBLE[o.cod];if(!T)return [];let c=T.causas;if(typeof T.ordena==='function'){try{c=T.ordena(c.slice(),o)}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }}return c}
+  function dinDe(o){const T=TROUBLE[o.cod];if(T&&typeof T.dyn==='function'){try{return T.dyn(o)||[]}catch(e){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }}return []}
   function painelLinha(o){
     const T=TROUBLE[o.cod],cs=causasDe(o),din=dinDe(o);
     const ef='<div><h4>1 · Efeito (o sintoma)</h4><p>'+esc(T?T.efeito:o.txt)+'</p><p class="mut">'+esc(o.txt)+'</p><p class="mut">Card: '+esc(nomeCard(o.card))+' · desde '+esc(dataHora(o.desde))+' · '+o.vezes+' vez(es)</p>'+din.map(x=>'<p class="mut">'+esc(x)+'</p>').join('')+'</div>';
@@ -136,7 +136,7 @@ const OCOR=(function(){
   const HK='medidor.alertasHist.v1',HMAX=500;
   let H=[],hSujo=false,hVer=0;
   try{const j=JSON.parse(localStorage.getItem(HK)||'[]');if(Array.isArray(j))H=j.filter(x=>x&&x.t&&x.cod).slice(-HMAX)}catch(e){H=[]}
-  const hSalva=()=>{if(!hSujo)return;hSujo=false;try{localStorage.setItem(HK,JSON.stringify(H))}catch(e){}};
+  const hSalva=()=>{if(!hSujo)return;hSujo=false;try{localStorage.setItem(HK,JSON.stringify(H))}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }};
   function hReg(ev,o){
     H.push({t:Date.now(),e:ev,cod:o.cod,ref:o.ref||'',tipo:o.tipo,card:o.card,txt:o.txt,m:($('demo')&&$('demo').checked)?'DEMO':'REAL'});
     if(H.length>HMAX)H.splice(0,H.length-HMAX);
@@ -381,12 +381,13 @@ const OCOR=(function(){
     });
     // erros não tratados da própria tela viram SIS-001 (evento: some sozinho depois de 60 s sem repetir)
     const sis=m=>{try{m=String(m||'desconhecido');if(/^ResizeObserver loop/.test(m))return; // aviso inofensivo do navegador, não é erro do programa
-      set('app','SIS-001','Erro interno da tela: '+m.slice(0,160),{ev:true,expira:60000})}catch(x){}};
+      set('app','SIS-001','Erro interno da tela: '+m.slice(0,160),{ev:true,expira:60000})}catch(x){ /* ignorado: atualização de tela opcional: o próximo ciclo refaz */ }};
     addEventListener('error',e=>sis(e&&e.message));
     addEventListener('unhandledrejection',e=>sis(e&&e.reason&&e.reason.message?e.reason.message:e&&e.reason));
     // ciclo: varre o estado 1x/s e redesenha só o que mudou
-    setInterval(()=>{try{varre()}catch(x){}desenhaCards();if(dlg().open&&verJanela!==ver)janela();janelaH(false)},1000);
-    try{varre()}catch(x){}desenhaCards();
+    // v1.10.229 (Passo 5, B3): se o motor de alarmes (varre) falhar, o erro NAO some mais: vira SIS-001 (antes era engolido e os alarmes podiam parar de atualizar em silencio)
+    setInterval(()=>{try{varre()}catch(x){sis(x&&x.message?x.message:x)}desenhaCards();if(dlg().open&&verJanela!==ver)janela();janelaH(false)},1000);
+    try{varre()}catch(x){sis(x&&x.message?x.message:x)}desenhaCards();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
   return{set,limpa,ativas,lista,abre,abreH,historico:()=>H.slice(),CAT,CARDS,diag:textoDiag};

@@ -3,14 +3,14 @@
    é formato de máquina e fica separado, onde for necessário. Funcionamento: EXPO.menu(botão,[{rot,fn},…]) abre um pequeno menu embaixo do botão. */
 const EXPO=(function(){
   let m=null;
-  const fecha=()=>{if(m){try{if(m.matches(':popover-open'))m.hidePopover()}catch(e){}m.remove();m=null}document.removeEventListener('pointerdown',fora,true);document.removeEventListener('keydown',tecla,true)};
+  const fecha=()=>{if(m){try{if(m.matches(':popover-open'))m.hidePopover()}catch(e){ /* ignorado: popover já no estado pedido ou sem suporte */ }m.remove();m=null}document.removeEventListener('pointerdown',fora,true);document.removeEventListener('keydown',tecla,true)};
   const fora=e=>{if(m&&!m.contains(e.target))fecha()};
   const tecla=e=>{if(e.key==='Escape')fecha()};
   function menu(btn,itens){
     fecha();m=document.createElement('div');m.className='expmenu';m.setAttribute('role','menu');
     itens.forEach(it=>{if(it==='-'){m.appendChild(document.createElement('hr'));return}const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b.innerHTML=it.rot+(it.dica?'<small>'+it.dica+'</small>':'');
       b.onclick=()=>{fecha();try{it.fn()}catch(e){console.error('Exportar',e);if(typeof msgGer==='function')msgGer('Não foi possível exportar: '+(e&&e.message||e),8000)}};m.appendChild(b)});
-    m.setAttribute('popover','manual');document.body.appendChild(m);try{m.showPopover()}catch(e){}  // v1.10.107: popover = camada de cima do navegador (acima dos <dialog> modais)
+    m.setAttribute('popover','manual');document.body.appendChild(m);try{m.showPopover()}catch(e){ /* ignorado: popover já no estado pedido ou sem suporte */ }  // v1.10.107: popover = camada de cima do navegador (acima dos <dialog> modais)
     const r=btn.getBoundingClientRect();
     m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-8))+'px';
     m.style.top=Math.min(r.bottom+2,innerHeight-m.offsetHeight-8)+'px';
@@ -63,7 +63,7 @@ function imprimeComNome(nome,classe){
   const dlg=$('dlgLogs');if(!dlg)return;
   let banco=BANCOS_PLC[0].id,tmr=null,busy=false;
   $('logBanco').innerHTML=BANCOS_PLC.map(b=>'<button type="button" data-b="'+b.id+'">BC'+b.id+'</button>').join('');   // v1.10.156
-  try{const b=localStorage.getItem('medidor.logBanco');if(BANCOS_PLC.some(x=>x.id===b))banco=b;$('logAuto').checked=localStorage.getItem('medidor.logAuto')==='1'}catch(e){}
+  try{const b=localStorage.getItem('medidor.logBanco');if(BANCOS_PLC.some(x=>x.id===b))banco=b;$('logAuto').checked=localStorage.getItem('medidor.logAuto')==='1'}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   const base=()=>((window.CH_SRV&&window.CH_SRV.url)||'').trim();
   const hora=d=>d.toLocaleTimeString('pt-BR');
   const aviso=(cls,html)=>{const a=$('lgAviso');a.className='lgaviso '+cls;a.innerHTML=html;a.hidden=!html};
@@ -114,9 +114,9 @@ function imprimeComNome(nome,classe){
     marcaBanco();tag();dlg.show();carrega(true);auto();
   });
   $('logAtualiza').addEventListener('click',()=>carrega(true));
-  $('logBanco').addEventListener('click',e=>{const b=e.target.closest('button[data-b]');if(!b||b.dataset.b===banco)return;banco=b.dataset.b;try{localStorage.setItem('medidor.logBanco',banco)}catch(x){}marcaBanco();carrega(true)});
+  $('logBanco').addEventListener('click',e=>{const b=e.target.closest('button[data-b]');if(!b||b.dataset.b===banco)return;banco=b.dataset.b;try{localStorage.setItem('medidor.logBanco',banco)}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }marcaBanco();carrega(true)});
   $('logLimit').addEventListener('change',()=>carrega(true));
-  $('logAuto').addEventListener('change',()=>{try{localStorage.setItem('medidor.logAuto',$('logAuto').checked?'1':'0')}catch(x){}auto()});
+  $('logAuto').addEventListener('change',()=>{try{localStorage.setItem('medidor.logAuto',$('logAuto').checked?'1':'0')}catch(x){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }auto()});
   dlg.addEventListener('close',()=>{clearInterval(tmr);tmr=null});
   $('logImprime').addEventListener('click',e=>{ // v1.10.103: Exportar ▾ (TXT / MD / PDF)
     const tit='Log da comunicação das chaves — BC'+banco;

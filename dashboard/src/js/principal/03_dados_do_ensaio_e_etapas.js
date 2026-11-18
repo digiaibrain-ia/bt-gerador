@@ -13,7 +13,7 @@ const DADOS=JSON.parse(JSON.stringify(DADOS_DEMO));let DADOS_MODO=null;
 var ULTIMO=null; // dados do último ensaio iniciado (do modo atual)
 function carregaDados(){ // (re)carrega os dados do modo atual (demo ou real) — chamado ao abrir a página e ao trocar entre demo e real
   const m=$('demo').checked?'demo':'real';if(m===DADOS_MODO)return;DADOS_MODO=m;
-  let j=null;try{j=JSON.parse(localStorage.getItem('medidor.dados.'+m)||'null')}catch(e){}
+  let j=null;try{j=JSON.parse(localStorage.getItem('medidor.dados.'+m)||'null')}catch(e){ /* ignorado: armazenamento do navegador indisponível; a preferência não é guardada */ }
   Object.keys(DADOS).forEach(k=>delete DADOS[k]);
   Object.assign(DADOS,m==='demo'?JSON.parse(JSON.stringify(DADOS_DEMO)):DADOS_REAL(),j&&typeof j==='object'?j:{});
   try{ULTIMO=JSON.parse(localStorage.getItem('medidor.dadosUltimo.'+m)||'null')}catch(e){ULTIMO=null}
