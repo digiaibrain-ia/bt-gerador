@@ -8,7 +8,7 @@ const path = require('path');
 const RAIZ = path.join(__dirname, '..', '..');
 const HTML = require('../versoes.js').caminhoFerramenta(process.env.BT2_FASE4_HTML || require('../versoes.js').medidorAtual());   // A3: padrao = medidor mais novo
 const FLUXOS = path.join(RAIZ, 'nodered', 'flows', 'bt2');
-const ARQ_FLUXOS = ['chaves-56-api-v3.7', 'chaves-400-api-v3.6', 'chaves-550-api-v1.7', 'chaves-595-api-v1.7', 'cliente-156-dse-plc-carga-v3', 'cliente-31-seletor-plc-db2000-v4', 'registro-ensaio-db2100-api-v1.10', 'simulador-dse-demo-v7', 'dev-logs-api-v1.3', 'servidor-deepsea-api-gerador-v3_7'];
+const ARQ_FLUXOS = ['chaves-56-api-v3.8', 'chaves-400-api-v3.7', 'chaves-550-api-v1.8', 'chaves-595-api-v1.8', 'cliente-156-dse-plc-carga-v3', 'cliente-31-seletor-plc-db2000-v4', 'registro-ensaio-db2100-api-v1.10', 'simulador-dse-demo-v7', 'dev-logs-api-v1.3', 'servidor-deepsea-api-gerador-v3_7'];
 
 function rotasDosFluxos() {
   const rotas = [];

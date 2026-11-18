@@ -10,7 +10,7 @@ const { ENV_TESTE, enderecos, esperaAte, get, post, sobe, espera } = require('..
 describe('Fase 5 - dois aparelhos comandando a mesma chave', () => {
   let h, e;
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.7', 'simulador-dse-demo-v7'], env: ENV_TESTE, envAbas: { BT2_BANCADA: '1' } });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.8', 'simulador-dse-demo-v7'], env: ENV_TESTE, envAbas: { BT2_BANCADA: '1' } });
     e = enderecos('56');
     await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 5000);
     h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); h.plc.escrever(e.cbBanco, true);

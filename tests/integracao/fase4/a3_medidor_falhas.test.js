@@ -18,7 +18,7 @@ describe('A3 - medidor: falhas do PLC do banco', () => {
   const ocor = () => p.evaluate(() => window.OCOR.ativas().filter(x => /^CHV-00[78]$/.test(x.cod)).map(x => ({ cod: x.cod, ref: x.ref, tipo: x.tipo, txt: x.txt })));
 
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.7', 'chaves-400-api-v3.6'], env: ENV_TESTE, servirHtml: true });   // o chip "PLC" so fica ok com os DOIS bancos lendo
+    h = await sobe({ fluxos: ['chaves-56-api-v3.8', 'chaves-400-api-v3.7'], env: ENV_TESTE, servirHtml: true });   // o chip "PLC" so fica ok com os DOIS bancos lendo
     const e4 = enderecos('400'); h.plc.escrever(e4.comOk, true); h.plc.escrever(e4.seletora, true);
     h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); for (let i = 1; i <= 13; i++) h.plc.escrever(e.hab(i), true);
     tick(); timer = setInterval(tick, 100);

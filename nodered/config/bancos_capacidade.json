@@ -1,0 +1,17 @@
+{
+  "versao": "0.1",
+  "data": "19/11/2026",
+  "descricao": "Espelho versionado da capacidade dos bancos de carga e do limite de carga do gerador. A VERDADE do kW de cada chave e o setup.nominal[] no PLC do banco (DB3000/3100/3200/3300); este arquivo e o espelho que o Node-RED usa e que os testes conferem contra o medidor. Passo 5, C1: o Node-RED so REGISTRA quando o limite seria passado; nao recusa comando.",
+  "pctLim": 110,
+  "pctLim_nota": "Limite de seguranca = kw100 x pctLim / 100. 110 % e o padrao provisorio unico (igual a G.pctLim do medidor), valido ate haver parametrizacao por modelo de gerador (ISO 3046-1: 110 % por 1 h).",
+  "gerador": {
+    "kw100": null,
+    "kw100_nota": "kW a 100 % do gerador em ensaio. null = limite NAO avaliado (o backend ainda nao sabe qual gerador esta na bancada: o catalogo de modelos fica no medidor). Preencher aqui so numa campanha com gerador fixo; a fonte automatica (ensaio gravado no backend) e a decisao do C2."
+  },
+  "bancos": {
+    "56":  { "id_medidor": "56",   "db": 3000, "chaves_kw": [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 3] },
+    "400": { "id_medidor": "400",  "db": 3100, "chaves_kw": [5, 5, 10, 10, 10, 10, 50, 50, 50, 50, 50, 50, 50] },
+    "595": { "id_medidor": "59,5", "db": 3200, "chaves_kw": [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 3, 3, 2, 1, 0.5, 0.5, 0.5] },
+    "550": { "id_medidor": "550",  "db": 3300, "chaves_kw": [5, 5, 5, 5, 5, 25, 50, 50, 100, 100, 100, 100] }
+  }
+}
