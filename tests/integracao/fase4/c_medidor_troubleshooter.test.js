@@ -77,8 +77,12 @@ describe('C - medidor: triangulos, troubleshooter, legenda, Cards x flow, DSE-00
     const txt = await p.evaluate(() => window.OCOR.ativas().find(x => x.cod === 'DSE-001').txt);
     assert.match(txt, /API responde \(HTTP 503\).*Modbus do DSE n.o conecta.*retrying/s, txt);
     await p.evaluate(() => window.OCOR.abre());
-    await p.waitForSelector('#ocCorpo button.ocx');
-    await p.locator('#ocCorpo tr', { hasText: 'DSE' }).locator('button.ocx').first().click();
+    // 1.10.226 (ALARME_INTELIGENTE_v0.2): "DSE nunca conectado" e do tipo Informacao (I-DSE-001) e a janela NAO a mostra por padrao.
+    assert.equal(await p.evaluate(() => window.OCOR.ativas().find(x => x.cod === 'DSE-001').tipo), 'i', 'DSE-001 deveria ser Informacao');
+    assert.equal(await p.locator('#ocCorpo tr', { hasText: 'DSE-001' }).count(), 0, 'Informacao nao aparece por padrao');
+    await p.click('#ocTipos button[data-t="i"]');
+    await p.waitForSelector('#ocCorpo tr:has-text("I-DSE-001") button.ocx');
+    await p.locator('#ocCorpo tr', { hasText: 'DSE-001' }).locator('button.ocx').first().click();
     const painel = await p.evaluate(() => document.querySelector('#ocCorpo tr.oct').textContent.replace(/\s+/g, ' '));
     assert.ok(/Modbus do DSE: status retrying/.test(painel) && /Connection refused/.test(painel) && /IP FIXO/.test(painel), painel.slice(0, 300));
   });
