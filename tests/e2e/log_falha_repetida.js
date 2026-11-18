@@ -1,6 +1,6 @@
 // Medidor 1.10.225: falha de API repetida nao vira um evento por tentativa no log (DEV.OBS). Demo local, file://. Uso: node tests/e2e/log_falha_repetida.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.225.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.226.html');
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1280, height: 800 } })).newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());
