@@ -26,6 +26,7 @@ const OCOR=(function(){
     'CHV-003':{t:'m',card:'bco', txt:'Demo + PLC: as chaves comandam o PLC de verdade'},
     'CHV-004':{t:'m',card:'bco', txt:'Node-RED zerou as chaves (tela ausente)'},
     'CHV-005':{t:'f',card:'bco', txt:'Banco desligado/bloqueado pelo PLC (seletora em Manual ou sem comunicação com o ET200)'}, // v1.9.77
+    'CHV-009':{t:'m',card:'bco', txt:'Estado seguro NÃO confirmado: não consegui desligar/zerar no PLC'},   // v1.10.228 (Passo 5, B1)
     'CHV-007':{t:'f',card:'bco', txt:'Chave sem retorno (SB): o PLC derrubou o comando e travou a chave'},   // v1.10.168 (Fase 4, Portão A)
     'CHV-008':{t:'f',card:'bco', txt:'Contator colado: retorno ativo sem comando (chave bloqueada pelo PLC)'}, // v1.10.168
     'ENS-001':{t:'f',card:'reg', txt:'Dados do ensaio não gravados no PLC'},
@@ -63,6 +64,8 @@ const OCOR=(function(){
       {t:'Havia um DSE real respondendo enquanto o Demo estava ligado.',teste:'O gerador real está conectado?',sol:[['Desligue o Demo (botão Demo) para a tela voltar ao modo real.','tela']]}]},
     'CHV-001':{efeito:'Um comando de chave foi enviado e NÃO foi executado.',causas:[
       {t:'O PLC ou o Node-RED recusou ou não confirmou (veja o texto da ocorrência).',teste:'O texto da ocorrência traz o motivo (409, 503 ou 504). Tente ler o estado da chave antes de repetir.',sol:[['Releia o estado (a chave está no que você pediu?) e só então repita o comando.','tela'],['Se repetir, abra o Gerenciador de logs e veja a resposta do Node-RED.','pc']]}]},
+    'CHV-009':{efeito:'Ao trocar de modo (ou parar o gerador) a tela mandou desligar chaves e zerar a seleção no PLC, e o PLC/Node-RED NÃO confirmou. Algumas chaves podem continuar comandadas.',causas:[
+      {t:'Node-RED fora do ar, PLC sem leitura recente (503) ou comando recusado (veja o texto da ocorrência).',teste:'O chip "PLC" mostra "leitura ok"? As chaves do banco estão no estado que você espera?',sol:[['Confira na bancada quais chaves estão ligadas e desligue pelo painel local se precisar.','bancada'],['Resolva a falta de comunicação e repita a troca de modo: o alerta sai sozinho quando o desligamento do banco der certo por inteiro.','tela']]}]},
     'CHV-002':{efeito:'Comando bloqueado: o banco está sem leitura do PLC.',causas:[
       {t:'Sem leitura do PLC (veja COM-001 / CHV-006).',teste:'O chip "PLC" da tela mostra "leitura ok"?',sol:[['Resolva primeiro a falta de leitura (roteiro de COM-001).','pc']]}]},
     'CHV-004':{efeito:'O Node-RED zerou as chaves porque nenhuma tela consultou o PLC (vigia de segurança).',causas:[

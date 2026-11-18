@@ -180,15 +180,28 @@
      Fecha janelas, desmarca o Setup (e avisa o PLC), desliga as chaves locais e — se o PLC estava em uso — desliga no PLC todo cbLigar que a tela conhece.
      Entrando em modo com PLC, o desligamento é feito logo depois da PRIMEIRA leitura (só então se sabe o que está ligado). */
   const zerarPend={};
+  /* v1.10.228 (Passo 5, B1): a falha ao desligar/zerar no PLC NÃO fica mais só no CHV-001 (que some quando qualquer outro POST do mesmo banco dá certo).
+     Aqui se guarda o que NÃO foi confirmado por banco e se abre o Alerta CHV-009, que só sai quando um desligamento do mesmo banco der certo por inteiro.
+     Não bloqueia nada e não muda o comando enviado: só avisa o operador (a proteção real continua no PLC). */
+  function chAvisaZeroNaoConfirmado(tentou,falhas){
+    if(!window.OCOR)return;
+    tentou.forEach(bid=>{
+      if(falhas[bid])window.OCOR.set('bco','CHV-009','BC'+bid+': ao voltar ao estado seguro NÃO consegui desligar no PLC — '+falhas[bid].join('; ')+'. Confira na bancada e tente de novo.',{ref:'BC'+bid,ev:true});
+      else window.OCOR.limpa('bco','CHV-009','BC'+bid);
+    });
+  }
   async function chZeraPlc(selAntigo,soBid){
-    const bids=new Set();
+    const bids=new Set(),tentou=new Set(),falhas={};
+    const falhou=(bid,o,e)=>{(falhas[bid]=falhas[bid]||[]).push(o+(e&&e.message?' ('+e.message+')':''))};
     if(selAntigo!=null)bids.add(bidDeCh(selAntigo));
     if(CH_SELPLC!=null)bids.add(bidDeCh(CH_SELPLC));
-    for(const bid of bids){if(soBid&&bid!==soBid)continue;try{await chFetch('POST',rotaCh(bid,'selecionar'),{indice:0})}catch(e){}}
+    for(const bid of bids){if(soBid&&bid!==soBid)continue;tentou.add(bid);try{await chFetch('POST',rotaCh(bid,'selecionar'),{indice:0})}catch(e){falhou(bid,'seleção da chave não foi zerada',e)}}
     for(let q=0;q<CH.length;q++){
       if(!CH_CMD[q])continue;const bid=bidDeCh(q);if(soBid&&bid!==soBid)continue;
-      try{await chFetch('POST',rotaCh(bid,'ligar'),{indice:q-offsetBanco(CH[q].b)+1,ligar:false});CH_CMD[q]=false}catch(e){}
+      tentou.add(bid);
+      try{await chFetch('POST',rotaCh(bid,'ligar'),{indice:q-offsetBanco(CH[q].b)+1,ligar:false});CH_CMD[q]=false}catch(e){falhou(bid,nomeCh(q)+' continua comandada',e)}
     }
+    chAvisaZeroNaoConfirmado(tentou,falhas);
   }
   async function chZeraPendentes(){
     for(const b of BANCOS_PLC){if(!zerarPend[b.id]||!LINK.bancoOk(b.id))continue;delete zerarPend[b.id];await chZeraPlc(null,b.id)}
@@ -204,7 +217,7 @@
     for(const k in _ms)delete _ms[k];
     const st=$('stTxt');if(st)st.textContent='';
     if(o.serPlc&&!o.eraPlc)BANCOS.forEach(b=>{zerarPend[b.id]=true});else if(!o.serPlc)Object.keys(zerarPend).forEach(k=>delete zerarPend[k]);
-    if(o.eraPlc&&chBase()){try{await chZeraPlc(selAntigo)}catch(e){}}
+    if(o.eraPlc&&chBase()){try{await chZeraPlc(selAntigo)}catch(e){/* chZeraPlc já trata cada POST e abre o CHV-009; aqui só um erro inesperado de programação */}}
     else CH_CMD.fill(false);
     try{grade();resumo();renderTabs();live()}catch(e){}
     try{drawBanco(bancoDados(window.__ultimoDado||{}))}catch(e){}
@@ -325,7 +338,8 @@
       // v1.9.55: segurança — se o gerador parar (real ou demo) com uma chave selecionada no Setup, desmarca sozinho (evita travar os cliques)
       if(SEL!=null&&!genOn()){
         const selAntigo=SEL;SEL=null;liga(null);grade(); // v1.9.70: redesenha os quadrados (antes o azul SELECIONADA ficava)
-        if(chPlcAtivo())chFetch('POST',rotaCh(bidDeCh(selAntigo),'selecionar'),{indice:0}).catch(()=>{});
+        // v1.10.228: a falha já vira CHV-001 dentro de chFetch; aqui só se avisa no texto do Setup que o PLC não confirmou
+        if(chPlcAtivo())chFetch('POST',rotaCh(bidDeCh(selAntigo),'selecionar'),{indice:0}).catch(()=>{const s2=$('stTxt');if(s2)s2.textContent+=' O PLC NÃO confirmou a desmarcação (veja CHV-001).'});
         const st=$('stTxt');if(st)st.textContent='Chave '+nomeCh(selAntigo)+' desmarcada automaticamente (gerador parado).';
       }
       if(!genOn()&&BASE_OK){BASE=null;BASE_OK=false} // v1.9.70: gerador parado invalida o "kW sem carga" (valor velho não vale para a próxima calibração)
@@ -428,7 +442,8 @@
     const selAntigo=SEL;BASE=null;BASE_OK=false;
     if(selAntigo!=null){
       SEL=null;liga(null);
-      if(chPlcAtivo())chFetch('POST',rotaCh(bidDeCh(selAntigo),'selecionar'),{indice:0}).catch(()=>{});
+      // v1.10.228: a falha já vira CHV-001 dentro de chFetch; aqui só se avisa no texto do Setup que o PLC não confirmou
+      if(chPlcAtivo())chFetch('POST',rotaCh(bidDeCh(selAntigo),'selecionar'),{indice:0}).catch(()=>{const s2=$('stTxt');if(s2)s2.textContent+=' O PLC NÃO confirmou a desmarcação (veja CHV-001).'});
       const st=$('stTxt');if(st)st.textContent='Chave '+nomeCh(selAntigo)+' desmarcada: gerador parado (STOP).';
     }
     try{grade();live()}catch(e){}

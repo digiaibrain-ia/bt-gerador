@@ -1,4 +1,7 @@
 const HISTORICO=[
+  {v:"1.10.228",d:"18/11/2026",i:[
+    'Passo 5 da auditoria (B1): ao voltar ao estado seguro (troca de modo) a tela agora AVISA quando o PLC/Node-RED não confirma o desligamento das chaves ou o zerar da seleção. Novo Alerta CHV-009 por banco, que só sai quando o desligamento do mesmo banco der certo por inteiro (o CHV-001 saía com qualquer outro comando bem-sucedido). Nos desmarcados automáticos do Setup (gerador parado/STOP) o texto passa a dizer que o PLC não confirmou. Nenhum comando mudou, nada é bloqueado e o PLC não é tocado.'
+  ]},
   {v:"1.10.227",d:"18/11/2026",i:[
     'Código-fonte modular (Passo 3 da auditoria, aprovado pelo Reginaldo): o medidor passa a ser MONTADO por dashboard/build/build.js a partir de dashboard/src/ (esqueleto index.html + 9 arquivos de estilo + 40 módulos de script por assunto + os demais módulos). Nenhuma regra, tela ou rota mudou: o HTML remontado com a versão 1.10.226 tem o mesmo SHA-256 do arquivo da 1.10.226 (prova em docs/bt2/auditoria/PASSO_3_BUILD_MODULAR_v0.1.md). Só mudam o número da versão e este item do histórico.'
   ]},
