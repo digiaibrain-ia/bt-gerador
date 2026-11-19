@@ -9,7 +9,7 @@ const assert = require('node:assert/strict');
 const { ENV_TESTE, BANCOS, enderecos, esperaAte, get, post, sobe } = require('../ajudas.js');
 const { parseAddr } = require('../plc_simulado.js');
 
-const ULTIMA = { 56: 'v3.8', 400: 'v3.7' };   // A3 (18/11/2026): padrao = a versao mais nova de cada banco (BT2_FASE4_VERSAO forca outra, p.ex. para a contra-prova)
+const ULTIMA = { 56: 'v3.9', 400: 'v3.8' };   // A3 (18/11/2026): padrao = a versao mais nova de cada banco (BT2_FASE4_VERSAO forca outra, p.ex. para a contra-prova)
 for (const id of ['56', '400']) {
   const VERSAO = process.env.BT2_FASE4_VERSAO || ULTIMA[id];
   describe('A2 - chaves-' + id + '-api-' + VERSAO, () => {

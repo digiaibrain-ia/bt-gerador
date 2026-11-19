@@ -347,6 +347,24 @@
   window.PATAMAR_GUIADO_ON=()=>!!G.guiadoOn&&mae.armada;
   /* v1.10.229 (Passo 5, B3): se desarmar a "mãe" falhar, o Patamar pode continuar armado e voltar a comandar chaves. Antes o erro era engolido; agora vai para o log de desenvolvimento (DEV.OBS) como erro. */
   const maeFalhaDesarmar=x=>{try{if(window.devObs)window.devObs.log('bco','sistema','Patamar: falha ao DESARMAR a mãe (ela pode continuar armada) — '+(x&&x.message?x.message:x),'erro')}catch(y){/* o próprio log é opcional */}};
+  /* v1.10.230 (Passo 5, C2): INFORMA o kW a 100 % do gerador ao Node-RED (POST /api/gerador/capacidade) para o limite de capacidade do backend.
+     Só com o Node-RED em uso (real ou Demo+PLC) e kW válido; reenvia a cada 60 s (o backend deixa de usar o valor se ficar 180 s sem aviso) e na hora que o kW muda.
+     Não comanda nada e não depende da resposta: se a rota não existir (fluxo ainda não importado) só vai para o log de desenvolvimento, uma vez. */
+  (function(){
+    let ult=0,ultKw=0,avisou=false;
+    const envia=()=>{
+      try{
+        const C=window.CH_SRV,kw=+G.kw100;
+        if(!(C&&C.fonte==='nodered')||typeof srvBase!=='function'||!srvBase()||!(kw>0))return;
+        if(kw===ultKw&&Date.now()-ult<60000)return;
+        ult=Date.now();ultKw=kw;
+        fetch(srvBase()+'/api/gerador/capacidade',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kw100:kw,modelo:String(G.modelo||'').slice(0,80)})})
+          .then(r=>{if(r.ok)avisou=false;else throw new Error('HTTP '+r.status)})
+          .catch(e=>{if(!avisou){avisou=true;try{if(window.devObs)window.devObs.log('bco','sistema','Capacidade: não consegui informar o kW a 100 % ao Node-RED ('+(e&&e.message?e.message:e)+')','aviso')}catch(x){/* o log é opcional */}}});
+      }catch(e){/* ignorado: informar o kW ao backend é opcional; a tela continua com o próprio limite */}
+    };
+    setInterval(envia,5000);window.__enviaKw100=envia;
+  })();
   window.PATAMAR_ENSAIO_GRAVADO=()=>{try{mae.desarma('ensaio gravado')}catch(x){maeFalhaDesarmar(x)}limpaManual();G.plano=null;G.msg='';G.pat=-1;previaEt=null;APL_ET=-1;salva();atualizaBtnRodar();desenha()};   // v1.10.195: gravar o ensaio devolve o card Patamar ao inicial (sem patamar escolhido); o liga/desliga fica como o operador deixou
   window.PATAMAR_GUIADO_PARA=m=>{try{mae.desarma(m||'ensaio parado')}catch(x){maeFalhaDesarmar(x)}limpaManual();G.plano=null;G.msg='';atualizaBtnRodar();desenha()};   // v1.10.103: PARAR ENSAIO restabelece o Patamar (o liga/desliga continua como o operador deixou: religa sozinho no próximo ensaio)   // v1.10.2: o simulador consulta isto para não escolher chaves por conta própria
   /* ---- catálogo: agora é o módulo CATDSE (acima), compartilhado com "Dados do ensaio" ---- */

@@ -67,7 +67,7 @@ describe('C1 estatico: o arquivo de capacidade e os fluxos novos', () => {
       assert.deepEqual(limite.wires[0], poA[a.find(x => x.name === 'valida ligar').id].wires[0], 'o no de limite deve seguir para o mesmo destino de antes');
       assert.deepEqual(vl.wires[1], poA[vl.id].wires[1], 'a saida de erro de "valida ligar" nao pode mudar');
       const pad = JSON.parse(/const PADRAO = (\{.*?\});\n/s.exec(limite.func)[1]);
-      assert.deepEqual(pad, cfg, 'o padrao embutido deve ser igual ao arquivo');
+      assert.deepEqual({ pctLim: pad.pctLim, kw100: pad.gerador.kw100, bancos: pad.bancos }, { pctLim: cfg.pctLim, kw100: cfg.gerador.kw100, bancos: cfg.bancos }, 'o padrao embutido deve bater com o arquivo (pctLim, kw100 e bancos)');   // C2 acrescentou campos ao arquivo; o C1 so usa estes
       assert.equal(limite.outputs, 1);
     });
   }

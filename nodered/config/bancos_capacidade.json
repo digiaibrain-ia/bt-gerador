@@ -1,12 +1,23 @@
 {
-  "versao": "0.1",
+  "versao": "0.2",
   "data": "19/11/2026",
-  "descricao": "Espelho versionado da capacidade dos bancos de carga e do limite de carga do gerador. A VERDADE do kW de cada chave e o setup.nominal[] no PLC do banco (DB3000/3100/3200/3300); este arquivo e o espelho que o Node-RED usa e que os testes conferem contra o medidor. Passo 5, C1: o Node-RED so REGISTRA quando o limite seria passado; nao recusa comando.",
+  "descricao": "Espelho versionado da capacidade dos bancos de carga e do limite de carga do gerador. A VERDADE do kW de cada chave e o setup.nominal[] no PLC do banco (DB3000/3100/3200/3300); este arquivo e o espelho que o Node-RED usa e que os testes conferem contra o medidor. Passo 5: C1 (registrar) e C2 (recusar, so quando modo = recusar).",
+  "modo": "registrar",
+  "modo_nota": "registrar = so anota no log (C1). recusar = o Node-RED recusa com HTTP 409 o comando de LIGAR chave que passaria do limite (C2). Padrao: registrar. So mudar para recusar depois de validar na bancada com carga desacoplada e com OK do Reginaldo. Desligar NUNCA e recusado.",
   "pctLim": 110,
   "pctLim_nota": "Limite de seguranca = kw100 x pctLim / 100. 110 % e o padrao provisorio unico (igual a G.pctLim do medidor), valido ate haver parametrizacao por modelo de gerador (ISO 3046-1: 110 % por 1 h).",
   "gerador": {
     "kw100": null,
-    "kw100_nota": "kW a 100 % do gerador em ensaio. null = limite NAO avaliado (o backend ainda nao sabe qual gerador esta na bancada: o catalogo de modelos fica no medidor). Preencher aqui so numa campanha com gerador fixo; a fonte automatica (ensaio gravado no backend) e a decisao do C2."
+    "kw100_nota": "kW a 100 % do gerador em ensaio. Se preenchido aqui, VALE ESTE (campanha com gerador fixo). null = o Node-RED usa o valor que o medidor informa em POST /api/gerador/capacidade (se recente); sem nenhum dos dois o limite NAO e avaliado (nunca recusa).",
+    "kw100_max": 1000,
+    "kw100_max_nota": "Teto aceito para o valor informado pelo medidor (protege contra valor absurdo). Acima disso a rota responde 400.",
+    "validade_s": 180,
+    "validade_s_nota": "Tempo em que o valor informado pelo medidor continua valendo sem novo aviso (o medidor reenvia a cada minuto). Vencido = limite NAO avaliado."
+  },
+  "degrau": {
+    "max_kw": null,
+    "max_kw_nota": "Teto de carga NOVA (kW) que pode ser ligada dentro de janela_s segundos (soma das chaves ligadas na janela). null = degrau nao avaliado. Valor a confirmar pela Engenharia (BK-AUD-10): nao ha valor normativo adotado.",
+    "janela_s": 10
   },
   "bancos": {
     "56":  { "id_medidor": "56",   "db": 3000, "chaves_kw": [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 3] },

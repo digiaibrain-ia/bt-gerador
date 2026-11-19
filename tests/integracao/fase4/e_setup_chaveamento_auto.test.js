@@ -14,7 +14,7 @@ describe('Setup: chaveamento vindo dos Dados do ensaio', () => {
   const tens = () => h.plc.ler(e.tensaoSel);
   const dados = (v, conf = true) => p.evaluate(([v, conf]) => { DADOS.tensao = v; dadosConfMarca(conf); }, [v, conf]);
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.8', 'chaves-400-api-v3.7'], env: ENV_TESTE, servirHtml: true });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.9', 'chaves-400-api-v3.8'], env: ENV_TESTE, servirHtml: true });
     for (const x of [e, e4]) { h.plc.escrever(x.comOk, true); h.plc.escrever(x.seletora, true); }
     b = await chromium.launch(); p = await b.newPage({ viewport: { width: 1400, height: 900 } });
     p.on('pageerror', x => { throw new Error('erro de JavaScript na pagina: ' + x.message); });

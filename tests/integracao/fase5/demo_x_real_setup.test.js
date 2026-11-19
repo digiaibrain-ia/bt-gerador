@@ -15,7 +15,7 @@ describe('Fase 5 - Setup no modo REAL (simulado) x Demo', () => {
   let h, e, b, p;
   const txt = s => p.evaluate(x => { const el = document.querySelector(x); return el ? el.textContent.replace(/\s+/g, ' ').trim() : null; }, s);
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.8', 'simulador-dse-demo-v7', 'registro-ensaio-db2100-api-v1.10'], env: ENV_TESTE, envAbas: { BT2_BANCADA: '1' }, servirHtml: true });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.9', 'simulador-dse-demo-v7', 'registro-ensaio-db2100-api-v1.10'], env: ENV_TESTE, envAbas: { BT2_BANCADA: '1' }, servirHtml: true });
     e = enderecos('56');
     await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 5000);
     h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); h.plc.escrever(e.cbBanco, true);

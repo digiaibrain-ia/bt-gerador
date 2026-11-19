@@ -1,4 +1,7 @@
 const HISTORICO=[
+  {v:"1.10.230",d:"19/11/2026",i:[
+    'Passo 5 da auditoria (C2): o medidor passa a INFORMAR o kW a 100 % do gerador ao Node-RED (POST /api/gerador/capacidade, a cada 60 s e quando o kW muda; só com o Node-RED em uso). É o valor que o limite de capacidade do backend usa quando o arquivo de capacidade não define o kW. Nada muda para o operador: a tela continua com o próprio limite, e se a rota ainda não existir o aviso vai só para o log de desenvolvimento.'
+  ]},
   {v:"1.10.229",d:"19/11/2026",i:[
     'Passo 5 da auditoria (B3/B4): revisados todos os catch vazios da tela (283). 264 inofensivos (guardar preferência no navegador, fechar popover já fechado, redesenho opcional...) ganharam um comentário com o motivo dentro do bloco; um teste novo (tests/catch_vazio.test.js) barra qualquer catch vazio sem motivo. Dois deixaram de engolir erro: (1) se o motor de alarmes (varre) falhar, aparece SIS-001 Erro interno da tela, em vez de os alarmes pararem de atualizar em silêncio; (2) se desarmar a mãe do Patamar falhar (ela poderia continuar armada), o erro vai para o log de desenvolvimento. Nenhum comando mudou e nada é bloqueado.'
   ]},

@@ -29,7 +29,7 @@ describe('Passo 5 B1/B2: zerar o PLC com falha avisa (CHV-009) e só normaliza q
   };
 
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.8', 'chaves-400-api-v3.7', 'registro-ensaio-db2100-api-v1.10'], env: ENV_TESTE, servirHtml: true });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.9', 'chaves-400-api-v3.8', 'registro-ensaio-db2100-api-v1.10'], env: ENV_TESTE, servirHtml: true });
     const e56 = enderecos('56'), e400 = enderecos('400');
     for (const e of [e56, e400]) { h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); }
     b = await chromium.launch(); p = await b.newPage({ viewport: { width: 1280, height: 900 } });
