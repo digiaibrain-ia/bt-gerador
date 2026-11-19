@@ -40,4 +40,5 @@ __pycache__/
 
 # relatorios de mutacao e pasta temporaria do Stryker
 tests/mutacao/relatorios/
+tests/mutacao/alvos/
 .stryker-tmp/

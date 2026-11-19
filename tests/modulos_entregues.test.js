@@ -46,10 +46,18 @@ test('os modulos usados direto pelo build (perfil de combustivel e decodificador
   for (const m of ['fb_perfil_combustivel_v0.1.js', 'decodifica_serie_mwm_v0.3.js']) assert.ok(esq.includes('../modulos-fonte/' + m), m + ' deixou de ser usado pelo build direto de modulos-fonte');
 });
 
+test('o nucleo do RNC (rnc_core_v1.2.js) esta colado SEM alteracao nos nos do fluxo rnc-api-v1.2 que o usam', () => {
+  const core = semComentarios(ler('nodered/gerador/rnc/rnc_core_v1.2.js')).replace(/module\.exports=\{[^}]*\};?$/, '');
+  assert.ok(core.length > 3000, 'nucleo vazio?');
+  const nos = JSON.parse(ler('nodered/flows/rnc-api-v1.2.json')).filter(n => n.type === 'function' && /SCHEMA_VERSION/.test(n.func || ''));
+  assert.ok(nos.length >= 2, 'esperava os nos que carregam o nucleo (atende as rotas e copia do jsonl)');
+  for (const n of nos) assert.ok(semComentarios(n.func).includes(core), 'o no "' + n.name + '" nao tem o nucleo identico ao rnc_core_v1.2.js');
+});
+
 test('os testes de propriedades e de mutacao apontam para os mesmos arquivos (sem versao antiga por engano)', () => {
   const t = {
     'tests/propriedades/rodizio_chaves.prop.test.js': 'rodizio_chaves_v0.6.js', 'tests/propriedades/fbs_virtuais.prop.test.js': 'fbs_virtuais_v0.14.js',
-    'tests/propriedades/perfil_combustivel.prop.test.js': 'fb_perfil_combustivel_v0.1.js', 'tests/propriedades/decodifica_serie_mwm.prop.test.js': 'decodifica_serie_mwm_v0.3.js',
+    'tests/propriedades/perfil_combustivel.prop.test.js': 'fb_perfil_combustivel_v0.1.js', 'tests/propriedades/decodifica_serie_mwm.prop.test.js': 'decodifica_serie_mwm_v0.3.js', 'tests/propriedades/rnc_core_v1.2.prop.test.js': 'rnc_core_v1.2.js',
   };
   for (const [teste, modulo] of Object.entries(t)) assert.ok(ler(teste).includes(modulo), teste + ' deveria usar ' + modulo);
 });

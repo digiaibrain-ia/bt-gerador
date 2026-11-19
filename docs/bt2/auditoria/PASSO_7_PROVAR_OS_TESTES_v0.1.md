@@ -44,3 +44,17 @@ npm --prefix tests/mutacao ci && node tests/mutacao/rodar_mutacao.js [perfil|ser
 
 ## Segunda opinião independente
 O quarto item da passagem ("pedir uma segunda opinião independente") **não pode ser feito por mim**: é a mesma IA. Preparei o que um revisor humano ou outra IA precisa: `docs/bt2/auditoria/PROMESSAS_DOS_MODULOS_v0.1.md` (o que cada módulo promete, onde está provado e o que não está).
+
+## Passo 7b: a mesma prova em mais dois módulos (19/11/2026)
+
+| Módulo | Teste novo | Mutação antes → depois |
+|---|---|---|
+| Núcleo do RNC (`nodered/gerador/rnc/rnc_core_v1.2.js`) | `tests/propriedades/rnc_core_v1.2.prop.test.js` (14 testes: máquina de estados, idempotência 200/409, revisão, transição 422, numeração por ano, limites) | 88,4 % → **99,1 %** (3 sobreviventes equivalentes) |
+| Nó "limite de capacidade e degrau (C2)" do fluxo `chaves-56-api-v3.9` | `tests/propriedades/capacidade_c2.prop.test.js` (o código REAL do nó roda em `vm`; comparado com um oráculo escrito à parte; 16 testes) | 66,9 % → **92,9 %** (19 sobreviventes, todos equivalentes, ver abaixo) |
+
+- Regras provadas no C2: só recusa em modo `recusar` e só com kW a 100 % conhecido (arquivo > medidor dentro da validade de 180 s); desligar nunca é recusado; modo `registrar` nunca recusa; soma entre bancos só com leitura de até 5 s; qualquer erro interno deixa o comando seguir (fail-open); logs limitados (2 s recusa, 10 s registro, 10 min divergência, 1 h aviso "kW desconhecido", máx. 1000 registros); degrau só conta comandos que seguiram, máx. 200.
+- Guarda de embutimento (`tests/modulos_entregues.test.js`): o núcleo do RNC colado nos 2 nós do fluxo `rnc-api-v1.2` é idêntico ao arquivo testado.
+- Nenhum bug de produção encontrado; o ganho foi de cobertura de prova.
+- Sobreviventes do C2, por classificação: 12 são o objeto `PADRAO` embutido (só vale sem arquivo de capacidade carregado; o aviso "Total comandado 0 kW" é testado), 1 fallback `[]` do `norm` (a chave de fora do vetor nunca é número), 1 fallback `[]` do histórico (`undefined` já é filtrado), `>=` contra `> + 1e-9` no limite e no degrau (equivalentes por causa da tolerância e do arredondamento a 3 casas) e `typeof esp` (com `esp` indefinido a comparação já dá falso).
+- Como rodar: `node tests/mutacao/rodar_mutacao.js rnc` ou `cap` (o `cap` gera `tests/mutacao/alvos/cap_c2.js` a partir do fluxo; a pasta `alvos/` não vai para o Git).
+- Fora do escopo por não valerem a prova: `dados_ensaio_ns_v0.2` (depende de DOM, só e2e) e `calculos_setup_v0.1` (não entregue).
