@@ -1,4 +1,7 @@
 const HISTORICO=[
+  {v:"1.10.231",d:"19/11/2026",i:[
+    'Passo 6 da auditoria: DEBOUNCE E HISTERESE de alarmes por criticidade (pedido do Reginaldo, que decidiu por critério técnico). As ocorrências de comunicação/disponibilidade (COM-001, COM-002, COM-003, COM-005, DSE-001, DSE-002, CHV-005, CHV-006) só aparecem se a causa durar 10 s e, depois de ativas, só normalizam depois de 5 s normais; uma causa que some antes nunca aparece (45 de 88 ciclos da bancada de 17/11 duraram menos de 10 s). NUNCA se atrasam: chave sem retorno e contator colado (CHV-007/008), comando não executado (CHV-001), Node-RED zerou as chaves (CHV-004), estado seguro não confirmado (CHV-009), comando bloqueado (CHV-002), dados do ensaio (ENS-001/002/003), erro interno (SIS-001) e os alarmes e proteções do DSE. Os tempos são ASSUMIDOS: a Engenharia confirma por categoria. window.OCOR_DEBOUNCE_ESCALA = 0 desliga (só diagnóstico).'
+  ]},
   {v:"1.10.230",d:"19/11/2026",i:[
     'Passo 5 da auditoria (C2): o medidor passa a INFORMAR o kW a 100 % do gerador ao Node-RED (POST /api/gerador/capacidade, a cada 60 s e quando o kW muda; só com o Node-RED em uso). É o valor que o limite de capacidade do backend usa quando o arquivo de capacidade não define o kW. Nada muda para o operador: a tela continua com o próprio limite, e se a rota ainda não existir o aviso vai só para o log de desenvolvimento.'
   ]},

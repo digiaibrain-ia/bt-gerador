@@ -33,3 +33,7 @@ Thumbs.db
 
 # Testes de integracao (Fase 1): instalacao local do Node-RED de teste (nunca vai ao Git)
 tests/integracao/runtime/
+
+# Cache do Python
+__pycache__/
+*.pyc

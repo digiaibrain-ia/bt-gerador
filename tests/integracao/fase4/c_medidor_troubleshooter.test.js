@@ -104,7 +104,7 @@ describe('C7 - medidor com o PLC do banco (ET200) sem comunicacao', () => {
 
   test('ET200 sem comunicacao: COM-005 ativa, o banco fica bloqueado e o clique NAO comanda o PLC (com mensagem)', async () => {
     h.plc.escrever(e.comOk, false);
-    assert.ok(await esperaAte(() => p.evaluate(() => window.OCOR.ativas().some(x => x.cod === 'COM-005' && x.ref === 'BC56')), 8000), 'COM-005 nao apareceu');
+    assert.ok(await esperaAte(() => p.evaluate(() => window.OCOR.ativas().some(x => x.cod === 'COM-005' && x.ref === 'BC56')), 20000), 'COM-005 nao apareceu (debounce de 10 s, Passo 6)');
     const antes = h.plc.escritas.length;
     await p.locator('#bancos .tile[data-i="0"]').click();
     assert.ok(await esperaAte(async () => (await p.evaluate(() => document.querySelector('#gmsg').textContent)).length > 0, 3000), 'clique mudo: sem mensagem');

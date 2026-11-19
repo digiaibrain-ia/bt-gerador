@@ -8,7 +8,7 @@ const ativos = p => p.evaluate(() => OCOR.ativas().map(o => o.cod + (o.ref ? '|'
   const b = await chromium.launch();
   for (const [nome, vp, mobile] of [['desktop 1280', { width: 1280, height: 800 }, false], ['celular 390', { width: 390, height: 844 }, true]]) {
     console.log('\n## ' + nome);
-    const nova = async (queda) => { const ctx = await b.newContext({ viewport: vp, isMobile: mobile, hasTouch: mobile }); const p = await ctx.newPage(); p.erros = []; p.on('pageerror', e => p.erros.push(e.message));
+    const nova = async (queda) => { const ctx = await b.newContext({ viewport: vp, isMobile: mobile, hasTouch: mobile }); const p = await ctx.newPage(); await p.addInitScript(() => { window.OCOR_DEBOUNCE_ESCALA = 0; }); p.erros = []; p.on('pageerror', e => p.erros.push(e.message));
       const resp = r => queda ? r.abort() : r.fulfill({ status: 503, body: '{}' }); await p.route('**/*/api/**', resp); await p.route('**/api/**', resp); await p.goto('file://' + ARQ); return { ctx, p }; };
     // 1) Demo local: sem alarme de PLC
     { const { ctx, p } = await nova(); await p.waitForTimeout(1500);

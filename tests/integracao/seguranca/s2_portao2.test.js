@@ -8,7 +8,7 @@ const { ENV_TESTE, esperaAte, get, post, sobe } = require('../ajudas.js');
 
 const PASTA = path.join(__dirname, '..', '..', '..', 'nodered', 'flows', 'bt2');
 const { caminhoFluxo } = require('../../versoes.js');   // A3: pasta ativa e depois tests/fixtures/fluxos
-const NOVOS = ['chaves-56-api-v3.1', 'chaves-400-api-v3.1', 'chaves-550-api-v1.2', 'chaves-595-api-v1.2', 'cliente-156-dse-plc-carga-v3', 'cliente-31-seletor-plc-db2000-v4', 'registro-ensaio-db2100-api-v1.6', 'simulador-dse-demo-v6', 'servidor-deepsea-api-gerador-v3_7'];
+const NOVOS = ['chaves-56-api-v3.1', 'chaves-400-api-v3.1', 'chaves-550-api-v1.2', 'chaves-595-api-v1.2', 'cliente-156-dse-plc-carga-v3', 'cliente-31-seletor-plc-db2000-v4', 'registro-ensaio-db2100-api-v1.6', 'simulador-dse-demo-v6', 'servidor-deepsea-api-gerador-v3_8'];
 const lerFluxo = n => JSON.parse(fs.readFileSync(caminhoFluxo(n), 'utf8'));
 
 describe('S2 Portao 2 - fluxos sem enderecos fixos', () => {

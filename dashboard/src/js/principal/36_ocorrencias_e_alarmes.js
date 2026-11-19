@@ -149,7 +149,7 @@ const OCOR=(function(){
 
   /* ---- API ---- */
   // Liga (ou atualiza) uma ocorrência. opc: {ref:'BC56' (separa a mesma falha em bancos diferentes), tipo:'f'|'m'|'falha'|'msg', ev:true (evento: soma "vezes" a cada chamada), expira:ms (normaliza sozinha se não for renovada)}
-  function set(card,cod,texto,opc){
+  function setImediato(card,cod,texto,opc){
     opc=opc||{};
     if((cod==='CHV-005'||cod==='CHV-006')&&opc.ref&&window.BANCOS_VISIVEIS&&window.BANCOS_VISIVEIS.silencia&&window.BANCOS_VISIVEIS.silencia(String(opc.ref).replace(/^BC/,'')))return;   /* v1.10.224: ruido de banco fora do teste */
     const k=cod+'|'+(opc.ref||''),agora=Date.now(),cat=CAT[cod]||{};
@@ -167,9 +167,46 @@ const OCOR=(function(){
     }
     return o;
   }
-  function limpa(card,cod,ref){ // causa sumiu → "Normalizou"
+  function limpaImediato(card,cod,ref){ // causa sumiu → "Normalizou"
     const o=L.get(cod+'|'+(ref||''));
     if(o&&o.ativa){o.ativa=false;o.fim=Date.now();ver++;hReg('normalizou',o)}
+  }
+  /* ===== v1.10.231 (Passo 6): DEBOUNCE E HISTERESE DE ALARMES POR CRITICIDADE =====
+     PARA QUE SERVE (leigo): no log da bancada de 17/11, 45 de 88 ciclos "ativou → normalizou" duraram menos de 10 s (sobretudo na troca de modo): o operador via alarmes piscando.
+     Agora, para as ocorrências de COMUNICAÇÃO e DISPONIBILIDADE, a causa precisa durar 10 s antes de virar ocorrência (debounce) e, depois de ativa, precisa ficar 5 s
+     normal antes de "normalizar" (histerese). Uma causa que some antes dos 10 s nunca aparece (só conta em OCOR.fugazes()).
+     NUNCA SE ATRASA (tempo real, fora das tabelas abaixo): chave sem retorno e contator colado (CHV-007/008), comando não executado (CHV-001), Node-RED zerou as chaves (CHV-004),
+     estado seguro não confirmado (CHV-009), comando bloqueado (CHV-002), dados do ensaio não gravados (ENS-001/002/003), erro interno (SIS-001) e os alarmes/proteções do DSE.
+     COMO FUNCIONA (técnico): set()/limpa() públicos viram porteiros de setImediato()/limpaImediato(). Causa nova de código com debounce fica em PEND até durar o tempo;
+     limpa() antes disso cancela (fugaz). Causa ativa que "some" fica em SAIDA até durar o tempo da histerese; se voltar, cancela a saída. promove() roda 1x/s no varre().
+     OCOR_DEBOUNCE_ESCALA (window): 1 = padrão; 0 = tudo imediato (só para teste/diagnóstico). Os tempos são ASSUMIDOS (10 s / 5 s): a Engenharia confirma por categoria. */
+  const DEB_S={'COM-001':10,'COM-002':10,'COM-003':10,'COM-005':10,'DSE-001':10,'DSE-002':10,'CHV-005':10,'CHV-006':10};
+  const HIS_S={'COM-001':5,'COM-002':5,'COM-003':5,'COM-005':5,'DSE-001':5,'DSE-002':5,'CHV-005':5,'CHV-006':5};
+  const ESC=()=>{const e=window.OCOR_DEBOUNCE_ESCALA;return typeof e==='number'&&e>=0?e:1};
+  const PEND=new Map(),SAIDA=new Map();let FUG=0;
+  const ativaK=k=>{const o=L.get(k);return !!(o&&o.ativa)};
+  function set(card,cod,texto,opc){
+    opc=opc||{};
+    const s=(DEB_S[cod]||0)*ESC();
+    if(!(s>0))return setImediato(card,cod,texto,opc);
+    const k=cod+'|'+(opc.ref||'');
+    SAIDA.delete(k);                                  // a causa voltou: cancela a saída pendente
+    if(ativaK(k))return setImediato(card,cod,texto,opc);
+    const p=PEND.get(k);
+    if(!p)PEND.set(k,{a:[card,cod,texto,opc],ini:Date.now()});else p.a=[card,cod,texto,opc];   // ainda esperando: só atualiza o texto
+    return null;
+  }
+  function limpa(card,cod,ref){
+    const k=cod+'|'+(ref||'');
+    if(PEND.delete(k))FUG++;                          // sumiu antes de durar o tempo: fugaz, nunca virou ocorrência
+    const h=(HIS_S[cod]||0)*ESC();
+    if(h>0&&ativaK(k)){if(!SAIDA.has(k))SAIDA.set(k,{a:[card,cod,ref],ini:Date.now()});return}
+    limpaImediato(card,cod,ref);
+  }
+  function promove(){
+    const agora=Date.now();
+    PEND.forEach((p,k)=>{if(agora-p.ini>=(DEB_S[p.a[1]]||0)*ESC()*1000){PEND.delete(k);setImediato(p.a[0],p.a[1],p.a[2],p.a[3])}});
+    SAIDA.forEach((s,k)=>{if(agora-s.ini>=(HIS_S[s.a[1]]||0)*ESC()*1000){SAIDA.delete(k);limpaImediato(s.a[0],s.a[1],s.a[2])}});
   }
   function apara(){ // mantém no máx. MAX linhas: descarta as normalizadas mais antigas
     if(L.size<=MAX)return;
@@ -194,6 +231,7 @@ const OCOR=(function(){
 
   /* ---- varredura de estado (1x por segundo) ---- */
   function varre(){
+    promove();                                         // v1.10.231: debounce/histerese (PEND e SAIDA) a cada segundo
     const agora=Date.now(),demo=!!($('demo')&&$('demo').checked),gr=agora-T0>GRACA;
     const C=window.CH_SRV,srv=!!(C&&C.fonte==='nodered'&&(C.url||'').trim()!==''); // chaves no Node-RED real?
     const liga=(cond,cod,txt,ref,tipo)=>{if(cond)set(null,cod,txt,tipo?{ref,tipo}:{ref});else limpa(null,cod,ref)};
@@ -390,6 +428,6 @@ const OCOR=(function(){
     try{varre()}catch(x){sis(x&&x.message?x.message:x)}desenhaCards();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-  return{set,limpa,ativas,lista,abre,abreH,historico:()=>H.slice(),CAT,CARDS,diag:textoDiag};
+  return{set,limpa,ativas,lista,abre,abreH,historico:()=>H.slice(),CAT,CARDS,diag:textoDiag,fugazes:()=>FUG,pendentes:()=>PEND.size,debounce:{DEB_S,HIS_S}};
 })();
 window.OCOR=OCOR;
