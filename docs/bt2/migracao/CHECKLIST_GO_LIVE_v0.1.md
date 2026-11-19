@@ -1,17 +1,17 @@
 # Checklist de entrada em produção · medidor 1.10.231 + pacote v1.28 · 19/11/2026
 
-Para o Reginaldo e a TI. **Eu não implanto nada**: nada foi importado no PC BT2, no PLC ou no DSE. Marcar cada item com data e quem fez. Detalhe passo a passo da implantação: `IMPLANTACAO_C2_PASSO6_CHECKLIST_v0.1.md` (e o do C1). Estado dos testes: unitários e propriedades verdes, integração 247 + 3 `todo`, e2e 24 de 25.
+Para o Reginaldo (que faz a implantação e a bancada). **Eu não implanto nada**: nada foi importado no PC BT2, no PLC ou no DSE. Marcar cada item com data e quem fez. Detalhe passo a passo da implantação: `IMPLANTACAO_C2_PASSO6_CHECKLIST_v0.1.md` (e o do C1). Estado dos testes: unitários e propriedades verdes, integração 247 + 3 `todo`, e2e 24 de 25.
 
 ## A. Bloqueadores (não entrar em produção sem fechar)
 | # | Item | Quem | Status |
 |---|---|---|---|
-| A1 | Backup do PC BT2 (fluxos, `bancos_capacidade.json`, `public\html`, medidor anterior) e plano de retorno testado | TI | [ ] |
-| A2 | Bancada com **carga desacoplada**: PLC/ET200 reais, compilação no TIA, tempos de leitura, ligar/desligar por banco | Engenharia | [ ] |
-| A3 | Implantar o pacote v1.28 **em modo `registrar`** (padrão), uma aba por vez, conferindo o log e `GET /api/chaves/<banco>` | TI | [ ] |
-| A3b | **Opcional (fecha o F2-1):** copiar `nodered/config/bt2_json_invalido_400_v0.1.js` para a pasta do `settings.js`, acrescentar `httpNodeMiddleware: require('./bt2_json_invalido_400_v0.1.js'),`, reiniciar e testar: corpo `{abc` em `/api/chaves/56/habilitar` deve dar 400 `{"ok":false,"erro":"corpo JSON invalido"}`. Retorno: tirar a linha. Sem isso, o erro de corpo ruim continua 500 (sem efeito de segurança) | TI | [ ] |
-| A4 | Alarmes novos na bancada: comunicação aparece até 10 s depois e sai até 5 s depois; segurança é imediato (COM-001/002/003/005, DSE-001/002, CHV-005/006 contra CHV-007/008, CHV-001/004/009) | Engenharia | [ ] |
-| A5 | Conferir o catálogo de kW a 100 % do gerador em ensaio e o 110 % (decisão: ficam como padrão) | Engenharia | [ ] |
-| A6 | Valores do perfil de combustível contra o datasheet do MWM: 25 % / 10 s (gás), 20 % / 15 s (biometano). Mudar só por revisão explícita | Engenharia | [ ] |
+| A1 | Backup do PC BT2 (fluxos, `bancos_capacidade.json`, `public\html`, medidor anterior) e plano de retorno testado | Reginaldo | [ ] |
+| A2 | Bancada com **carga desacoplada**: PLC/ET200 reais, compilação no TIA, tempos de leitura, ligar/desligar por banco | Reginaldo | [ ] |
+| A3 | Implantar o pacote v1.28 **em modo `registrar`** (padrão), uma aba por vez, conferindo o log e `GET /api/chaves/<banco>` | Reginaldo | [ ] |
+| A3b | **Opcional (fecha o F2-1):** copiar `nodered/config/bt2_json_invalido_400_v0.1.js` para a pasta do `settings.js`, acrescentar `httpNodeMiddleware: require('./bt2_json_invalido_400_v0.1.js'),`, reiniciar e testar: corpo `{abc` em `/api/chaves/56/habilitar` deve dar 400 `{"ok":false,"erro":"corpo JSON invalido"}`. Retorno: tirar a linha. Sem isso, o erro de corpo ruim continua 500 (sem efeito de segurança) | Reginaldo | [ ] |
+| A4 | Alarmes novos na bancada: comunicação aparece até 10 s depois e sai até 5 s depois; segurança é imediato (COM-001/002/003/005, DSE-001/002, CHV-005/006 contra CHV-007/008, CHV-001/004/009) | Reginaldo | [ ] |
+| A5 | Conferir o catálogo de kW a 100 % do gerador em ensaio e o 110 % (decisão: ficam como padrão) | Reginaldo | [ ] |
+| A6 | Valores do perfil de combustível contra o datasheet do MWM: 25 % / 10 s (gás), 20 % / 15 s (biometano). Mudar só por revisão explícita | Reginaldo | [ ] |
 
 ## B. Decisões suas antes de ligar a recusa (C2 `recusar`)
 | # | Item | Observação |
