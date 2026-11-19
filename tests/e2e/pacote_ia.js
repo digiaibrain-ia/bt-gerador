@@ -1,5 +1,5 @@
 // Teste do menu de botao direito + "Pacote para a IA" (medidor 1.10.164).
-// Uso: servir a pasta de teste na porta 8790 (medidor + link para dashboard/vendor/tesseract) e rodar
+// Uso: servir a pasta de teste na porta 8790 (medidor + link `tesseract` -> dashboard/vendor/tesseract NA RAIZ do servidor, porque o medidor le './tesseract/') e rodar
 //   NODE_PATH=$(npm root -g) node tests/e2e/pacote_ia.js
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 const URL = 'http://localhost:8790/' + (process.env.MEDIDOR || require('../versoes.js').medidorAtual());
@@ -18,7 +18,7 @@ const R = []; const ok = (n, c, d) => { R.push({ n, ok: !!c, d: d || '' }); cons
     await p.evaluate(({ x, y }) => { const e = document.elementFromPoint(x, y); e.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: x, clientY: y })); }, alvo);
     await p.waitForTimeout(300);
     const menu = await p.evaluate(() => { const m = document.querySelector('.pia-menu'); if (!m) return null; const r = m.getBoundingClientRect(); return { itens: [...m.querySelectorAll('button')].map(x => x.textContent.trim()), dentro: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, native: false }; });
-    ok('menu abre no botao direito', menu && menu.itens.length === 5, menu && menu.itens.join(' | '));
+    ok('menu abre no botao direito (6 itens, inclui "Tamanho desta janela")', menu && menu.itens.length === 6 && menu.itens.some(t => /Tamanho desta janela/.test(t)) && menu.itens.some(t => /Capturar para a IA/.test(t)), menu && menu.itens.join(' | '));
     ok('menu fica dentro da tela', menu && menu.dentro);
     ok('menu NAO tem comando de chave/banco/gerador', menu && !menu.itens.some(t => /ligar|desligar|parar|stop|aplicar/i.test(t)));
     // 2) capturar: arma, faixa visivel, arrasta area

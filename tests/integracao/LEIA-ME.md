@@ -36,7 +36,7 @@ Um arquivo so:
 4. Recusa `NODE_ENV=production` e roda so com `BT2_AMBIENTE_TESTE=local` (o `npm test` faz isso).
 
 ## Achados pendentes
-Testes marcados `todo` mostram o comportamento esperado e falham de proposito: **F4-2, F4-1, F2-1**. O F11 registra (sem falhar) o endereco real que o navegador tentou acessar: **F2-3**. Estao em `BACKLOG_FORA_DE_ESCOPO.md`.
+Testes marcados `todo` mostram o comportamento esperado e falham de proposito: **F4-2, F4-1** (o F2-1 foi fechado em 19/11/2026 pelo middleware `nodered/config/bt2_json_invalido_400_v0.1.js`, usado no teste F2 com `jsonMiddleware: true`; contra-prova em `f2b_json_invalido_sem_middleware.test.js`). O F11 registra (sem falhar) o endereco real que o navegador tentou acessar: **F2-3**. Estao em `BACKLOG_FORA_DE_ESCOPO.md`.
 
 ## Arquivos que nao vao ao Git
 `tests/integracao/runtime/` (instalacao do Node-RED e pasta temporaria de cada execucao).

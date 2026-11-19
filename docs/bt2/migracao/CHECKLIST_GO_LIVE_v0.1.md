@@ -8,6 +8,7 @@ Para o Reginaldo e a TI. **Eu não implanto nada**: nada foi importado no PC BT2
 | A1 | Backup do PC BT2 (fluxos, `bancos_capacidade.json`, `public\html`, medidor anterior) e plano de retorno testado | TI | [ ] |
 | A2 | Bancada com **carga desacoplada**: PLC/ET200 reais, compilação no TIA, tempos de leitura, ligar/desligar por banco | Engenharia | [ ] |
 | A3 | Implantar o pacote v1.28 **em modo `registrar`** (padrão), uma aba por vez, conferindo o log e `GET /api/chaves/<banco>` | TI | [ ] |
+| A3b | **Opcional (fecha o F2-1):** copiar `nodered/config/bt2_json_invalido_400_v0.1.js` para a pasta do `settings.js`, acrescentar `httpNodeMiddleware: require('./bt2_json_invalido_400_v0.1.js'),`, reiniciar e testar: corpo `{abc` em `/api/chaves/56/habilitar` deve dar 400 `{"ok":false,"erro":"corpo JSON invalido"}`. Retorno: tirar a linha. Sem isso, o erro de corpo ruim continua 500 (sem efeito de segurança) | TI | [ ] |
 | A4 | Alarmes novos na bancada: comunicação aparece até 10 s depois e sai até 5 s depois; segurança é imediato (COM-001/002/003/005, DSE-001/002, CHV-005/006 contra CHV-007/008, CHV-001/004/009) | Engenharia | [ ] |
 | A5 | Conferir o catálogo de kW a 100 % do gerador em ensaio e o 110 % (decisão: ficam como padrão) | Engenharia | [ ] |
 | A6 | Valores do perfil de combustível contra o datasheet do MWM: 25 % / 10 s (gás), 20 % / 15 s (biometano). Mudar só por revisão explícita | Engenharia | [ ] |
@@ -15,8 +16,8 @@ Para o Reginaldo e a TI. **Eu não implanto nada**: nada foi importado no PC BT2
 ## B. Decisões suas antes de ligar a recusa (C2 `recusar`)
 | # | Item | Observação |
 |---|---|---|
-| B1 | **`degrau.max_kw` (BK-AUD-10)**: hoje `null` (sem teto de degrau) | Precisa de valor normativo da Engenharia. Sem ele, só o limite de capacidade recusa |
-| B2 | Passar `"modo": "recusar"` | Só depois de A2 a A5, com carga desacoplada: tentar passar do limite deve dar **409** sem chegar ao PLC; abaixo do limite normal; desligar sempre funciona. Retorno: voltar a `registrar` e reiniciar |
+| B1 | **Degrau (BK-AUD-10)**: hoje `degrau.max_kw` = `null` (sem teto) | **Decisão do Reginaldo (19/11/2026):** o histórico da operação mostra pouca oscilação na troca de degrau; usar **30 % como referência** (não como valor exato: o cálculo das chaves pode dar diferença) e **apenas registrar**. Falta decidir como implantar (ver pergunta abaixo) |
+| B2 | Passar `"modo": "recusar"` | **Decisão do Reginaldo: o modo é tratado por banco, individualmente** (hoje o arquivo tem um `modo` único para todos).  Só depois de A2 a A5, com carga desacoplada: tentar passar do limite deve dar **409** sem chegar ao PLC; abaixo do limite normal; desligar sempre funciona. Retorno: voltar a `registrar` e reiniciar |
 | B3 | O fail-open do C2 (erro interno deixa o comando seguir) é o desejado? | Hoje sim: a segurança final está no PLC |
 
 ## C. Riscos conhecidos que entram aceitos (decidir se aceita)
@@ -26,9 +27,9 @@ Para o Reginaldo e a TI. **Eu não implanto nada**: nada foi importado no PC BT2
 - O medidor informa o próprio kW a 100 %; o valor do arquivo sempre vence e há teto (`kw100_max` 1000) e validade (180 s).
 - **276 `catch` vazios** no medidor, comentados; 23 envolvem rede. O desligamento de chave que falha não avisa o operador (a chave não é marcada como desligada, a segurança está no PLC).
 
-## D. Pendências de teste (não bloqueiam, ordem de prioridade)
-1. JSON malformado devolve **500 em vez de 400** (`ACHADO F2-1`): correção pequena, em versão nova de fluxo.
-2. E2E `pacote_ia`: o teste espera 5 itens no menu do botão direito e o medidor tem 6; o OCR local não foi esclarecido.
+## D. Pendências de teste (não bloqueiam)
+1. ~~JSON malformado devolve 500 em vez de 400 (F2-1)~~ **Fechado em 19/11/2026**: o 500 vem do nó `http in` do Node-RED, não do fluxo; middleware `nodered/config/bt2_json_invalido_400_v0.1.js` + teste F2 (10 de 10) + contra-prova. Falta só a implantação opcional (A3b).
+2. ~~E2E `pacote_ia`~~ **Fechado**: menu com 6 itens (esperava 5) corrigido; o OCR falhava por falha do meu servidor de teste (`./tesseract/` na raiz), não do medidor. 3 resoluções, tudo verde.
 3. Teste do texto do Setup ("O PLC NÃO confirmou a desmarcação") e demais `todo`.
 
 ## E. Congelamento

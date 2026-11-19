@@ -13,7 +13,7 @@ const { caminhoFluxo, FERRAMENTAS, FERRAMENTAS_ARQUIVO, FIXTURES } = require('..
 const RED = require(path.join(RUNTIME, 'node_modules', 'node-red'));
 const express = require(path.join(RUNTIME, 'node_modules', 'express'));
 
-async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), env = {}, envAbas = {}, servirHtml = false } = {}) {
+async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), env = {}, envAbas = {}, servirHtml = false, jsonMiddleware = false } = {}) {
   verificaAmbiente(Object.assign({}, process.env, env), {});
   instalaGuardaRede();
   Object.assign(process.env, env);                       // ex.: WD_HTML_S reduzido nos testes do vigia
@@ -44,6 +44,7 @@ async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), 
     userDir, flowFile: 'flows.json', httpAdminRoot: false, httpNodeRoot: '/', credentialSecret: 'teste-local-nao-usar',
     telemetryEnabled: false, editorTheme: { projects: { enabled: false } }, logging: { console: { level: process.env.BT2_LOG_NIVEL || 'error', metrics: false, audit: false } },
   };
+  if (jsonMiddleware) settings.httpNodeMiddleware = require('../../nodered/config/bt2_json_invalido_400_v0.1.js').criar(require(path.join(RUNTIME, 'node_modules', 'body-parser')));   // F2-1: so quando o teste pede
   RED.init(server, settings);
   // captura TODOS os avisos/erros do Node-RED desta execucao (instrumentacao da Fase 3: resposta em duplicidade, erro de no, etc.)
   const logs = [];

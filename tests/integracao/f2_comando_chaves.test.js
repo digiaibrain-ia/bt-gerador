@@ -7,7 +7,7 @@ const { ENV_TESTE, enderecos, esperaAte, get, post, sobe } = require('./ajudas.j
 describe('F2 comando de chaves do BC56', () => {
   let h, e;
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.9'], env: ENV_TESTE });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.9'], env: ENV_TESTE, jsonMiddleware: true });   // F2-1: com o middleware de JSON invalido (settings.js do PC)
     e = enderecos('56');
     await esperaAte(async () => (await get(h, '/api/chaves/56')).status === 200, 5000);
   });
@@ -41,10 +41,22 @@ describe('F2 comando de chaves do BC56', () => {
     assert.equal((await get(h, '/api/chaves/56')).status, 200, 'o fluxo parou de responder depois do JSON ruim');
   });
 
-  // ACHADO F2-1 (pendente): JSON malformado no corpo volta como 500 ("Internal Server Error") em vez de 400 (erro do cliente).
-  test('ACHADO F2-1: JSON malformado deveria devolver 400 (erro do cliente), nao 500', { todo: 'ACHADO F2-1: erro de cliente volta como 500' }, async () => {
-    const r = await post(h, '/api/chaves/56/habilitar', '{isto nao e json');
-    assert.equal(r.status, 400, 'veio ' + r.status + ': ' + r.t.slice(0, 80));
+  // ACHADO F2-1 (fechado em 19/11/2026): o 500 vem do "http in" do Node-RED, nao do fluxo; o middleware nodered/config/bt2_json_invalido_400_v0.1.js (httpNodeMiddleware no settings.js) devolve 400.
+  test('ACHADO F2-1: JSON malformado devolve 400 (erro do cliente) com mensagem clara, em todas as rotas de comando', async () => {
+    for (const rota of ['habilitar', 'ligar']) {
+      const r = await post(h, '/api/chaves/56/' + rota, '{isto nao e json');
+      assert.equal(r.status, 400, rota + ' veio ' + r.status + ': ' + r.t.slice(0, 80));
+      assert.deepEqual(r.j, { ok: false, erro: 'corpo JSON invalido' });
+    }
+    assert.equal((await get(h, '/api/chaves/56')).status, 200);
+  });
+
+  test('o middleware nao atrapalha: corpo valido continua como antes e o PLC nao recebe nada do corpo ruim', async () => {
+    const antes = h.plc.escritas.length;
+    await post(h, '/api/chaves/56/habilitar', '{"indice":');
+    assert.equal(h.plc.escritas.length, antes, 'corpo invalido nao pode gerar escrita');
+    const r = await post(h, '/api/chaves/56/habilitar', { indice: 3, habilitada: true });
+    assert.equal(r.status, 200, r.t);
   });
 
   test('ligar exige banco ligado: sem "Ligar banco" a chave nao liga (409) e o PLC nao recebe comando', async () => {
