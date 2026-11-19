@@ -16,13 +16,13 @@ Para o Reginaldo e a TI. **Eu não implanto nada**: nada foi importado no PC BT2
 ## B. Decisões suas antes de ligar a recusa (C2 `recusar`)
 | # | Item | Observação |
 |---|---|---|
-| B1 | **Degrau (BK-AUD-10)**: hoje `degrau.max_kw` = `null` (sem teto) | **Decisão do Reginaldo (19/11/2026):** o histórico da operação mostra pouca oscilação na troca de degrau; usar **30 % como referência** (não como valor exato: o cálculo das chaves pode dar diferença) e **apenas registrar**. Falta decidir como implantar (ver pergunta abaixo) |
+| B1 | ~~Degrau (BK-AUD-10)~~ **Descartado por decisão do Reginaldo (19/11/2026)** | A única regra de limite é **110 % do kW a 100 % de cada gerador** (o limite é de cada gerador, cada um com a sua conta). Transições entre degraus ficam com o perfil do medidor. `degrau.max_kw` continua `null` (não avaliado); nenhum código a mudar |
 | B2 | Passar `"modo": "recusar"` | **Decisão do Reginaldo: o modo é tratado por banco, individualmente** (hoje o arquivo tem um `modo` único para todos).  Só depois de A2 a A5, com carga desacoplada: tentar passar do limite deve dar **409** sem chegar ao PLC; abaixo do limite normal; desligar sempre funciona. Retorno: voltar a `registrar` e reiniciar |
 | B3 | O fail-open do C2 (erro interno deixa o comando seguir) é o desejado? | Hoje sim: a segurança final está no PLC |
 
 ## C. Riscos conhecidos que entram aceitos (decidir se aceita)
 - **BK-AUD-04:** o PLC não limita capacidade; hoje limitam o medidor e o Node-RED.
-- **BK-AUD-10:** o PLC não limita o tamanho do degrau.
+- **BK-AUD-10 (degrau):** descartado por decisão; só vale o limite de 110 % por gerador.
 - **BK-AUD-05:** sem login (a guarda confere origem, não identidade).
 - O medidor informa o próprio kW a 100 %; o valor do arquivo sempre vence e há teto (`kw100_max` 1000) e validade (180 s).
 - **276 `catch` vazios** no medidor, comentados; 23 envolvem rede. O desligamento de chave que falha não avisa o operador (a chave não é marcada como desligada, a segurança está no PLC).

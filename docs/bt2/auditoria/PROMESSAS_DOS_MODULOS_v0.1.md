@@ -58,3 +58,4 @@ Compilação no TIA, PLC/ET200 reais, tempos reais de leitura, valores assumidos
 4. A soma inclui os outros bancos (leitura de até 5 s); o degrau só conta comandos que seguiram.
 **Provado em:** `tests/propriedades/capacidade_c2.prop.test.js` (mutação 92,9 %), código real do nó. **Não provado:** o PLC real, a bancada e o valor do degrau (`max_kw` null). **Pergunta ao revisor:** fail-open (erro interno deixa ligar) é o desejado, dado que a segurança final continua no PLC?
 
+**Decisão posterior (19/11/2026):** o limite do degrau do C2 está descartado; a única regra de recusa é o limite de capacidade (110 % do kW a 100 % de cada gerador). O código de degrau segue inerte com `degrau.max_kw = null`.
