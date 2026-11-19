@@ -33,7 +33,7 @@ Para o Reginaldo e a TI. **Eu não implanto nada**: nada foi importado no PC BT2
 3. Teste do texto do Setup ("O PLC NÃO confirmou a desmarcação") e demais `todo`.
 
 ## E. Congelamento
-- [ ] Esteira completa verde (unitários, integração, e2e, build modular, propriedades) no commit entregue.
+- [x] Esteira completa verde (19/11/2026): unitários 270/270, integração 389 + 5 `todo`, e2e 25/25. Ver `PASSO_8_CONGELAMENTO_v0.1.md`.
 - [ ] Mutação rodada à mão nos módulos (`node tests/mutacao/rodar_mutacao.js todos`).
-- [ ] Hash do HTML 1.10.231 e do pacote v1.28 anotados no `LEIA-ME_ENTREGA`.
+- [ ] Hash do HTML 1.10.231 (no PASSO_8) e do zip do pacote v1.28 (no envio à TI) anotados no `LEIA-ME_ENTREGA`.
 - [ ] Depois do go-live: acompanhar o log `LIMITE`/`CAPACIDADE` por 1 semana em modo `registrar` antes de B2.
