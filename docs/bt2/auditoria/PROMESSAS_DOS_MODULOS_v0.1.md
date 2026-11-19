@@ -34,3 +34,27 @@ Nunca falha; só aceita o formato da norma (ETD 091 rev.05 e ETD 094 rev.00); co
 
 ## O que NENHUM teste automático prova
 Compilação no TIA, PLC/ET200 reais, tempos reais de leitura, valores assumidos (110 %, degraus, pausas, debounce de 10 s/5 s), e a intenção da operação. Isso é bancada e decisão sua.
+
+## Decisões da revisão independente (19/11/2026, ver `REVISAO_INDEPENDENTE_PASSO_7_v0.1.md`)
+| Pergunta | Decisão | Pendente |
+|---|---|---|
+| Guarda: "abaixo do alvo permitido, acima do limite bloqueado" | **Sim.** Liberada no valor exato. | Conferir o catálogo de kW a 100 % e o 110 % antes da plena carga |
+| FB mãe: derrubar todas as chaves quando o DSE cai | **Sim, regra inviolável (fail-safe).** Rearme explícito do operador. | — |
+| Perfil de combustível: valores batem com o datasheet? | **Mantidos como conservadores**, travados por teste. | **Conferir com o datasheet do MWM em ensaio.** Mudança só por revisão explícita |
+| Plano de entrada: pausa 0 funde os passos | **Aceitável.** | — |
+| Decodificador MWM: avisar (não travar) para código válido e não mapeado | **Aprovado.** | — |
+
+## Promessas acrescentadas no Passo 7b
+### Núcleo do RNC (`rnc_core_v1.2`, usado pelo fluxo `rnc-api-v1.2`)
+1. Estados só mudam por transição permitida (senão 422); revisão desatualizada dá 409/400.
+2. Abrir exige `idempotency_key`: mesma chave e mesmo conteúdo devolve o mesmo resultado (200), conteúdo diferente com a mesma chave dá 409 `CHAVE_REUTILIZADA`; vale também para eventos.
+3. Numeração por ano; o estado é reconstruído a partir dos eventos.
+**Provado em:** `tests/propriedades/rnc_core_v1.2.prop.test.js` (mutação 99,1 %); o código colado nos nós do fluxo é idêntico ao testado (`tests/modulos_entregues.test.js`). **Não provado:** o armazenamento em disco no PC BT2.
+
+### Nó de capacidade e degrau (C2, `chaves-56-api-v3.9` e iguais nos outros bancos)
+1. Só recusa (HTTP 409) em modo `recusar` e só quando o kW a 100 % é conhecido (arquivo > medidor dentro de 180 s); sem kW conhecido nunca recusa.
+2. **Desligar nunca é recusado.** Modo `registrar` nunca recusa.
+3. Qualquer erro interno deixa o comando seguir (fail-open) e só avisa no log.
+4. A soma inclui os outros bancos (leitura de até 5 s); o degrau só conta comandos que seguiram.
+**Provado em:** `tests/propriedades/capacidade_c2.prop.test.js` (mutação 92,9 %), código real do nó. **Não provado:** o PLC real, a bancada e o valor do degrau (`max_kw` null). **Pergunta ao revisor:** fail-open (erro interno deixa ligar) é o desejado, dado que a segurança final continua no PLC?
+
