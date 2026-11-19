@@ -147,7 +147,7 @@ test('M4 patamar Manual: Aplicar com a guarda bloqueando vai a FALHA (nao a ESCA
 
 // M5 (baixa): io() usava a variavel global BANCOS do HTML; fora do medidor o ciclo quebrava (ReferenceError) a cada segundo.
 test('M5 sem a global BANCOS (fora do medidor) o ciclo nao lanca excecao', () => {
-  const ctx = vm.createContext({ console }); vm.runInContext(fs.readFileSync(MOD, 'utf8'), ctx);
+  const ctx = vm.createContext({ console, process }); vm.runInContext(fs.readFileSync(MOD, 'utf8'), ctx);
   const h = criaHost(), m = ctx.FBV.criaMae(h); m.arma();
   assert.doesNotThrow(() => anda(m, h, 3)); assert.equal(m.estado, 'ESCALONANDO');
 });

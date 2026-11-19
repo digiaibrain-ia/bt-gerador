@@ -37,3 +37,7 @@ tests/integracao/runtime/
 # Cache do Python
 __pycache__/
 *.pyc
+
+# relatorios de mutacao e pasta temporaria do Stryker
+tests/mutacao/relatorios/
+.stryker-tmp/
