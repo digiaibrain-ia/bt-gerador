@@ -38,10 +38,10 @@ Fonte: texto do projetista elétrico + PDFs `Descrição Diagrama ABWC` e `Diagr
 4. **Trip:** com trip ativo, bloquear CC, abrir/manter aberto e exigir causa tratada + pulso de Reset. **Não resetar automaticamente.**
 5. **Banco só liga (`ligarBanco`) com tensão selecionada confirmada** por Ligado=1 e Desligado=0 do disjuntor correspondente (coerência 11–14 × 41–42; combinação 0/0 ou 1/1 = falha de sinalização).
 6. **Perda de comunicação/seletora em Manual:** abrir o que for seguro conforme a regra do FB101 (REGION 0), sem religar sozinho.
-7. **Integração com setup/DB por tensão:** `TensaoSel` do FB100 deve passar a refletir a **tensão efetivamente confirmada pelos disjuntores**, não só a informada pelo HTML.
+7. **Integração com setup/DB por tensão:** `TensaoSel` do FB100 (DBs de setup por tensão, numeração a conferir no plano v4) deve passar a refletir a **tensão efetivamente confirmada pelos disjuntores**, não só a informada pelo HTML.
 
 ## 5. Impacto no projeto (a decidir, nada alterado)
-- Novo bloco de I/O por banco (suposto no ET200 do banco, como as chaves): `sbTensao` (entradas) e `cbTensao` (saídas) em struct novo **no fim** do DB150/DB158 (mesma regra da v0.2 dos sinais de banco: não deslocar offsets existentes).
+- Novo bloco de I/O por banco (suposto no ET200 do banco, como as chaves): `sbTensao` (entradas) e `cbTensao` (saídas), dentro da faixa de DB do próprio banco no `PLANO_NUMERACAO_BLOCOS_PLC_v4` (BANCO_1/BC56 = 3000–3099, BANCO_2/BC400 = 3100–3199). **Os números DB150/DB158 citados em versões anteriores são do padrão antigo e não valem mais;** o número exato de cada DB será definido por você.
 - Possível novo FB de seleção de tensão (numeração a definir no `PLANO_NUMERACAO_BLOCOS_PLC`).
 - HTML/Node-RED: estado de cada disjuntor e botões de seleção de tensão no card do banco (hoje a sinalização de chaveamento vem dos dados: `SINALIZACAO_CHAVEAMENTO_PELOS_DADOS_v1.10.123.md`).
 - Hardware: 20 DI + 16 saídas (1 por disjuntor para 220 VCA) a mais nos ET200.
@@ -52,7 +52,7 @@ Fonte: texto do projetista elétrico + PDFs `Descrição Diagrama ABWC` e `Diagr
 - **P3:** existe contato livre de mola carregada ou é preciso relé de interface (A2)?
 - **P4:** tem UVT/SHT2? Qual a tensão de CC, SHT1 e R1–R2 (A5–A7)?
 - **P5:** os sinais entram em qual ET200/CLP e quem fornece a alimentação 220 VCA do motor?
-- **P6:** quer que eu já gere a estrutura no DB150/DB158 e o FB de seleção (rascunho), ou só a documentação por enquanto?
+- **P6:** nada será gerado (decisão do usuário, 20/11/2026): apenas documentação.
 
 ---
 **Fontes**: texto do projetista (20/11/2026); `Diagrama_ABWC.pdf`; `Descrição_Diagrama_ABWC.pdf`; `PROPOSTA_SINAIS_LIGAR_BANCO_E_SELETORA_v0.2.md`; `PROTECAO_COMANDOS_PERSISTENTES_CB.md`; `fb100_setupChaves_v0.3.scl`.
