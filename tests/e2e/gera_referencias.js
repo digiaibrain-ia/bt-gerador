@@ -6,7 +6,7 @@ const OUT = path.join(__dirname, '..', '..', 'referencias', 'img'); fs.mkdirSync
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 3 }); const p = await ctx.newPage();
   await p.route('**/api/**', r => r.fulfill({ status: 503, body: '{}' }));
-  await p.goto('http://localhost:8790/' + (process.env.MEDIDOR || 'medidor_gerador_v1.10.166.html')); await p.waitForTimeout(2000);
+  await p.goto('http://localhost:8790/' + (process.env.MEDIDOR || require('../versoes.js').medidorAtual())); await p.waitForTimeout(2000);
   // Demo local: as chaves mostram estados reais (sem PLC elas ficam em 'sem leitura' com ? e borda vermelha, que nao serve de referencia)
   await p.fill('#demoSenha', 'mwm'); await p.click('#bDemo'); await p.check('#dmTradicional'); await p.waitForTimeout(500); await p.evaluate(() => document.getElementById('dlgDemo').close()); await p.waitForTimeout(1500);
   const foto = async (nome, sel, pad = 6) => { const el = await p.$(sel); const bb = await el.boundingBox(); await p.screenshot({ path: path.join(OUT, nome + '.png'), clip: { x: Math.max(0, bb.x - pad), y: Math.max(0, bb.y - pad), width: bb.width + 2 * pad, height: bb.height + 2 * pad } }); console.log('ok', nome, Math.round(bb.width) + 'x' + Math.round(bb.height)); };

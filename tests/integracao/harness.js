@@ -9,11 +9,11 @@ const { PlcSimulado } = require('./plc_simulado.js');
 const { verificaAmbiente, verificaFlows, instalaGuardaRede } = require('./trava_producao.js');
 
 const RUNTIME = path.join(__dirname, 'runtime');
-const FLUXOS = path.join(__dirname, '..', '..', 'nodered', 'flows', 'bt2');
+const { caminhoFluxo, FERRAMENTAS, FERRAMENTAS_ARQUIVO, FIXTURES } = require('../versoes.js');   // A3: pasta ativa primeiro, depois tests/fixtures/fluxos
 const RED = require(path.join(RUNTIME, 'node_modules', 'node-red'));
 const express = require(path.join(RUNTIME, 'node_modules', 'express'));
 
-async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), env = {}, envAbas = {}, servirHtml = false } = {}) {
+async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), env = {}, envAbas = {}, servirHtml = false, jsonMiddleware = false } = {}) {
   verificaAmbiente(Object.assign({}, process.env, env), {});
   instalaGuardaRede();
   Object.assign(process.env, env);                       // ex.: WD_HTML_S reduzido nos testes do vigia
@@ -24,7 +24,7 @@ async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), 
   const flows = [];
   // 13/11/2026 - BT2_FLUXO_TROCA="antigo=novo,outro=novo2": le o fluxo NOVO no lugar do antigo (prova de equivalencia de um fluxo organizado com a MESMA bateria de testes). Sem a variavel, nada muda.
   const troca = Object.fromEntries((process.env.BT2_FLUXO_TROCA || '').split(',').filter(Boolean).map(p => p.split('=')));
-  for (const f of fluxos) flows.push(...JSON.parse(fs.readFileSync(path.join(FLUXOS, (troca[f] || f) + '.json'), 'utf8')));
+  for (const f of fluxos) flows.push(...JSON.parse(fs.readFileSync(caminhoFluxo(troca[f] || f), 'utf8')));
   for (const c of fluxosCaminho) flows.push(...JSON.parse(fs.readFileSync(c, 'utf8')));   // caminho explicito (uso de teste/probe)
   // variaveis de ambiente DA ABA (como o operador faz em Propriedades > Variaveis de ambiente), trocadas so na copia em memoria
   for (const aba of flows.filter(n => n.type === 'tab')) {
@@ -44,6 +44,7 @@ async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), 
     userDir, flowFile: 'flows.json', httpAdminRoot: false, httpNodeRoot: '/', credentialSecret: 'teste-local-nao-usar',
     telemetryEnabled: false, editorTheme: { projects: { enabled: false } }, logging: { console: { level: process.env.BT2_LOG_NIVEL || 'error', metrics: false, audit: false } },
   };
+  if (jsonMiddleware) settings.httpNodeMiddleware = require('../../nodered/config/bt2_json_invalido_400_v0.1.js').criar(require(path.join(RUNTIME, 'node_modules', 'body-parser')));   // F2-1: so quando o teste pede
   RED.init(server, settings);
   // captura TODOS os avisos/erros do Node-RED desta execucao (instrumentacao da Fase 3: resposta em duplicidade, erro de no, etc.)
   const logs = [];
@@ -52,7 +53,7 @@ async function sobe({ fluxos = [], fluxosCaminho = [], plc = new PlcSimulado(), 
   capta.on('log', m => { if (m.level <= RED.log.WARN) logs.push({ nivel: m.level, msg: String(m.msg && m.msg.message ? m.msg.message : m.msg), tipo: m.type, nome: m.name, t: Date.now() }); });
   RED.log.addHandler(capta);
   // (opcional, so para o F11) serve o HTML do medidor a partir da copia de DISCO do repositorio, na mesma origem do Node-RED de teste
-  if (servirHtml) app.use('/html', express.static(path.join(__dirname, '..', '..', 'dashboard', 'ferramentas'), { index: false }));
+  if (servirHtml) { app.use('/html', express.static(FERRAMENTAS, { index: false })); app.use('/html', express.static(FERRAMENTAS_ARQUIVO, { index: false })); app.use('/html', express.static(path.join(FIXTURES, 'ferramentas'), { index: false })); }
   app.use(settings.httpNodeRoot, RED.httpNode);
   await RED.start();
   server.listen(0, '127.0.0.1');

@@ -1,10 +1,12 @@
 // Medidor 1.10.224: CHV-005/CHV-006 de banco NAO selecionado e parado sao silenciados; banco selecionado (ou com chave ligada) continua alarmando. Demo local. file://.
 // Uso: node tests/e2e/alarme_banco_silenciado.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.224.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1536, height: 900 } })).newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());
+  // Passo 6 (19/11/2026): este roteiro prova a LOGICA de causa-raiz/silenciamento, nao o tempo; o debounce de 10 s tem teste proprio (fase4/x_alarme_debounce). Por isso o debounce fica desligado aqui.
+  await p.addInitScript(() => { window.OCOR_DEBOUNCE_ESCALA = 0; });
   await p.route('**/api/**', r => r.fulfill({ status: 503, body: '{}' })); await p.goto('file://' + ARQ); await p.waitForTimeout(2200);
   await p.evaluate(() => { const d = document.getElementById('demo'); d.checked = true; d.dispatchEvent(new Event('change', { bubbles: true })); }); await p.waitForTimeout(1500);
   const ativas = (cod, ref) => p.evaluate(([c, r]) => window.OCOR.lista().filter(x => x.cod === c && x.ref === r && x.ativa).length, [cod, ref]);

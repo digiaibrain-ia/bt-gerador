@@ -5,7 +5,7 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('http'), fs = require('fs'), os = require('os'), path = require('path');
 const { chromium } = require('playwright');
-const FER = path.join(__dirname, '..', '..', '..', 'dashboard', 'ferramentas'), MED = process.env.BT2_MED || 'medidor_gerador_v1.10.193.html';
+const FER = path.join(__dirname, '..', '..', '..', 'dashboard', 'ferramentas'), MED = process.env.BT2_MED || require('../../versoes.js').medidorAtual();
 let dir, srv, port, b;
 before(async () => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'emb-')); fs.copyFileSync(path.join(FER, MED), path.join(dir, MED));

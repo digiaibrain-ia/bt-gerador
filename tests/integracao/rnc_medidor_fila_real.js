@@ -2,7 +2,7 @@
 // Uso: cd tests/integracao && BT2_AMBIENTE_TESTE=local node rnc_medidor_fila_real.js
 const path = require('path'), os = require('os'), fs = require('fs'); const { chromium } = require('playwright');
 const { ENV_TESTE, sobe } = require('./ajudas.js');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.216.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const FLUXO = path.resolve(__dirname, '..', '..', 'nodered', 'flows', 'rnc-api-v1.2.json');
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {

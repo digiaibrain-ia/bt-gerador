@@ -2,7 +2,7 @@
 // file://. Uso: node tests/e2e/modo_discreto.js (MEDIDOR=nome.html ANTES=nome.html SHOTS=pasta)
 const { chromium } = require('playwright'); const path = require('path');
 const D = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas');
-const NOVO = path.join(D, process.env.MEDIDOR || 'medidor_gerador_v1.10.215.html'), ANTES = path.join(D, process.env.ANTES || 'medidor_gerador_v1.10.214.html'); const SHOTS = process.env.SHOTS || '';
+const NOVO = path.join(D, process.env.MEDIDOR || require('../versoes.js').medidorAtual()), ANTES = path.join(D, process.env.ANTES || require('../versoes.js').medidorAtual()); const SHOTS = process.env.SHOTS || '';
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 const medida = p => p.evaluate(() => { const c = document.getElementById('modoCard'), r = c.getBoundingClientRect();
   return { h: Math.round(r.height), w: Math.round(r.width), estoura: c.scrollWidth > c.clientWidth + 1 || document.documentElement.scrollWidth > innerWidth + 1,

@@ -11,6 +11,7 @@ const V = require('../verificador.js');
 
 const dorme = ms => new Promise(r => setTimeout(r, ms));
 const PASTA = path.join(__dirname, '..', '..', '..', 'nodered', 'flows', 'bt2');
+const { caminhoFluxo } = require('../../versoes.js');   // A3: pasta ativa e depois tests/fixtures/fluxos
 const P = (h, rota, c) => post(h, '/api/chaves/56/' + rota, c);
 
 // BC56 v3.2 pronto, com a comunicacao ET200 e a seletora em Auto (condicao normal para ligar banco)
@@ -209,7 +210,7 @@ describe('C2 R2/R5 BC56 - modo CONCORRENTE (so onde muda o resultado)', () => {
 });
 
 // ---------- registro de ensaio (DB2100) ----------
-const endVar = (flow, nome) => { for (const n of JSON.parse(fs.readFileSync(path.join(PASTA, flow + '.json'), 'utf8'))) for (const v of (n.vartable || [])) if (v.name === nome) return v.addr; throw new Error('variavel nao encontrada: ' + nome); };
+const endVar = (flow, nome) => { for (const n of JSON.parse(fs.readFileSync(caminhoFluxo(flow), 'utf8'))) for (const v of (n.vartable || [])) if (v.name === nome) return v.addr; throw new Error('variavel nao encontrada: ' + nome); };
 const REG = 'registro-ensaio-db2100-api-v1.8';
 const PREEN = { campos: { serie: 'SN-1', versao: 'V1', data: '2026-11-03', fase: 'trifasico', frequenciaHz: 60, tensaoV: 380, tempAmbienteC: 25, potenciaKw: 100, equipamentos: { motor: { fabricante: 'M', modelo: 'X', serie: '1' } } } };
 

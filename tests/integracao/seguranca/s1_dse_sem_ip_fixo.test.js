@@ -7,7 +7,7 @@ const path = require('path');
 const { chromium } = require('playwright');
 const { ENV_TESTE, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = path.join(__dirname, '..', '..', '..', 'dashboard', 'ferramentas', 'medidor_gerador_v1.10.176.html');
+const HTML = require('../../versoes.js').caminhoFerramenta(process.env.BT2_FASE4_HTML || require('../../versoes.js').medidorAtual());   // A3: padrao = medidor mais novo
 
 describe('S1 DSE sem IP fixo no cliente', () => {
   test('estatico: o HTML nao traz nenhum IP de rede fixo (172.17.* nem http://<numero>:porta)', () => {
@@ -20,7 +20,7 @@ describe('S1 DSE sem IP fixo no cliente', () => {
   describe('navegador (medidor real contra o Node-RED de teste)', () => {
     let h, b, p, pedidos = [];
     before(async () => {
-      h = await sobe({ fluxos: ['chaves-56-api-v3.0'], env: ENV_TESTE, servirHtml: true });
+      h = await sobe({ fluxos: ['chaves-56-api-v3.9'], env: ENV_TESTE, servirHtml: true });
       b = await chromium.launch();
       p = await b.newPage({ viewport: { width: 1280, height: 900 } });
       await p.route('**/*', r => {
@@ -28,7 +28,7 @@ describe('S1 DSE sem IP fixo no cliente', () => {
         if (u.startsWith(h.url)) { pedidos.push(u); return r.continue(); }
         return r.abort();
       });
-      await p.goto(h.url + '/html/medidor_gerador_v1.10.176.html');
+      await p.goto(h.url + '/html/' + path.basename(HTML));
       await esperaAte(async () => pedidos.some(u => u.endsWith('/api/gerador')), 8000, 200);
     });
     after(async () => { if (b) await b.close(); if (h) await h.para(); });

@@ -1,0 +1,538 @@
+  /* ---- janelas flutuantes (estilo supervisório, tom azul) ----
+     paleta própria: se gostar, o resto da página pode migrar para ela (ver --jazul) */
+  dialog.jan{--jazul:#1a4a78;--jfundo:#f3f5f8;--jborda:#9aa5b1;
+    border:2px solid var(--jazul);border-radius:0;padding:0;background:var(--jfundo);color:#1b2a3a;
+    width:min(var(--w,700px),94vw);max-height:92vh;overflow:auto;box-shadow:0 14px 48px rgba(5,20,40,.55);z-index:40}
+  /* v1.9.43: popups "livres" (não-modais) - Chaves/Setup/Gráfico. Mostrados com .show() em vez de .showModal(),
+     então não bloqueiam a tela principal e podem ficar vários abertos ao mesmo tempo. Borda diferenciada pra
+     o operador perceber que são "soltos". */
+  dialog.jan.livre{border-color:#2f7d3a}
+  /* v1.10.163: em tela que rola (até 1279 px) a janela "livre" abria no TOPO da página (posição dela no HTML) e a tela pulava para cima:
+     quem tocava em ⚙ Chaves / 🛠 Setup / 🔧 Troca / ⤢ Popup lá embaixo perdia o lugar. Agora ela abre presa à tela, onde o operador está. */
+  @media (max-width:1279px){dialog.jan.livre:not(#dlgGuiado){position:fixed;top:8px;bottom:auto;max-height:calc(100vh - 16px)}}
+  /* v1.9.78: Setup — tela principal bloqueada enquanto o popup está aberto + popup maior */
+  #stBloq{position:fixed;inset:0;z-index:39;background:rgba(10,25,45,.50);cursor:not-allowed}
+  #dlgChSetup{width:min(var(--w,1860px),98vw);max-height:96vh}
+  #dlgChSetup .jb{padding:12px 18px 14px}
+  #dlgChSetup .chpk .tile{width:96px!important;min-width:96px;font-size:16px;padding:10px 0 8px}
+  #dlgChSetup .chpk .tile .realval{font-size:14.5px}
+  #dlgChSetup .stcolform{flex:1 1 640px}
+  #dlgChSetup .stlive{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+  #dlgChSetup .stlive div{padding:6px 9px;font-size:13px}
+  #dlgChSetup .stform .box{padding:6px 12px;font-size:14px}
+  #dlgChSetup .stform .box small{font-size:11px}
+  #dlgChSetup .enschip{font-size:12px;padding:3px 10px}
+  #dlgChSetup h4{font-size:13.5px}
+  #dlgChSetup #stRes table{font-size:13.5px}
+  #dlgChSetup #stRes th,#dlgChSetup #stRes td{padding:4px 8px}
+  #dlgChSetup .ensseg button{padding:7px 18px;font-size:14px}
+  #stTensRow{align-items:center}
+  @keyframes stPisca{0%,100%{box-shadow:0 14px 48px rgba(5,20,40,.55)}50%{box-shadow:0 0 0 5px #e0b84a,0 14px 48px rgba(5,20,40,.55)}}
+  #dlgChSetup.stPisca{animation:stPisca .5s 2}
+
+  .jan .jt.livre{background:var(--ui-tinta);border-bottom:3px solid var(--ui-acento)}   /* v1.9.88: era verde — verde agora só sinaliza estado */
+  /* v1.9.43: gráfico dentro do popup precisa de altura própria (fora do grid/flex da tela principal) */
+  #dlgGrafico .jb{padding:10px 14px 14px}
+  #dlgGrafico #gra{border:none;padding:0;background:transparent}
+  #dlgGrafico .cvw{position:relative;height:52vh;min-height:320px}
+  #dlgGrafico #chart{position:absolute;left:0;top:0;width:100%;height:100%}
+  #dlgGrafico.ampliado{--w:1500px}
+  #dlgGrafico.ampliado .cvw{height:76vh}
+  #graPop,#graZoom{cursor:zoom-in}
+  /* v1.9.81: Manual guiado — sugestão desenhada nas chaves do card Cargas (borda tracejada) e painel */
+  /* v1.10.103 — REGRA DO PROJETO: LAYOUT ESTÁVEL. Indicador visual (tracejado, sombra, realce) não pode mudar o tamanho de nada.
+     Por quê (técnico): outline com offset positivo e border/padding/margin entram na conta de altura/overflow do card. Aqui o tracejado é um
+     pseudo-elemento ABSOLUTO dentro da própria chave (inset:0), que não ocupa espaço. Leigo: é um "adesivo" por cima, não um quadro em volta. */
+  .tile.sug{position:relative}
+  .tile.sug::after{content:'';position:absolute;inset:0;border:3px dashed var(--ui-acento);border-radius:inherit;box-sizing:border-box;pointer-events:none;animation:gdPulsa 1.4s ease-in-out infinite}
+  @keyframes gdPulsa{50%{opacity:.35}}
+  @media (prefers-reduced-motion:reduce){.tile.sug::after{animation:none}}
+  [hidden]{display:none!important}   /* v1.10.103: o atributo hidden sempre esconde (o chip "Guiado: desligado" aparecia porque .enschip{display:inline-block} vencia) */
+  /* chip de estado On/Off do Patamar (card Banco de Cargas) */
+  #bGuiadoRun.enschip{cursor:default;white-space:nowrap}
+  #bGuiado.cfgbtn.gdrun-on{font-weight:700}
+  /* ⓘ do cabeçalho: indicador discreto + painel com o detalhe */
+  .ensbar{position:relative}
+  #ensInfo{cursor:pointer;font-weight:700;padding:2px 9px}
+  #ensInfoPop{display:none;position:absolute;right:14px;top:calc(100% + 4px);z-index:60;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.28);padding:30px 12px 10px;flex-direction:column;align-items:flex-start;gap:6px;max-width:min(560px,92vw)}
+  #ensInfoPop.open{display:flex}
+  #ensInfoPop .enschip{white-space:normal;text-align:left}
+  #ensInfoX{position:absolute;top:4px;right:6px;border:0;background:none;color:inherit;font-size:16px;cursor:pointer;line-height:1}
+  /* Mapa dos FBs: painel dentro da página */
+  #dlgMapaFBs[open]{display:flex;flex-direction:column;--w:1180px;max-width:97vw;max-height:96vh;resize:both;overflow:hidden;margin:auto 8px auto auto}   /* nasce encostado à direita para não cobrir o diálogo do Patamar */
+  #dlgMapaFBs .jb{flex:1 1 auto;min-height:0;padding:0}
+  #mapaFrame{width:100%;height:76vh;min-height:360px;border:0;background:#fff;display:block}
+  /* v1.10.209: painel do mapa em tela pequena = tela inteira, titulo em uma linha, iframe com todo o espaco que sobra (antes: altura fixa de 76vh). O PC nao muda. */
+  @media (max-width:700px),(max-height:520px){
+    dialog#dlgMapaFBs.jan.livre[open]{position:fixed;inset:0;width:100vw;max-width:100vw;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;margin:0;border-radius:0;resize:none}
+    #dlgMapaFBs .jt{padding:4px 8px;gap:6px;flex-wrap:nowrap;min-height:0}
+    #dlgMapaFBs .jt>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #dlgMapaFBs .mjt{display:none}
+    #dlgMapaFBs .jb{display:flex;flex:1 1 auto;min-height:0}
+    #mapaFrame{flex:1 1 auto;height:auto;min-height:0}
+  }
+  /* Patamar Guiado: medidas e zoom */
+  .gd-geo{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;padding-top:6px;border-top:1px dashed #9aa6b5;font-size:11.5px}
+  .gd-geo button{padding:2px 8px;font-size:12px}
+  .gd-geo code{font-size:11px;flex:1 1 220px}
+  /* Exportar ▾ */
+  .expmenu{position:fixed;margin:0;inset:auto;overflow:visible;z-index:2147483000;background:#fff;color:#1b2a3a;border:1px solid #9aa5b1;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.3);display:flex;flex-direction:column;min-width:190px;padding:3px}
+  .expmenu button{border:0;background:none;text-align:left;padding:7px 10px;font:inherit;font-size:13px;color:inherit;cursor:pointer;border-radius:4px}
+  .expmenu button:hover,.expmenu button:focus-visible{background:#e8eef6}
+  .expmenu small{display:block;color:#51606f;font-size:11px}
+  .expmenu hr{border:0;border-top:1px solid #d3d9e0;margin:3px 2px;width:auto}
+  #dlgGuiado[open]{display:flex;flex-direction:column;--w:780px;max-width:97vw;max-height:96vh;overflow:hidden;resize:both}   /* v1.9.88: sem a lista de chaves a janela é estreita */
+  #dlgGuiado .jb{flex:1 1 auto;min-height:0;overflow:auto;padding:8px 12px 12px}
+  .gd-pat{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 6px}
+  #dlgModo .jnota:is(#mdTipoNota,#mdSalvaNota,#mdGraNota,#mdOpNota,#aimpNota){display:none}   /* v1.10.120: os textos viraram o ícone i de cada título */
+  #dlgModo h4 .ibub{position:relative;margin-left:6px}
+  #bAplicaPat{background:#1f9d6a;border-color:#1f9d6a;color:#fff;font-weight:700}
+  .gd-chip{border:1px solid #9aa6b5;border-radius:16px;background:#fff;color:inherit;padding:5px 14px;font:inherit;font-size:13px;cursor:pointer}
+  .gd-chip.on{background:var(--ui-acento-esc);border-color:var(--ui-acento-esc);color:#fff;font-weight:700}
+  .gd-chip:disabled{opacity:.6;cursor:default}
+  /* v1.10.119 — cartão de patamar: % (marcar) + salvamento Manual/Auto próprio. Só cor/borda mudam: o tamanho é fixo (REGRA_LAYOUT_ESTAVEL). */
+  .gd-pat{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+  /* v1.10.151: janela Detalhes do Patamar */
+  #dlgPatDet[open]{display:flex;flex-direction:column;max-height:88vh}
+  #dlgPatDet .jb{flex:1 1 auto;min-height:0;overflow:auto}
+  #dlgPatDet .jb{padding:6px 12px 12px}
+  #dlgPatDet .pd-sec{padding:8px 0;border-bottom:1px solid var(--line)}
+  #dlgPatDet .pd-sec:last-child{border-bottom:0}
+  #dlgPatDet .pd-sec h4{margin:0 0 6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+  #dlgPatDet .gd-row{margin:0;gap:6px}
+  #dlgPatDet .gd-resumo{margin:0}
+  #dlgPatDet pre{margin:0!important;max-height:130px!important;background:var(--cardin);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+  .gd-emerg{border:0;background:#fde7e5;color:#b32626;border-radius:10px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;padding:4px;line-height:1.2}
+  .gd-emerg:hover{background:#d03b3b;color:#fff}
+  .gd-pc{border:1.5px solid #c3cbd6;border-radius:10px;padding:6px 8px 5px;display:flex;flex-direction:column;gap:4px;align-items:stretch;min-height:92px;background:rgba(255,255,255,.55)}
+  .gd-pc.on{border-color:var(--ui-acento-esc);background:rgba(47,111,208,.07)}
+  .gd-pc.cur{box-shadow:0 0 0 2px #1f9d6a inset}
+  .gd-pc .gd-chip{width:100%;border-radius:8px;font-size:15px;padding:5px 8px}
+  .gd-sv{display:flex;border:1px solid #9aa6b5;border-radius:8px;overflow:hidden}
+  .gd-sv button{flex:1;border:0;background:#fff;color:inherit;font:inherit;font-size:12px;padding:4px 2px;cursor:pointer;min-height:26px}
+  .gd-sv button+button{border-left:1px solid #9aa6b5}
+  .gd-sv button.on{background:#1f9d6a;color:#fff;font-weight:700}
+  .gd-sv button:disabled{opacity:.5;cursor:default}
+  .gd-pc small{font-size:11px;opacity:.75;text-align:center}
+  .gd-pc.exc small{opacity:1;color:#b25a00;font-weight:700}
+  .gd-vazio{border:1.5px dashed #9aa6b5;border-radius:10px;padding:8px 10px;font-size:12.5px;opacity:.8;margin:2px 0 6px;min-height:40px}
+  .gd-ap{border:1.5px solid #9aa6b5;border-radius:10px;padding:8px 10px;margin:2px 0 6px}
+  .gd-ap.pronto{border-color:#1f9d6a;background:rgba(31,157,106,.08)}
+  .gd-bar{position:relative;height:16px;border-radius:8px;background:#e2e6ec;margin:6px 0 4px;overflow:hidden}
+  .gd-bar i{position:absolute;top:0;bottom:0;background:rgba(31,157,106,.35)}
+  .gd-bar b{position:absolute;top:0;bottom:0;width:3px;background:#0b0b0b}
+  .gd-ap button{min-height:34px}
+  #dlgGuiado .gd-row button.on{background:var(--ui-acento-esc);border-color:var(--ui-acento-esc);color:#fff;font-weight:700}
+  #dlgGuiado .gd-row button.on:hover{background:var(--ui-acento)}
+  /* v1.10.163: botão do Patamar DESABILITADO (ex.: "▶ Ligar Patamar Guiado" sem modelo/kW) tinha a mesma cor dos habilitados: tocava e nada acontecia */
+  #dlgGuiado .gd-row button:disabled,#dlgGuiado .gd-row button:disabled:hover{opacity:.45;filter:grayscale(.7);cursor:not-allowed}
+  .gd-resumo{font-size:12.5px;border-left:4px solid var(--ui-acento);padding:4px 8px;margin:6px 0;background:var(--ui-acento-fraco)}
+  .gd-resumo b{font-size:12.5px}
+  .gd-g{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-bottom:8px}
+  .gd-g label{display:flex;justify-content:space-between;gap:6px;align-items:center;font-size:12.5px}
+  .gd-g input,.gd-g select{width:120px;font:inherit}
+  .gd-bk h4{margin:8px 0 4px;font-size:13px}.gd-ch{display:grid;grid-template-columns:repeat(13,minmax(50px,1fr));gap:4px}
+  .gd-c{border:2px solid #9996;border-radius:7px;padding:3px 2px;text-align:center;font-size:12px;background:transparent;color:inherit;cursor:pointer;min-height:56px}
+  .gd-c b{display:block;font-size:13px}.gd-c small{display:block;font-size:10px;opacity:.75}
+  /* v1.9.87: seleção sem redesenhar a lista — só troca de classe (transição suave); chave marcada mostra ✓ no canto */
+  .gd-c{position:relative;transition:background-color .15s ease,border-color .15s ease,transform .08s ease}
+  .gd-c:active:not(.dis){transform:scale(.94)}
+  .gd-c.sel{background:var(--ui-acento-fraco);border-color:var(--ui-acento)}
+  .gd-c.sel::after{content:'✓';position:absolute;top:1px;right:4px;font-size:11px;font-weight:800;color:#1a5fb0}
+  @media (prefers-reduced-motion:reduce){.gd-c{transition:none}.gd-c:active:not(.dis){transform:none}}
+  .gd-c.sug{border-style:dashed;border-color:var(--ui-acento)}.gd-c.dis{opacity:.4;cursor:not-allowed}
+  .gd-c.ped{border-color:#eda100}.gd-c.ativa{border-color:var(--ui-acento);border-style:solid}.gd-c.conf{border-color:#0a8a0a;background:#0a8a0a2e}
+  /* v1.10.133: .gd-res deixou de ser uma linha de texto só (negrito 15px, tudo numa frase só) e virou um cartão —
+     a mensagem de bloqueio (quando existe) fica em destaque sozinha; os números (Seleção/alvo/diferença/limite)
+     formam uma linha leve embaixo, sem negrito gigante colorido. POR QUÊ: a versão anterior empilhava aviso +
+     4 números na mesma frase em negrito colorido, ilegível (achado do operador, print da tela). */
+  .gd-res{border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin:6px 0;background:var(--cardin)}
+  .gd-res-msg{font-size:13px;font-weight:700;margin:0 0 4px}
+  .gd-res-stats{display:flex;flex-wrap:wrap;gap:3px 14px;font-size:12px;font-weight:400;color:var(--mut)}
+  .gd-res-stats b{font-weight:700;color:var(--txt)}
+  .gd-bad{border-color:#f0b3b3;background:#fdeded}.gd-bad .gd-res-msg{color:#c6362f}
+  .gd-warn{border-color:#f0d58a;background:#fff8e6}.gd-warn .gd-res-msg{color:#8a5a00}
+  .gd-ok{border-color:#b9e3c6;background:#eef9f1}.gd-ok .gd-res-msg{color:#0a7a0a}
+  .gd-row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+  #dlgGrafico.ampliado #graZoom{cursor:zoom-out}
+  /* v1.9.82: seletor de catálogo (busca digitada + lista) e passos do Manual guiado */
+  .cat-b{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:4px 0;font-size:12.5px}
+  .cat-b input[type=search]{flex:1 1 220px;min-width:160px;font:inherit}
+  .cat-l{max-height:150px;overflow:auto;border:1px solid #9995;border-radius:6px;margin:4px 0}
+  .cat-l button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #9993;background:transparent;color:inherit;padding:3px 8px;font:inherit;font-size:12px;cursor:pointer}
+  .cat-l button:hover,.cat-l button.on{background:var(--ui-acento-fraco)}.cat-l small{opacity:.7;margin-left:6px}
+  .cat-i{font-size:12px;opacity:.8}
+  #dCat.escolhido .cat-busca,#dCat.escolhido .cat-l{display:none}   /* v1.10.0: gerador escolhido -> some a busca; "Trocar gerador" volta */
+  #dCat .cat-ficha button{margin-left:auto}
+  /* v1.9.83: X de fechar à esquerda (padrão de todas as janelas); título logo depois; botões extras (.jr) empurrados à direita */
+  /* seletor de catálogo com cara de cartão */
+  .cat-card{border:1px solid #9aa5b1;border-left:5px solid #1a4a78;background:#fff;border-radius:8px;padding:8px 10px;margin:8px 0}
+  .cat-card>summary{cursor:pointer;font-size:13px;font-weight:700;color:#1a4a78}
+  .cat-b input[type=search]{border:2px solid #1a4a78;border-radius:7px;padding:7px 10px;font-size:14px;background:#fff}
+  .cat-b input[type=file]{font-size:11.5px;max-width:230px}
+  .cat-l{background:#fff}
+  .cat-l button{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 9px;font-size:12.5px}
+  .cat-l button.on{background:#1a4a78;color:#fff}.cat-l button.on small{opacity:.9}
+  .cat-l small{white-space:nowrap;background:#1a4a7822;border-radius:10px;padding:1px 8px;margin:0}
+  .cat-l button.on small{background:#ffffff33}
+  .cat-ficha{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:12.5px}
+  .cat-ficha b{background:#2f7d3a;color:#fff;border-radius:10px;padding:2px 10px;font-weight:600}
+  .cat-ficha span{flex:1 1 100%;opacity:.85;font-size:12px}
+  #dlgDados{max-height:98vh;--w:1500px!important}
+  #dlgDados .cat-l{max-height:170px}
+  /* Manual guiado em 2 colunas */
+  .gd-2{display:grid;grid-template-columns:minmax(400px,.85fr) minmax(0,1.35fr);gap:0 22px;align-items:start}
+  @media (max-width:1050px){.gd-2{grid-template-columns:1fr}}
+  .gd-p{margin:10px 0 2px;font-size:13px;font-weight:700}
+  .gd-det{margin:8px 0}.gd-det>summary{cursor:pointer;font-size:12.5px;opacity:.85;padding:4px 0}
+  /* v1.9.87: emergência na barra verde do título. Cor de perigo = a mesma dos avisos/falhas da tela (#d03b3b); botão claro na barra para ter contraste */
+  #dlgGuiado .gd-top-emerg{margin-left:auto;margin-right:10px;background:#fff;color:#b32626;border:2px solid #fff;border-radius:6px;padding:3px 10px;font:inherit;font-size:12px;font-weight:800;letter-spacing:.02em;text-transform:none;cursor:pointer}
+  #dlgGuiado .gd-top-emerg:hover{background:#d03b3b;color:#fff}
+  .gd-mod{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 8px;border:1px solid #9aa5b1;border-radius:8px;font-size:12.5px;margin-bottom:4px}
+  .gd-mod b{font-size:13px}
+  table.tp{border-collapse:collapse;width:100%;font-size:12.5px}table.tp th{position:sticky;top:0;background:var(--ui-tinta);color:#fff;padding:4px 6px;text-align:right}table.tp td{padding:3px 6px;text-align:right;border-bottom:1px solid var(--line)}table.tp th:first-child,table.tp td:first-child{text-align:left}table.tp tr.tp-at td{background:var(--ui-acento-fraco);font-weight:700}
+  .tr-ch{border:2px solid #9996;border-radius:7px;min-width:58px;padding:3px 4px;text-align:center;font-size:12px;background:transparent;color:inherit;cursor:pointer}
+  .tr-ch.on{background:#e08a0033;border-color:#e08a00}.tr-ch small{display:block;font-size:10px;opacity:.75}
+  dialog.jan::backdrop{background:rgba(10,25,45,.55)}
+  .jan .jt{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--jazul);color:#fff;padding:9px 12px 9px 14px;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+  .jan .jr{display:flex;align-items:center;gap:8px}
+  .jan .jtag{border:1px solid #fff;padding:4px 9px;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:none;white-space:nowrap}
+  .jan .jx{width:28px;height:26px;border:1px solid #fff;background:transparent;color:#fff;font-size:14px;line-height:1;padding:0}
+  /* v1.10.161: o ✕ de fechar NUNCA sai da tela. No celular o cabeçalho (título + etiqueta + ⤢ + ✕) era mais largo que a janela e empurrava o ✕ para fora. */
+  .jan .jt>span:first-child{flex:1 1 auto;min-width:0}
+  .jan .jr{flex:0 1 auto;min-width:0;max-width:100%}
+  .jan .jtag{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .jan .jx,.jan .jwbtn{flex:0 0 auto}
+  @media(max-width:600px){.jan .jt{flex-wrap:wrap;row-gap:6px}.jan .jr{flex-wrap:wrap;justify-content:flex-end;row-gap:6px}.jan .jt>span:first-child{flex:1 1 60%}}   /* celular: botões do cabeçalho quebram de linha em vez de sair da tela */
+  .jan .jx:hover{background:#fff;color:var(--jazul)}
+  .jan .jb{padding:12px 16px 14px}
+  /* v1.9.63: bolinhas de comunicação no card Modo + fontes menores */
+  #modoCard .lnk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}
+  #modoCard .lk{border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--cardin);min-width:0;cursor:default}
+  #modoCard .lk .lkh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;line-height:1.2}
+  #modoCard .lk .dot{width:10px;height:10px;border-radius:50%;background:#9aa3ad;flex:none}
+  #modoCard .lk small{display:block;margin-top:1px;font-size:10.5px;line-height:1.2;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #modoCard .lk[data-s=ok] .dot{background:var(--ok);animation:lkpulso 2.4s ease-out infinite}
+  #modoCard .lk[data-s=parc] .dot{background:#e08a00}
+  @keyframes lkpulso{0%{box-shadow:0 0 0 0 rgba(46,154,95,.55)}70%,100%{box-shadow:0 0 0 7px rgba(46,154,95,0)}}
+  @media (prefers-reduced-motion:reduce){#modoCard .lk .dot{animation:none!important}}
+  /* v1.10.115: chave SEM LEITURA do PLC não pode parecer "desligada": bolinha hachurada, contorno tracejado e "?" (só cor/contorno/pseudo-elemento: layout estável) */
+  .tile.unk{position:relative;opacity:1;filter:none;outline:2px dashed var(--bad);outline-offset:-3px}
+  .tile.unk i{background:repeating-linear-gradient(45deg,#8d8d88 0 4px,#d9d9d4 4px 8px)!important}
+  .tile.unk::after{content:'?';position:absolute;top:1px;right:4px;font:800 12px/1 system-ui;color:var(--bad)}
+  .bk.semplc .bkh b{color:var(--mut);font-weight:700}
+  /* v1.9.64: balão (tooltip) das bolinhas em CSS puro — não pisca: o texto vem de data-tip e só é trocado quando muda */
+  #modoCard{overflow:visible}
+  #modoCard .lk{position:relative}
+  #modoCard .lk:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+  #modoCard .lk::after{content:attr(data-tip);display:none;position:absolute;left:0;top:calc(100% + 6px);width:300px;max-width:80vw;background:#1f2937;color:#fff;font-size:11.5px;font-weight:400;line-height:1.45;letter-spacing:0;text-transform:none;padding:8px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:60;white-space:pre-line;text-align:left;pointer-events:none}
+  #modoCard .lk:last-child::after{left:auto;right:0}
+  #modoCard .lk:hover::after,#modoCard .lk:focus-visible::after{display:block}
+  /* v1.9.64: Mensagens e falhas — triângulo no cabeçalho de cada card, botão geral na barra de cima e janela */
+  .ocb{display:inline-flex;align-items:center;gap:4px;border:0;background:transparent;padding:0 2px;margin:0 0 0 8px;cursor:pointer;vertical-align:middle;line-height:1;font:inherit;letter-spacing:0;text-transform:none}
+  .ocb[hidden]{display:none!important}
+  .ocb svg{width:22px;height:20px;display:block;flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+  .ocb .ocn{font-size:11px;font-weight:800;color:#111;background:#f5c400;border:1px solid #1a1a1a;border-radius:9px;padding:0 5px;min-width:17px;text-align:center;line-height:15px}
+  .ocb:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+  .ocb.novo svg{animation:ocbalanca .9s ease-out 1}
+
+  /* v1.10.170 (Fase 4, Portão C): animação DISCRETA dos triângulos (só quando há ocorrência ativa; para com "reduzir movimento") */
+  .ocb.f svg{animation:ocPulsoF 2.6s ease-in-out infinite}
+  .ocb.m svg{animation:ocPulsoM 3.8s ease-in-out infinite}
+  .ocb.novo.f svg{animation:ocbalanca .9s ease-out 1,ocPulsoF 2.6s ease-in-out .9s infinite}
+  .ocb.novo.m svg{animation:ocbalanca .9s ease-out 1,ocPulsoM 3.8s ease-in-out .9s infinite}
+  #bFalhas.tem svg{animation:ocPulsoF 2.6s ease-in-out infinite}
+  #bAlertas.tem svg{animation:ocPulsoM 3.8s ease-in-out infinite}
+  @keyframes ocPulsoF{0%,100%{filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}50%{filter:drop-shadow(0 0 5px rgba(217,45,32,.95)) drop-shadow(0 1px 1px rgba(0,0,0,.3))}}
+  @keyframes ocPulsoM{0%,100%{filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}50%{filter:drop-shadow(0 0 3px rgba(224,160,0,.8)) drop-shadow(0 1px 1px rgba(0,0,0,.3))}}
+  @media (prefers-reduced-motion:reduce){.ocb.f svg,.ocb.m svg,.ocb.novo.f svg,.ocb.novo.m svg,#bFalhas.tem svg,#bAlertas.tem svg{animation:none}}
+  /* v1.10.170: troubleshooter (Efeito -> Causa -> Solução) e legenda na janela Alertas e Falhas */
+  #dlgOcor td.tgl{white-space:nowrap}
+  #dlgOcor .ocx{border:1px solid #c9a24a;background:#fff8e6;color:#6b4a00;border-radius:4px;padding:1px 7px;font-size:11.5px;cursor:pointer}
+  #dlgOcor .ocx:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+  #dlgOcor tr.oct>td{background:#fffaf0;border-top:0;padding:8px 10px 12px}
+  #dlgOcor .ocp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  @media (max-width:900px){#dlgOcor .ocp{grid-template-columns:1fr}}
+  #dlgOcor .ocp h4{margin:0 0 4px;font-size:12px;color:#5a4300;letter-spacing:.02em}
+  #dlgOcor .ocp ol{margin:0;padding-left:18px}
+  #dlgOcor .ocp li{margin:0 0 6px}
+  #dlgOcor .ocp .mut{color:#51606f;font-size:11.5px}
+  #dlgOcor .ocp .chip{display:inline-block;font-size:10.5px;border-radius:9px;padding:0 6px;margin-left:4px;white-space:nowrap}
+  #dlgOcor .ocp .chip.pc{background:#dbeafe;color:#1a4a78}
+  #dlgOcor .ocp .chip.tela{background:#e3f1e6;color:#1f6b3a}
+  #dlgOcor .ocp .chip.bancada{background:#fde7c8;color:#8a4b00}
+  #dlgOcor .ocrod{margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  #dlgOcor .oclegenda{border:1px solid #c7d0da;background:#fff;padding:8px 10px;margin-bottom:8px;font-size:12px}
+  #dlgOcor .oclegenda[hidden]{display:none}
+  #dlgOcor .oclegenda table{margin-top:6px}
+  @keyframes ocbalanca{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(3deg)}}
+  @media (prefers-reduced-motion:reduce){.ocb.novo svg{animation:none}}
+  /* v1.10.166: Alertas e Falhas são DOIS botões independentes (dentro do grupo #bOcor). Cada um abre a janela com o seu tipo e, lá dentro, dá para ligar o outro tipo junto. */
+  #bOcor{display:inline-flex;align-items:center;gap:6px}
+  #bAlertas,#bFalhas{display:inline-flex;align-items:center;gap:6px;border:0;cursor:pointer;color:#fff}
+  #bOcor svg{width:16px;height:15px;display:block;flex:none}
+  #bAlertas.tem{background:#f5c400;color:#111;font-weight:700}
+  #bFalhas.tem{background:#fff;color:#8a1c15;box-shadow:inset 0 0 0 2px #d92d20;font-weight:700}   /* há FALHA ativa */
+  #ocTipos{display:inline-flex;gap:6px}
+  #ocTipos button{border:1px solid #9aa6b5;background:#fff;color:#1b2a3a;border-radius:14px;padding:3px 11px;font:inherit;font-size:12.5px;cursor:pointer;min-height:28px}
+  #ocTipos button.on[data-t=m]{background:#f5c400;border-color:#8a6d00;font-weight:700}
+  #ocTipos button.on[data-t=f]{background:#fff4f2;border-color:#d92d20;color:#8a1c15;font-weight:700;box-shadow:inset 0 0 0 1px #d92d20}
+  #ocTipos button.on[data-t=i]{background:#e8f1fd;border-color:#3f82e8;color:#173e7a;font-weight:700}
+  #dlgOcor td.ti{color:#1f5fbf}
+  #dlgOcor .ocglos{margin-top:8px;font-size:12.5px;line-height:1.45}#dlgOcor .ocglos dt{font-weight:700;margin-top:6px}#dlgOcor .ocglos dd{margin:0 0 0 14px}
+  dialog#dlgOcor.jan.livre{border-color:#9a6a00}
+  #dlgOcor .jt.livre{background:#9a6a00}
+  #dlgOcor .jx:hover{color:#9a6a00}
+  #dlgOcor .ocjb{padding:10px 14px 12px}
+  #dlgOcor .ocbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+  #dlgOcor .ocbar .bt{padding:6px 11px;font-size:12px}
+  #dlgOcor .ocbar select{width:auto!important;min-width:0;flex:none;border:1px solid var(--jborda);background:#fff;color:#1b2a3a;padding:5px 6px;font-size:12px}
+  #dlgOcor .ocbar .oclbl{display:inline;font-size:12px}
+  #dlgOcor #ocStatus{margin-left:auto;font-size:12px;color:#51606f}
+  #dlgOcor .ocstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
+  #dlgOcor .ocst{border:1px solid #c7d0da;background:#fff;padding:5px 8px}
+  #dlgOcor .ocst small{display:block;font-size:10.5px;color:#51606f}
+  #dlgOcor .ocst b{font-size:16px;font-variant-numeric:tabular-nums}
+  #dlgOcor .ocst b.bad{color:#b3261e}
+  #dlgOcor .ocscroll{max-height:52vh;overflow:auto;border:1px solid #c7d0da;background:#fff}
+  #dlgOcor table{border-collapse:collapse;width:100%;font-size:12px}
+  #dlgOcor th{position:sticky;top:0;background:#f1e7cf;color:#5a4300;text-align:left;padding:5px 7px;font-size:11.5px;letter-spacing:.03em}
+  #dlgOcor td{padding:4px 7px;border-top:1px solid #e3e8ee;vertical-align:top;font-variant-numeric:tabular-nums}
+  #dlgOcor td.cod{font-family:Consolas,"Courier New",monospace;font-weight:700;white-space:nowrap}
+  #dlgOcor td.tf{color:#b3261e;font-weight:700}#dlgOcor td.tm{color:#8a5a00;font-weight:700}
+  #dlgOcor tr.nrm td{color:#6b7684;background:#f7f8fa}
+  #dlgOcor tr.nrm td.tf,#dlgOcor tr.nrm td.tm{color:#6b7684;font-weight:400}
+  #dlgOcor .ocvazio{padding:14px;color:#51606f;font-size:12.5px}
+  #dlgOcor .ocnota{margin:6px 0 0;font-size:11.5px;color:#51606f;line-height:1.4}
+  #dlgOcor .ocprt{display:none}
+  @media print{
+    body.prOcor>*:not(#dlgOcor){display:none!important}
+    body.prOcor #dlgOcor{position:static!important;display:block!important;width:100%!important;max-height:none!important;margin:0!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+    body.prOcor #dlgOcor .jt,body.prOcor #dlgOcor .ocbar{display:none!important}
+    body.prOcor #dlgOcor .ocscroll{max-height:none!important;overflow:visible!important}
+    body.prOcor #dlgOcor .ocprt{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+  }
+
+  /* v1.10.103: histórico (buffer) de alertas e falhas — mesmas regras da janela Alertas e Falhas */
+  dialog#dlgOcHist.jan.livre{border-color:#9a6a00}
+  #dlgOcHist .jt.livre{background:#9a6a00}
+  #dlgOcHist .jx:hover{color:#9a6a00}
+  #dlgOcHist .ohjb{padding:10px 14px 12px}
+  #dlgOcHist .ohbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+  #dlgOcHist .ohbar .bt{padding:6px 11px;font-size:12px}
+  #dlgOcHist .ohbar select{width:auto!important;min-width:0;flex:none;border:1px solid var(--jborda);background:#fff;color:#1b2a3a;padding:5px 6px;font-size:12px}
+  #dlgOcHist .ohbar .ohlbl{display:inline;font-size:12px}
+  #dlgOcHist #ohStatus{margin-left:auto;font-size:12px;color:#51606f}
+  #dlgOcHist .ohstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
+  #dlgOcHist .ohst{border:1px solid #c7d0da;background:#fff;padding:5px 8px}
+  #dlgOcHist .ohst small{display:block;font-size:10.5px;color:#51606f}
+  #dlgOcHist .ohst b{font-size:16px;font-variant-numeric:tabular-nums}
+  #dlgOcHist .ohst b.bad{color:#b3261e}
+  #dlgOcHist .ohscroll{max-height:52vh;overflow:auto;border:1px solid #c7d0da;background:#fff}
+  #dlgOcHist table{border-collapse:collapse;width:100%;font-size:12px}
+  #dlgOcHist th{position:sticky;top:0;background:#f1e7cf;color:#5a4300;text-align:left;padding:5px 7px;font-size:11.5px;letter-spacing:.03em}
+  #dlgOcHist td{padding:4px 7px;border-top:1px solid #e3e8ee;vertical-align:top;font-variant-numeric:tabular-nums}
+  #dlgOcHist td.cod{font-family:Consolas,"Courier New",monospace;font-weight:700;white-space:nowrap}
+  #dlgOcHist td.tf{color:#b3261e;font-weight:700}#dlgOcHist td.tm{color:#8a5a00;font-weight:700}
+  #dlgOcHist tr.nrm td{color:#6b7684;background:#f7f8fa}
+  #dlgOcHist tr.nrm td.tf,#dlgOcHist tr.nrm td.tm{color:#6b7684;font-weight:400}
+  #dlgOcHist .ohvazio{padding:14px;color:#51606f;font-size:12.5px}
+  #dlgOcHist .ohnota{margin:6px 0 0;font-size:11.5px;color:#51606f;line-height:1.4}
+  #dlgOcHist .ohprt{display:none}
+  @media print{
+    body.prOcHist>*:not(#dlgOcHist){display:none!important}
+    body.prOcHist #dlgOcHist{position:static!important;display:block!important;width:100%!important;max-height:none!important;margin:0!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+    body.prOcHist #dlgOcHist .jt,body.prOcHist #dlgOcHist .ohbar{display:none!important}
+    body.prOcHist #dlgOcHist .ohscroll{max-height:none!important;overflow:visible!important}
+    body.prOcHist #dlgOcHist .ohprt{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+  }
+  /* v1.9.64: janela Dados do ensaio maior, em 2 colunas, com o rodapé de botões sempre visível */
+  #dlgDados{max-height:96vh}
+  #dlgDados .jb{padding:14px 22px 0}
+  #dlgDados .dcols{display:grid;grid-template-columns:minmax(340px,.85fr) minmax(0,1.5fr);gap:8px 30px;align-items:start}
+  #dlgDados .dcl,#dlgDados .dcr{min-width:0}
+  #dlgDados .sapdrop{padding:16px;font-size:14px;min-height:92px;display:flex;align-items:center;justify-content:center}
+  #dlgDados .sapdrop.comimg{justify-content:flex-start;min-height:0;padding:8px 12px}
+  #dlgDados .sapdrop img{max-width:150px;max-height:96px}
+  #dlgDados .sapdrop img.amp{max-width:min(600px,90vw);max-height:60vh}
+  #sapPrev[hidden]{display:none}
+  #dlgDados .sapbar button{padding:8px 14px;font-size:13px}
+  #dlgDados label{font-size:12.5px}
+  #dlgDados input[type=text],#dlgDados input:not([type]),#dlgDados input[inputmode]{font-size:15px;padding:8px 10px}
+  #dlgDados .jlin{margin-top:12px}
+  #dlgDados .jl4{grid-template-columns:1fr 1fr}
+  #dlgDados .jeqt{border-spacing:0 9px}
+  #dlgDados .jeqt th{font-size:12.5px}
+  #dlgDados .jeqt td{font-size:14px}
+  #dlgDados .jeqt td:first-child{width:112px}
+  #dlgDados .jfase{padding-top:42px;min-width:150px}
+  #dlgDados .jfase label{font-size:15px}
+  #dlgDados .jerr{margin-top:10px}
+  #dlgDados .jbtns{position:sticky;bottom:0;background:var(--jfundo);margin:12px -22px 0;padding:12px 22px 14px;border-top:2px solid var(--jazul);z-index:2}
+  #dlgDados .jbtns .bt{padding:12px 22px;font-size:14px}
+  @media (max-width:1000px){#dlgDados .dcols{grid-template-columns:1fr}}
+  /* v1.10.163: celular — Monofásico/Trifásico saíam cortados pela direita e a barra fixa de 5 botões ocupava ~30 % da tela (4 linhas).
+     Agora as fases ficam abaixo da tabela, em linha, e os botões em 2 colunas, com "Iniciar ensaio" largo embaixo. */
+  @media (max-width:600px){
+    #dlgDados .jb{padding:12px 12px 0}
+    #dlgDados .jeq{flex-wrap:wrap;gap:6px}
+    #dlgDados .jfase{flex-direction:row;flex-wrap:wrap;padding-top:0;min-width:0;gap:6px 16px}
+    #dlgDados .jbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px -12px 0;padding:10px 12px 12px}
+    #dlgDados .jbtns>span{display:none}
+    #dlgDados .jbtns .bt{padding:10px 6px;font-size:12.5px}
+    #dlgDados .jbtns #dOk{grid-column:1/-1}
+  }
+  /* v1.9.63: janela de Logs (padrão jan, não-modal) */
+  #dlgLogs .lgb{padding:10px 14px 12px}
+  #dlgLogs .lgbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+  #dlgLogs .lgbar .bt{padding:6px 11px;font-size:12px}
+  #dlgLogs .lgbar select{width:auto!important;min-width:0;flex:none;border:1px solid var(--jborda);background:#fff;color:#1b2a3a;padding:5px 6px;font-size:12px}
+  #dlgLogs .lgbar label{display:inline-flex;gap:5px;align-items:center;font-size:12px;cursor:pointer}
+  #dlgLogs #lgStatus{margin-left:auto;font-size:12px;color:#51606f;padding:3px 7px;border-radius:4px}
+  #dlgLogs #lgStatus.flash{animation:lgflash 1s ease-out}
+  @keyframes lgflash{0%{background:#cfe8d5}100%{background:transparent}}
+  @media (prefers-reduced-motion:reduce){#dlgLogs #lgStatus.flash{animation:none}}
+  #dlgLogs .lgaviso{margin:0 0 8px;padding:8px 10px;border:1px solid;font-size:12.5px;line-height:1.45}
+  #dlgLogs .lgaviso.err{background:#fde7e5;border-color:#b3261e;color:#7a1810}
+  #dlgLogs .lgaviso.warn{background:#fff1c9;border-color:#c99a00;color:#5a4300}
+  #dlgLogs .lgaviso.info{background:#e8eef6;border-color:#9aa5b1;color:#26384c}
+  #dlgLogs .lgstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
+  #dlgLogs .lgst{border:1px solid #c7d0da;background:#fff;padding:5px 8px}
+  #dlgLogs .lgst small{display:block;font-size:10.5px;color:#51606f}
+  #dlgLogs .lgst b{font-size:16px;font-variant-numeric:tabular-nums}
+  #dlgLogs .lgst b.bad{color:#b3261e}
+  #dlgLogs .lgnota{margin:6px 0 0;font-size:11.5px;color:#51606f;line-height:1.4}
+  #dlgLogs .lgscroll{max-height:50vh;overflow:auto;border:1px solid #c7d0da;background:#fff}
+  #dlgLogs table{border-collapse:collapse;width:100%;font-size:12px}
+  #dlgLogs th{position:sticky;top:0;background:#e3e9f0;color:#1a4a78;text-align:left;padding:5px 7px;font-size:11.5px;letter-spacing:.03em}
+  #dlgLogs td{padding:4px 7px;border-top:1px solid #e3e8ee;vertical-align:top;font-variant-numeric:tabular-nums}
+  #dlgLogs tr.lgerr td{background:#fdeceb}
+  #dlgLogs td.lgok{color:#1c7a43;font-weight:700}#dlgLogs td.lgno{color:#b3261e;font-weight:700}
+  #dlgLogs .lgvazio{padding:14px;color:#51606f;font-size:12.5px}
+  #dlgLogs .lgprt{display:none}
+  @media print{
+    body.prLogs>*:not(#dlgLogs){display:none!important}
+    body.prLogs #dlgLogs{position:static!important;display:block!important;width:100%!important;max-height:none!important;margin:0!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+    body.prLogs #dlgLogs .jt,body.prLogs #dlgLogs .lgbar{display:none!important}
+    body.prLogs #dlgLogs .lgscroll{max-height:none!important;overflow:visible!important}
+    body.prLogs #dlgLogs .lgprt{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+  }
+  .jan h4{margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--jazul);color:var(--jazul);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase}
+  .jan h4:first-child{margin-top:0}
+  .jan p{margin:0 0 16px;font-size:14px;line-height:1.5}
+  .jan label{display:block;font-size:11px;color:#40526a}
+  .jan input[type=text],.jan input:not([type]),.jan input[inputmode]{display:block;width:100%;margin-top:2px;border:1px solid var(--jborda);background:#fff;color:#111;padding:6px 8px;font:14px Consolas,"Courier New",monospace}
+  .jan input.dse{background:#dce9f6;border-color:#5b8cba}
+  .jan input.dse+i,.jan .dsepto{font-style:normal;color:#1a4a78}
+  .jan .jlin{display:grid;gap:12px;margin-bottom:6px}
+  .jan .jl3{grid-template-columns:1fr 1fr 1fr}
+  .jan .jl4{grid-template-columns:repeat(4,1fr);margin-top:14px}
+  .jan .jeq{display:flex;gap:18px;align-items:flex-start}
+  .jan .jeqt{border-collapse:separate;border-spacing:0 6px;flex:1}
+  .jan .jeqt th{font-size:12px;font-weight:400;color:#40526a;text-align:center;padding:0 4px}
+  .jan .jeqt td{padding:0 4px 0 0;font-size:13px;color:#1b2a3a}
+  .jan .jeqt td:first-child{width:90px}
+  .jan .jeqt input{margin:0}
+  .jan .jfase{display:flex;flex-direction:column;gap:12px;padding-top:34px;min-width:130px}
+  .jan .jfase label{display:flex;align-items:center;gap:6px;font-size:14px;color:#1b2a3a}
+  .jan .jfase input{width:auto;display:inline;margin:0}
+  .jan .jerr{min-height:20px;margin-top:8px;color:#b3261e;font-size:13px;font-weight:700}
+  .jan .jmsg{min-height:0;margin:10px 0 0;color:#40526a;font-size:13px}
+  .jan .jmsg.av{padding:7px 10px;background:#fff4d6;border:1px solid #d9a400;color:#6b4e00}
+  .jan .jbtns{display:flex;align-items:stretch;gap:12px;margin-top:14px;flex-wrap:wrap}
+  .jan .jbtns span{flex:1}
+  .jan .bt{border:2px solid var(--jazul);padding:10px 14px;line-height:1.25;font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border-radius:0}
+  .jan .bt.p{background:var(--jazul);color:#fff}
+  .jan .bt.p:hover:not(:disabled){background:#12395f}
+  .jan .bt.s{background:#fff;color:var(--jazul)}
+  .jan .bt.s:hover{background:#e8eef5}
+  .jan .bt.c{background:#8d97a3;border-color:#8d97a3;color:#fff}
+  .jan .bt.d{background:#c0392b;border-color:#c0392b;color:#fff}
+  .jan .bt.d:hover{background:#a52f23}
+  .jan .bt:disabled{background:#b8bec6;border-color:#b8bec6;color:#fff;cursor:not-allowed}
+  .jan .jchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .jan .chip{padding:6px 10px;font-size:12.5px;font-weight:700;border:1px solid #b8bec6;background:#eceff3;color:#40526a}
+  .jan .chip.ok{background:#e1f3e6;border-color:#2e7d32;color:#1b5e20}
+  .jan .chip.av{background:#fff4d6;border-color:#d9a400;color:#6b4e00}
+  .jan .chip.cr{background:#fde7e5;border-color:#b3261e;color:#8a1c15}
+  .jan .jtab{width:100%;border-collapse:separate;border-spacing:0 3px;font-variant-numeric:tabular-nums}
+  .jan .jtab th{font-size:11.5px;font-weight:400;color:#40526a;text-align:center;letter-spacing:.04em;text-transform:uppercase;padding:2px 4px}
+  .jan .jtab th:first-child{text-align:left}
+  .jan .jtab td{border:1px solid var(--jborda);background:#fff;padding:3px 8px;text-align:center;font-size:13.5px}
+  #resTab th{text-transform:none;letter-spacing:0;font-size:12px}
+  /* v1.10.163: no celular a tabela de 12 colunas do Resultado (e a do Registro de aprendizado) era mais larga que a janela e a JANELA INTEIRA
+     rolava de lado (botões e condições juntos). Agora só a tabela rola de lado; as condições ganham largura para o texto. */
+  @media (max-width:760px){
+    #dlgRes #resTab,#dlgReg #rgTab{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+    #dlgRes #resTab td,#dlgRes #resTab th{white-space:nowrap}
+    #dlgRes .jcond td:nth-child(2){width:84px}
+    #dlgRes .jcond td:nth-child(3){width:auto}
+  }
+  .jan .jtab td:first-child{text-align:left;color:#1b2a3a}
+  .jan .jtab td.sv{font-weight:700}
+  .jan .jtab td.vivo{background:#fff4d2;border-color:#d8c58a}
+  .jan .jtab td.vz{color:#8d97a3}
+  .jan .jcond td:nth-child(2),.jan .jcond td:nth-child(3){width:150px}
+  .jan .bdg{display:inline-block;padding:2px 14px;font-size:12px;font-weight:700;letter-spacing:.05em;border:1px solid #b8bec6;background:#eceff3;color:#40526a}
+  .jan .bdg.ok{background:#e1f3e6;border-color:#2e7d32;color:#1b5e20}
+  .jan .bdg.cr{background:#fde7e5;border-color:#b3261e;color:#8a1c15}
+  .jan .jfinal{margin-top:10px;font-size:14px;font-weight:700;color:var(--jazul)}
+  /* botões de acesso às janelas (mesmo estilo do ⚙ da água) */
+  #modoCard .mdgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin-top:6px}
+  #modoCard .card{padding:5px 8px}
+  #modoCard .card .l{font-size:10.5px;line-height:1.2}
+  #modoCard .v{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:13px;font-weight:700;line-height:1.25;margin-top:1px;overflow:hidden;overflow-wrap:anywhere}
+  #modoCard .v.demo{color:#b45309}#modoCard .v.real{color:var(--ok)}
+  /* v1.10.214: card MODO menor (so tamanho; visual igual ao da 1.10.212) */
+  #modoCard .lnk{gap:4px;margin-top:4px}
+  #modoCard .lk{border-radius:7px;padding:2px 6px}
+  #modoCard .lk .lkh{gap:5px;font-size:11px;line-height:1.15}
+  #modoCard .lk .dot{width:8px;height:8px}
+  #modoCard .lk small{font-size:9.5px;line-height:1.1;margin-top:0}
+  #modoCard .mdgrid{grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:4px;margin-top:4px}
+  #modoCard .card{padding:2px 6px;border-radius:7px}
+  #modoCard .card .l{font-size:9.5px;line-height:1.1}
+  #modoCard .v{font-size:11.5px;line-height:1.15;margin-top:0}
+  .cfgbtn.inl{position:static;margin-left:auto;width:auto;height:22px;padding:0 10px;border-radius:11px;font-size:11px;font-weight:700;letter-spacing:.02em;text-transform:none;white-space:nowrap}
+  .thbtn{display:block;margin:3px auto 0;border:1px solid #1a4a78;background:#fff;color:#1a4a78;font-size:10.5px;font-weight:700;line-height:1.5;padding:0 9px;border-radius:10px}
+  .thbtn:hover{background:#1a4a78;color:#fff}
+  html[data-tema=escuro] .thbtn{background:#2c2e33;color:#e8e8e4;border-color:#8d97a3}
+  html[data-tema=escuro] .thbtn:hover{background:#e8e8e4;color:#111}
+  /* etapas e títulos do registro agora clicáveis */
+  .st{cursor:pointer}
+  .st:hover .b{outline:2px solid var(--blue)}
+  .tb thead th[id^=th]{cursor:pointer}
+  .tb thead th[id^=th]:hover{text-decoration:underline}
+  .svbtn.re{background:#fff;color:#1a4a78;border-color:#1a4a78}
+  .clock{flex-wrap:wrap}
+  .clock .clkbtns{margin-left:auto;align-self:center;display:flex;flex-direction:row;gap:6px;align-items:center}
+  .clock .clkbtns .fimbtn{margin:0}
+  .clock .salvbtn{background:#fff;color:#1a4a78;border:1px solid #1a4a78;border-radius:8px;padding:6px 8px;font-size:11.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+  .clock .salvbtn:disabled{opacity:.3;cursor:not-allowed}
+  /* v1.10.163: até 1279 px (celular e 2 colunas) o Registro do ensaio fica longe do cronômetro (no celular ~1.700 px abaixo) e o aviso
+     "Etapa N cumprida · SALVAR" não tinha botão por perto. O SALVAR ETAPA volta, empilhado em cima do FINALIZAR, SEMPRE no mesmo lugar
+     (desabilitado quando não há o que salvar = layout estável). Em 1280 px ou mais continua escondido (decisão do operador: redundante). */
+  @media (max-width:1279px){
+    .clock #bSalv{display:inline-block!important}
+    .clock .clkbtns{flex-direction:column;align-items:stretch;gap:5px}
+    .clock .clkbtns button{padding:8px 10px;font-size:12.5px;min-height:34px}
+  }
+  .clock .salvbtn:hover:not(:disabled){background:#e8eef5}
+  html[data-tema=escuro] .clock .salvbtn{background:#2c2e33;color:#e8e8e4;border-color:#8d97a3}
+  @keyframes pede{0%,100%{box-shadow:0 0 0 0 rgba(46,154,95,.6)}50%{box-shadow:0 0 0 6px rgba(46,154,95,0)}}
+  @keyframes pisca{0%,100%{opacity:1}50%{opacity:.5}}
+  @keyframes piscaIni{0%,100%{background:#dbeafe;border-color:#1a4a78;color:#1a4a78}50%{background:#fff;border-color:#9cb8d6;color:#1a4a78}}
+  #bIni.pede{animation:piscaIni 1.1s ease-in-out infinite;font-weight:700;border-width:2px}
+  #bIni.ativo{background:#1a4a78!important;color:#fff!important;border-color:#12395f!important;animation:none}
+  html[data-tema=escuro] #bIni.pede{animation-name:piscaIniEscuro}
+  @keyframes piscaIniEscuro{0%,100%{background:#1a3a5c;border-color:#5b8cba;color:#cfe3fa}50%{background:#2c2e33;border-color:#3b5a7a;color:#cfe3fa}}
+  @keyframes piscaVerde{0%,100%{background:#2e9a5f;border-color:#1d6d41;color:#fff}50%{background:#eafff2;border-color:#2e9a5f;color:#1d6d41}}
+  @keyframes piscaLaranja{0%,100%{background:#ff8c00;border-color:#b35f00;color:#fff}50%{background:#2a2a2a;border-color:#666;color:#fff}}
+  #bGuiadoRun.gdrun-aviso{border-color:var(--bad);color:var(--bad);font-weight:700;animation:piscaLaranja 1s ease-in-out infinite}
+  #bGuiadoRun.gdrun-on{background:var(--ui-acento);color:#fff;border-color:var(--ui-acento-esc);font-weight:700}
+  #bDemo.demoOn{animation:piscaLaranja 1s ease-in-out infinite;font-weight:700}
+  .clock .fimbtn.pede{animation:piscaVerde 1.1s ease-in-out infinite;border-width:2px}
+  .clock .salvbtn.pede,.svbtn.pede{animation:piscaVerde 1.1s ease-in-out infinite;border-width:2px}
+  .tools #bModo{font-size:11.5px}
+  html[data-tema=escuro] .svbtn.re:not(:disabled){background:#2c2e33;color:#e8e8e4;border-color:#8d97a3}
+

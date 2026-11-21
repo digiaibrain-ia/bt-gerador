@@ -6,14 +6,18 @@ const fs = require('fs');
 const path = require('path');
 
 const RAIZ = path.join(__dirname, '..', '..');
-const HTML = path.join(RAIZ, 'dashboard', 'ferramentas', 'medidor_gerador_v1.10.176.html');
+const HTML = require('../versoes.js').caminhoFerramenta(process.env.BT2_FASE4_HTML || require('../versoes.js').medidorAtual());   // A3: padrao = medidor mais novo
 const FLUXOS = path.join(RAIZ, 'nodered', 'flows', 'bt2');
-const ARQ_FLUXOS = ['chaves-56-api-v3.4', 'chaves-400-api-v3.4', 'chaves-550-api-v1.5', 'chaves-595-api-v1.5', 'cliente-156-dse-plc-carga-v3', 'cliente-31-seletor-plc-db2000-v4', 'registro-ensaio-db2100-api-v1.8', 'simulador-dse-demo-v7', 'dev-logs-api-v1.3', 'servidor-deepsea-api-gerador-v3_7'];
+const ARQ_FLUXOS = ['chaves-56-api-v3.9', 'chaves-400-api-v3.8', 'chaves-550-api-v1.9', 'chaves-595-api-v1.9', 'cliente-156-dse-plc-carga-v3', 'cliente-31-seletor-plc-db2000-v4', 'registro-ensaio-db2100-api-v1.10', 'simulador-dse-demo-v7', 'dev-logs-api-v1.3', 'servidor-deepsea-api-gerador-v3_8', 'gerador-capacidade-api-v1.0'];
 
 function rotasDosFluxos() {
   const rotas = [];
   for (const a of ARQ_FLUXOS) for (const n of JSON.parse(fs.readFileSync(path.join(FLUXOS, a + '.json'), 'utf8'))) {
     if (n.type === 'http in') rotas.push({ metodo: String(n.method).toUpperCase(), url: n.url, arq: a });
+  }
+  // A3 (18/11/2026): o medidor mais novo tambem usa as rotas do RNC, que ficam no fluxo rnc-api-v1.2 (nodered/flows, fora de bt2)
+  for (const n of JSON.parse(fs.readFileSync(path.join(RAIZ, 'nodered', 'flows', 'rnc-api-v1.2.json'), 'utf8'))) {
+    if (n.type === 'http in') rotas.push({ metodo: String(n.method).toUpperCase(), url: n.url, arq: 'rnc-api-v1.2' });
   }
   return rotas;
 }
@@ -29,7 +33,8 @@ describe('F10 contrato HTML <-> rotas do Node-RED', () => {
     assert.ok(prefixos.size > 5, 'a varredura do HTML achou poucos caminhos (' + prefixos.size + ')');
     const faltando = [];
     for (const p of prefixos) {
-      const ok = rotas.some(r => normaliza(r.url).startsWith(p.replace(/\/$/, '')) || normaliza(r.url) === p);
+      const pp = p.split('?')[0];   // A3: a query string (?limit=10) nao faz parte do caminho da rota
+      const ok = rotas.some(r => normaliza(r.url).startsWith(pp.replace(/\/$/, '')) || normaliza(r.url) === pp);
       if (!ok) faltando.push(p);
     }
     assert.deepEqual(faltando, [], 'o HTML chama caminhos que nenhum fluxo atende');

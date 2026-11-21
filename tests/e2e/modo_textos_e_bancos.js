@@ -2,7 +2,7 @@
 // (2) Banco de Cargas: so o selecionado fica visivel, mesmo com o PLC nunca lido (chaves com "?"); leitura PERDIDA depois de existir mantem o banco visivel (seguranca).
 // file://. Uso: node tests/e2e/modo_textos_e_bancos.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.215.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 const modo = p => p.evaluate(() => ({ fonte: mcFonte.textContent, salva: mcSalva.textContent, node: mcNode.textContent, lkNr: document.querySelector('#lkNr small').textContent }));
 (async () => {

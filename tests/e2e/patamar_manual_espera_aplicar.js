@@ -1,7 +1,7 @@
 // Medidor 1.10.219 (regra da 1.10.218 refinada): salvamento "Por patamar", patamar MANUAL: a etapa so conta tempo depois do Aplicar. Demo local, so BC56, 40 kW a 100 %, ensaio acelerado (10x).
 // No degrau 107 % o operador NAO aplica por ~25 s: a etapa nao pode contar nem avancar. Depois aplica: o relogio solta e a etapa avanca. file://. Uso: node tests/e2e/patamar_manual_espera_aplicar.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.219.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1536, height: 900 } })).newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());

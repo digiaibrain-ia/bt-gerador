@@ -5,7 +5,7 @@ const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, esperaAte, sobe } = require('../ajudas.js');
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.191.html';
+const HTML = process.env.BT2_FASE4_HTML || require('../../versoes.js').medidorAtual();
 describe('v1.10.191 - perguntar ao final do ensaio', () => {
   let h, b, p; const txt = f => p.evaluate(f);
   const fim = async () => { await p.evaluate(() => { T.fim = false; T.started = false; }); await new Promise(r => setTimeout(r, 1300)); await p.evaluate(() => { T.started = true; T.fim = true; }); };

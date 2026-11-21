@@ -1,14 +1,14 @@
 // Medidor 1.10.212 — ALARME INTELIGENTE: contexto (Demo local sem alarme de PLC), escopo (so banco em uso), causa-raiz (1 alarme + dependentes), seguranca nao suprimida, linha "Monitorando".
 // Abre o arquivo direto (file://), servidor SIMULADO por page.route. Uso: node tests/e2e/alarme_inteligente.js   (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.212.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 const ativos = p => p.evaluate(() => OCOR.ativas().map(o => o.cod + (o.ref ? '|' + o.ref : '')).sort());
 (async () => {
   const b = await chromium.launch();
   for (const [nome, vp, mobile] of [['desktop 1280', { width: 1280, height: 800 }, false], ['celular 390', { width: 390, height: 844 }, true]]) {
     console.log('\n## ' + nome);
-    const nova = async (queda) => { const ctx = await b.newContext({ viewport: vp, isMobile: mobile, hasTouch: mobile }); const p = await ctx.newPage(); p.erros = []; p.on('pageerror', e => p.erros.push(e.message));
+    const nova = async (queda) => { const ctx = await b.newContext({ viewport: vp, isMobile: mobile, hasTouch: mobile }); const p = await ctx.newPage(); await p.addInitScript(() => { window.OCOR_DEBOUNCE_ESCALA = 0; }); p.erros = []; p.on('pageerror', e => p.erros.push(e.message));
       const resp = r => queda ? r.abort() : r.fulfill({ status: 503, body: '{}' }); await p.route('**/*/api/**', resp); await p.route('**/api/**', resp); await p.goto('file://' + ARQ); return { ctx, p }; };
     // 1) Demo local: sem alarme de PLC
     { const { ctx, p } = await nova(); await p.waitForTimeout(1500);

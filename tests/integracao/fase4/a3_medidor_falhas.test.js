@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 const { ENV_TESTE, BANCOS, enderecos, esperaAte, get, sobe } = require('../ajudas.js');
 const { parseAddr } = require('../plc_simulado.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.176.html';   // a falha CHV-007/008 vale da 1.10.168 em diante
+const HTML = process.env.BT2_FASE4_HTML || require('../../versoes.js').medidorAtual();   // a falha CHV-007/008 vale da 1.10.168 em diante
 describe('A3 - medidor: falhas do PLC do banco', () => {
   let h, b, p, timer; const e = enderecos('56'), B = BANCOS['56'];
   const bit = (base, i) => 'DB' + B.db + ',X' + (base + Math.floor((i - 1) / 8)) + '.' + ((i - 1) % 8);
@@ -18,7 +18,7 @@ describe('A3 - medidor: falhas do PLC do banco', () => {
   const ocor = () => p.evaluate(() => window.OCOR.ativas().filter(x => /^CHV-00[78]$/.test(x.cod)).map(x => ({ cod: x.cod, ref: x.ref, tipo: x.tipo, txt: x.txt })));
 
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.5', 'chaves-400-api-v3.5'], env: ENV_TESTE, servirHtml: true });   // o chip "PLC" so fica ok com os DOIS bancos lendo
+    h = await sobe({ fluxos: ['chaves-56-api-v3.9', 'chaves-400-api-v3.8'], env: ENV_TESTE, servirHtml: true });   // o chip "PLC" so fica ok com os DOIS bancos lendo
     const e4 = enderecos('400'); h.plc.escrever(e4.comOk, true); h.plc.escrever(e4.seletora, true);
     h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); for (let i = 1; i <= 13; i++) h.plc.escrever(e.hab(i), true);
     tick(); timer = setInterval(tick, 100);

@@ -1,6 +1,6 @@
 // Toque longo (celular) abre o menu, nao aciona o botao por baixo, e toque curto/rolagem NAO abrem o menu. Medidor 1.10.164, porta 8790.
 const { chromium } = require('playwright');
-const URL = 'http://localhost:8790/' + (process.env.MEDIDOR || 'medidor_gerador_v1.10.164.html');
+const URL = 'http://localhost:8790/' + (process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const ok = (n, c, d) => console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' â€” ' + d : ''));
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -20,7 +20,7 @@ const ok = (n, c, d) => console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' â
   ok('toque com arrasto (rolagem) NAO abre o menu', await p.evaluate(() => !document.querySelector('.pia-menu')));
   await toque(alvo.x, alvo.y, 900); await p.waitForTimeout(400);
   const m = await p.evaluate(() => { const e = document.querySelector('.pia-menu'); if (!e) return null; const r = e.getBoundingClientRect(); return { n: e.querySelectorAll('button').length, dentro: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight, cliques: window.__cliques }; });
-  ok('toque longo abre o menu dentro da tela', m && m.n === 5 && m.dentro, m && JSON.stringify(m));
+  ok('toque longo abre o menu dentro da tela', m && m.n === 6 && m.dentro, m && JSON.stringify(m));
   ok('toque longo NAO aciona o botao por baixo', m && m.cliques === 1);
   await p.touchscreen.tap(20, 700); await p.waitForTimeout(300);
   ok('tocar fora fecha o menu', await p.evaluate(() => !document.querySelector('.pia-menu')));

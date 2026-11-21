@@ -1,7 +1,7 @@
 // Medidor 1.10.216: area RNC com interruptor (nasce DESLIGADO), fila de envio sem rede e arquivo .csv. Servidor SIMULADO por page.route (file://).
 // Uso: node tests/e2e/rnc_area_fila.js (MEDIDOR=nome.html)
 const { chromium } = require('playwright'); const path = require('path'); const fs = require('fs'); const os = require('os');
-const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || 'medidor_gerador_v1.10.216.html');
+const ARQ = path.resolve(__dirname, '..', '..', 'dashboard', 'ferramentas', process.env.MEDIDOR || require('../versoes.js').medidorAtual());
 const R = []; const ok = (n, c, d) => { R.push(!!c); console.log((c ? 'OK   ' : 'FALHA') + ' ' + n + (d ? ' — ' + d : '')); };
 (async () => {
   const b = await chromium.launch();

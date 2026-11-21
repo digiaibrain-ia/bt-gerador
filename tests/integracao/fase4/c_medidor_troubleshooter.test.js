@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const { ENV_TESTE, enderecos, esperaAte, sobe } = require('../ajudas.js');
 
-const HTML = process.env.BT2_FASE4_HTML || 'medidor_gerador_v1.10.176.html';
+const HTML = process.env.BT2_FASE4_HTML || require('../../versoes.js').medidorAtual();
 
 describe('C - medidor: triangulos, troubleshooter, legenda, Cards x flow, DSE-001', () => {
   let h, b, ctx, p;
@@ -77,8 +77,12 @@ describe('C - medidor: triangulos, troubleshooter, legenda, Cards x flow, DSE-00
     const txt = await p.evaluate(() => window.OCOR.ativas().find(x => x.cod === 'DSE-001').txt);
     assert.match(txt, /API responde \(HTTP 503\).*Modbus do DSE n.o conecta.*retrying/s, txt);
     await p.evaluate(() => window.OCOR.abre());
-    await p.waitForSelector('#ocCorpo button.ocx');
-    await p.locator('#ocCorpo tr', { hasText: 'DSE' }).locator('button.ocx').first().click();
+    // 1.10.226 (ALARME_INTELIGENTE_v0.2): "DSE nunca conectado" e do tipo Informacao (I-DSE-001) e a janela NAO a mostra por padrao.
+    assert.equal(await p.evaluate(() => window.OCOR.ativas().find(x => x.cod === 'DSE-001').tipo), 'i', 'DSE-001 deveria ser Informacao');
+    assert.equal(await p.locator('#ocCorpo tr', { hasText: 'DSE-001' }).count(), 0, 'Informacao nao aparece por padrao');
+    await p.click('#ocTipos button[data-t="i"]');
+    await p.waitForSelector('#ocCorpo tr:has-text("I-DSE-001") button.ocx');
+    await p.locator('#ocCorpo tr', { hasText: 'DSE-001' }).locator('button.ocx').first().click();
     const painel = await p.evaluate(() => document.querySelector('#ocCorpo tr.oct').textContent.replace(/\s+/g, ' '));
     assert.ok(/Modbus do DSE: status retrying/.test(painel) && /Connection refused/.test(painel) && /IP FIXO/.test(painel), painel.slice(0, 300));
   });
@@ -87,7 +91,7 @@ describe('C - medidor: triangulos, troubleshooter, legenda, Cards x flow, DSE-00
 describe('C7 - medidor com o PLC do banco (ET200) sem comunicacao', () => {
   let h, b, p; const e = enderecos('56');
   before(async () => {
-    h = await sobe({ fluxos: ['chaves-56-api-v3.5', 'chaves-400-api-v3.5'], env: ENV_TESTE, servirHtml: true });
+    h = await sobe({ fluxos: ['chaves-56-api-v3.9', 'chaves-400-api-v3.8'], env: ENV_TESTE, servirHtml: true });
     const e4 = enderecos('400'); h.plc.escrever(e4.comOk, true); h.plc.escrever(e4.seletora, true);
     h.plc.escrever(e.comOk, true); h.plc.escrever(e.seletora, true); h.plc.escrever(e.cbBanco, true); for (let i = 1; i <= 13; i++) h.plc.escrever(e.hab(i), true);
     b = await chromium.launch(); p = await b.newPage({ viewport: { width: 1280, height: 900 } });
@@ -100,7 +104,7 @@ describe('C7 - medidor com o PLC do banco (ET200) sem comunicacao', () => {
 
   test('ET200 sem comunicacao: COM-005 ativa, o banco fica bloqueado e o clique NAO comanda o PLC (com mensagem)', async () => {
     h.plc.escrever(e.comOk, false);
-    assert.ok(await esperaAte(() => p.evaluate(() => window.OCOR.ativas().some(x => x.cod === 'COM-005' && x.ref === 'BC56')), 8000), 'COM-005 nao apareceu');
+    assert.ok(await esperaAte(() => p.evaluate(() => window.OCOR.ativas().some(x => x.cod === 'COM-005' && x.ref === 'BC56')), 20000), 'COM-005 nao apareceu (debounce de 10 s, Passo 6)');
     const antes = h.plc.escritas.length;
     await p.locator('#bancos .tile[data-i="0"]').click();
     assert.ok(await esperaAte(async () => (await p.evaluate(() => document.querySelector('#gmsg').textContent)).length > 0, 3000), 'clique mudo: sem mensagem');

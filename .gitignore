@@ -36,3 +36,12 @@ tests/integracao/runtime/
 
 # Obsidian (configuracao local de cada pessoa; nao versionar)
 .obsidian/
+
+# Cache do Python
+__pycache__/
+*.pyc
+
+# relatorios de mutacao e pasta temporaria do Stryker
+tests/mutacao/relatorios/
+tests/mutacao/alvos/
+.stryker-tmp/

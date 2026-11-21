@@ -1,0 +1,90 @@
+  /* ---- ícones de acesso às janelas (em azul) e janelas arrastáveis ---- */
+  .cfgbtn,.thbtn{color:#1a4a78}
+  .cfgbtn{border-color:#9db9d6;display:inline-grid;place-items:center}
+  .cfgbtn.inl{display:inline-flex;align-items:center;gap:5px;border-color:#9db9d6}
+  .cfgbtn svg,.thbtn svg{display:block;flex:none}
+  .thbtn{display:flex!important;align-items:center;justify-content:center;gap:4px;margin:3px auto 0}
+  html[data-tema=escuro] .cfgbtn{color:#8cc0f2;border-color:#4e6f91}
+  html[data-tema=escuro] .cfgbtn:hover{color:#fff}
+  .jan .jt,.dlgtop{cursor:move;user-select:none;touch-action:none}
+  .jan .jbtns span.jger{flex:0 1 auto;margin:0 auto;align-self:center;padding:7px 14px;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:1px solid #8d97a3;background:#eceff3;color:#40526a}
+  .jan .jger.on{background:#e1f3e6;border-color:#2e7d32;color:#1b5e20}
+  .jan .jger.part{background:#fff4d6;border-color:#d9a400;color:#6b4e00}
+  .jan .jger.off{background:#e3e8ef;border-color:#5b6b7e;color:#2c3a4d}
+  dialog.jan::backdrop{background:rgba(10,25,45,.28)}
+  .dlg::backdrop{background:rgba(0,0,0,.3)}
+
+  /* ---- janela: todas as grandezas do DSE ---- */
+  .jan .gdtopo{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+  .jan .gdtopo input{flex:1;margin:0}
+  .jan .gdlegenda{font-size:12px;color:#40526a;white-space:nowrap}
+  .jan .gdlegenda i{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px;border:1px solid #9aa5b1}
+  .jan .gdlegenda i.usa{background:#1a4a78;border-color:#1a4a78}
+  .jan .gdcorpo{max-height:calc(88vh - 150px);overflow:auto;padding-right:4px}
+  .jan .jnota{margin:0 0 6px;font-size:13px;color:#40526a}
+  .jan .jtipo{display:flex;gap:0;margin-bottom:8px}
+  .jan .jtipo button{flex:1;padding:9px 10px;border:2px solid var(--jazul);background:#fff;color:var(--jazul);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .jan .jtipo button+button{border-left:0}
+  .jan .jtipo button.on{background:var(--jazul);color:#fff}
+  .jan .jtipo button:disabled:not(.on){opacity:.45;cursor:not-allowed}
+  .jan select{display:block;width:100%;margin-top:2px;border:1px solid var(--jborda);background:#fff;color:#111;padding:6px 8px;font:14px Consolas,"Courier New",monospace}
+  .jan select:disabled{background:#e6e9ee;color:#9aa5b1}
+  .jan input:disabled{background:#e6e9ee;color:#9aa5b1}
+  html.modo-carga #stages,html.modo-carga #clkTot,html.modo-carga #bSalv,html.modo-carga #bFim,html.modo-carga #reg,html.modo-carga #bPdf,html.modo-carga #tg{display:none!important}
+  html.modo-carga #bco{flex:1!important}
+  .jan .jpar input{width:74px;margin:0 auto;text-align:center}
+  .jan .jpar input:disabled{background:#e6e9ee;color:#9aa5b1}
+  .jan .jpar td:first-child{width:22%}
+  #dlgParam .jb{padding-bottom:10px}
+  #bReg .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#8a8a85;margin-right:6px}
+  #bReg.on .dot{background:#e5484d;box-shadow:0 0 0 2px rgba(229,72,77,.35)}
+  .rgk{display:flex;gap:10px;margin-top:6px}
+  .rgk>div{flex:1;border:1px solid var(--jborda);background:#fff;padding:6px 10px;min-width:0}
+  .rgk b{display:block;font-size:20px;color:#1b2a3a}
+  .rgk span{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:#40526a}
+  #rgTab td,#rgTab th{padding:5px 8px;font-size:13px}
+  #rgTab .rgbar{display:block;height:6px;background:#dfe4ea;margin-top:3px}
+  #rgTab .rgbar i{display:block;height:100%;background:var(--jazul)}
+  #rgTab tr.atual td{background:#e6eef7}
+  #rgTab button{padding:2px 8px;font-size:12px}
+  #dlgReg .jbtns{position:sticky;bottom:0;background:var(--jfundo);padding:10px 0 6px;margin-top:8px;border-top:1px solid var(--jborda);z-index:2}
+  #dlgReg .jbtns:not(:last-child){position:static;border-top:0;padding:0;margin-top:6px}
+  #bReg.on{border-color:#e5484d}
+  #bReg.bloq{opacity:.6} /* v1.9.16: bloqueado mas clicável (clique mostra o motivo) — não usa :disabled */
+  #bReg.bloq .dot{background:#b9892a}
+  #dlgParam .jbtns{position:sticky;bottom:0;background:var(--jfundo);padding:10px 0 6px;margin-top:8px;border-top:1px solid var(--jborda);z-index:2} /* Aplicar/Fechar sempre visíveis, mesmo com a janela mais alta que a tela */
+  #dlgParam h4{margin-top:10px}
+  .jan .gdsec{margin:0 0 14px}
+  .jan .gdsec>h4{position:sticky;top:0;z-index:1;background:var(--jfundo);margin:0 0 6px;padding:6px 0 4px}
+  .jan .gdsec.usada>h4{color:#fff;background:var(--jazul);border:0;padding:6px 10px}
+  .jan .gdgrp{margin:8px 0 2px;font-size:12px;font-weight:700;color:#1a4a78;letter-spacing:.04em;text-transform:uppercase}
+  .jan .gdtab{width:100%;border-collapse:collapse;font-size:13px}
+  .jan .gdtab td{padding:4px 8px;border-bottom:1px solid #d5dbe2;vertical-align:top}
+  .jan .gdtab td:nth-child(1){width:34%;color:#1b2a3a}
+  .jan .gdtab td:nth-child(2){width:26%;color:#5b6b7e;font:12px Consolas,"Courier New",monospace}
+  .jan .gdtab td:nth-child(3){width:30%;font-weight:700;font-variant-numeric:tabular-nums;color:#111}
+  .jan .gdtab td:nth-child(4){width:10%;color:#5b6b7e}
+  .jan .gdtab tr.sem td:nth-child(3){color:#8d97a3;font-weight:400}
+  .jan .gdsec.usada .gdtab tr td:nth-child(1){box-shadow:inset 3px 0 0 #1a4a78}
+  .jan .gdvazio{padding:14px;color:#5b6b7e}
+  .jan .gdbool.on{color:#1b5e20}.jan .gdbool.off{color:#5b6b7e}
+
+  /* ---- janela Dados do ensaio: importar print do SAP (OCR local, roda no navegador, sem internet) ---- */
+  .sapimp{margin-bottom:10px}
+.jan input.duv{outline:2px solid #e0a000;background:#fff6dc}
+  .sapdrop{border:2px dashed #9aa5b1;border-radius:6px;background:#fff;padding:8px 14px;text-align:center;cursor:pointer;color:#40526a;font-size:13px;transition:background .15s,border-color .15s}
+  .sapdrop:hover,.sapdrop.over{background:#eef3f9;border-color:var(--jazul)}
+  .sapdrop label.sapfile{color:var(--jazul);text-decoration:underline;cursor:pointer}
+  .sapdrop.comimg{padding:6px 10px;text-align:left;display:flex;align-items:center;gap:10px;cursor:default;flex-wrap:wrap}
+  .sapdrop img{display:block;max-width:90px;max-height:60px;border:1px solid var(--jborda);border-radius:3px;cursor:zoom-in;flex:none}
+  .sapdrop img.amp{max-width:min(600px,90vw);max-height:60vh;cursor:zoom-out}
+  .sapdropinfo{font-size:11.5px;color:#5b6b7e;flex:1}
+  .sapbar{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+  .sapbar button{border:1px solid var(--jazul);background:#fff;color:var(--jazul);border-radius:6px;padding:6px 12px;font-size:12.5px;font-weight:700}
+  .sapbar button:disabled{opacity:.4;cursor:not-allowed}
+  .sapbar button:hover:not(:disabled){background:#eef3f9}
+  #sapStat{font-size:12px;color:#40526a;flex:1;min-width:140px}
+  #sapBruto{margin-top:8px;font-size:12px;color:#40526a}
+  #sapBruto summary{cursor:pointer}
+  #sapTxt{white-space:pre-wrap;background:#fff;border:1px solid var(--jborda);border-radius:6px;padding:8px;max-height:160px;overflow:auto;font:11.5px Consolas,"Courier New",monospace;margin-top:6px}
+
