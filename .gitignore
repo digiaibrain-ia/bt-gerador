@@ -34,6 +34,9 @@ Thumbs.db
 # Testes de integracao (Fase 1): instalacao local do Node-RED de teste (nunca vai ao Git)
 tests/integracao/runtime/
 
+# Obsidian (configuracao local de cada pessoa; nao versionar)
+.obsidian/
+
 # Cache do Python
 __pycache__/
 *.pyc
