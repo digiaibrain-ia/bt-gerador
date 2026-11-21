@@ -2,7 +2,7 @@
 
 - **Data:** 2026-11-21
 - **Quem decidiu:** Reginaldo pediu a direção (tratar as chaves como WORD, atenção ao atraso entre as chaves do Patamar, manter o FB em JavaScript ou do PLC); os detalhes foram decididos por critério e pontuação durante a implementação, e **ficam para o Reginaldo confirmar**
-- **Estado:** decidida · implementada em PLC simulado · **não validada na bancada**
+- **Estado:** **parcialmente revista** · item 1 (leitura em blocos) sem ganho de requisições (ver Correção) · lote por bit e máscara mantidos · **não validada na bancada**
 - **Versão onde vale:** fluxos de chaves v3.11/v3.12 (BC56), v3.10/v3.11 (BC400), v1.11/v1.12 (BC550 e BC595)
 
 ## Contexto
@@ -26,3 +26,6 @@ Fluxos novos de chaves (as versões anteriores ficam intactas). Uma conexão S7 
 ## Provado × não provado
 - Provado (PLC simulado): a leitura nova é idêntica à de antes nos 4 bancos; leitura inválida não atualiza o cache; o lote é tudo ou nada, respeita a capacidade, é cancelado por um Desligar banco e termina muito antes de comandos em sequência.
 - Não provado (depende da bancada): que isso reduz os erros de leitura e os 504 do Patamar; o tempo real de ciclo; os recursos de conexão do 1515; o SCL (não compilado).
+
+## Correção (21/11/2026, mesmo dia)
+Ao ler o código do `node-red-contrib-s7` 3.1.3 (`@st-one-io/nodes7` 1.1.x) vi que a biblioteca **já agrupa itens vizinhos**: os 124 itens de antes já saíam em 1 a 3 requisições, e os 8 itens em blocos geram **as mesmas** requisições. **Revogo a decisão 1** (leitura em blocos) como medida de desempenho: ela só troca comparações no Node-RED e acrescenta uma conexão S7 por banco. Decisões 2 a 4 (lote, máscara no PLC, medidor depois) continuam. O lote deve ser reconstruído sobre os fluxos **sem** a leitura em blocos antes de ir para a bancada.

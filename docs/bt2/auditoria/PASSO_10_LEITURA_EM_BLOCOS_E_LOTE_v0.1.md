@@ -2,6 +2,20 @@
 
 Pedido do Reginaldo: os erros de leitura acontecem **durante o Patamar** (lotes de chaves), vale tratar as chaves como WORD, há um atraso entre as chaves para compor o patamar, e a opção de rodar com o FB em JavaScript ou, no futuro, com o FB do PLC tem que continuar aberta. As dúvidas foram decididas por critério e pontuação (ver "Decisões"). **Tudo provado em PLC simulado; nada foi validado na bancada e nada foi implantado.**
 
+
+> **CORREÇÃO (21/11/2026, depois de ler o código da biblioteca): o item 1 (leitura em blocos) NÃO reduz as requisições à CPU.** O pacote `node-red-contrib-s7` 3.1.3 usa o `@st-one-io/nodes7` 1.1.x, e esse `nodes7` **já agrupa os itens vizinhos** em poucas requisições (no código: "Nearby items are grouped into the same part"; folga padrão de 5 bytes, payload de leitura = PDU − 18). Rodei o agrupamento real da biblioteca sobre o `vartable` de antes e de depois (`scripts/diagnostico/simula_agrupamento_nodes7_v0.1.js`):
+>
+> | Banco | Itens | PDU 960 | PDU 480 | PDU 240 |
+> |---|---|---|---|---|
+> | BC56 antes | 124 | **1** requisição | 2 | 3 |
+> | BC56 depois (blocos) | 8 | **1** | 2 | 3 |
+> | BC59,5 antes | 236 | 2 | 3 | 5 |
+> | BC59,5 depois (blocos) | 8 | 2 | 3 | 5 |
+>
+> Ou seja: a afirmação acima de que "118 bits soltos" eram 118 pedidos miúdos estava **errada** para esta versão da biblioteca. Os 124 itens já saíam em 1 a 3 requisições. A leitura em blocos só reduz o trabalho do Node-RED para comparar valores a cada ciclo, e **acrescenta uma conexão S7 por banco** (o endpoint de escrita) e um nó de decodificação. **Recomendação atual: não implantar o item 1 por conta própria.** O lote (item 2) e a reserva de capacidade (Passo 9) valem sem ele. A versão da biblioteca instalada no PC BT2 ainda precisa ser conferida (Menu › Gerenciar paleta).
+>
+> Outros fatos lidos no código (v3.1.3 / nodes7 1.1.x): o ciclo **pula** a leitura se a anterior não terminou; o ciclo mínimo é 50 ms; as escritas são promessas **enfileiradas pela conexão** (até 8 trabalhos em paralelo, `maxJobs`), então uma rajada de escritas não é descartada; o timeout padrão de cada requisição é 2000 ms; o PDU máximo padrão é 960 (negociado com a CPU).
+
 ## O que o código mostrava (antes de mexer)
 - Cada fluxo de banco lia **124 itens** do DB a cada 200 ms (o banco de 32 chaves, 236): **118 deles eram um bit cada**. Leitura e escrita dividiam o **mesmo** endpoint S7, então a leitura disputava a conexão com as escritas do Patamar.
 - O Patamar executa cada degrau **clicando nas chaves uma a uma**, e cada clique vira um `POST .../ligar` na fila de uma gravação por vez; cada comando espera 450 ms mais a leitura de volta antes de liberar o próximo. O próprio histórico do medidor registra que na troca de etapa ele chegou a disparar **26 POST no mesmo milissegundo** (hoje limitado a 3 por vez no navegador).
