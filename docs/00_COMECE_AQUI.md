@@ -1,6 +1,6 @@
 # Comece aqui (BT2 · banco de cargas)
 
-Atualizado em 21/11/2026 (inclui os Passos 7 a 9 e o pacote v1.30). Serve a quem chega agora, pessoa ou IA. Os links são normais (funcionam no GitHub e no Obsidian). A lista completa e antiga de documentos está em [INDICE_DOCUMENTOS.md](INDICE_DOCUMENTOS.md) (gerada em 10/11).
+Atualizado em 21/11/2026 (inclui os Passos 7 a 9 e o pacote v1.30). Serve a quem chega agora, pessoa ou IA. Os links são normais (funcionam no GitHub e no Obsidian). **Todos os documentos vivos, por área, com a versão mais nova de cada um: [INDICE_POR_AREA.md](INDICE_POR_AREA.md)** (gerado; a pasta `arquivo` é histórico e fica fora). A lista antiga de 10/11 continua em [INDICE_DOCUMENTOS.md](INDICE_DOCUMENTOS.md).
 
 ## 1. O que é o projeto, em 5 linhas
 Banco de cargas para ensaio de gerador. O **medidor** (um HTML) mostra e comanda; o **Node-RED** faz a ponte; o **PLC 1515** guarda o estado; o **ET200** (provisório) e depois o **PLC de Carga 1200** ligam as contatoras. A **segurança fica no PLC**. Regras de trabalho: `CLAUDE.md` na raiz do repositório (fora deste cofre; abra pelo GitHub).
