@@ -35,15 +35,22 @@ Pasta [bt2/promessas](bt2/promessas/). A ideia: você revisa a **promessa**; os 
 - [PRM-002 · Comando de chave passa pela fila e pela confirmação](bt2/promessas/PRM-002_comando_de_chave_fila_e_confirmacao.md)
 - [PRM-003 · Sugerir chaves só com o cronômetro parado](bt2/promessas/PRM-003_sugerir_so_com_cronometro_parado.md)
 
+### Auditoria e revisão (sessão de 19 a 21/11)
+A sessão nova trabalhou na mesma branch e deixou estes documentos. **Eu não revisei o conteúdo deles ao montar este índice**: leia o estado ("provado" ou "não provado") dentro de cada um.
+- [Promessas dos módulos críticos](bt2/auditoria/PROMESSAS_DOS_MODULOS_v0.1.md) (a lista por módulo; as notas PRM-001 a 003 acima são individuais e ligadas às decisões)
+- [Resultado antes e depois](bt2/auditoria/RESULTADO_ANTES_E_DEPOIS_v0.1.md) · [Revisão independente do passo 7](bt2/auditoria/REVISAO_INDEPENDENTE_PASSO_7_v0.1.md) · [Passo 7: provar os testes](bt2/auditoria/PASSO_7_PROVAR_OS_TESTES_v0.1.md) · [Passo 8: congelamento](bt2/auditoria/PASSO_8_CONGELAMENTO_v0.1.md)
+- [Alarmes e logs (passo 6)](bt2/auditoria/PASSO_6_ALARMES_E_LOGS_v0.1.md) · [Build modular (passo 3)](bt2/auditoria/PASSO_3_BUILD_MODULAR_v0.1.md) · [Medir e congelar (passos 1 e 2)](bt2/auditoria/RELATORIO_PASSO_1_2_MEDIR_E_CONGELAR_v0.1.md)
+- [Roteiro de implantação do Reginaldo](bt2/migracao/ROTEIRO_IMPLANTACAO_REGINALDO_v0.1.md) · [Checklist de go-live](bt2/migracao/CHECKLIST_GO_LIVE_v0.1.md)
+
 ## 5. Onde fica o código
 | Parte | Pasta |
 |---|---|
-| Medidor (versão atual 1.10.226) | `dashboard/ferramentas/medidor_gerador_v1.10.226.html` |
+| Medidor (versão mais nova na branch em 21/11: **1.10.231**) | `dashboard/ferramentas/medidor_gerador_v1.10.231.html` |
 | Módulos-fonte e geradores do medidor | `dashboard/modulos-fonte/` · `dashboard/gerador/` |
 | Fluxos Node-RED | `nodered/flows/bt2/` · geradores em `nodered/gerador/` |
 | Blocos de PLC | `plc/bt2/entrega_1200_v0.17/` · `plc/bt2/entrega_et200_v0.7/` |
 | Testes | `tests/e2e/` · `tests/integracao/` · `tests/fb/` |
-| Pacotes de entrega | `scripts/pacote/gerar_pacote_implantacao_v1.26.py` (e o do Alexandre: `gerar_pacote_alexandre_1200_v0.1.py`) |
+| Pacotes de entrega | `scripts/pacote/gerar_pacote_implantacao_v1.29.py` (mais novo em 21/11) e o do Alexandre: `gerar_pacote_alexandre_1200_v0.1.py` |
 
 ## 6. Como usar com o Obsidian
 Abra a pasta `docs` como cofre. Os modelos ficam em `_modelos` (em Configurações › Plugins principais › Modelos, aponte a pasta de modelos para `_modelos`). A pasta `.obsidian` é configuração pessoal e **não vai para o Git**.
