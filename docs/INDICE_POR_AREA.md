@@ -16,6 +16,7 @@ _Cada decisão do Reginaldo, com data e motivo._
 - [DEC-009 · O modo "recusar" é um só e só liga depois da bancada](bt2/decisoes/DEC-009_modo_recusar_um_so_depois_da_bancada.md)
 - [DEC-010 · Quando o DSE para de responder, as chaves caem (fail-safe)](bt2/decisoes/DEC-010_dse_cai_derruba_as_chaves.md)
 - [DEC-011 · Os valores do perfil de combustível ficam como estão até conferir o datasheet](bt2/decisoes/DEC-011_perfil_de_combustivel_mantido_ate_o_datasheet.md)
+- [DEC-012 · Leitura do DB em blocos de byte e comando em lote por bit agora; máscara no PLC depois](bt2/decisoes/DEC-012_leitura_em_blocos_e_lote_por_bit_agora_mascara_depois.md)
 
 ## Promessas dos módulos (PRM)
 _O que cada parte garante, em português. Você revisa a promessa; os testes conferem o código._
@@ -25,6 +26,7 @@ _O que cada parte garante, em português. Você revisa a promessa; os testes con
 - [PRM-003 · Sugerir chaves só com o cronômetro parado](bt2/promessas/PRM-003_sugerir_so_com_cronometro_parado.md)
 - [PRM-004 · O limite de capacidade nunca é passado, nem com comandos simultâneos](bt2/promessas/PRM-004_limite_de_capacidade_nunca_e_passado.md)
 - [PRM-005 · A FB mãe do Patamar só comanda com o DSE respondendo e com a guarda liberando](bt2/promessas/PRM-005_fb_mae_so_comanda_com_dse_e_guarda.md)
+- [PRM-006 · O comando em lote das chaves é tudo ou nada e nunca passa do limite](bt2/promessas/PRM-006_lote_de_chaves_tudo_ou_nada.md)
 
 ## Auditoria, passos de 1 a 9 e provas
 _Auditoria pelos 5 fundamentos, passos de correção, provas de teste, revisão independente e congelamento._
@@ -34,6 +36,7 @@ _Auditoria pelos 5 fundamentos, passos de correção, provas de teste, revisão 
 - [Auditoria pelos 5 fundamentos — rodada 2 (código novo da 1.10.219/220) · 17/11/2026](bt2/auditoria/AUDITORIA_5_FUNDAMENTOS_RODADA2_v0.1.md) · v0.1
 - [Decisões por pontuação — perfil de combustível (gás/biometano) e revisão do escalonamento · 17/11/2026 · medidor 1.10.220](bt2/auditoria/DECISOES_PERFIL_COMBUSTIVEL_E_ESCALONAMENTO_v0.1.md) · v0.1
 - [Modos de operação do medidor — matriz observada · 17/11/2026 · medidor 1.10.220](bt2/auditoria/MODOS_DE_OPERACAO_v0.1.md) · v0.1
+- [Passo 10: leitura das chaves em blocos, comando em lote e lote por máscara no PLC · 21/11/2026](bt2/auditoria/PASSO_10_LEITURA_EM_BLOCOS_E_LOTE_v0.1.md) · v0.1
 - [Passo 3: build modular do medidor (1.10.227) · 18/11/2026](bt2/auditoria/PASSO_3_BUILD_MODULAR_v0.1.md) · v0.1
 - [Passo 5 · A1 a A3: fixtures de teste e testes sempre na versão mais nova · 18/11/2026](bt2/auditoria/PASSO_5_A_FIXTURES_v0.1.md) · v0.1
 - [Passo 5 · B1+B2: falha ao desligar/zerar o PLC não fica silenciosa (medidor 1.10.228) · 18/11/2026](bt2/auditoria/PASSO_5_B1_B2_CATCH_DE_COMANDO_v0.1.md) · v0.1
@@ -70,7 +73,7 @@ _Roteiros, checklists, estados da bancada e entregas. O roteiro e o checklist de
 - [Migração BT2 — plano v0.5 (03/11/2026)](bt2/migracao/MIGRACAO_PLANO_v0.5.md) · v0.5
 - [Revisão geral HTML × Node-RED × PLC — BT2 — 24/10/2026](bt2/migracao/REVISAO_GERAL_HTML_NODERED_PLC_2026-10-24.md)
 - [Roteiro unico de atualizacao: PLC + Node-RED + HTML (pelo notebook) - v0.1](bt2/migracao/ROTEIRO_ATUALIZACAO_NOTEBOOK_v0.1.md) · v0.1
-- [Roteiro de implantação (v0.2: fluxos com a correção da corrida de capacidade) · pacote v1.30 (medidor 1.10.231) · feito por mim, passo a pas](bt2/migracao/ROTEIRO_IMPLANTACAO_REGINALDO_v0.2.md) · v0.2 · anteriores: [v0.1](bt2/migracao/ROTEIRO_IMPLANTACAO_REGINALDO_v0.1.md)
+- [Roteiro de implantação (v0.3: leitura em blocos, comando em lote e correção da corrida de capacidade) · pacote v1.31 (medidor 1.10.231) · fe](bt2/migracao/ROTEIRO_IMPLANTACAO_REGINALDO_v0.3.md) · v0.3 · anteriores: [v0.2](bt2/migracao/ROTEIRO_IMPLANTACAO_REGINALDO_v0.2.md), [v0.1](bt2/migracao/ROTEIRO_IMPLANTACAO_REGINALDO_v0.1.md)
 
 ## Arquitetura
 _Quem fala com quem._
@@ -162,6 +165,7 @@ _Dados do ensaio, registro, gráficos e analisador._
 ## Contratos de API
 _As rotas HTTP do Node-RED e o que cada uma devolve._
 
+- [Contrato HTTP do comando em lote das chaves · POST /api/chaves/{banco}/lote · v0.1 · 21/11/2026](bt2/contratos/CONTRATO_HTTP_COMANDO_EM_LOTE_v0.1.md) · v0.1
 - [Contrato HTTP HTML <-> Node-RED do card "Chaves do banco de carga" (v2.4 - rotas `/api/...`, 24/10/2026)](bt2/contratos/CONTRATO_HTTP_HTML_NODERED_CHAVES.md)
 - [Contrato HTTP — HTML ⇄ Node-RED · Logs do desenvolvedor DEV.OBS (23/10/2026)](bt2/contratos/CONTRATO_HTTP_HTML_NODERED_DEV_LOGS.md)
 - [Contrato HTTP HTML ↔ Node-RED do card "Registro do ensaio" (DB53) — v1.4 — rotas `/api/ensaio/*` (22/10/2026)](bt2/contratos/CONTRATO_HTTP_HTML_NODERED_REGISTRO_ENSAIO.md)
@@ -288,4 +292,4 @@ _Aponte a pasta de modelos do Obsidian para cá._
 - [Índice dos documentos — 10/11/2026](INDICE_DOCUMENTOS.md)
 
 ---
-196 entradas (cada uma pode ter versões anteriores).
+200 entradas (cada uma pode ter versões anteriores).

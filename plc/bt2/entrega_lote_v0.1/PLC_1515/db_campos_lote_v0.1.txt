@@ -1,0 +1,10 @@
+CAMPOS NOVOS NO FIM DO DB DE CADA BANCO (db3000_BC56, db3100_BC400, db3300_BC550, db3200_BC595) - RASCUNHO v0.1 - 21/11/2026
+[F] Acrescentar SO NO FIM do DB (nada muda de lugar; o download reinicializa o DB: guardar o snapshot dos valores antes, como em todas as cargas).
+[F] Bancos de ate 16 chaves (DB de 16 chaves; o ultimo campo atual e RespEcoOk em X470.0):
+      Lote.setMask : Word    offset 472.0   (mascara de ligar, bit i-1 = chave i)
+      Lote.clrMask : Word    offset 474.0   (mascara de desligar)
+      Lote.seq     : UInt    offset 476.0   (contador do pedido, escrito POR ULTIMO)
+      Lote.seqAck  : UInt    offset 478.0   (contador reconhecido pelo PLC)
+[F] Banco de 32 chaves (BC59,5): setMask e clrMask como DWord (4 bytes cada), seq e seqAck UInt; offsets a definir no fim do DB3200 (o ultimo campo atual e RespEcoOk).
+[M] Os offsets acima assumem o fim do DB de 16 chaves em 470.0 (conferir no TIA depois de exportar o DB: nao esta compilado).
+[M] Depois de criar os campos: acrescentar os nomes LoteSet, LoteClr e LoteSeq ao endpoint de ESCRITA do fluxo (novas versoes dos fluxos, so DEPOIS do TIA compilado e da bancada) e LoteSeqAck ao de leitura.

@@ -1,0 +1,28 @@
+# DEC-012 · Leitura do DB em blocos de byte e comando em lote por bit agora; máscara no PLC depois
+
+- **Data:** 2026-11-21
+- **Quem decidiu:** Reginaldo pediu a direção (tratar as chaves como WORD, atenção ao atraso entre as chaves do Patamar, manter o FB em JavaScript ou do PLC); os detalhes foram decididos por critério e pontuação durante a implementação, e **ficam para o Reginaldo confirmar**
+- **Estado:** decidida · implementada em PLC simulado · **não validada na bancada**
+- **Versão onde vale:** fluxos de chaves v3.11/v3.12 (BC56), v3.10/v3.11 (BC400), v1.11/v1.12 (BC550 e BC595)
+
+## Contexto
+Os erros de leitura aparecem durante o Patamar, que muda várias chaves em sequência. O Node-RED lia 124 itens do DB a cada 200 ms (118 eram um bit cada) numa conexão que as escritas dos comandos também usam, e o Patamar manda um POST por chave, cada um esperando a sua vez e a leitura de volta.
+
+## Decisão
+1. **Leitura em blocos de byte** (124 → 8 itens por ciclo), com um nó que devolve os bits com os mesmos nomes; **escritas continuam bit a bit**, por nome, num endpoint próprio.
+2. **Comando em lote** `POST /api/chaves/{banco}/lote`: um degrau do Patamar num comando só, tudo ou nada, com a capacidade conferida para o conjunto. Contrato: [CONTRATO_HTTP_COMANDO_EM_LOTE_v0.1](../contratos/CONTRATO_HTTP_COMANDO_EM_LOTE_v0.1.md).
+3. **Escrever o comando como WORD pelo Node-RED: não.** O PLC também escreve nesses bits (o FB101 zera `CbLigar[]`), e um cache atrasado religaria chave que o PLC acabou de derrubar. A forma segura é a **máscara aplicada pelo PLC** (duas palavras e um contador), que fica como rascunho SCL com modelo em JavaScript provado; os fluxos ainda não a usam.
+4. **O medidor ainda não usa o lote**: só depois de o lote ser validado na bancada. A pausa entre degraus continua com quem executa o Patamar (FB em JavaScript hoje; um bloco do PLC no futuro) e o contrato da API não muda.
+
+## Por quê
+A leitura em blocos e o lote atacam as duas causas visíveis no código (muitos pedidos miúdos e comandos em série) sem tocar no PLC nem nas regras de segurança. A escrita por WORD pelo Node-RED reabriria o risco de ler e reescrever. Trocar o medidor antes da bancada mexeria em estado de tela e em testes e2e sem prova real.
+
+## O que isso muda
+Fluxos novos de chaves (as versões anteriores ficam intactas). Uma conexão S7 a mais por banco. Nenhuma rota existente mudou de resposta. Ver [Passo 10](../auditoria/PASSO_10_LEITURA_EM_BLOCOS_E_LOTE_v0.1.md).
+
+## Como conferir
+`tests/propriedades/leitura_blocos.prop.test.js`, `tests/integracao/fase4/zz_lote.test.js` (com contra-prova na versão sem a rota), `tests/propriedades/capacidade_reserva.prop.test.js` e `tests/propriedades/lote_mascara.prop.test.js`.
+
+## Provado × não provado
+- Provado (PLC simulado): a leitura nova é idêntica à de antes nos 4 bancos; leitura inválida não atualiza o cache; o lote é tudo ou nada, respeita a capacidade, é cancelado por um Desligar banco e termina muito antes de comandos em sequência.
+- Não provado (depende da bancada): que isso reduz os erros de leitura e os 504 do Patamar; o tempo real de ciclo; os recursos de conexão do 1515; o SCL (não compilado).

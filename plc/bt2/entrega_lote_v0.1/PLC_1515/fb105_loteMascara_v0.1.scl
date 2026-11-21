@@ -1,0 +1,57 @@
+//[F] ------------------------------------------------------------
+//[F] fb105_loteMascara_v0.1.scl - RASCUNHO, NAO COMPILADO NO TIA - Passo 10 (item 3) - 21/11/2026
+//[F] PARA QUE SERVE (leigo): liga e desliga VARIAS chaves de um banco no mesmo ciclo, a partir de duas palavras (mascara de ligar e
+//[F] mascara de desligar) e de um contador de pedido. O Node-RED escreve as palavras e SO DEPOIS o contador; este bloco aplica os bits
+//[F] e reconhece. Assim as chaves do degrau mudam JUNTAS e ninguem precisa ler-e-reescrever a palavra do comando.
+//[F] PARA QUE SERVE (tecnico): bloco para BANCOS DE ATE 16 CHAVES (BC56, BC400, BC550). Chamar ANTES do fb101_ComEt200 no mesmo ciclo.
+//[F] Regra e modelo executavel: tests/plc_modelo/modelo_lote_mascara.js (o teste de propriedades e a conformidade deste bloco).
+//[M] MONTAGEM NO TIA: criar o FB105 em SCL, acesso PADRAO (nao otimizado, igual aos DBs dos bancos), ligar CbLigar, Habilitada, LigarBanco,
+//[M] SetMask, ClrMask, Seq e SeqAck aos campos do DB do banco (ver db_campos_lote_v0.1.txt). NAO compilado: conferir nomes e tipos no TIA.
+//[F] ------------------------------------------------------------
+FUNCTION_BLOCK "fb105_loteMascara"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 0.1
+
+   VAR_INPUT
+      LigarBanco : Bool;                    //[F] banco liberado pelo operador (cbBanco.ligar); sem isto nenhuma chave e ligada
+      Habilitada : Array[1..16] of Bool;    //[F] chave habilitada no DB (setup/habilitacao); chave nao habilitada nunca e ligada pelo lote
+   END_VAR
+
+   VAR_IN_OUT
+      CbLigar : Array[1..16] of Bool;       //[F] comando de cada chave (cb.ligar[] do DB do banco); o FB101 le este vetor e envia ao ET200
+      SetMask : Word;                       //[F] mascara de ligar: bit i-1 = chave i (escrita pelo Node-RED)
+      ClrMask : Word;                       //[F] mascara de desligar: bit i-1 = chave i (escrita pelo Node-RED)
+      Seq : UInt;                           //[F] contador do pedido (escrito pelo Node-RED POR ULTIMO, depois das duas mascaras)
+      SeqAck : UInt;                        //[F] contador reconhecido pelo PLC (o Node-RED confere que SeqAck = Seq para saber que foi aplicado)
+   END_VAR
+
+   VAR_TEMP
+      i : Int;                              //[F] indice da chave
+      bit : Word;                           //[F] mascara de um bit so (chave i)
+      zero : Word;                          //[F] constante 16#0000
+   END_VAR
+
+BEGIN
+
+   REGION "1) Aplica o lote quando o contador muda"
+      //[F] Seq igual a SeqAck = nenhum pedido novo: nao faz nada (repetir o mesmo lote nao tem efeito).
+      //[F] Seq diferente = pedido novo: 1) desliga os bits de ClrMask, 2) liga os bits de SetMask SO se a chave esta habilitada e o banco ligado, 3) reconhece.
+      #zero := 16#0000;
+      IF #Seq <> #SeqAck THEN
+         FOR #i := 1 TO 16 DO
+            #bit := SHL(IN := WORD#16#0001, N := #i - 1);
+            IF (#ClrMask AND #bit) <> #zero THEN
+               #CbLigar[#i] := FALSE;       //[F] desligar vem PRIMEIRO e nunca e barrado
+            END_IF;
+         END_FOR;
+         FOR #i := 1 TO 16 DO
+            #bit := SHL(IN := WORD#16#0001, N := #i - 1);
+            IF (#SetMask AND #bit) <> #zero AND #Habilitada[#i] AND #LigarBanco THEN
+               #CbLigar[#i] := TRUE;        //[F] ligar so com a chave habilitada e o banco ligado (se a mesma chave estiver nas duas mascaras, o ligar vence)
+            END_IF;
+         END_FOR;
+         #SeqAck := #Seq;                   //[F] reconhece: o Node-RED so confirma o lote depois de ver SeqAck = Seq e os bits de CbLigar
+      END_IF;
+   END_REGION
+
+END_FUNCTION_BLOCK

@@ -12,7 +12,7 @@ const fc = require('fast-check');
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const RAIZ = path.join(__dirname, '..', '..');
 const cfgFc = { numRuns: +process.env.FC_RUNS || 300, seed: +process.env.FC_SEED || 20261120 };
-const FLUXO = JSON.parse(fs.readFileSync(path.join(RAIZ, 'nodered/flows/bt2/chaves-56-api-v3.10.json'), 'utf8'));
+const FLUXO = JSON.parse(fs.readFileSync(path.join(RAIZ, 'nodered/flows/bt2/chaves-56-api-v3.12.json'), 'utf8'));
 const FONTE = process.env.CAP_RESERVA_ARQ ? fs.readFileSync(path.resolve(RAIZ, process.env.CAP_RESERVA_ARQ), 'utf8')      // alvo da mutacao
   : '(function (msg, flow, global, env, node) {' + FLUXO.find(n => n.id === 'chv56_c2_reserva').func + '\n})';
 const FONTE_CACHE = '(function (msg, flow, global, env, node) {' + FLUXO.find(n => n.id === 'chv56_cache_vivo').func + '\n})';
@@ -28,7 +28,7 @@ function roda(est, c) {                            // executa o no REAL; devolve
   const agora = c.agora === undefined ? T0 : c.agora;
   const Fake = class extends Date { static now() { return agora; } };
   const fn = vm.runInNewContext(FONTE, { Date: Fake, process, console });
-  const msg = { _rota: c.rota === undefined ? 'LIGAR' : c.rota, _reqId: 'r' + Math.random(), payload: { indice: c.indice, ligar: c.ligar } };
+  const msg = { _rota: c.rota === undefined ? 'LIGAR' : c.rota, _reqId: 'r' + Math.random(), payload: c.payload || { indice: c.indice, ligar: c.ligar } };
   const saida = fn(msg, ctx('flow'), ctx('global'), { get() {} }, { warn: t => avisos.push(t), log() {} });
   return { saida, msg, avisos };
 }
@@ -201,4 +201,68 @@ test('reservas guardadas com lixo ou repetidas nao quebram nem contam duas vezes
   const est = novoEstado({ cfg: cfgDe(30, 'recusar', 100), live: liveDe([1, 2]), resv: [null, undefined, 7, { idx: 3 }, { idx: 4, kw: 5, ts: T0 }, { idx: 4, kw: 5, ts: T0 }] });
   const r = roda(est, { indice: 6, ligar: true }); assert.equal(r.saida[1], null); assert.deepEqual(pl(est.flow.chv56_resv.map(x => x.idx).sort()), [4, 6], 'a reserva repetida conta uma vez e o lixo some');
   const dois = novoEstado({ cfg: cfgDe(20, 'recusar', 100), live: liveDe([1, 2, 3]), resv: [{ idx: 4, kw: 5, ts: T0 }, { idx: 4, kw: 5, ts: T0 }] }); assert.equal(roda(dois, { indice: 5, ligar: true }).msg.payload.totalKw, 25, 'duas reservas da mesma chave: 15 + 5 + 5');
+});
+
+/* ---------------------------------------------------------------------------------------------------------------------
+   Passo 10 (item 2): LOTE. O no passa a decidir o CONJUNTO de chaves de um lote (tudo ou nada) e reserva todas as aceitas.
+   --------------------------------------------------------------------------------------------------------------------- */
+const loteDe = (ligar, desligar = []) => ({ rota: 'LOTE', payload: { ligar, desligar } });
+const kwSet = (idxs) => [...new Set(idxs)].reduce((a, i) => a + KW[i - 1], 0);
+
+test('LOTE, SEGURANCA: com o PLC "congelado", a carga aceita por QUALQUER sequencia de lotes nunca passa do limite, e lote recusado nao deixa rastro (tudo ou nada)', () => {
+  fc.assert(fc.property(fc.constantFrom(10, 20, 30), fc.array(fc.subarray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], { minLength: 1, maxLength: 6 }), { minLength: 1, maxLength: 12 }), (kw100, lotes) => {
+    const lim = comLimite(kw100, 100), est = novoEstado({ cfg: cfgDe(kw100, 'recusar', 100), live: liveDe([]) }), aceitas = new Set();
+    for (const l of lotes) {
+      const plU = x => x === undefined ? undefined : pl(x), antesResv = plU(est.flow.chv56_resv), antesKw = plU(est.global.bt2_kw_56), r = roda(est, loteDe(l));
+      if (r.saida[1]) {
+        assert.equal(r.saida[0], null); assert.equal(r.msg.statusCode, 409); assert.equal(r.msg.payload.codigo, 'LIMITE_EXCEDIDO'); assert.match(r.msg.payload.erro, /^comando recusado: lote \[/);
+        assert.deepEqual(plU(est.flow.chv56_resv), antesResv, 'lote recusado nao reserva nada'); assert.deepEqual(plU(est.global.bt2_kw_56), antesKw, 'nem publica');
+      } else { assert.equal(r.saida[0], r.msg); l.forEach(i => aceitas.add(i)); }
+      assert.ok(kwSet([...aceitas]) <= lim + 1e-9, 'aceitou ate ' + kwSet([...aceitas]) + ' kW com limite ' + lim);
+    }
+  }), cfgFc);
+});
+
+test('LOTE: exemplos exatos: o conjunto cabe no valor exato, 0,001 kW acima recusa; chaves ja ligadas nao contam de novo; o total inclui as reservas e o outro banco', () => {
+  const E = (kw100, ligadas, outro) => novoEstado({ cfg: cfgDe(kw100, 'recusar', 100), live: liveDe(ligadas), outro });
+  assert.equal(roda(E(20, [1]), loteDe([2, 3, 4])).saida[1], null, '5 + 15 = 20 cabe no limite 20'); assert.notEqual(roda(E(19.99, [1]), loteDe([2, 3, 4])).saida[1], null);
+  assert.equal(roda(E(15, [1, 2, 3]), loteDe([1, 2, 3])).saida[1], null, 'lote so com chaves ja ligadas: nada novo, cabe'); assert.notEqual(roda(E(14.99, [1, 2, 3]), loteDe([1, 2, 3])).saida[1], null, 'mas o total ja comandado passa do limite');
+  const e = E(20, [1, 2]); assert.equal(roda(e, loteDe([3, 4])).saida[1], null); const r = roda(e, loteDe([5])); assert.equal(r.msg.payload.totalKw, 25, 'a reserva do lote anterior entra na conta');
+  assert.notEqual(roda(E(20, [1, 2], { kw: 5, ts: T0 - 1000 }), loteDe([3, 4])).saida[1], null, 'o outro banco entra na soma: 10 + 10 + 5 > 20');
+  const resv = roda(e, loteDe([3, 4])); void resv; assert.deepEqual(pl(e.flow.chv56_resv.map(x => x.idx).sort()), [3, 4], 'repetir o lote ja aceito nao duplica a reserva');
+  const pub = E(30, [1]); roda(pub, loteDe([2, 3])); assert.deepEqual(pl(pub.global.bt2_kw_56), { ts: T0, kw: 5 + 10 }, 'o kW publicado inclui as reservas do lote');
+});
+
+test('LOTE: lote so de DESLIGAR, corpo sem "ligar" e outras rotas NUNCA sao recusados nem reservam; modo registrar nunca recusa nem reserva, e anota o lote acima do limite UMA vez a cada 10 s', () => {
+  const est = novoEstado({ cfg: cfgDe(10, 'recusar', 100), live: liveDe([1, 2, 3, 4, 5, 6]) });
+  for (const l of [loteDe([], [1, 2]), { rota: 'LOTE', payload: { desligar: [1] } }, { rota: 'LOTE', payload: { ligar: [] } }, { rota: 'LOTE', payload: {} }]) { const r = roda(est, l); assert.equal(r.saida[0], r.msg); assert.equal(r.saida[1], null); }
+  assert.equal(est.flow.chv56_resv, undefined, 'nada reservado'); assert.equal(est.flow.chv56_logs.length, 0);
+  const reg = novoEstado({ cfg: cfgDe(10, 'registrar', 100), live: liveDe([1, 2]) });
+  const r1 = roda(reg, loteDe([3, 4, 5])); assert.equal(r1.saida[1], null, 'registrar nao recusa'); assert.equal(reg.flow.chv56_resv, undefined, 'registrar nao reserva'); assert.equal(reg.global.bt2_kw_56, undefined, 'nem publica');
+  assert.equal(reg.flow.chv56_logs.length, 1); const l = pl(reg.flow.chv56_logs[0]); assert.equal(l.rota, 'LIMITE'); assert.equal(l.erro, 'LIMITE_EXCEDIDO (so registra; o comando NAO foi recusado)'); assert.match(l.dado, /^lote \[3,4,5\]: total comandado 25 kW > limite 10 kW/);
+  roda(reg, loteDe([3, 4, 5]), { agora: T0 + 9999 }); roda(reg, { ...loteDe([3, 4, 5]), agora: T0 + 9999 }); assert.equal(reg.flow.chv56_logs.length, 1, 'dentro de 10 s nao repete');
+  roda(reg, { ...loteDe([3, 4, 5]), agora: T0 + 10000 }); assert.equal(reg.flow.chv56_logs.length, 2);
+  assert.equal(roda(novoEstado({ cfg: cfgDe(10, 'registrar', 100), live: liveDe([1, 2]) }), { indice: 3, ligar: true }).saida[1], null, 'LIGAR em registrar continua como antes');
+  const q = roda(novoEstado({ cfg: cfgDe(10, 'recusar', 100), live: liveDe([1, 2, 3]) }), { ...loteDe([4, 5]), quebra: true }); assert.equal(q.saida[0], q.msg); assert.deepEqual(q.avisos, ['capacidade (C2 reserva): erro ao avaliar (o comando segue normalmente): boom']);
+  const semKw = novoEstado({ cfg: cfgDe(null, 'recusar', 100), live: liveDe([1, 2, 3]) }); assert.equal(roda(semKw, loteDe([4, 5, 6])).saida[1], null, 'sem kw100 conhecido nunca recusa o lote');
+});
+
+test('LOTE: a reserva do lote vence em 5 s e some quando o PLC mostra as chaves ligadas (sem contar duas vezes); log da recusa e do contexto como no LIGAR', () => {
+  const est = novoEstado({ cfg: cfgDe(20, 'recusar', 100), live: liveDe([1, 2]) });
+  assert.equal(roda(est, loteDe([3, 4])).saida[1], null);                                             // reserva 3 e 4 (20 kW)
+  assert.notEqual(roda(est, loteDe([5])).saida[1], null, 'as reservas contam'); est.flow.chv56_live = liveDe([1, 2, 3, 4]);
+  assert.equal(roda(est, loteDe([5])).msg.payload.totalKw, 25, 'refletidas: contam uma vez so');
+  est.flow.chv56_live = liveDe([1, 2]); assert.equal(roda(est, { ...loteDe([5]), agora: T0 + 5001 }).saida[1], null, 'vencida: o lote anterior nao conta mais');
+  const rec = novoEstado({ cfg: cfgDe(20, 'recusar', 100), live: liveDe([1, 2, 3, 4]) }); const r = roda(rec, loteDe([5, 6]));
+  assert.equal(r.msg.payload.erro, 'comando recusado: lote [5,6]: total comandado 29 kW > limite 20 kW (kw100 20 x 100 %, origem arquivo, com reservas em voo)');
+  assert.deepEqual(pl(rec.flow.chv56_ctx), { rota: 'LOTE', reqId: r.msg._reqId, fase: 'reserva', lerAgora: false, esp: { reserva: 'LIMITE_EXCEDIDO' } });
+});
+
+test('LOTE/LIGAR: em modo registrar o LIGAR unico NAO anota nada na saida da fila (a anotacao e do no de entrada); chave de 0 kW num lote nao gera reserva', () => {
+  const reg = novoEstado({ cfg: cfgDe(10, 'registrar', 100), live: liveDe([1, 2, 3]) });
+  const r = roda(reg, { indice: 4, ligar: true }); assert.equal(r.saida[0], r.msg); assert.equal(reg.flow.chv56_logs.length, 0, 'registrar + LIGAR: o no de saida nao grava log'); assert.deepEqual(r.avisos, []);
+  const zero = novoEstado({ cfg: { ...cfgDe(100, 'recusar', 100), bancos: { '56': { chaves_kw: [0, 5, 5] } } }, live: { Nominal: [] } });
+  assert.equal(roda(zero, loteDe([1, 2])).saida[1], null); assert.deepEqual(pl(zero.flow.chv56_resv.map(x => x.idx)), [2], 'so a chave de 5 kW reserva; a de 0 kW nao');
+  const sem = novoEstado({ cfg: { ...cfgDe(100, 'recusar', 100), bancos: { '56': { chaves_kw: [0, 5, 5] } } }, live: { Nominal: [] } }); delete sem.flow.chv56_logs;
+  assert.equal(roda(sem, loteDe([2, 3])).saida[1], null);
 });

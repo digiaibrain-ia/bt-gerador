@@ -65,3 +65,8 @@ Compilação no TIA, PLC/ET200 reais, tempos reais de leitura, valores assumidos
 2. A reserva só vale até o PLC mostrar a chave ligada ou 5 s; desligar nunca é recusado; modo `registrar` e `kw100` desconhecido nunca recusam; erro interno deixa o comando seguir (fail-open).
 **Provado em:** `tests/propriedades/capacidade_reserva.prop.test.js` (mutação 92,2 %) e `tests/integracao/fase4/z_capacidade_corrida.test.js` (com contra-prova). **Não provado:** o tempo real entre o POST e a chave aparecer ligada no PLC (bancada), e o PLC não limita capacidade.
 
+### Comando em lote das chaves (Passo 10, 21/11/2026)
+1. `POST /api/chaves/{banco}/lote` é **tudo ou nada**: uma chave a ligar que não pode recusa o lote inteiro e nada é escrito; o total do conjunto nunca passa do limite (inclui reservas em voo e outros bancos); desligar nunca é recusado; os bits são escritos um a um (desligar primeiro) e uma leitura de volta confere todas as chaves.
+2. Um "Desligar banco" aceito depois cancela o lote que espera na fila.
+**Provado em:** `tests/integracao/fase4/zz_lote.test.js` (com contra-prova) e `tests/propriedades/capacidade_reserva.prop.test.js`. **Não provado:** tempos reais (bancada), que isso reduza os erros do Patamar, e o medidor **ainda não usa** o lote. Ver [PRM-006](../promessas/PRM-006_lote_de_chaves_tudo_ou_nada.md).
+

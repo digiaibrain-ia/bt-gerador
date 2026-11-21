@@ -1,6 +1,6 @@
 # Comece aqui (BT2 · banco de cargas)
 
-Atualizado em 21/11/2026 (inclui os Passos 7 a 9 e o pacote v1.30). Serve a quem chega agora, pessoa ou IA. Os links são normais (funcionam no GitHub e no Obsidian). **Todos os documentos vivos, por área, com a versão mais nova de cada um: [INDICE_POR_AREA.md](INDICE_POR_AREA.md)** (gerado; a pasta `arquivo` é histórico e fica fora). A lista antiga de 10/11 continua em [INDICE_DOCUMENTOS.md](INDICE_DOCUMENTOS.md).
+Atualizado em 21/11/2026 (inclui os Passos 7 a 10 e o pacote v1.31). Serve a quem chega agora, pessoa ou IA. Os links são normais (funcionam no GitHub e no Obsidian). **Todos os documentos vivos, por área, com a versão mais nova de cada um: [INDICE_POR_AREA.md](INDICE_POR_AREA.md)** (gerado; a pasta `arquivo` é histórico e fica fora). A lista antiga de 10/11 continua em [INDICE_DOCUMENTOS.md](INDICE_DOCUMENTOS.md).
 
 ## 1. O que é o projeto, em 5 linhas
 Banco de cargas para ensaio de gerador. O **medidor** (um HTML) mostra e comanda; o **Node-RED** faz a ponte; o **PLC 1515** guarda o estado; o **ET200** (provisório) e depois o **PLC de Carga 1200** ligam as contatoras. A **segurança fica no PLC**. Regras de trabalho: `CLAUDE.md` na raiz do repositório (fora deste cofre; abra pelo GitHub).
@@ -32,6 +32,7 @@ Pasta [bt2/decisoes](bt2/decisoes/). As mais recentes:
 - [DEC-009 · O modo "recusar" é um só e só liga depois da bancada](bt2/decisoes/DEC-009_modo_recusar_um_so_depois_da_bancada.md)
 - [DEC-010 · Quando o DSE para de responder, as chaves caem (fail-safe)](bt2/decisoes/DEC-010_dse_cai_derruba_as_chaves.md)
 - [DEC-011 · Os valores do perfil de combustível ficam como estão até conferir o datasheet](bt2/decisoes/DEC-011_perfil_de_combustivel_mantido_ate_o_datasheet.md)
+- [DEC-012 · Leitura do DB em blocos de byte e lote por bit agora; máscara no PLC depois](bt2/decisoes/DEC-012_leitura_em_blocos_e_lote_por_bit_agora_mascara_depois.md)
 
 ## 4. Promessas dos módulos (o que cada parte garante, em português)
 Pasta [bt2/promessas](bt2/promessas/). A ideia: você revisa a **promessa**; os testes conferem se o código cumpre. Modelo: [MODELO_PROMESSA_MODULO](_modelos/MODELO_PROMESSA_MODULO.md).
@@ -40,13 +41,14 @@ Pasta [bt2/promessas](bt2/promessas/). A ideia: você revisa a **promessa**; os 
 - [PRM-003 · Sugerir chaves só com o cronômetro parado](bt2/promessas/PRM-003_sugerir_so_com_cronometro_parado.md)
 - [PRM-004 · O limite de capacidade nunca é passado, nem com comandos simultâneos](bt2/promessas/PRM-004_limite_de_capacidade_nunca_e_passado.md)
 - [PRM-005 · A FB mãe do Patamar só comanda com o DSE respondendo e com a guarda liberando](bt2/promessas/PRM-005_fb_mae_so_comanda_com_dse_e_guarda.md)
+- [PRM-006 · O comando em lote das chaves é tudo ou nada e nunca passa do limite](bt2/promessas/PRM-006_lote_de_chaves_tudo_ou_nada.md)
 
 ### Auditoria e revisão (sessão de 19 a 21/11)
 Documentos da auditoria e da preparação da entrada em produção. Leia sempre o estado ("provado" ou "não provado") dentro de cada um: tudo foi provado em PLC simulado, **nada na bancada**.
 - [Promessas dos módulos críticos](bt2/auditoria/PROMESSAS_DOS_MODULOS_v0.1.md) (a lista por módulo; as notas PRM-001 a 003 acima são individuais e ligadas às decisões)
-- [Resultado antes e depois](bt2/auditoria/RESULTADO_ANTES_E_DEPOIS_v0.1.md) · [Revisão independente do passo 7](bt2/auditoria/REVISAO_INDEPENDENTE_PASSO_7_v0.1.md) · [Passo 7: provar os testes](bt2/auditoria/PASSO_7_PROVAR_OS_TESTES_v0.1.md) · [Passo 8: congelamento](bt2/auditoria/PASSO_8_CONGELAMENTO_v0.1.md) · [Passo 9: corrida do limite de capacidade](bt2/auditoria/PASSO_9_CORRIDA_DE_CAPACIDADE_v0.1.md)
+- [Resultado antes e depois](bt2/auditoria/RESULTADO_ANTES_E_DEPOIS_v0.1.md) · [Revisão independente do passo 7](bt2/auditoria/REVISAO_INDEPENDENTE_PASSO_7_v0.1.md) · [Passo 7: provar os testes](bt2/auditoria/PASSO_7_PROVAR_OS_TESTES_v0.1.md) · [Passo 8: congelamento](bt2/auditoria/PASSO_8_CONGELAMENTO_v0.1.md) · [Passo 9: corrida do limite de capacidade](bt2/auditoria/PASSO_9_CORRIDA_DE_CAPACIDADE_v0.1.md) · [Passo 10: leitura em blocos, lote e máscara no PLC](bt2/auditoria/PASSO_10_LEITURA_EM_BLOCOS_E_LOTE_v0.1.md) · [Contrato do comando em lote](bt2/contratos/CONTRATO_HTTP_COMANDO_EM_LOTE_v0.1.md)
 - [Alarmes e logs (passo 6)](bt2/auditoria/PASSO_6_ALARMES_E_LOGS_v0.1.md) · [Build modular (passo 3)](bt2/auditoria/PASSO_3_BUILD_MODULAR_v0.1.md) · [Medir e congelar (passos 1 e 2)](bt2/auditoria/RELATORIO_PASSO_1_2_MEDIR_E_CONGELAR_v0.1.md)
-- [Roteiro de implantação do Reginaldo (v0.2)](bt2/migracao/ROTEIRO_IMPLANTACAO_REGINALDO_v0.2.md) · [Checklist de go-live](bt2/migracao/CHECKLIST_GO_LIVE_v0.1.md)
+- [Roteiro de implantação do Reginaldo (v0.3)](bt2/migracao/ROTEIRO_IMPLANTACAO_REGINALDO_v0.3.md) · [Checklist de go-live](bt2/migracao/CHECKLIST_GO_LIVE_v0.1.md)
 
 ## 5. Onde fica o código
 | Parte | Pasta |
@@ -56,7 +58,7 @@ Documentos da auditoria e da preparação da entrada em produção. Leia sempre 
 | Fluxos Node-RED | `nodered/flows/bt2/` · geradores em `nodered/gerador/` |
 | Blocos de PLC | `plc/bt2/entrega_1200_v0.17/` · `plc/bt2/entrega_et200_v0.7/` |
 | Testes | `tests/e2e/` · `tests/integracao/` · `tests/fb/` |
-| Pacotes de entrega | `scripts/pacote/gerar_pacote_implantacao_v1.30.py` (mais novo em 21/11; os fluxos de chaves vão nas versões v3.10 / v3.9 / v1.10 / v1.10) e o do Alexandre: `gerar_pacote_alexandre_1200_v0.1.py` |
+| Pacotes de entrega | `scripts/pacote/gerar_pacote_implantacao_v1.31.py` (mais novo em 21/11; os fluxos de chaves vão nas versões v3.12 / v3.11 / v1.12 / v1.12) e o do Alexandre: `gerar_pacote_alexandre_1200_v0.1.py` |
 
 ## 6. Como usar com o Obsidian
 1. Clone a branch `ccr-bt2-pacote-v1.21` e, no Obsidian, **abra a pasta `docs` como cofre** (Open folder as vault). Não abra o repositório inteiro: o cofre é só a pasta `docs`.

@@ -7,12 +7,14 @@ Para o Reginaldo (que faz a implantação e a bancada). **Eu não implanto nada*
 |---|---|---|---|
 | A1 | Backup do PC BT2 (fluxos, `bancos_capacidade.json`, `public\html`, medidor anterior) e plano de retorno testado | Reginaldo | [ ] |
 | A2 | Bancada com **carga desacoplada**: PLC/ET200 reais, compilação no TIA, tempos de leitura, ligar/desligar por banco | Reginaldo | [ ] |
-| A3 | Implantar o pacote v1.30 (fluxos de chaves v3.10 / v3.9 / v1.10 / v1.10, com a reserva de capacidade) **em modo `registrar`** (padrão), uma aba por vez, conferindo o log e `GET /api/chaves/<banco>` | Reginaldo | [ ] |
+| A3 | Implantar o pacote v1.30 (fluxos de chaves v3.12 / v3.11 / v1.12 / v1.12, com reserva de capacidade, leitura em blocos e lote) **em modo `registrar`** (padrão), uma aba por vez, conferindo o log e `GET /api/chaves/<banco>` | Reginaldo | [ ] |
 | A3b | **Opcional (fecha o F2-1):** copiar `nodered/config/bt2_json_invalido_400_v0.1.js` para a pasta do `settings.js`, acrescentar `httpNodeMiddleware: require('./bt2_json_invalido_400_v0.1.js'),`, reiniciar e testar: corpo `{abc` em `/api/chaves/56/habilitar` deve dar 400 `{"ok":false,"erro":"corpo JSON invalido"}`. Retorno: tirar a linha. Sem isso, o erro de corpo ruim continua 500 (sem efeito de segurança) | Reginaldo | [ ] |
 | A4 | Alarmes novos na bancada: comunicação aparece até 10 s depois e sai até 5 s depois; segurança é imediato (COM-001/002/003/005, DSE-001/002, CHV-005/006 contra CHV-007/008, CHV-001/004/009) | Reginaldo | [ ] |
 | A5 | Conferir o catálogo de kW a 100 % do gerador em ensaio e o 110 % (decisão: ficam como padrão) | Reginaldo | [ ] |
 | A6 | Valores do perfil de combustível contra o datasheet do MWM: 25 % / 10 s (gás), 20 % / 15 s (biometano). Mudar só por revisão explícita | Reginaldo | [ ] |
 | A7 | **Medir na bancada o tempo entre o POST de ligar e a chave aparecer ligada (`cbLigar` no `GET /api/chaves/<banco>`)**, com patamar de várias chaves. A reserva de capacidade vale 5 s; se o tempo real passar disso, a corrida pode reabrir | Reginaldo | [ ] |
+| A8 | **Leitura em blocos de byte** (Passo 10): conferir no log que o nó de leitura **e o de escrita** de cada aba conectam (uma conexão S7 a mais por banco, 4 a mais no 1515; conferir os recursos de conexão da CPU). Medir antes e depois, no mesmo Patamar de várias chaves: erros de leitura, respostas 504 e tempo do Patamar | Reginaldo | [ ] |
+| A9 | **Testar o comando em lote** (`POST /api/chaves/<banco>/lote`) na bancada com carga desacoplada: 200 e as chaves ligam; um lote com chave desabilitada volta 400 e nada liga. **O medidor só passa a usar o lote depois disto** | Reginaldo | [ ] |
 
 ## B. Decisões suas antes de ligar a recusa (C2 `recusar`)
 | # | Item | Observação |
