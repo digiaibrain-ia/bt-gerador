@@ -7,7 +7,7 @@ Para o Reginaldo (que faz a implantação e a bancada). **Eu não implanto nada*
 |---|---|---|---|
 | A1 | Backup do PC BT2 (fluxos, `bancos_capacidade.json`, `public\html`, medidor anterior) e plano de retorno testado | Reginaldo | [ ] |
 | A2 | Bancada com **carga desacoplada**: PLC/ET200 reais, compilação no TIA, tempos de leitura, ligar/desligar por banco | Reginaldo | [ ] |
-| A3 | Implantar o pacote v1.30 (fluxos de chaves v3.12 / v3.11 / v1.12 / v1.12, com reserva de capacidade, leitura em blocos e lote) **em modo `registrar`** (padrão), uma aba por vez, conferindo o log e `GET /api/chaves/<banco>` | Reginaldo | [ ] |
+| A3 | Implantar o pacote v1.30 (fluxos de chaves v3.13 / v3.12 / v1.13 / v1.13, com reserva de capacidade e lote) **em modo `registrar`** (padrão), uma aba por vez, conferindo o log e `GET /api/chaves/<banco>` | Reginaldo | [ ] |
 | A3b | **Opcional (fecha o F2-1):** copiar `nodered/config/bt2_json_invalido_400_v0.1.js` para a pasta do `settings.js`, acrescentar `httpNodeMiddleware: require('./bt2_json_invalido_400_v0.1.js'),`, reiniciar e testar: corpo `{abc` em `/api/chaves/56/habilitar` deve dar 400 `{"ok":false,"erro":"corpo JSON invalido"}`. Retorno: tirar a linha. Sem isso, o erro de corpo ruim continua 500 (sem efeito de segurança) | Reginaldo | [ ] |
 | A4 | Alarmes novos na bancada: comunicação aparece até 10 s depois e sai até 5 s depois; segurança é imediato (COM-001/002/003/005, DSE-001/002, CHV-005/006 contra CHV-007/008, CHV-001/004/009) | Reginaldo | [ ] |
 | A5 | Conferir o catálogo de kW a 100 % do gerador em ensaio e o 110 % (decisão: ficam como padrão) | Reginaldo | [ ] |

@@ -4,13 +4,13 @@
    PARA QUE SERVE (leigo): o Patamar liga varias chaves de uma vez (um degrau). Em vez de um comando por chave (cada um esperando a sua vez e a leitura de volta), o medidor pode mandar o degrau
    inteiro num comando so: {"ligar":[1,2,5], "desligar":[7]}. TUDO OU NADA: se uma chave nao puder ligar, nada e escrito. A capacidade e conferida para o CONJUNTO. Desligar nunca e recusado.
    O QUE ESTE TESTE PROVA:
-     S   as 4 versoes novas so diferem das anteriores na rota nova e nas emendas dos nos compartilhados; nenhuma rota existente mudou de comportamento;
+     S   as 4 versoes novas (v3.13, v3.12, v1.13, v1.13) so diferem das anteriores (v3.10, v3.9, v1.10, v1.10) na rota nova e nas emendas dos nos compartilhados; nenhuma rota existente mudou de comportamento;
      L1  caminho feliz: liga e desliga varias chaves num comando, o PLC recebe os bits certos e a resposta lista o que foi feito;
      L2  corpo invalido => 400 e NADA escrito;        L3 tudo ou nada: chave desabilitada, banco desligado, contator colado => recusa o lote inteiro e nada e escrito;
      L4  guarda D3 e leitura velha (503) valem para o lote; lote so de desligar passa sempre;
      L5  capacidade: o conjunto que passa do limite leva 409 (tudo ou nada); dois lotes simultaneos => so cabe um; desligar nunca e recusado; modo registrar so anota;
      L6  velocidade: um lote de 8 chaves termina muito antes de 8 comandos em sequencia;       L7 banco de 18 chaves (BC59,5): indices ate 18.
-   CONTRA-PROVA: BT2_LOTE_FLUXO56=chaves-56-api-v3.11 (versao SEM a rota de lote) tem que FALHAR em L1 a L6.
+   CONTRA-PROVA: BT2_LOTE_FLUXO56=chaves-56-api-v3.10 BT2_LOTE_FLUXO595=chaves-595-api-v1.10 (versoes SEM a rota de lote) tem que FALHAR em L1 a L6.
    NAO PROVA: PLC/ET200 reais nem o tempo real de escrita e leitura (bancada).
    ===================================================================================================================== */
 const { test, describe, before, after } = require('node:test');
@@ -21,8 +21,8 @@ const { caminhoFluxo } = require('../../versoes.js');
 
 const RAIZ = path.join(__dirname, '..', '..', '..');
 const cfg = JSON.parse(fs.readFileSync(path.join(RAIZ, 'nodered', 'config', 'bancos_capacidade.json'), 'utf8'));
-const F56 = process.env.BT2_LOTE_FLUXO56 || 'chaves-56-api-v3.12', F595 = process.env.BT2_LOTE_FLUXO595 || 'chaves-595-api-v1.12', API = 'gerador-capacidade-api-v1.0';
-const PARES = { '56': ['chaves-56-api-v3.11', 'chaves-56-api-v3.12'], '400': ['chaves-400-api-v3.10', 'chaves-400-api-v3.11'], '550': ['chaves-550-api-v1.11', 'chaves-550-api-v1.12'], '595': ['chaves-595-api-v1.11', 'chaves-595-api-v1.12'] };
+const F56 = process.env.BT2_LOTE_FLUXO56 || 'chaves-56-api-v3.13', F595 = process.env.BT2_LOTE_FLUXO595 || 'chaves-595-api-v1.13', API = 'gerador-capacidade-api-v1.0';
+const PARES = { '56': ['chaves-56-api-v3.10', 'chaves-56-api-v3.13'], '400': ['chaves-400-api-v3.9', 'chaves-400-api-v3.12'], '550': ['chaves-550-api-v1.10', 'chaves-550-api-v1.13'], '595': ['chaves-595-api-v1.10', 'chaves-595-api-v1.13'] };   // lote SEM a leitura em blocos (gerar_lote_v0.2)
 const lerFl = n => JSON.parse(fs.readFileSync(caminhoFluxo(n), 'utf8'));
 const NOVOS_FUNCS = ['fila (uma gravacao por vez)', 'monta escritas por variavel', 'confere leitura x escrita', 'reserva de capacidade na saida da fila (C2)'];
 

@@ -3,7 +3,7 @@
 - **Data:** 2026-11-21
 - **Quem decidiu:** Reginaldo pediu a direção (tratar as chaves como WORD, atenção ao atraso entre as chaves do Patamar, manter o FB em JavaScript ou do PLC); os detalhes foram decididos por critério e pontuação durante a implementação, e **ficam para o Reginaldo confirmar**
 - **Estado:** **parcialmente revista** · item 1 (leitura em blocos) sem ganho de requisições (ver Correção) · lote por bit e máscara mantidos · **não validada na bancada**
-- **Versão onde vale:** fluxos de chaves v3.11/v3.12 (BC56), v3.10/v3.11 (BC400), v1.11/v1.12 (BC550 e BC595)
+- **Versão onde vale (revista):** lote nos fluxos **v3.13 (BC56), v3.12 (BC400), v1.13 (BC550 e BC595)**, feitos sobre as versões de ANTES da leitura em blocos. As versões v3.11/v3.10/v1.11 (blocos) e v3.12/v3.11/v1.12 (lote com blocos) ficam no repositório como histórico e **não são recomendadas**
 
 ## Contexto
 Os erros de leitura aparecem durante o Patamar, que muda várias chaves em sequência. O Node-RED lia 124 itens do DB a cada 200 ms (118 eram um bit cada) numa conexão que as escritas dos comandos também usam, e o Patamar manda um POST por chave, cada um esperando a sua vez e a leitura de volta.
@@ -29,3 +29,6 @@ Fluxos novos de chaves (as versões anteriores ficam intactas). Uma conexão S7 
 
 ## Correção (21/11/2026, mesmo dia)
 Ao ler o código do `node-red-contrib-s7` 3.1.3 (`@st-one-io/nodes7` 1.1.x) vi que a biblioteca **já agrupa itens vizinhos**: os 124 itens de antes já saíam em 1 a 3 requisições, e os 8 itens em blocos geram **as mesmas** requisições. **Revogo a decisão 1** (leitura em blocos) como medida de desempenho: ela só troca comparações no Node-RED e acrescenta uma conexão S7 por banco. Decisões 2 a 4 (lote, máscara no PLC, medidor depois) continuam. O lote deve ser reconstruído sobre os fluxos **sem** a leitura em blocos antes de ir para a bancada.
+
+## Reconstrução (21/11/2026)
+O lote foi gerado de novo sobre os fluxos sem a leitura em blocos (`nodered/gerador/gerar_lote_v0.2.py`): **chaves-56 v3.13, chaves-400 v3.12, chaves-550 v1.13, chaves-595 v1.13**. O nó de reserva e a rota são idênticos aos da versão com blocos; cada fluxo volta a ter 2 endpoints S7. Ver [análise da comunicação S7](../auditoria/ANALISE_COMUNICACAO_S7_E_GATEWAY_v0.1.md).

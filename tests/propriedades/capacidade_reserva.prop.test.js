@@ -12,7 +12,7 @@ const fc = require('fast-check');
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const RAIZ = path.join(__dirname, '..', '..');
 const cfgFc = { numRuns: +process.env.FC_RUNS || 300, seed: +process.env.FC_SEED || 20261120 };
-const FLUXO = JSON.parse(fs.readFileSync(path.join(RAIZ, 'nodered/flows/bt2/chaves-56-api-v3.12.json'), 'utf8'));
+const FLUXO = JSON.parse(fs.readFileSync(path.join(RAIZ, 'nodered/flows/bt2/chaves-56-api-v3.13.json'), 'utf8'));
 const FONTE = process.env.CAP_RESERVA_ARQ ? fs.readFileSync(path.resolve(RAIZ, process.env.CAP_RESERVA_ARQ), 'utf8')      // alvo da mutacao
   : '(function (msg, flow, global, env, node) {' + FLUXO.find(n => n.id === 'chv56_c2_reserva').func + '\n})';
 const FONTE_CACHE = '(function (msg, flow, global, env, node) {' + FLUXO.find(n => n.id === 'chv56_cache_vivo').func + '\n})';

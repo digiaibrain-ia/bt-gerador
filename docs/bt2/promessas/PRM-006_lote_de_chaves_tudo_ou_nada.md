@@ -1,6 +1,6 @@
 # PRM-006 · O comando em lote das chaves é tudo ou nada e nunca passa do limite
 
-- **Módulo:** rota `POST /api/chaves/{banco}/lote` dos fluxos `chaves-56-api-v3.12`, `chaves-400-api-v3.11`, `chaves-550-api-v1.12` e `chaves-595-api-v1.12` (Node-RED)
+- **Módulo:** rota `POST /api/chaves/{banco}/lote` dos fluxos `chaves-56-api-v3.13`, `chaves-400-api-v3.12`, `chaves-550-api-v1.13` e `chaves-595-api-v1.13` (Node-RED)
 - **Quem revisa a promessa:** Reginaldo
 - **Estado da promessa:** verificada em PLC simulado · **não validada na bancada**
 

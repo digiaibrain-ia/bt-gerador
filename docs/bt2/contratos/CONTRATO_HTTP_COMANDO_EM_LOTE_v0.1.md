@@ -1,6 +1,6 @@
 # Contrato HTTP do comando em lote das chaves · POST /api/chaves/{banco}/lote · v0.1 · 21/11/2026
 
-Estado: **implementado e provado em PLC simulado** (fluxos chaves-56 v3.12, chaves-400 v3.11, chaves-550 v1.12, chaves-595 v1.12). **Nada validado na bancada.** O medidor ainda **não usa** esta rota (ver "Como o medidor vai usar").
+Estado: **implementado e provado em PLC simulado** (fluxos chaves-56 v3.13, chaves-400 v3.12, chaves-550 v1.13, chaves-595 v1.13). **Nada validado na bancada.** O medidor ainda **não usa** esta rota (ver "Como o medidor vai usar").
 
 ## Para que serve
 Um degrau do Patamar liga e desliga várias chaves ao mesmo tempo. Com um comando por chave, cada um espera a sua vez na fila e a leitura de volta (450 ms mais a leitura): oito chaves são oito esperas em série, e o medidor já chegou a disparar 26 POST no mesmo milissegundo. O lote leva o degrau **inteiro em um comando**, valida tudo junto, confere a capacidade do conjunto e confirma com **uma** leitura de volta.

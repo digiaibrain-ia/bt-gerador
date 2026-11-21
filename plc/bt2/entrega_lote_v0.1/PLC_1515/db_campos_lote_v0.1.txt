@@ -8,3 +8,4 @@ CAMPOS NOVOS NO FIM DO DB DE CADA BANCO (db3000_BC56, db3100_BC400, db3300_BC550
 [F] Banco de 32 chaves (BC59,5): setMask e clrMask como DWord (4 bytes cada), seq e seqAck UInt; offsets a definir no fim do DB3200 (o ultimo campo atual e RespEcoOk).
 [M] Os offsets acima assumem o fim do DB de 16 chaves em 470.0 (conferir no TIA depois de exportar o DB: nao esta compilado).
 [M] Depois de criar os campos: acrescentar os nomes LoteSet, LoteClr e LoteSeq ao endpoint de ESCRITA do fluxo (novas versoes dos fluxos, so DEPOIS do TIA compilado e da bancada) e LoteSeqAck ao de leitura.
+[F] ESCRITA SEGURA (21/11/2026): o Node-RED deve escrever setMask (472), clrMask (474) e seq (476) NUM UNICO ITEM CONTIGUO de 6 bytes (DBn,BYTE472.6) em UMA escrita, para o PLC nunca enxergar o contador novo com a mascara antiga. seqAck (478) e escrito so pelo PLC.

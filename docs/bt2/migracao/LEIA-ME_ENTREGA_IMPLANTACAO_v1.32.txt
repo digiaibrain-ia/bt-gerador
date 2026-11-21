@@ -1,0 +1,23 @@
+PACOTE DE IMPLANTACAO - BT2 v1.32 (21/11/2026) - LEIA PRIMEIRO
+
+Quem implanta: Reginaldo. Siga 05_documentos/ROTEIRO_IMPLANTACAO_REGINALDO_v0.4.md (passo a passo, com conferencia e retorno em cada etapa).
+
+ANTES DE QUALQUER COISA
+1. Nada aqui foi importado no PC BT2, no PLC ou no DSE. Faca BACKUP (TIA e Node-RED exportado).
+2. Carga de potencia sempre DESACOPLADA em teste.
+3. 02_somente_bancada (simulador) NUNCA vai para o PC de producao.
+4. PLC e Node-RED mudam JUNTOS: apague a aba antiga do mesmo banco antes de importar a nova (rotas iguais).
+5. Modo "registrar" (padrao). NAO mudar para "recusar" antes da bancada.
+
+O QUE MUDOU NA v1.32 (21/11/2026), em relacao a v1.31: LOTE SEM A LEITURA EM BLOCOS.
+- A analise do codigo do node-red-contrib-s7 3.1.3 (@st-one-io/nodes7 1.1.x) mostrou que a biblioteca JA agrupa itens vizinhos: a leitura em blocos da v1.31 NAO reduzia as requisicoes e acrescentava uma conexao S7 por banco. A v1.32 a retira.
+- Fluxos de chaves: chaves-56 v3.13, chaves-400 v3.12, chaves-550 v1.13, chaves-595 v1.13. Trazem a RESERVA DE CAPACIDADE (v1.30) e a rota nova POST /api/chaves/<banco>/lote (um degrau do Patamar num comando, tudo ou nada). Cada aba volta a ter 2 endpoints S7. As rotas antigas nao mudaram. Em modo "registrar" a reserva nao faz nada.
+- O MEDIDOR (1.10.231) AINDA NAO USA O LOTE: continua mandando um comando por chave. So passa a usar depois de o lote ser validado na bancada.
+- plc_lote_rascunho/: bloco de PLC do lote por mascara (fb105/fb106) e campos de DB, RASCUNHO NAO COMPILADO NO TIA. Os fluxos nao dependem dele.
+- Documentos novos: ANALISE_COMUNICACAO_S7_E_GATEWAY, ROTEIRO_IMPLANTACAO_REGINALDO_v0.4 (substitui o v0.3); PASSO_10 e CONTRATO do lote atualizados.
+- ANTES DE MUDAR A ARQUITETURA: medir o Patamar (item A8 do checklist): versao do node-red-contrib-s7, captura Wireshark da porta 102, ciclo e carga de comunicacao no TIA, 504 por motivo.
+Regra de recusa: 110 % do kW a 100 % de cada gerador. Degrau descartado (degrau.max_kw = null).
+
+Conteudo funcional (medidor, PLC, ET200, DSE): igual ao da v1.28/v1.29. Pastas: 01_fluxos_importar, 02_somente_bancada, 03_front_operacao, 04_config, 05_documentos, 06_front_desenvolvimento, 07_diagnostico, 08_rnc, 09_fontes_js_atuais, 10_catalogo_dse, 11_pacote_alexandre_zip, 12_para_alexandre, 13_vendor, 14_exemplo_sintetico, plc, plc_et200.
+
+HONESTO: PLC de Carga 1200 e rascunho (nao compilado no TIA); ET200 validado na bancada com retorno provisorio; os testes automaticos rodam contra PLC simulado e nao substituem a bancada. Valores assumidos (110 %, perfis de combustivel, debounce) pendentes de datasheet.
