@@ -59,3 +59,9 @@ Compilação no TIA, PLC/ET200 reais, tempos reais de leitura, valores assumidos
 **Provado em:** `tests/propriedades/capacidade_c2.prop.test.js` (mutação 92,9 %), código real do nó. **Não provado:** o PLC real, a bancada e o valor do degrau (`max_kw` null). **Pergunta ao revisor:** fail-open (erro interno deixa ligar) é o desejado, dado que a segurança final continua no PLC?
 
 **Decisão posterior (19/11/2026):** o limite do degrau do C2 está descartado; a única regra de recusa é o limite de capacidade (110 % do kW a 100 % de cada gerador). O código de degrau segue inerte com `degrau.max_kw = null`.
+
+### Reserva de capacidade na saída da fila (C2b, Passo 9, 20/11/2026)
+1. Em modo `recusar`, com o PLC ainda sem mostrar as chaves que acabaram de ser aceitas, **a carga aceita nunca passa do limite** (110 % do kW a 100 % do gerador), mesmo com comandos simultâneos no mesmo banco ou em bancos diferentes.
+2. A reserva só vale até o PLC mostrar a chave ligada ou 5 s; desligar nunca é recusado; modo `registrar` e `kw100` desconhecido nunca recusam; erro interno deixa o comando seguir (fail-open).
+**Provado em:** `tests/propriedades/capacidade_reserva.prop.test.js` (mutação 92,2 %) e `tests/integracao/fase4/z_capacidade_corrida.test.js` (com contra-prova). **Não provado:** o tempo real entre o POST e a chave aparecer ligada no PLC (bancada), e o PLC não limita capacidade.
+

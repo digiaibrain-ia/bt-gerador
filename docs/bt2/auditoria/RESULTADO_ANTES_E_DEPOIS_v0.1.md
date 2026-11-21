@@ -8,6 +8,7 @@ Base de comparação: medidor **1.10.226** (início, 18/11) contra **1.10.231** 
 | **Complexidade das funções** | 92 funções acima do limite (29 muito acima); `ciclo` 95, `faseRncDurante` 74 | **Igual.** Modularizei o arquivo, mas não refatorei as funções (BK-AUD-09 segue aberto) |
 | **`catch` vazios** | 276 (23 perto de rede ou comando); falha ao desligar chave não avisava o operador | 264 revisados e comentados; o desligamento que o PLC não confirma agora avisa (CHV-009); erro do motor de alarmes vira SIS-001 |
 | **Limite de capacidade** | Só no HTML; um POST direto passava do limite | Também no Node-RED: C1 registra, C2 recusa com 409 em modo `recusar`. Regra única: **110 % do kW a 100 % de cada gerador**; desligar nunca é recusado; sem kW conhecido nada é recusado. **Padrão `registrar`** |
+| **Corrida do limite** | Dois comandos de ligar quase juntos passavam do limite (provado: 25 kW com limite de 22 kW) | Reserva de capacidade na saída da fila (fluxos v3.10 / v3.9 / v1.10 / v1.10): um é aceito e o outro volta 409. Prova com contra-prova, 14 testes de propriedades e mutação 92,2 % (Passo 9) |
 | **Degrau** | Indefinido (BK-AUD-10) | Descartado por decisão; só vale o 110 % |
 | **Alarmes** | Alarme fugaz abria ocorrência na hora (ruído) | Comunicação entra após 10 s e sai após 5 s; segurança continua imediata |
 | **Log do DSE** | Avisos repetidos | 1 aviso por bloco a cada 5 min (fluxo v3_8) |

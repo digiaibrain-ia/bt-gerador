@@ -7,17 +7,18 @@ Para o Reginaldo (que faz a implantação e a bancada). **Eu não implanto nada*
 |---|---|---|---|
 | A1 | Backup do PC BT2 (fluxos, `bancos_capacidade.json`, `public\html`, medidor anterior) e plano de retorno testado | Reginaldo | [ ] |
 | A2 | Bancada com **carga desacoplada**: PLC/ET200 reais, compilação no TIA, tempos de leitura, ligar/desligar por banco | Reginaldo | [ ] |
-| A3 | Implantar o pacote v1.28 **em modo `registrar`** (padrão), uma aba por vez, conferindo o log e `GET /api/chaves/<banco>` | Reginaldo | [ ] |
+| A3 | Implantar o pacote v1.30 (fluxos de chaves v3.10 / v3.9 / v1.10 / v1.10, com a reserva de capacidade) **em modo `registrar`** (padrão), uma aba por vez, conferindo o log e `GET /api/chaves/<banco>` | Reginaldo | [ ] |
 | A3b | **Opcional (fecha o F2-1):** copiar `nodered/config/bt2_json_invalido_400_v0.1.js` para a pasta do `settings.js`, acrescentar `httpNodeMiddleware: require('./bt2_json_invalido_400_v0.1.js'),`, reiniciar e testar: corpo `{abc` em `/api/chaves/56/habilitar` deve dar 400 `{"ok":false,"erro":"corpo JSON invalido"}`. Retorno: tirar a linha. Sem isso, o erro de corpo ruim continua 500 (sem efeito de segurança) | Reginaldo | [ ] |
 | A4 | Alarmes novos na bancada: comunicação aparece até 10 s depois e sai até 5 s depois; segurança é imediato (COM-001/002/003/005, DSE-001/002, CHV-005/006 contra CHV-007/008, CHV-001/004/009) | Reginaldo | [ ] |
 | A5 | Conferir o catálogo de kW a 100 % do gerador em ensaio e o 110 % (decisão: ficam como padrão) | Reginaldo | [ ] |
 | A6 | Valores do perfil de combustível contra o datasheet do MWM: 25 % / 10 s (gás), 20 % / 15 s (biometano). Mudar só por revisão explícita | Reginaldo | [ ] |
+| A7 | **Medir na bancada o tempo entre o POST de ligar e a chave aparecer ligada (`cbLigar` no `GET /api/chaves/<banco>`)**, com patamar de várias chaves. A reserva de capacidade vale 5 s; se o tempo real passar disso, a corrida pode reabrir | Reginaldo | [ ] |
 
 ## B. Decisões suas antes de ligar a recusa (C2 `recusar`)
 | # | Item | Observação |
 |---|---|---|
 | B1 | ~~Degrau (BK-AUD-10)~~ **Descartado por decisão do Reginaldo (19/11/2026)** | A única regra de limite é **110 % do kW a 100 % de cada gerador** (o limite é de cada gerador, cada um com a sua conta). Transições entre degraus ficam com o perfil do medidor. `degrau.max_kw` continua `null` (não avaliado); nenhum código a mudar |
-| B2 | Passar `"modo": "recusar"` | **Decisão do Reginaldo: o modo é tratado por banco, individualmente** (hoje o arquivo tem um `modo` único para todos).  Só depois de A2 a A5, com carga desacoplada: tentar passar do limite deve dar **409** sem chegar ao PLC; abaixo do limite normal; desligar sempre funciona. Retorno: voltar a `registrar` e reiniciar |
+| B2 | Passar `"modo": "recusar"` (a corrida de comandos simultâneos está corrigida nos fluxos v3.10 / v3.9 / v1.10 / v1.10; testar também na bancada com dois comandos quase juntos) | **Decisão do Reginaldo: o modo é tratado por banco, individualmente** (hoje o arquivo tem um `modo` único para todos).  Só depois de A2 a A5, com carga desacoplada: tentar passar do limite deve dar **409** sem chegar ao PLC; abaixo do limite normal; desligar sempre funciona. Retorno: voltar a `registrar` e reiniciar |
 | B3 | O fail-open do C2 (erro interno deixa o comando seguir) é o desejado? | Hoje sim: a segurança final está no PLC |
 
 ## C. Riscos conhecidos que entram aceitos (decidir se aceita)
