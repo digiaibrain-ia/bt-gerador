@@ -17,9 +17,9 @@ Para tornar permanente, adicione a pasta ao caminho do navi (`export NAVI_PATH="
 
 ## Regras refletidas no cheatsheet
 
-- Rotas HTTP só em `/api/` (`docs/PADRAO_ROTAS_API_NODERED.md`).
-- BT1 e BT2 são sistemas separados; o cheatsheet não mistura os dois.
-- Não há comando Modbus direto: o Node-RED é o único cliente Modbus do DSE (ADR-0001).
+- Rotas HTTP só em `/api/` (`docs/bt2/contratos/PADRAO_ROTAS_API_NODERED.md`).
+- BT1 e BT2 são sistemas separados; o cheatsheet não mistura os dois. Regras gerais de trabalho estão em `CLAUDE.md`.
+- Não há comando Modbus direto: o Node-RED é o único cliente Modbus do DSE (`docs/geral/arquitetura.md`, ADR-0001).
 - A URL do Node-RED é digitada no momento do uso e nunca vai para o Git.
 
 ## Manter
