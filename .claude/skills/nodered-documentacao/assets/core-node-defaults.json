@@ -1,0 +1,2291 @@
+{
+ "_source": "node-red 5.0.7 packages/node_modules/@node-red/nodes/core/*.html (defaults, credentials, select options extracted)",
+ "nodes": {
+  "inject": {
+   "file": "@node-red/nodes/core/common/20-inject.html",
+   "category": "common",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "props": {
+     "value": [
+      {
+       "p": "payload"
+      },
+      {
+       "p": "topic",
+       "vt": "str"
+      }
+     ],
+     "required": false
+    },
+    "repeat": {
+     "value": "",
+     "required": false
+    },
+    "crontab": {
+     "value": "",
+     "required": false
+    },
+    "once": {
+     "value": false,
+     "required": false
+    },
+    "onceDelay": {
+     "value": 0.1,
+     "required": false
+    },
+    "topic": {
+     "value": "",
+     "required": false
+    },
+    "payload": {
+     "value": "",
+     "required": false
+    },
+    "payloadType": {
+     "value": "date",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "debug": {
+   "file": "@node-red/nodes/core/common/21-debug.html",
+   "category": "common",
+   "inputs": 1,
+   "outputs": 0,
+   "defaults": {
+    "name": {
+     "value": "_DEFAULT_",
+     "required": false
+    },
+    "active": {
+     "value": true,
+     "required": false
+    },
+    "tosidebar": {
+     "value": true,
+     "required": false
+    },
+    "console": {
+     "value": false,
+     "required": false
+    },
+    "tostatus": {
+     "value": false,
+     "required": false
+    },
+    "complete": {
+     "value": "false",
+     "required": true
+    },
+    "targetType": {
+     "required": false
+    },
+    "statusVal": {
+     "value": "",
+     "required": false
+    },
+    "statusType": {
+     "value": "auto",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "complete": {
+   "file": "@node-red/nodes/core/common/24-complete.html",
+   "category": "common",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "scope": {
+     "value": [],
+     "required": false,
+     "type": "*[]"
+    },
+    "uncaught": {
+     "value": false,
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "catch": {
+   "file": "@node-red/nodes/core/common/25-catch.html",
+   "category": "common",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "scope": {
+     "value": null,
+     "required": false,
+     "type": "*[]"
+    },
+    "uncaught": {
+     "value": false,
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "status": {
+   "file": "@node-red/nodes/core/common/25-status.html",
+   "category": "common",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "scope": {
+     "value": null,
+     "required": false,
+     "type": "*[]"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "link in": {
+   "file": "@node-red/nodes/core/common/60-link.html",
+   "category": "common",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "_DEFAULT_",
+     "required": false
+    },
+    "links": {
+     "value": [],
+     "required": false,
+     "type": "link out[]"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "link call": {
+   "file": "@node-red/nodes/core/common/60-link.html",
+   "category": "common",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "links": {
+     "value": [],
+     "required": false,
+     "type": "link in[]"
+    },
+    "linkType": {
+     "value": "static",
+     "required": false
+    },
+    "timeout": {
+     "value": "30",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "linkType": [
+     "static",
+     "dynamic"
+    ]
+   }
+  },
+  "link out": {
+   "file": "@node-red/nodes/core/common/60-link.html",
+   "category": "common",
+   "inputs": 1,
+   "outputs": 0,
+   "defaults": {
+    "name": {
+     "value": "_DEFAULT_",
+     "required": false
+    },
+    "mode": {
+     "value": "link",
+     "required": false
+    },
+    "links": {
+     "value": [],
+     "required": false,
+     "type": "link in[]"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "mode": [
+     "link",
+     "return"
+    ]
+   }
+  },
+  "comment": {
+   "file": "@node-red/nodes/core/common/90-comment.html",
+   "category": "common",
+   "inputs": 0,
+   "outputs": 0,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "info": {
+     "value": "",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "global-config": {
+   "file": "@node-red/nodes/core/common/91-global-config.html",
+   "category": "config",
+   "defaults": {
+    "env": {
+     "value": [],
+     "required": false
+    },
+    "modules": {
+     "value": {},
+     "required": false
+    }
+   },
+   "credentials": [
+    "map"
+   ],
+   "selectOptions": {}
+  },
+  "unknown": {
+   "file": "@node-red/nodes/core/common/98-unknown.html",
+   "category": "unknown",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "modules": {
+     "value": [],
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "function": {
+   "file": "@node-red/nodes/core/function/10-function.html",
+   "category": "function",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "_DEFAULT_",
+     "required": false
+    },
+    "func": {
+     "value": "\nreturn msg;",
+     "required": false
+    },
+    "outputs": {
+     "value": 1,
+     "required": false
+    },
+    "timeout": {
+     "value": "<fn>",
+     "required": false
+    },
+    "noerr": {
+     "value": 0,
+     "required": true
+    },
+    "initialize": {
+     "value": "",
+     "required": false
+    },
+    "finalize": {
+     "value": "",
+     "required": false
+    },
+    "libs": {
+     "value": [],
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "switch": {
+   "file": "@node-red/nodes/core/function/10-switch.html",
+   "category": "function",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "property": {
+     "value": "payload",
+     "required": true
+    },
+    "propertyType": {
+     "value": "msg",
+     "required": false
+    },
+    "rules": {
+     "value": [
+      {
+       "t": "eq",
+       "v": "",
+       "vt": "str"
+      }
+     ],
+     "required": false
+    },
+    "checkall": {
+     "value": "true",
+     "required": true
+    },
+    "repair": {
+     "value": false,
+     "required": false
+    },
+    "outputs": {
+     "value": 1,
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "checkall": [
+     "true",
+     "false"
+    ]
+   }
+  },
+  "change": {
+   "file": "@node-red/nodes/core/function/15-change.html",
+   "category": "function",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "rules": {
+     "value": [
+      {
+       "t": "set",
+       "p": "payload",
+       "pt": "msg",
+       "to": "",
+       "tot": "str"
+      }
+     ],
+     "required": false
+    },
+    "action": {
+     "value": "",
+     "required": false
+    },
+    "property": {
+     "value": "",
+     "required": false
+    },
+    "from": {
+     "value": "",
+     "required": false
+    },
+    "to": {
+     "value": "",
+     "required": false
+    },
+    "reg": {
+     "value": false,
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "range": {
+   "file": "@node-red/nodes/core/function/16-range.html",
+   "category": "function",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "minin": {
+     "value": "",
+     "required": true
+    },
+    "maxin": {
+     "value": "",
+     "required": true
+    },
+    "minout": {
+     "value": "",
+     "required": true
+    },
+    "maxout": {
+     "value": "",
+     "required": true
+    },
+    "action": {
+     "value": "scale",
+     "required": false
+    },
+    "round": {
+     "value": false,
+     "required": false
+    },
+    "property": {
+     "value": "payload",
+     "required": true
+    },
+    "name": {
+     "value": "",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "action": [
+     "scale",
+     "clamp",
+     "roll",
+     "drop"
+    ]
+   }
+  },
+  "template": {
+   "file": "@node-red/nodes/core/function/80-template.html",
+   "category": "function",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "field": {
+     "value": "payload",
+     "required": false
+    },
+    "fieldType": {
+     "value": "msg",
+     "required": false
+    },
+    "format": {
+     "value": "handlebars",
+     "required": false
+    },
+    "syntax": {
+     "value": "mustache",
+     "required": false
+    },
+    "template": {
+     "value": "This is the payload: {{payload}} !",
+     "required": false
+    },
+    "output": {
+     "value": "str",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "format": [
+     "handlebars",
+     "html",
+     "json",
+     "javascript",
+     "css",
+     "markdown",
+     "php",
+     "python",
+     "sql",
+     "yaml",
+     "text"
+    ],
+    "syntax": [
+     "mustache",
+     "plain"
+    ],
+    "output": [
+     "str",
+     "json",
+     "yaml"
+    ]
+   }
+  },
+  "delay": {
+   "file": "@node-red/nodes/core/function/89-delay.html",
+   "category": "function",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "pauseType": {
+     "value": "delay",
+     "required": true
+    },
+    "timeout": {
+     "value": "5",
+     "required": true
+    },
+    "timeoutUnits": {
+     "value": "seconds",
+     "required": false
+    },
+    "rate": {
+     "value": "1",
+     "required": true
+    },
+    "nbRateUnits": {
+     "value": "1",
+     "required": false
+    },
+    "rateUnits": {
+     "value": "second",
+     "required": false
+    },
+    "randomFirst": {
+     "value": "1",
+     "required": true
+    },
+    "randomLast": {
+     "value": "5",
+     "required": true
+    },
+    "randomUnits": {
+     "value": "seconds",
+     "required": false
+    },
+    "drop": {
+     "value": false,
+     "required": false
+    },
+    "allowrate": {
+     "value": false,
+     "required": false
+    },
+    "outputs": {
+     "value": 1,
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "timeoutUnits": [
+     "milliseconds",
+     "seconds",
+     "minutes",
+     "hours",
+     "days"
+    ],
+    "randomUnits": [
+     "milliseconds",
+     "seconds",
+     "minutes",
+     "hours",
+     "days"
+    ],
+    "rateUnits": [
+     "second",
+     "minute",
+     "hour",
+     "day"
+    ]
+   }
+  },
+  "trigger": {
+   "file": "@node-red/nodes/core/function/89-trigger.html",
+   "category": "function",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "op1": {
+     "value": "1",
+     "required": false
+    },
+    "op2": {
+     "value": "0",
+     "required": false
+    },
+    "op1type": {
+     "value": "val",
+     "required": false
+    },
+    "op2type": {
+     "value": "val",
+     "required": false
+    },
+    "duration": {
+     "value": "250",
+     "required": true
+    },
+    "extend": {
+     "value": "false",
+     "required": false
+    },
+    "overrideDelay": {
+     "value": "false",
+     "required": false
+    },
+    "units": {
+     "value": "ms",
+     "required": false
+    },
+    "reset": {
+     "value": "",
+     "required": false
+    },
+    "bytopic": {
+     "value": "all",
+     "required": false
+    },
+    "topic": {
+     "value": "topic",
+     "required": true
+    },
+    "outputs": {
+     "value": 1,
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "units": [
+     "ms",
+     "s",
+     "min",
+     "hr"
+    ],
+    "bytopic": [
+     "all",
+     "topic"
+    ]
+   }
+  },
+  "exec": {
+   "file": "@node-red/nodes/core/function/90-exec.html",
+   "category": "function",
+   "inputs": 1,
+   "outputs": 3,
+   "defaults": {
+    "command": {
+     "value": "",
+     "required": false
+    },
+    "addpay": {
+     "value": "",
+     "required": false
+    },
+    "append": {
+     "value": "",
+     "required": false
+    },
+    "useSpawn": {
+     "value": "false",
+     "required": false
+    },
+    "timer": {
+     "value": "",
+     "required": false
+    },
+    "winHide": {
+     "value": false,
+     "required": false
+    },
+    "oldrc": {
+     "value": false,
+     "required": false
+    },
+    "name": {
+     "value": "",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "useSpawn": [
+     "false",
+     "true"
+    ]
+   }
+  },
+  "rbe": {
+   "file": "@node-red/nodes/core/function/rbe.html",
+   "category": "function",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "func": {
+     "value": "rbe",
+     "required": false
+    },
+    "gap": {
+     "value": "",
+     "required": false
+    },
+    "start": {
+     "value": "",
+     "required": false
+    },
+    "inout": {
+     "value": "out",
+     "required": false
+    },
+    "septopics": {
+     "value": true,
+     "required": false
+    },
+    "property": {
+     "value": "payload",
+     "required": true
+    },
+    "topi": {
+     "value": "topic",
+     "required": true
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "func": [
+     "rbe",
+     "rbei",
+     "deadbandEq",
+     "deadband",
+     "narrowbandEq",
+     "narrowband"
+    ],
+    "inout": [
+     "out",
+     "in"
+    ]
+   }
+  },
+  "tls-config": {
+   "file": "@node-red/nodes/core/network/05-tls.html",
+   "category": "config",
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "certType": {
+     "value": "files",
+     "required": false
+    },
+    "cert": {
+     "value": "",
+     "required": false
+    },
+    "key": {
+     "value": "",
+     "required": false
+    },
+    "p12": {
+     "value": "",
+     "required": false
+    },
+    "p12name": {
+     "value": "",
+     "required": false
+    },
+    "ca": {
+     "value": "",
+     "required": false
+    },
+    "certname": {
+     "value": "",
+     "required": false
+    },
+    "keyname": {
+     "value": "",
+     "required": false
+    },
+    "caname": {
+     "value": "",
+     "required": false
+    },
+    "servername": {
+     "value": "",
+     "required": false
+    },
+    "verifyservercert": {
+     "value": true,
+     "required": false
+    },
+    "alpnprotocol": {
+     "value": "",
+     "required": false
+    },
+    "certEnv": {
+     "value": "",
+     "required": false
+    },
+    "keyEnv": {
+     "value": "",
+     "required": false
+    },
+    "caEnv": {
+     "value": "",
+     "required": false
+    }
+   },
+   "credentials": [
+    "certdata",
+    "keydata",
+    "cadata",
+    "p12data",
+    "passphrase"
+   ],
+   "selectOptions": {
+    "certType": [
+     "files",
+     "pfx",
+     "env"
+    ]
+   }
+  },
+  "http proxy": {
+   "file": "@node-red/nodes/core/network/06-httpproxy.html",
+   "category": "config",
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "url": {
+     "value": "",
+     "required": false
+    },
+    "noproxy": {
+     "value": [],
+     "required": false
+    }
+   },
+   "credentials": [
+    "username",
+    "password"
+   ],
+   "selectOptions": {}
+  },
+  "mqtt-broker": {
+   "file": "@node-red/nodes/core/network/10-mqtt.html",
+   "category": "config",
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "broker": {
+     "value": "",
+     "required": true
+    },
+    "port": {
+     "value": 1883,
+     "required": false
+    },
+    "tls": {
+     "required": false,
+     "type": "tls-config"
+    },
+    "clientid": {
+     "value": "",
+     "required": false
+    },
+    "autoConnect": {
+     "value": true,
+     "required": false
+    },
+    "usetls": {
+     "value": false,
+     "required": false
+    },
+    "verifyservercert": {
+     "value": false,
+     "required": false
+    },
+    "compatmode": {
+     "value": false,
+     "required": false
+    },
+    "protocolVersion": {
+     "value": 4,
+     "required": false
+    },
+    "keepalive": {
+     "value": 60,
+     "required": false
+    },
+    "cleansession": {
+     "value": true,
+     "required": false
+    },
+    "autoUnsubscribe": {
+     "value": true,
+     "required": false
+    },
+    "birthTopic": {
+     "value": "",
+     "required": false
+    },
+    "birthQos": {
+     "value": "0",
+     "required": false
+    },
+    "birthRetain": {
+     "value": "false",
+     "required": false
+    },
+    "birthPayload": {
+     "value": "",
+     "required": false
+    },
+    "birthMsg": {
+     "value": {},
+     "required": false
+    },
+    "closeTopic": {
+     "value": "",
+     "required": false
+    },
+    "closeQos": {
+     "value": "0",
+     "required": false
+    },
+    "closeRetain": {
+     "value": "false",
+     "required": false
+    },
+    "closePayload": {
+     "value": "",
+     "required": false
+    },
+    "closeMsg": {
+     "value": {},
+     "required": false
+    },
+    "willTopic": {
+     "value": "",
+     "required": false
+    },
+    "willQos": {
+     "value": "0",
+     "required": false
+    },
+    "willRetain": {
+     "value": "false",
+     "required": false
+    },
+    "willPayload": {
+     "value": "",
+     "required": false
+    },
+    "willMsg": {
+     "value": {},
+     "required": false
+    },
+    "userProps": {
+     "value": "",
+     "required": false
+    },
+    "sessionExpiry": {
+     "value": 0,
+     "required": false
+    }
+   },
+   "credentials": [
+    "user",
+    "password"
+   ],
+   "selectOptions": {
+    "protocolVersion": [
+     "3",
+     "4",
+     "5"
+    ],
+    "birthRetain": [
+     "false",
+     "true"
+    ],
+    "birthQos": [
+     "0",
+     "1",
+     "2"
+    ],
+    "closeRetain": [
+     "false",
+     "true"
+    ],
+    "closeQos": [
+     "0",
+     "1",
+     "2"
+    ],
+    "willRetain": [
+     "false",
+     "true"
+    ],
+    "willQos": [
+     "0",
+     "1",
+     "2"
+    ]
+   }
+  },
+  "mqtt in": {
+   "file": "@node-red/nodes/core/network/10-mqtt.html",
+   "category": "network",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "topic": {
+     "value": "",
+     "required": false
+    },
+    "qos": {
+     "value": "2",
+     "required": false
+    },
+    "datatype": {
+     "value": "auto-detect",
+     "required": true
+    },
+    "broker": {
+     "required": true,
+     "type": "mqtt-broker"
+    },
+    "nl": {
+     "value": false,
+     "required": false
+    },
+    "rap": {
+     "value": true,
+     "required": false
+    },
+    "rh": {
+     "value": 0,
+     "required": false
+    },
+    "inputs": {
+     "value": 0,
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "topicType": [
+     "topic",
+     "dynamic"
+    ],
+    "qos": [
+     "0",
+     "1",
+     "2"
+    ],
+    "rh": [
+     "0",
+     "1",
+     "2"
+    ],
+    "datatype": [
+     "auto-detect",
+     "auto",
+     "buffer",
+     "utf8",
+     "json",
+     "base64"
+    ]
+   }
+  },
+  "mqtt out": {
+   "file": "@node-red/nodes/core/network/10-mqtt.html",
+   "category": "network",
+   "inputs": 1,
+   "outputs": 0,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "topic": {
+     "value": "",
+     "required": false
+    },
+    "qos": {
+     "value": "",
+     "required": false
+    },
+    "retain": {
+     "value": "",
+     "required": false
+    },
+    "respTopic": {
+     "value": "",
+     "required": false
+    },
+    "contentType": {
+     "value": "",
+     "required": false
+    },
+    "userProps": {
+     "value": "",
+     "required": false
+    },
+    "correl": {
+     "value": "",
+     "required": false
+    },
+    "expiry": {
+     "value": "",
+     "required": false
+    },
+    "broker": {
+     "required": true,
+     "type": "mqtt-broker"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "qos": [
+     "",
+     "0",
+     "1",
+     "2"
+    ],
+    "retain": [
+     "",
+     "false",
+     "true"
+    ]
+   }
+  },
+  "http in": {
+   "file": "@node-red/nodes/core/network/21-httpin.html",
+   "category": "network",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "url": {
+     "value": "",
+     "required": true
+    },
+    "method": {
+     "value": "get",
+     "required": true
+    },
+    "upload": {
+     "value": false,
+     "required": false
+    },
+    "skipBodyParsing": {
+     "value": false,
+     "required": false
+    },
+    "swaggerDoc": {
+     "required": false,
+     "type": "swagger-doc"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "method": [
+     "get",
+     "post",
+     "put",
+     "delete",
+     "patch"
+    ]
+   }
+  },
+  "http response": {
+   "file": "@node-red/nodes/core/network/21-httpin.html",
+   "category": "network",
+   "inputs": 1,
+   "outputs": 0,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "statusCode": {
+     "value": "",
+     "required": false
+    },
+    "headers": {
+     "value": {},
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "http request": {
+   "file": "@node-red/nodes/core/network/21-httprequest.html",
+   "category": "network",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "method": {
+     "value": "GET",
+     "required": false
+    },
+    "ret": {
+     "value": "txt",
+     "required": false
+    },
+    "paytoqs": {
+     "value": false,
+     "required": false
+    },
+    "url": {
+     "value": "",
+     "required": false
+    },
+    "tls": {
+     "required": false,
+     "type": "tls-config"
+    },
+    "persist": {
+     "value": false,
+     "required": false
+    },
+    "proxy": {
+     "required": false,
+     "type": "http proxy"
+    },
+    "insecureHTTPParser": {
+     "value": false,
+     "required": false
+    },
+    "authType": {
+     "value": "",
+     "required": false
+    },
+    "senderr": {
+     "value": false,
+     "required": false
+    },
+    "headers": {
+     "value": [],
+     "required": false
+    }
+   },
+   "credentials": [
+    "user",
+    "password"
+   ],
+   "selectOptions": {
+    "method": [
+     "GET",
+     "POST",
+     "PUT",
+     "DELETE",
+     "HEAD",
+     "use"
+    ],
+    "paytoqs": [
+     "ignore",
+     "query",
+     "body"
+    ],
+    "ret": [
+     "txt",
+     "bin",
+     "obj"
+    ]
+   }
+  },
+  "websocket in": {
+   "file": "@node-red/nodes/core/network/22-websocket.html",
+   "category": "network",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "server": {
+     "required": false,
+     "type": "websocket-listener"
+    },
+    "client": {
+     "required": false,
+     "type": "websocket-client"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "mode": [
+     "server",
+     "client"
+    ]
+   }
+  },
+  "websocket out": {
+   "file": "@node-red/nodes/core/network/22-websocket.html",
+   "category": "network",
+   "inputs": 1,
+   "outputs": 0,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "server": {
+     "required": false,
+     "type": "websocket-listener"
+    },
+    "client": {
+     "required": false,
+     "type": "websocket-client"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "mode": [
+     "server",
+     "client"
+    ]
+   }
+  },
+  "websocket-listener": {
+   "file": "@node-red/nodes/core/network/22-websocket.html",
+   "category": "config",
+   "inputs": 0,
+   "outputs": 0,
+   "defaults": {
+    "path": {
+     "value": "",
+     "required": true
+    },
+    "wholemsg": {
+     "value": "false",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "wholemsg": [
+     "false",
+     "true"
+    ]
+   }
+  },
+  "websocket-client": {
+   "file": "@node-red/nodes/core/network/22-websocket.html",
+   "category": "config",
+   "inputs": 0,
+   "outputs": 0,
+   "defaults": {
+    "path": {
+     "value": "",
+     "required": true
+    },
+    "tls": {
+     "required": false,
+     "type": "tls-config"
+    },
+    "wholemsg": {
+     "value": "false",
+     "required": false
+    },
+    "hb": {
+     "value": "",
+     "required": false
+    },
+    "subprotocol": {
+     "value": "",
+     "required": false
+    },
+    "headers": {
+     "value": [],
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "wholemsg": [
+     "false",
+     "true"
+    ]
+   }
+  },
+  "tcp in": {
+   "file": "@node-red/nodes/core/network/31-tcpin.html",
+   "category": "network",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "server": {
+     "value": "server",
+     "required": true
+    },
+    "host": {
+     "value": "",
+     "required": false
+    },
+    "port": {
+     "value": "",
+     "required": true
+    },
+    "datamode": {
+     "value": "stream",
+     "required": false
+    },
+    "datatype": {
+     "value": "buffer",
+     "required": false
+    },
+    "newline": {
+     "value": "",
+     "required": false
+    },
+    "topic": {
+     "value": "",
+     "required": false
+    },
+    "trim": {
+     "value": false,
+     "required": false
+    },
+    "base64": {
+     "value": false,
+     "required": true
+    },
+    "tls": {
+     "value": "",
+     "required": false,
+     "type": "tls-config"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "server": [
+     "server",
+     "client"
+    ],
+    "datamode": [
+     "stream",
+     "single"
+    ],
+    "datatype": [
+     "buffer",
+     "utf8",
+     "base64"
+    ]
+   }
+  },
+  "tcp out": {
+   "file": "@node-red/nodes/core/network/31-tcpin.html",
+   "category": "network",
+   "inputs": 1,
+   "outputs": 0,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "host": {
+     "value": "",
+     "required": false
+    },
+    "port": {
+     "value": "",
+     "required": false
+    },
+    "beserver": {
+     "value": "client",
+     "required": true
+    },
+    "base64": {
+     "value": false,
+     "required": true
+    },
+    "end": {
+     "value": false,
+     "required": true
+    },
+    "tls": {
+     "value": "",
+     "required": false,
+     "type": "tls-config"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "beserver": [
+     "server",
+     "client",
+     "reply"
+    ]
+   }
+  },
+  "tcp request": {
+   "file": "@node-red/nodes/core/network/31-tcpin.html",
+   "category": "network",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "server": {
+     "value": "",
+     "required": false
+    },
+    "port": {
+     "value": "",
+     "required": false
+    },
+    "out": {
+     "value": "time",
+     "required": true
+    },
+    "ret": {
+     "value": "buffer",
+     "required": false
+    },
+    "splitc": {
+     "value": "0",
+     "required": true
+    },
+    "newline": {
+     "value": "",
+     "required": false
+    },
+    "trim": {
+     "value": false,
+     "required": false
+    },
+    "tls": {
+     "value": "",
+     "required": false,
+     "type": "tls-config"
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "ret": [
+     "buffer",
+     "string"
+    ],
+    "out": [
+     "time",
+     "char",
+     "count",
+     "sit",
+     "immed"
+    ]
+   }
+  },
+  "udp in": {
+   "file": "@node-red/nodes/core/network/32-udp.html",
+   "category": "network",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "iface": {
+     "value": "",
+     "required": false
+    },
+    "port": {
+     "value": "",
+     "required": true
+    },
+    "ipv": {
+     "value": "udp4",
+     "required": false
+    },
+    "multicast": {
+     "value": "false",
+     "required": false
+    },
+    "group": {
+     "value": "",
+     "required": false
+    },
+    "datatype": {
+     "value": "buffer",
+     "required": true
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "multicast": [
+     "false",
+     "true"
+    ],
+    "ipv": [
+     "udp4",
+     "udp6"
+    ],
+    "datatype": [
+     "buffer",
+     "utf8",
+     "base64"
+    ]
+   }
+  },
+  "udp out": {
+   "file": "@node-red/nodes/core/network/32-udp.html",
+   "category": "network",
+   "inputs": 1,
+   "outputs": 0,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "addr": {
+     "value": "",
+     "required": false
+    },
+    "iface": {
+     "value": "",
+     "required": false
+    },
+    "port": {
+     "value": "",
+     "required": false
+    },
+    "ipv": {
+     "value": "udp4",
+     "required": false
+    },
+    "outport": {
+     "value": "",
+     "required": false
+    },
+    "base64": {
+     "value": false,
+     "required": true
+    },
+    "multicast": {
+     "value": "false",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "multicast": [
+     "false",
+     "broad",
+     "multi"
+    ],
+    "ipv": [
+     "udp4",
+     "udp6"
+    ]
+   }
+  },
+  "csv": {
+   "file": "@node-red/nodes/core/parsers/70-CSV.html",
+   "category": "parser",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "spec": {
+     "value": "rfc",
+     "required": false
+    },
+    "sep": {
+     "value": ",",
+     "required": true
+    },
+    "hdrin": {
+     "value": "",
+     "required": false
+    },
+    "hdrout": {
+     "value": "none",
+     "required": false
+    },
+    "multi": {
+     "value": "one",
+     "required": true
+    },
+    "ret": {
+     "value": "\\r\\n",
+     "required": false
+    },
+    "temp": {
+     "value": "",
+     "required": false
+    },
+    "skip": {
+     "value": "0",
+     "required": false
+    },
+    "strings": {
+     "value": true,
+     "required": false
+    },
+    "include_empty_strings": {
+     "value": "",
+     "required": false
+    },
+    "include_null_values": {
+     "value": "",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "multi": [
+     "one",
+     "mult"
+    ],
+    "hdrout": [
+     "none",
+     "all",
+     "once"
+    ],
+    "ret": [
+     "\\r\\n",
+     "\\n",
+     "\\r"
+    ]
+   }
+  },
+  "html": {
+   "file": "@node-red/nodes/core/parsers/70-HTML.html",
+   "category": "parser",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "property": {
+     "value": "payload",
+     "required": false
+    },
+    "outproperty": {
+     "value": "payload",
+     "required": false
+    },
+    "tag": {
+     "value": "",
+     "required": false
+    },
+    "ret": {
+     "value": "html",
+     "required": false
+    },
+    "as": {
+     "value": "single",
+     "required": false
+    },
+    "chr": {
+     "value": "_",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "ret": [
+     "html",
+     "text",
+     "attr",
+     "compl"
+    ],
+    "as": [
+     "single",
+     "multi"
+    ]
+   }
+  },
+  "json": {
+   "file": "@node-red/nodes/core/parsers/70-JSON.html",
+   "category": "parser",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "property": {
+     "value": "payload",
+     "required": true
+    },
+    "action": {
+     "value": "",
+     "required": false
+    },
+    "pretty": {
+     "value": false,
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "action": [
+     "",
+     "str",
+     "obj"
+    ]
+   }
+  },
+  "xml": {
+   "file": "@node-red/nodes/core/parsers/70-XML.html",
+   "category": "parser",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "property": {
+     "value": "payload",
+     "required": true
+    },
+    "attr": {
+     "value": "",
+     "required": false
+    },
+    "chr": {
+     "value": "",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "yaml": {
+   "file": "@node-red/nodes/core/parsers/70-YAML.html",
+   "category": "parser",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "property": {
+     "value": "payload",
+     "required": true
+    },
+    "name": {
+     "value": "",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "split": {
+   "file": "@node-red/nodes/core/sequence/17-split.html",
+   "category": "sequence",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "splt": {
+     "value": "\\n",
+     "required": false
+    },
+    "spltType": {
+     "value": "str",
+     "required": false
+    },
+    "arraySplt": {
+     "value": 1,
+     "required": false
+    },
+    "arraySpltType": {
+     "value": "len",
+     "required": false
+    },
+    "stream": {
+     "value": false,
+     "required": false
+    },
+    "addname": {
+     "value": "",
+     "required": false
+    },
+    "property": {
+     "value": "payload",
+     "required": true
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  },
+  "join": {
+   "file": "@node-red/nodes/core/sequence/17-split.html",
+   "category": "sequence",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "mode": {
+     "value": "auto",
+     "required": false
+    },
+    "build": {
+     "value": "object",
+     "required": false
+    },
+    "property": {
+     "value": "payload",
+     "required": false
+    },
+    "propertyType": {
+     "value": "msg",
+     "required": false
+    },
+    "key": {
+     "value": "topic",
+     "required": false
+    },
+    "joiner": {
+     "value": "\\n",
+     "required": false
+    },
+    "joinerType": {
+     "value": "str",
+     "required": false
+    },
+    "useparts": {
+     "value": false,
+     "required": false
+    },
+    "accumulate": {
+     "value": "false",
+     "required": false
+    },
+    "timeout": {
+     "value": "",
+     "required": false
+    },
+    "count": {
+     "value": "",
+     "required": false
+    },
+    "reduceRight": {
+     "value": false,
+     "required": false
+    },
+    "reduceExp": {
+     "required": false
+    },
+    "reduceInit": {
+     "required": false
+    },
+    "reduceInitType": {
+     "required": false
+    },
+    "reduceFixup": {
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "mode": [
+     "auto",
+     "custom",
+     "reduce"
+    ],
+    "build": [
+     "string",
+     "buffer",
+     "array",
+     "object",
+     "merged"
+    ]
+   }
+  },
+  "sort": {
+   "file": "@node-red/nodes/core/sequence/18-sort.html",
+   "category": "sequence",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "order": {
+     "value": "ascending",
+     "required": false
+    },
+    "as_num": {
+     "value": false,
+     "required": false
+    },
+    "target": {
+     "value": "payload",
+     "required": false
+    },
+    "targetType": {
+     "value": "msg",
+     "required": false
+    },
+    "msgKey": {
+     "value": "payload",
+     "required": false
+    },
+    "msgKeyType": {
+     "value": "elem",
+     "required": false
+    },
+    "seqKey": {
+     "value": "payload",
+     "required": false
+    },
+    "seqKeyType": {
+     "value": "msg",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "order": [
+     "ascending",
+     "descending"
+    ]
+   }
+  },
+  "batch": {
+   "file": "@node-red/nodes/core/sequence/19-batch.html",
+   "category": "sequence",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "mode": {
+     "value": "count",
+     "required": false
+    },
+    "count": {
+     "value": 10,
+     "required": false
+    },
+    "overlap": {
+     "value": 0,
+     "required": false
+    },
+    "interval": {
+     "value": 10,
+     "required": false
+    },
+    "allowEmptySequence": {
+     "value": false,
+     "required": false
+    },
+    "honourParts": {
+     "value": false,
+     "required": false
+    },
+    "topics": {
+     "value": [
+      {
+       "topic": ""
+      }
+     ],
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "mode": [
+     "count",
+     "interval",
+     "concat"
+    ]
+   }
+  },
+  "file": {
+   "file": "@node-red/nodes/core/storage/10-file.html",
+   "category": "storage",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "filename": {
+     "value": "",
+     "required": false
+    },
+    "filenameType": {
+     "value": "str",
+     "required": false
+    },
+    "appendNewline": {
+     "value": true,
+     "required": false
+    },
+    "createDir": {
+     "value": false,
+     "required": false
+    },
+    "overwriteFile": {
+     "value": "false",
+     "required": false
+    },
+    "encoding": {
+     "value": "none",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "overwriteFile": [
+     "false",
+     "true",
+     "delete"
+    ]
+   }
+  },
+  "file in": {
+   "file": "@node-red/nodes/core/storage/10-file.html",
+   "category": "storage",
+   "inputs": 1,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "filename": {
+     "value": "",
+     "required": false
+    },
+    "filenameType": {
+     "value": "str",
+     "required": false
+    },
+    "format": {
+     "value": "utf8",
+     "required": false
+    },
+    "chunk": {
+     "value": false,
+     "required": false
+    },
+    "sendError": {
+     "value": false,
+     "required": false
+    },
+    "encoding": {
+     "value": "none",
+     "required": false
+    },
+    "allProps": {
+     "value": false,
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {
+    "format": [
+     "utf8",
+     "lines",
+     "",
+     "stream"
+    ]
+   }
+  },
+  "watch": {
+   "file": "@node-red/nodes/core/storage/23-watch.html",
+   "category": "storage",
+   "inputs": 0,
+   "outputs": 1,
+   "defaults": {
+    "name": {
+     "value": "",
+     "required": false
+    },
+    "files": {
+     "value": "",
+     "required": true
+    },
+    "recursive": {
+     "value": "",
+     "required": false
+    }
+   },
+   "credentials": [],
+   "selectOptions": {}
+  }
+ }
+}

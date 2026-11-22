@@ -31,6 +31,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Reversa: configuração pessoal
+.reversa/config.user.toml
+
 # Testes de integracao (Fase 1): instalacao local do Node-RED de teste (nunca vai ao Git)
 tests/integracao/runtime/
 
