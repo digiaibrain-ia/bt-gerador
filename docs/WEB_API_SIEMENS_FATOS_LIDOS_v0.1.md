@@ -26,3 +26,24 @@ Regra: **FATO** = texto da página; **INTERPRETAÇÃO** = minha leitura para o B
 - Como `PlcProgram.Read/Write` é por variável, o ganho só existe com **lote JSON-RPC** num único HTTPS — que precisa ser medido (latência, CPU, limite de lote) antes de qualquer decisão.
 - 100 sessões num 1515 folga para 4 bancos, desde que o cliente reutilize o token e faça Ping dentro de 120 s.
 - Para comando de chaves em produção, a Web API é candidata a **canal de diagnóstico/teste separado**, não substituta do S7 até haver medição (item A8 do checklist de go-live).
+
+---
+## ADENDO — manual "Web server" S7-1500 (11/2026, A5E53797648-AC), lido do PDF enviado
+
+### FATOS
+- **S7-1500 F-CPU é suportada** pela Web API (padrão, F e T). Requisito: firmware certo no catálogo, projeto baixado, caixa **"Activate Web server on this module"** marcada no TIA.
+- **Web API só por HTTPS** (porta 443, não desativável); precisa de certificado válido (CA ou autoassinado, com limitações).
+- Firmware mínimo (S7-1500 padrão/T/F): `Api.Login/Browse/Version/Ping/GetCertificateUrl` e `PlcProgram.Browse/Read/Write` = **V2.8**; `Api.GetQuantityStructures`, `Syslog.Browse` = V3.1; `Api.GetSessionInfo` = V4.0. **Keep-Alive HTTP no endpoint só a partir do V4.1.**
+- **Lote (bulk)**: sem limite fixo de chamadas, mas **corpo HTTP ≤ 64 KB (firmware ≤ V3.0) ou 128 KB (≥ V3.1)**. O lote é processado **em ordem descendente** (do último ao primeiro item do corpo).
+- `Api.GetQuantityStructures` devolve limites reais da CPU: tamanho máximo do corpo, **nº máximo de requisições paralelas** e de sessões. No exemplo do manual: 131072 bytes, **4 requisições paralelas**, 200 sessões (exemplo, não é o 1515F).
+- `PlcProgram.Read/Write`: **uma variável por chamada**, por nome simbólico (`"DB".Campo`); direitos `read_value`/`write_value`; erro 4 "No resources" = repetir quando houver recurso; erro 3 "System is busy" no Browse. Read/Write devolve `true` na escrita.
+- Para F-CPU existem direitos de runtime extras ("Change parameter of the F-system", "Full access including fail-safe"); o manual manda **não atribuir F-Admin ao usuário "Anonymous"**.
+- Página de sistema "Performance" mostra carga de programa/comunicação; a carga máxima de comunicação é configurada no hardware.
+- Pacote npm `@siemens/simatic-s7-webserver-api` 1.1.3 (MIT; dependências axios, moment, pino): cliente TypeScript oficial (Login, Read, Write, Browse, Ping, Quantity Structures…). Exemplo `samples/WebAppManager` no GitHub **não lido** (repositório fora do escopo da sessão).
+- `5c768f65-API_Siemens.pdf` (153 págs) é cópia **em imagem** (sem texto) do Manual Collection S7-1500; não foi lido em detalhe (o conteúdo equivalente veio do manual de 11/2026).
+- `CreatingUserDefinedWebPages` (51 págs): exemplo de aplicação Siemens para páginas web de usuário com a Web API; **não é sobre desempenho de comando**.
+
+### INTERPRETAÇÃO
+- O limite relevante não é o tamanho do lote, é o **nº de requisições paralelas** (valor real só com `Api.GetQuantityStructures` no 1515F do BT2). Se for baixo (ex.: 4), 4 bancos em paralelo disputam vaga; comando em produção ficaria sujeito a "No resources".
+- A ordem **descendente** do lote precisa ser considerada: para "desligar primeiro, ligar depois" o cliente teria de montar o array invertido.
+- Não há nada no manual que dê latência ou carga por chamada: **só medindo** (A8).
