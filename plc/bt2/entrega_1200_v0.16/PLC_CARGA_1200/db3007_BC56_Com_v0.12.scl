@@ -1,0 +1,28 @@
+DATA_BLOCK "db3007_BC56_Com"
+TITLE = db3007_BC56_Com v0.8 (DB3007)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+NON_RETAIN
+////====================================
+//// db3007_BC56_Com (DB3007) v0.8 - RASCUNHO. Telegrama PEDIDO/RESPOSTA do BC56 (24 B). Mesmo layout do ComBC56 do ET200 (ate 16 chaves).
+//// PUT do 1515: P#DB3007.DBX0.0 BYTE 10 | GET do 1515: P#DB3007.DBX10.0 BYTE 14. Escritor unico: PEDIDO so pelo PUT; RESPOSTA so pelo fb_bancoCarga16.
+////====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;            // PEDIDO
+      vida1515 : Int;
+      ligarBanco : Bool;
+      resPut : Byte;
+      habPed : Array[1..16] of Bool;
+      seq : Int;
+      fbk : Array[1..16] of Bool;            // RESPOSTA
+      vidaET : Int;
+      seletoraAuto : Bool;
+      resGet : Byte;
+      habResp : Array[1..16] of Bool;
+      eco : Int;
+      falhaRetorno : Array[1..16] of Bool;
+      contatorColado : Array[1..16] of Bool;
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK

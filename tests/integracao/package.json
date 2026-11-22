@@ -1,0 +1,9 @@
+{
+  "name": "bt2-testes-integracao",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Testes de integracao da Fase 1: Node-RED real + PLC simulado em memoria. Nunca aponta para PLC, ET200, DSE ou Node-RED reais.",
+  "scripts": {
+    "test": "BT2_AMBIENTE_TESTE=local node --test --test-concurrency=1 --test-timeout=120000"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "bt2-testes-mutacao",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Teste de mutacao (Stryker) dos modulos puros do medidor. Instalar: npm --prefix tests/mutacao ci",
+  "devDependencies": { "@stryker-mutator/core": "8.7.1" }
+}

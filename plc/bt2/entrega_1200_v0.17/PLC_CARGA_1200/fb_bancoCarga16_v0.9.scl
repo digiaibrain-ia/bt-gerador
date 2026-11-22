@@ -1,0 +1,119 @@
+FUNCTION_BLOCK "fb_bancoCarga16"
+TITLE = fb_bancoCarga16 v0.9 (1200)
+AUTHOR : 'RegLobo'
+VERSION : 0.6
+//[F]==============================================================
+//[F] LEGENDA: //[F] (barra =====) = FUNCIONAMENTO: o que o codigo faz e por que.
+//[M]--------------------------------------------------------------
+//[M] LEGENDA: //[M] (barra -----) = MONTAGEM NO TIA: como importar, numerar, ligar tags.
+//[F]==============================================================
+//[F]==============================================================
+//[F] FUNCIONAMENTO - RASCUNHO v0.9 (17/11/2026), nao compilado, nao testado no PLC. PORTE do fb_bancoEt200_16 v0.4 (ja validado na bancada do ET200).
+//[F] O QUE FAZ: lado do banco do telegrama PUT/GET do 1515 (ate 16 chaves). 1 instancia por banco, chamada pelo fb_bancosCarga1200 (multi-instancia).
+//[F]   1) vidaET sobe +1 a cada ~100 ms (prova ao 1515 que este PLC esta vivo).
+//[F]   2) vida1515 parou de mudar por TempoPerdaMs (2 s) -> ComOk = FALSE e TODAS as saidas vao a FALSE.
+//[F]   3) apos queda (ou partida da CPU) cada chave fica TRAVADA e so solta quando o 1515 manda Cmd = FALSE e depois recomanda. Nao religa sozinha.
+//[F]   4) saida da contatora = Cmd E ComOk E LigarBanco E seletora Auto E nao travada E Permite (fb_supervisaoChaves16: SB some -> CB cai em 2 s, falha travada).
+//[F]   5) Fbk[n] = contato auxiliar REAL; SeletoraAuto = entrada fisica da seletora (1 = Auto).
+//[F] MUDANCAS v0.9 (vindas do ET200): (a) sem DB_ANY/PEEK/POKE: o telegrama entra pelos parametros IN_OUT, ligados aos campos do DB pelo nome (o que foi provado no ET200);
+//[F]   (b) sem as copias _s* do S7-300 (no 1200 o array IN_OUT pode ser repassado direto ao supervisor); (c) removidos _cmdAnt/_comOkAnt (nao eram usados).
+//[F] ESCRITOR UNICO: PEDIDO so pelo PUT do 1515; RESPOSTA so por este FB. SaidaContatora so deve ser escrita por aqui (via fb_bancosCarga1200).
+//[M]--------------------------------------------------------------
+//[M] MONTAGEM NO TIA - voce NAO chama este FB direto: o fb_bancosCarga1200 o chama (multi-instancia _bc56 e _bc400). Importe depois do fb_supervisaoChaves16.
+//[M]   Os parametros IN_OUT (Cmd, Vida1515...) sao ligados no fb_bancosCarga1200 aos campos de "db3007_BC56_Com" / "db3107_BC400_Com". Nome no TIA sem versao: fb_bancoCarga16.
+//[M]   Se aparecer "tipo de parametro invalido" ao repassar array IN_OUT para o supervisor: copie para arrays STAT como no ET200 (fb_bancoEt200_16 v0.4) e avise.
+//[M]--------------------------------------------------------------
+   VAR_INPUT
+      NumChaves        : Int;                       //[M] chaves reais deste banco (1..16); BC56 e BC400 = 13
+      SeletoraEntrada  : Bool;                      //[F] entrada fisica: seletora do banco em Auto (1 = Auto)
+      TempoPerdaMs     : Time := T#2S;              //[F] sem vida nova do 1515 por este tempo = comunicacao perdida (menor que o TempoVida do 1515, 3 s)
+      TempoRetornoMs   : Int := 2000;               //[F] T de verificacao do retorno (decisao do Reginaldo: 2 s)
+   END_VAR
+   VAR_OUTPUT
+      ComOk : Bool;                                 //[F] TRUE = 1515 vivo
+   END_VAR
+   VAR_IN_OUT
+      Cmd               : Array[1..16] of Bool;   //[M] <DB telegrama>.cmd        (PEDIDO, so le)
+      Vida1515          : Int;                     //[M] <DB telegrama>.vida1515   (PEDIDO, so le)
+      LigarBanco        : Bool;                    //[M] <DB telegrama>.ligarBanco (PEDIDO, so le)
+      HabPed            : Array[1..16] of Bool;   //[M] <DB telegrama>.habPed     (PEDIDO, so le)
+      Seq               : Int;                     //[M] <DB telegrama>.seq        (PEDIDO, so le)
+      HabResp           : Array[1..16] of Bool;   //[M] <DB telegrama>.habResp    (RESPOSTA, escreve)
+      Eco               : Int;                     //[M] <DB telegrama>.eco        (RESPOSTA, escreve)
+      FalhaRetorno      : Array[1..16] of Bool;   //[M] <DB telegrama>.falhaRetorno   (RESPOSTA, escreve; travada ate novo comando)
+      ContatorColado    : Array[1..16] of Bool;   //[M] <DB telegrama>.contatorColado (RESPOSTA, escreve; travado)
+      VidaET            : Int;                     //[M] <DB telegrama>.vidaET     (RESPOSTA, escreve)
+      Fbk               : Array[1..16] of Bool;   //[M] <DB telegrama>.fbk        (RESPOSTA, escreve)
+      SeletoraAuto      : Bool;                    //[M] <DB telegrama>.seletoraAuto (RESPOSTA, escreve)
+      SaidaContatora    : Array[1..16] of Bool;   //[M] imagem das saidas (STAT do fb_bancosCarga1200; o FC copia para os tags Q)
+      EntradaContatoAux : Array[1..16] of Bool;   //[M] contatos auxiliares (STAT do fb_bancosCarga1200; o FC copia dos tags I)
+   END_VAR
+   VAR
+      _tOsc100ms   : TON_TIME;                     //[F] gera o tick de 100 ms do vidaET
+      _sup         : "fb_supervisaoChaves16";      //[M] multi-instancia: supervisao do retorno SB (nao precisa de DB avulso)
+      _tPerda      : TON_TIME;                     //[F] conta o tempo sem vida nova do 1515
+      _vida1515Ant : Int;                          //[F] vida do ciclo anterior
+      _vidaMudou   : Bool;                         //[F] TRUE no ciclo em que a vida do 1515 mudou
+      _bloq        : Array[1..16] of Bool;         //[F] TRUE = caiu a comunicacao (ou partida); so solta com Cmd[i] = FALSE
+      _partiu      : Bool;                         //[F] FALSE no 1o ciclo apos partida
+      _n           : Int;                          //[F] NumChaves limitado a 0..16
+      i            : Int;
+   END_VAR
+
+BEGIN
+   //[F] 1) VIDA DESTE PLC: +1 a cada 100 ms; volta a 0 antes de estourar o Int.
+   #_tOsc100ms(IN := NOT #_tOsc100ms.Q, PT := T#100MS);
+   IF #_tOsc100ms.Q THEN
+      #VidaET := #VidaET + 1;
+      IF #VidaET >= 32767 THEN #VidaET := 0; END_IF;
+   END_IF;
+
+   //[F] 2) VIGIA DA VIDA DO 1515: valor novo reseta o tempo; sem novidade por TempoPerdaMs = ComOk FALSE.
+   IF #Vida1515 <> #_vida1515Ant THEN
+      #_vida1515Ant := #Vida1515;
+      #_vidaMudou := TRUE;
+   ELSE
+      #_vidaMudou := FALSE;
+   END_IF;
+   #_tPerda(IN := NOT #_vidaMudou, PT := #TempoPerdaMs);
+   #ComOk := NOT #_tPerda.Q;
+
+   //[F] limita NumChaves a 0..16 (fora disso o laco escreveria fora do array)
+   #_n := #NumChaves;
+   IF #_n < 0 THEN #_n := 0; END_IF;
+   IF #_n > 16 THEN #_n := 16; END_IF;
+
+   //[F] 3) TRAVA POS-QUEDA: sem comunicacao (ou 1o ciclo apos partida) trava todas as chaves; cada uma so solta quando o 1515 manda Cmd = FALSE.
+   FOR #i := 1 TO 16 DO
+      IF NOT #ComOk OR NOT #_partiu THEN
+         #_bloq[#i] := TRUE;
+      ELSIF NOT #Cmd[#i] THEN
+         #_bloq[#i] := FALSE;
+      END_IF;
+   END_FOR;
+   #_partiu := TRUE;
+
+   #SeletoraAuto := #SeletoraEntrada;   //[F] devolve ao 1515 o estado da seletora fisica
+
+   //[F] 4) SUPERVISAO DO RETORNO: SB some -> CB cai (T = TempoRetornoMs); habilita/desabilita com resposta; eco do seq.
+   //[F]    SaidaQ = imagem das saidas do ciclo anterior (SaidaContatora); AuxIn = contatos auxiliares fisicos.
+   #_sup(NumChaves := #_n, TempoRetornoMs := #TempoRetornoMs, ComOk := #ComOk, Seq := #Seq,
+         Cmd := #Cmd, HabPed := #HabPed, SaidaQ := #SaidaContatora, AuxIn := #EntradaContatoAux,
+         HabResp := #HabResp, FalhaRetorno := #FalhaRetorno, ContatorColado := #ContatorColado);
+   #Eco := #_sup.Eco;
+
+   //[F] 5) SAIDAS: so liga com TODAS as condicoes. Qualquer uma falhando = FALSE (estado seguro). Chaves alem de NumChaves ficam sempre FALSE.
+   FOR #i := 1 TO 16 DO
+      IF #i <= #_n THEN
+         #Fbk[#i] := #EntradaContatoAux[#i];
+         IF #ComOk AND #LigarBanco AND #SeletoraEntrada AND NOT #_bloq[#i] AND #_sup.Permite[#i] THEN   //[F] Permite = habilitada E sem falha travada
+            #SaidaContatora[#i] := #Cmd[#i];
+         ELSE
+            #SaidaContatora[#i] := FALSE;
+         END_IF;
+      ELSE
+         #Fbk[#i] := FALSE;
+         #SaidaContatora[#i] := FALSE;
+      END_IF;
+   END_FOR;
+END_FUNCTION_BLOCK

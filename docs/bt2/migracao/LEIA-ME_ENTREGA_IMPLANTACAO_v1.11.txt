@@ -1,0 +1,25 @@
+PACOTE DE IMPLANTACAO - BT2 v1.11 (14/11/2026) - LEIA PRIMEIRO
+
+1. Nada aqui foi importado no PC BT2, no PLC ou no DSE. Faca BACKUP (TIA e Node-RED exportado) antes. Carga de potencia sempre DESACOPLADA em teste.
+2. O simulador (02_somente_bancada) NUNCA vai para o PC de producao.
+3. PLC e Node-RED mudam JUNTOS: DB novo no PLC pede o fluxo novo logo depois (01_fluxos_importar, uma aba por vez; apague antes a aba antiga do mesmo banco, as rotas sao iguais).
+4. Checklist e roteiro: 05_documentos/IMPLANTACAO_ROTEIRO_v0.11.md e CHECKLIST_BANCADA_v0.8.md. Padrao dos fluxos: 05_documentos/PADRAO_FLUXOS_NODERED_v0.1.md.
+
+O QUE MUDOU NA v1.11
+- chaves-56-api-v3.6: o mesmo comportamento da v3.5, organizado (faixas por rota, info em todo no, aba com a versao certa).
+- cliente-156-dse-plc-ensaio-v4.0: o DB2000 (DSE) fica no PLC de ENSAIO (1515), nao no PLC de Carga. O fluxo antigo cliente-31 SAIU do pacote: so um fluxo pode gravar o DB2000. Se ele estiver no editor, APAGUE.
+- plc/ (PLC de Carga 1200, 1 DB por arquivo, COMO_USAR_1200.txt) e plc_et200/ (ET200, COMO_USAR_et200.txt). Nas pastas PLC_1515 agora vao tambem db3002/db3102 (setup por tensao).
+- 07_diagnostico/teste-s7-isolado-v0.1.json: le o inicio e o fim do DB3000 e o fim do DB3002 e mostra no Debug (so leitura).
+
+ANTES DE TESTAR (licoes da bancada de 14/11)
+- O PLC de ENSAIO e o 1515 (rack 0, slot 1): e nele que o Node-RED le o DB3000/DB3100. O ET200 e outro equipamento, com outro IP.
+- DB3000 (BC56) e DB3100 (BC400) tem que ser a v0.3: pelo menos 471 bytes, "Acesso otimizado" DESMARCADO. DB antigo = "Invalid address" na leitura.
+- DB3002/DB3102 (setup por tensao): pelo menos 1358 bytes.
+- CPU do 1515: "Permitir acesso via PUT/GET" habilitado.
+- Enderecos (PLC_IP, DSE_URL) vem de variavel do processo do Node-RED; nao ha IP nem senha neste pacote. Se o Node-RED roda sob o PM2 como servico do Windows, o PM2 guarda o ambiente: use "pm2 restart <app> --update-env" e "pm2 save" (PowerShell normal, mesmo usuario do servico). Erro no Debug "getaddrinfo ENOTFOUND ${PLC_IP}" = a variavel nao chegou ao Node-RED.
+- Se o medidor mostrar "PLC nao conectado": 1) abra http://localhost:1880/api/chaves/56 (tem que vir um JSON com "habilitada"); 2) importe o teste isolado e leia o Debug; 3) ping e porta 102 abertos NAO provam a sessao S7.
+
+CONTEUDO
+03_front_operacao = medidor 1.10.201 + catalogo de modelos + menu (catalogo_ferramentas.js e menu_dev_v0.3.js) + grafico. Mantenha na MESMA pasta. A pasta 06_front_desenvolvimento NAO vai para o PC de operacao.
+Confira a integridade: sha256sum -c MANIFESTO.sha256. Pasta plc/ e plc_et200/ sao do Reginaldo/programador (rascunhos, nao compilados).
+O catalogo_ferramentas.js nao leva versao no nome; a data e o rotulo do pacote estao DENTRO dele (linha "atualizado").

@@ -1,0 +1,71 @@
+PACOTE DE IMPLANTACAO - BT2 v1.18 (17/11/2026) - LEIA PRIMEIRO
+
+1. Nada aqui foi importado no PC BT2, no PLC ou no DSE. Faca BACKUP (TIA e Node-RED exportado) antes. Carga de potencia sempre DESACOPLADA em teste.
+2. O simulador (02_somente_bancada) NUNCA vai para o PC de producao.
+3. PLC e Node-RED mudam JUNTOS: DB novo no PLC pede o fluxo novo logo depois (01_fluxos_importar, uma aba por vez; apague antes a aba antiga do mesmo banco, as rotas sao iguais).
+4. Checklist e roteiro: 05_documentos/IMPLANTACAO_ROTEIRO_v0.11.md e CHECKLIST_BANCADA_v0.8.md. Padrao dos fluxos: 05_documentos/PADRAO_FLUXOS_NODERED_v0.1.md.
+
+O QUE MUDOU NA v1.18 (em relacao a v1.17)
+- medidor 1.10.218 (era 1.10.217): PATAMAR MANUAL ESPERA O APLICAR. No salvamento "Por patamar", um patamar em modo Manual agora segura o relogio da etapa ate o operador clicar em Aplicar (tambem quando "nada a mudar"). Antes, na passagem 100 % -> 107 % a carga do 100 % ja estava dentro da tolerancia (+-10 pontos) do 107 %, o relogio contou sozinho e a etapa avancou e foi salva sem aplicar ("foi em auto"). Patamar Auto e os outros modos de salvamento nao mudam. Teste: tests/e2e/patamar_manual_espera_aplicar.js.
+
+O QUE MUDOU NA v1.17 (em relacao a v1.16)
+- medidor 1.10.217 (era 1.10.216): CORRIGE o campo de busca do modelo do gerador que "sumia" em Dados do ensaio. Com um gerador ja escolhido (lembrado ao recarregar) a busca fica escondida e o botao "Trocar gerador" a traz de volta; mas a mensagem "Catalogo atualizado sozinho" apagava a ficha e esse botao. Agora a ficha e o "Trocar gerador" permanecem. Sem outra mudanca.
+- RNC: depois de importar 01_fluxos_importar/rnc-api-v1.1.json, clique em IMPLEMENTAR (Deploy) no Node-RED; sem isso a tela RNC · Reparo mostra HTTP 404. Teste: abra http://<servidor>:1880/api/rnc/saude (tem que vir JSON com "flow":"rnc-v1.1").
+
+O QUE MUDOU NA v1.16 (em relacao a v1.15)
+- medidor 1.10.216 (igual ao da v1.15, com a area RNC). Sem mudanca no medidor.
+- ET200 entrega v0.7 (era v0.1): fb_bancosEt200 v0.2 (saida fisica "Ligar Banco" com ComOk e trava apos queda), fc_bancosEt200 v0.7 (organiza tags, retorno provisorio = a propria saida), ibancosEt200_v0.1.db (DB de instancia pronto), db38/db39 v0.5, fb_bancoEt200_16 v0.4, fb_supervisaoChaves16 v0.1. Pasta plc_et200/ (COMO_USAR_et200.txt).
+- ATENCAO: ET200 em teste na bancada; veja plc_et200/COMO_USAR_et200.txt (ordem de importacao e escritor unico das saidas).
+
+O QUE MUDOU NA v1.15 (em relacao a v1.14)
+- medidor 1.10.216 (era 1.10.209). Mudancas visiveis:
+  * ALARME INTELIGENTE (1.10.212): sem alarme de leitura do PLC no Demo local; so alarma banco EM USO (selecionado, ligado ou com chave ligada) apos 4 s; Node-RED fora = 1 alarme (COM-002) com os afetados, sem fila de COM-001/CHV-006/COM-003; seguranca (CHV-005/007/008, COM-005) NAO muda; linha "Monitorando" na janela Alertas e Falhas. Doc: 05_documentos/ALARME_INTELIGENTE_v0.1.md.
+  * CENTRAL DE REGISTROS (1.10.210): botao Exportar (PDF organizado, Markdown, planilha de alertas, monitoramento .json). Doc: CENTRAL_REGISTROS_v0.4_EXPORTAR.md.
+  * BANCO DE CARGAS (1.10.215): mostra SO o banco selecionado; fica visivel mesmo desmarcado se tiver chave ligada, comando pendente ou leitura perdida depois de existir; botao 👁 n/N mostra todos. Doc: BANCOS_VISIVEIS_v0.1.md.
+  * CARD MODO (1.10.214/215): menor, mesmo visual; "Fonte dos dados" = SIDSE (Demo) ou DSE Real; "Salvamento" = Manual, Auto ou Patamar; a caixa "Node-RED (confirmado)" virou "Registro no Node-RED" (Simulado, Manual ✓, Auto ✓, Sem confirmacao...).
+  * AREA RNC (1.10.216): botao "RNC" no cabecalho; interruptor "Usar RNC" DESLIGADO por padrao (hoje o RNC e o cartao escrito). Desligado = medidor como antes, sem chamar /api/rnc. Ligado: "Registrar defeito", aviso "RNC: BLOQUEADO", pendentes, recentes e atalho do Reparo. Sem rede: fila + arquivo .csv (RNC_pendente_...csv) e reenvio sozinho/por arquivo; nao duplica. Doc: RNC_AREA_MEDIDOR_v0.1.md.
+- FLUXO NOVO (opcional, so se for usar o RNC): 01_fluxos_importar/rnc-api-v1.1.json (aba propria, sem nos s7). Defina RNC_DIR pelo PM2 (ver 04_config/pc-bt2.env.example), pasta FORA da public do Node-RED, e faca backup dela. Teste: 08_rnc/RNC_LEIA-ME_BANCADA_v0.2.md e rnc_teste_bancada_v0.2.js (so roda em pasta com "teste" no nome e vazia).
+- TELAS NOVAS em 03_front_operacao (mesma pasta do medidor): rnc_reparo_v0.3.html (quem conserta) e rnc_registro_v0.2.html (registro avulso com foto). O medidor abre o Reparo pelo catalogo.
+- Sem mudanca de PLC neste pacote. Fluxos de chaves/registro/DSE/logs iguais aos da v1.14. Mapa v0.19 igual.
+- NAO FAZ ainda: SQL (BK-RNC-02: copia assincrona, desligada, depois dos testes); receber NS do MES; gravar a origem no PLC.
+- Teste rapido (Demo, sem carga): botao RNC > ligue "Usar RNC" > Registrar defeito. Com o Node-RED parado: aparece "Salvo SO neste aparelho", baixa o .csv e o cabecalho mostra "RNC a enviar: 1"; suba o Node-RED e ele envia sozinho (ate 30 s). Desligue "Usar RNC" e o botao some.
+
+O QUE MUDOU NA v1.14 (em relacao a v1.13)
+- medidor 1.10.209 (era 1.10.206). O Dados do ensaio por NS e o fluxo registro v1.10 continuam como na v1.13.
+- MAPA DOS FBs (botao "Mapa dos FBs" em Patamar Guiado > Detalhes > Ferramentas), mapa v0.19 embutido no medidor. ATENCAO: a copia do mapa que o PC de operacao usa e a EMBUTIDA no medidor; ela estava na v0.14 (nunca recebeu as correcoes das v0.15 e v0.16). Agora e a v0.19.
+  1) Iluminacao: o bloco em estado ATIVO (contando) ganha uma aureola azul de fundo que respira entre 40 % e 90 % (ida e volta suave, nunca apaga, sem piscar). Cores dos estados mais fortes e simbolo de forma: ■ ocioso, ✔ ok, ▶ contando, ▲ falha. Com "reduzir movimento" ligado no aparelho a aureola fica fixa.
+  2) Celular: o diagrama ganha altura. Em celular em pe passou de 17 % para 76 % da altura da tela. O painel do mapa ocupa a tela, o cabecalho fica em 2 linhas, a faixa Gerador/Banco/Carga vira uma linha de resumo (seta ▸ abre o detalhe), a legenda vai para o botao (i) e o zoom inicial ajusta pela altura (ate 60 %). O PC nao muda.
+- Documentos novos em 05_documentos: MAPA_FBS_v0.18 e MAPA_FBS_v0.19.
+- Sem mudanca de PLC e de Node-RED neste pacote (os fluxos sao os mesmos da v1.13). Catalogo de modelos: sem mudanca.
+- Teste rapido do mapa (Demo, sem carga): ligue o Demo, Operador em Auto, abra o mapa, ligue o Patamar Guiado e inicie o ensaio: os blocos 6 e 7 (Comando e Tempos) ficam com a aureola respirando; parado, nenhum bloco brilha.
+
+O QUE MUDOU NA v1.13 (em relacao a v1.12) - continua valendo
+- medidor 1.10.209 (era 1.10.201): em "Dados do ensaio" ha agora a escolha "Origem dos dados": "Manual / print do SAP (original)" (padrao, igual ao de antes) ou "Por no de serie (MES)".
+  No modo por NS: digite ou leia o NS; o medidor decifra SO pelas normas (ETD 091 rev.05 gerador, 9 caracteres; ETD 094 rev.00 torre, 8 caracteres) e preenche Motor, Alternador e Controlador.
+  Depois use a busca de modelo (catalogo): ela preenche frequencia, tensao, potencia e controlador. O que faltar, digite. Tudo continua editavel.
+  Cada campo mostra a origem: barra azul = NS, barra verde = catalogo, sem barra = digitado. Texto longo fica no icone (i): decodificacao, avisos, conflito e exemplos da norma.
+  NS fora da norma (tamanho ou formato errado) NAO preenche nada: preencha a mao. Letra que a norma nao lista nao trava: o campo fica vazio, com aviso.
+- registro-ensaio-db2100 v1.10 (era v1.9): normaliza o NS no servidor (sem espacos e *, o O cortado vira 0, maiusculas). Antes, o O cortado ia ao PLC como "?". Aceita a origem dos dados (manual ou NS) e guarda em MEMORIA do Node-RED (some se reiniciar); GET /api/ensaio/snap devolve o campo "origem". O DB2100 do PLC NAO muda.
+- Importe o fluxo registro v1.10 JUNTO com o medidor 1.10.209 (apague antes a aba do registro v1.9). Medidor novo com fluxo antigo funciona, mas o O cortado continua indo como "?" e a leitura de volta pode acusar erro.
+- Catalogo de modelos: sem mudanca (catalogo_modelos_v0.1.csv, 1663 modelos). Conferido com a pasta do Drive em 14/11: mesmo arquivo. AINDA fora do catalogo: DSE 7420MKII, 8610MKII, 8620MKII e 8610MKII_MAR (continuam em .zip grandes no Drive; descompacte la para entrarem).
+- Documentos novos em 05_documentos: DADOS_ENSAIO_POR_NS, REGISTRO_ENSAIO_V1.10_NS, DECODIFICA_SERIE_MWM. Item BK-NS-01 no backlog (gravar a origem no PLC = mudanca de PLC, so com seu OK).
+- Sem mudanca de PLC neste pacote. plc/, plc_et200/, simulador e demais fluxos iguais aos da v1.12.
+
+TESTE RAPIDO DO NS (Demo ou bancada, sem carga): abra Dados do ensaio > "Por no de serie (MES)" e digite os exemplos das normas:
+  GDWAØ4447 = gas, motor serie 12 (2V) 4 cil, WEG, DSE 4520 | DRCBØ4447 = diesel, serie 229 3 cil 3,1 L, Cramaco, DSE 7320 | DTMFØ4447 = diesel, Yanmar, Mecc Alte, Deif AGC150 | DTMØ4447 (torre) = diesel, Yanmar, Mecc Alte.
+  Confirme os dados e abra GET /api/ensaio/snap: o NS tem que vir com zero (DTMF04447), sem * e sem ponto de interrogacao; "origem" traz origemDados "ns".
+  Os exemplos tambem estao no icone (i) do quadro do NS (botao "usar").
+NAO FAZ ainda: receber o NS direto do MES (depende da TI e do formato); decifrar a string longa do MES (aplicacao + NS); gravar a origem no PLC.
+
+ANTES DE TESTAR (licoes da bancada de 14/11)
+- O PLC de ENSAIO e o 1515 (rack 0, slot 1): e nele que o Node-RED le o DB3000/DB3100. O ET200 e outro equipamento, com outro IP.
+- DB3000 (BC56) e DB3100 (BC400) tem que ser a v0.3: pelo menos 471 bytes, "Acesso otimizado" DESMARCADO. DB antigo = "Invalid address" na leitura.
+- DB3002/DB3102 (setup por tensao): pelo menos 1358 bytes.
+- CPU do 1515: "Permitir acesso via PUT/GET" habilitado.
+- Enderecos (PLC_IP, DSE_URL) vem de variavel do processo do Node-RED; nao ha IP nem senha neste pacote. Se o Node-RED roda sob o PM2 como servico do Windows, o PM2 guarda o ambiente: use "pm2 restart <app> --update-env" e "pm2 save" (PowerShell normal, mesmo usuario do servico). Erro no Debug "getaddrinfo ENOTFOUND ${PLC_IP}" = a variavel nao chegou ao Node-RED.
+- Se o medidor mostrar "PLC nao conectado": 1) abra http://localhost:1880/api/chaves/56 (tem que vir um JSON com "habilitada"); 2) importe o teste isolado e leia o Debug; 3) ping e porta 102 abertos NAO provam a sessao S7.
+
+CONTEUDO
+03_front_operacao = medidor 1.10.216 + catalogo de modelos + menu (catalogo_ferramentas.js e menu_dev_v0.3.js) + grafico. Mantenha na MESMA pasta. A pasta 06_front_desenvolvimento NAO vai para o PC de operacao.
+Confira a integridade: sha256sum -c MANIFESTO.sha256. Pasta plc/ e plc_et200/ sao do Reginaldo/programador (rascunhos, nao compilados).
+O catalogo_ferramentas.js nao leva versao no nome; a data e o rotulo do pacote estao DENTRO dele (linha "atualizado").

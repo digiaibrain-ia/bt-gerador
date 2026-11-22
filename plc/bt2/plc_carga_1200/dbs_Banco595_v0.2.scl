@@ -1,0 +1,61 @@
+DATA_BLOCK "db3207_BC595_Com"
+TITLE = db3207_BC595_Com v0.2 (DB3207)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+NON_RETAIN
+////====================================
+//// db3207_BC595_Com v0.2 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Pacote plc_carga_1200 (S7-1200 real), BC59,5.
+//// Telegrama rapido do BC59,5 (36 bytes). PUT do 1515: P#DB3207.DBX0.0 BYTE 14   GET: P#DB3207.DBX14.0 BYTE 22.
+////====================================
+   VAR
+      com : "typeComBanco32";
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3208_BC595_Competencia"
+TITLE = db3208_BC595_Competencia v0.2 (DB3208)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+NON_RETAIN
+////====================================
+//// db3208_BC595_Competencia v0.2 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Pacote plc_carga_1200 (S7-1200 real), BC59,5.
+//// Competencia do BC59,5 (8 bytes, mesmo tipo dos outros bancos). GET do 1515: P#DB3208.DBX0.0 BYTE 8.
+////====================================
+   VAR
+      compet : "typeCompetenciaBanco";
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3200_BC595_Chaves"
+TITLE = db3200_BC595_Chaves v0.2 (DB3200) ESPELHO
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+NON_RETAIN
+////====================================
+//// db3200_BC595_Chaves ESPELHO v0.2 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Pacote plc_carga_1200 (S7-1200 real), BC59,5.
+//// Copia de mao unica do DB do 1515 (mesmos offsets do db3200_BC595_Chaves v0.3), so para a IHM. NAO e usada no controle.
+////   bytes 0..7 (cb, sb): preenchidos AQUI a partir do DB3207. bytes 8..399 (392 B) chegam por TRES PUTs do 1515 (limite ~212 B por job):
+////   PUT1 8..143 (habilitada, setupOk, kwReal = 136 B)  PUT2 144..271 (rMedidoOhm = 128 B)  PUT3 272..399 (rTeoricoOhm = 128 B).
+////====================================
+   VAR
+      cb : Struct
+         ligar : Array[1..32] of Bool;   // X0.0
+      END_STRUCT;
+      sb : Struct
+         ligada : Array[1..32] of Bool;   // X4.0
+      END_STRUCT;
+      setup : Struct
+         habilitada : Array[1..32] of Bool;    // X8.0   (PUT1)
+         setupOk : Array[1..32] of Bool;       // X12.0  (PUT1)
+         kwReal : Array[1..32] of Real;        // D16    (PUT1)
+         rMedidoOhm : Array[1..32] of Real;    // D144   (PUT2)
+         rTeoricoOhm : Array[1..32] of Real;   // D272   (PUT3)
+      END_STRUCT;
+   END_VAR
+BEGIN
+END_DATA_BLOCK

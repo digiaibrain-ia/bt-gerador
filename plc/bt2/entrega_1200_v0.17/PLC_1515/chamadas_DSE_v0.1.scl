@@ -1,0 +1,6 @@
+////====================================
+//// chamadas_DSE_v0.1 (12/11/2026) - RASCUNHO. Chamada no OB ciclico do 1515 (1x por ciclo). A instancia db2001i_DSE_PutCarga (DB2001) e criada ao inserir a chamada (numero e nome manuais).
+////====================================
+"db2001i_DSE_PutCarga"(Hab := TRUE, ID_Conexao := W#16#0,   /* A PREENCHER: ID da conexao S7 com o PLC de Carga */
+    Remoto := P#DB2000.DBX0.0 BYTE 136,   // destino no PLC de Carga (DB2000, mesmo numero)
+    Origem := P#DB2000.DBX0.0 BYTE 136);   // origem no 1515 (DB2000)

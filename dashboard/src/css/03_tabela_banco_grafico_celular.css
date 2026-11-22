@@ -1,0 +1,118 @@
+  /* ---- tabela do ensaio ---- */
+  .tbw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tb{width:100%;min-width:540px;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .tb th,.tb td{border:1px solid var(--line);padding:5px 4px;text-align:center;white-space:nowrap}
+  .tb td:first-child,.tb th:first-child{text-align:left;color:var(--mut);background:var(--cardin);padding-left:8px;position:sticky;left:0;z-index:1;box-shadow:1px 0 0 var(--line)}
+  .tb thead th{background:var(--band);font-weight:700;line-height:1.25}
+  .tb thead th small{display:block;font-weight:500;font-size:10.5px;color:var(--mut)}
+  .tb th.done{background:#d5eedd;color:#17613a}.tb th.done small{color:#17613a}
+  .tb th.cur{background:var(--warn);color:#111}.tb th.cur small{color:#111}
+  .tb td.done{background:#f3faf5}.tb td.cur{background:#fff6d6;font-weight:700}.tb td.pend{color:#b5b5b0}
+  .tb tr.vis td:first-child{font-style:italic}
+
+  /* ---- banco de carga ---- */
+  .hrow{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.hrow h2{margin:0}
+  .leg{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--mut)}
+  .leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .bk{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--cardin);margin-bottom:8px}
+  .bkh{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:12px;color:var(--mut);margin-bottom:6px}
+  .bkh b{color:var(--txt);font-weight:600}
+  /* v1.9.74: seletora Local/Remoto + "Ligar banco" de cada banco */
+  .bkctl{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;margin-left:auto}
+  .bkchip,.bkbtn{font:inherit;font-size:11.5px;font-weight:700;line-height:1;padding:5px 9px;border-radius:99px;border:1px solid var(--line);background:var(--cardin);color:var(--txt);cursor:pointer;white-space:nowrap}
+  .bkchip.s-na{color:var(--mut);border-style:dashed}
+  .bkchip.s-auto{background:#d7f0e1;border-color:#2e9a5f;color:#16603a}
+  .bkchip.s-man{background:#ffe9b8;border-color:#d99a00;color:#6d4f00}
+  .bkchip.trav,.cfgbtn.nao,#bIni.nao{opacity:.55;cursor:not-allowed} /* v1.9.76: travado por ensaio / Setup aberto (continua clicável só para explicar o motivo) */
+
+  /* v1.9.76: Operador secreto [DEV.OPS] — barra flutuante (fica no top layer, por cima dos popups) e lista de resultados no popup Demo */
+  #opsBar{position:fixed;inset:auto auto 14px 50%;transform:translateX(-50%);margin:0;max-width:min(94vw,760px);z-index:2147483000;padding:8px 12px;border:2px solid #1e3a5f;border-radius:10px;background:#0f2438;color:#fff;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.45);gap:12px;align-items:center}
+  #opsBar:not([hidden]){display:flex}
+  #opsBar[popover]:not(:popover-open){display:none}
+  #opsBar.bad{border-color:#b42318;background:#3a1210}
+  #opsBar .opsTxt{display:flex;flex-direction:column;min-width:0;flex:1}
+  #opsBar .opsTit{font-weight:700}
+  #opsBar .opsPasso{font-size:12px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #opsBar .opsCnt{font-variant-numeric:tabular-nums;white-space:pre}
+  /* v1.10.187: barra do robô cabe no celular (título em cima, botões embaixo) */
+  @media (max-width:700px){
+    #opsBar{flex-wrap:wrap;row-gap:6px;max-width:calc(100vw - 8px);box-sizing:border-box}
+    #opsBar .opsTxt{flex:1 1 55%;min-width:120px;order:1}
+    #opsBar .opsGrip{order:0}
+    #opsBar .opsCron{order:2}#opsBar .opsCnt{order:3}
+    #opsBar #opsMin,#opsBar #opsParar,#opsBar .fimOnly{order:4}
+    #opsBar .opsTit{font-size:12px}
+  }
+
+  @media (pointer:coarse){label:has(#opsDica){display:none!important}}   /* v1.10.186: Dica Alt+I é só de PC */
+  /* v1.10.183: bloco do Dev/Operador oculto cabe na largura do celular */
+  @media (max-width:700px){
+    #opsBox,#obsBox{max-width:100%;box-sizing:border-box;overflow:hidden}
+    #opsBox>div,#obsBox>div{flex-direction:column;align-items:stretch!important}
+    #opsBox label,#obsBox label{flex-wrap:wrap;width:100%}
+    #opsBox select,#opsBox input[type=text],#opsBox input[type=number],#obsBox select,#obsBox input[type=text],#obsBox input[type=number]{width:100%!important;max-width:100%;box-sizing:border-box;min-width:0}
+    #opsBox button,#obsBox button{width:100%}
+  }
+
+  /* v1.10.182: barra do robô no fim do teste */
+  #opsBar .fimOnly{display:none}
+  #opsBar.fim .fimOnly{display:inline-block}
+  #opsBar.fim #opsParar{display:none}
+  #opsBar.fim{border-color:#2e7d32;background:#10281a}
+  #opsBar.fim.bad{border-color:#b42318;background:#3a1210}
+
+  #opsBar button{background:#b42318;color:#fff;border:1px solid #7a1710;border-radius:6px;padding:5px 12px;font-weight:700;cursor:pointer}
+  #opsRes .opsSum{font-size:12px;margin:6px 0 4px}#opsRes .opsSum .bad{color:#b42318}
+  #opsRes .opsLin{display:flex;gap:6px;font-size:12px;line-height:1.35;padding:2px 0;border-top:1px solid #e3e7ec}
+  #opsRes .opsLin small{color:#5b6672}
+  #opsRes .opsLin.ok span:first-child{color:#177245}#opsRes .opsLin.falha span:first-child{color:#b42318}#opsRes .opsLin.aviso span:first-child{color:#b45309}
+  #opsRes .opsLin.falha{background:#fdecea}
+  .bkchip.s-bt{border-style:solid;box-shadow:0 1px 2px rgba(0,0,0,.08)} /* v1.9.75: Demo local — cara de botão (sem a borda tracejada de "sem sinal") */
+  .bkbtn{background:#111;border-color:#111;color:#fff;border-radius:6px}
+  .bkbtn.on{background:#2e9a5f;border-color:#2e9a5f}
+  .bkbtn.nao{background:var(--seg);border-color:var(--line);color:var(--mut);cursor:not-allowed}
+  .bkchip:focus-visible,.bkbtn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .tile.blk{opacity:.45;cursor:not-allowed}
+  @media (pointer:coarse){.bkchip,.bkbtn{padding:10px 12px;font-size:12.5px}}  /* celular/tablet: alvo de toque maior */
+  html[data-tema=escuro] .bkchip.s-auto{background:#1d4d33;border-color:#2c7a50;color:#9be8b9}
+  html[data-tema=escuro] .bkchip.s-man{background:#4a3c10;border-color:#7a6320;color:#ffd666}
+  html[data-tema=escuro] .bkbtn:not(.on):not(.nao){background:#e8e8e4;border-color:#e8e8e4;color:#111}
+  .sw{display:flex;flex-wrap:wrap;gap:6px}
+  .tile{width:58px;border:1px solid var(--line);border-radius:6px;background:var(--tile);text-align:center;padding:6px 2px 5px;font-size:11px;font-variant-numeric:tabular-nums}
+  .tile i{display:block;width:22px;height:22px;border-radius:50%;margin:0 auto 4px;border:2px solid rgba(0,0,0,.22);background:var(--bad);transition:background .15s}
+  .tile.s1 i{background:var(--ok)}
+  .tile.ref i{background:var(--line)}
+  .tile.ref{opacity:.85}
+
+  /* ---- gráfico e simulação ---- */
+  #chart{width:100%;display:block;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .chbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px;font-size:12px;color:var(--mut)}
+  .chbar span{flex:1;min-width:180px}
+  .chbar button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 12px;font-size:13px}
+  #sim{color:var(--mut);font-size:13px}
+  #sim .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
+  #sim input[type=range]{flex:1;min-width:140px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{border:0;border-radius:0;padding:9px 14px;background:#fff}
+  .seg button.on{background:#111;color:#fff}
+  footer{padding:8px 14px;color:var(--mut);font-size:11px;text-align:center}
+
+  /* ---- celular ---- */
+  @media (max-width:640px){
+    main{padding:8px;gap:8px}.cols{gap:8px}
+    .panel{padding:12px 10px 12px 16px}
+    header{padding:8px 10px}header h1{font-size:13px}
+    .cfg{padding:6px 10px}.cfg .api{flex-wrap:wrap;margin-left:0}.cfg input[type=text]{min-width:100%}
+    .gbtn{padding:6px 10px}
+    .leds{min-width:0}
+    .clock b{font-size:44px}.clock span{font-size:16px}
+    .btns{gap:8px}.btns button{padding:12px 4px;font-size:15px}
+    #lamp{width:48px;height:48px;font-size:20px}
+    .g4{grid-template-columns:repeat(2,1fr)}
+    .card .v{font-size:20px}
+    #med .card .v{font-size:25px} /* v1.9.30: +5% adicional no mobile (20px -> 24px na v1.9.29 -> 25px) */
+    .tb{font-size:11.5px}
+    .tile{width:48px}
+    .st .t{font-size:11px}
+  }
+

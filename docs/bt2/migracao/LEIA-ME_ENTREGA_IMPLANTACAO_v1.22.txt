@@ -1,0 +1,31 @@
+PACOTE DE IMPLANTACAO - BT2 v1.22 (17/11/2026) - LEIA PRIMEIRO
+
+Pacote por categoria. So a versao ATUAL de cada arquivo. O historico completo esta no Git.
+
+ANTES DE QUALQUER COISA
+1. Nada aqui foi importado no PC BT2, no PLC ou no DSE. Faca BACKUP (TIA e Node-RED exportado).
+2. Carga de potencia sempre DESACOPLADA em teste.
+3. 02_somente_bancada (simulador) NUNCA vai para o PC de producao.
+4. PLC e Node-RED mudam JUNTOS: apague a aba antiga do mesmo banco antes de importar a nova (rotas iguais).
+
+PASTAS
+  01_fluxos_importar        fluxos Node-RED atuais, uma aba por vez.
+  02_somente_bancada        simulador DSE (so bancada).
+  03_front_operacao         medidor 1.10.220, grafico do ensaio, menu, catalogo de ferramentas, RNC (registro e reparo).
+  04_config                 exemplo de configuracao do PC (sem IP real; preencher no PC).
+  05_documentos             decisoes, auditoria, arquitetura v0.6, infografico de chamadas v0.7, resumo para a reuniao.
+  06_front_desenvolvimento  ferramentas de apoio ao desenvolvedor (visor da API, mapa dos FBs, maquete, simulador de amostras, logs, arquitetura).
+                            Cada arquivo que ja esta na 03 nao se repete aqui.
+  07_diagnostico            fluxo de teste S7 isolado (diagnostico; usa a variavel PLC_IP).
+  08_rnc                    RNC: LEIA-ME e checklist de bancada, retrabalho, teste de bancada v0.3.
+  09_fontes_js_atuais       codigo-fonte JS da versao atual de cada modulo (sem testes).
+  10_catalogo_dse           script que le os .dse e gera a tabela de modelos de gerador.
+  11_pacote_alexandre_zip   pacote do programador do PLC de Carga 1200 (zip pronto para enviar).
+  12_para_alexandre         COMO_USAR e LEIA-ME do programador (os blocos estao em plc/).
+  13_vendor                 OCR tesseract (biblioteca de terceiros usada pelo projeto).
+  14_exemplo_sintetico      amostras e resumo sinteticos para o catalogo.
+  plc, plc_et200            blocos do PLC 1200 v0.17 (rascunho, nao compilado), ET200 v0.7 (provisorio) e 1515.
+
+ORDEM SUGERIDA DE TESTE: 1) medidor 1.10.220 com chaves-56 v3.7 e chaves-400 v3.6; 2) Patamar manual (aguardar Aplicar e clicar na chave que falta); 3) STOP e RUN do 1515; 4) RNC (opcional).
+
+HONESTO: o PLC de Carga 1200 e rascunho (nao compilado no TIA). O ET200 foi validado na bancada com retorno provisorio. Os testes automaticos rodam contra PLC simulado; nao substituem a bancada.

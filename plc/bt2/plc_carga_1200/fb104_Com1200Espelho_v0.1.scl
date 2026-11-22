@@ -1,0 +1,64 @@
+FUNCTION_BLOCK "fb104_Com1200Espelho"
+TITLE = fb104_Com1200Espelho v0.1
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+////====================================
+//// fb104_Com1200Espelho v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// ONDE RODA : 1515 (ensaio). 1 instancia por banco do PLC de cargas. Complementa o FB101 v0.8 (telegrama RAPIDO de comando, nao mexe nele).
+//// O QUE FAZ : a cada Pausa (padrao 1 s, LENTO de proposito): (1) PUT do espelho do DB de chaves (196 bytes, habilitada..rTeoricoOhm) para a IHM do 1200;
+////             (2) GET do DB de competencia do banco (8 bytes) para o DB local de competencia (mesmo numero e tipo no 1515).
+//// POR QUE SEPARADO : comando e seguranca ficam rapidos (~100 ms) e iguais ao ensaiado; dados que mudam devagar nao concorrem com eles na conexao.
+//// ESCRITOR UNICO : o espelho e escrito so pelo 1515; a competencia so pelo 1200. Um job PUT/GET por vez por conexao.
+//// ATENCAO : NAO compilado. CONFIRMAR no TIA: ponteiro absoluto P#DBn.DBX4.0 BYTE 196 como VARIANT em SD_1 (DB de origem NAO otimizado); limite ~212 bytes por job.
+////====================================
+   VAR_INPUT
+      Hab : Bool;
+      ID_Conexao : Word;
+      LocalEspelho : Variant;      // P#DB<base>.DBX4.0 BYTE 196 (origem do PUT, no proprio DB de chaves)
+      RemotoEspelho : Remote;      // P#DB<base>.DBX4.0 BYTE 196 (destino no PLC de cargas)
+      RemotoCompet : Remote;       // P#DB<base+8>.DBX0.0 BYTE 8 (origem do GET)
+      Pausa : Time := T#1S;
+   END_VAR
+   VAR_OUTPUT
+      StatusPut : Word;
+      StatusGet : Word;
+      FalhaPut : Bool;
+      FalhaGet : Bool;
+      CompetOk : Bool;             // TRUE depois do 1o GET bem-sucedido
+   END_VAR
+   VAR_IN_OUT
+      Compet : "typeCompetenciaBanco";
+   END_VAR
+   VAR
+      statPut : PUT;
+      statGet : GET;
+      estado : Int;                // 0 inicia PUT, 1 aguarda PUT, 2 inicia GET, 3 aguarda GET, 4 pausa
+      reqPut : Bool;
+      reqGet : Bool;
+      putDone : Bool;
+      putError : Bool;
+      getNdr : Bool;
+      getError : Bool;
+      rx : "typeCompetenciaBanco";
+      tPausa : TON_TIME;
+   END_VAR
+BEGIN
+   #statPut(REQ := #reqPut, ID := #ID_Conexao, DONE => #putDone, ERROR => #putError, STATUS => #StatusPut, ADDR_1 := #RemotoEspelho, SD_1 := #LocalEspelho);
+   #statGet(REQ := #reqGet, ID := #ID_Conexao, NDR => #getNdr, ERROR => #getError, STATUS => #StatusGet, ADDR_1 := #RemotoCompet, RD_1 := #rx);
+   IF NOT #Hab THEN
+      #estado := 0; #reqPut := FALSE; #reqGet := FALSE; #CompetOk := FALSE;
+   ELSE
+      CASE #estado OF
+         0: #reqPut := TRUE; #estado := 1;
+         1: IF #putDone OR #putError THEN #FalhaPut := #putError; #reqPut := FALSE; #estado := 2; END_IF;
+         2: #reqGet := TRUE; #estado := 3;
+         3: IF #getNdr OR #getError THEN
+               #FalhaGet := #getError;
+               IF #getNdr THEN #Compet := #rx; #CompetOk := TRUE; END_IF;   // so atualiza o DB local com leitura valida
+               #reqGet := FALSE; #estado := 4;
+            END_IF;
+         4: #tPausa(IN := TRUE, PT := #Pausa);
+            IF #tPausa.Q THEN #tPausa(IN := FALSE, PT := #Pausa); #estado := 0; END_IF;
+      END_CASE;
+   END_IF;
+END_FUNCTION_BLOCK

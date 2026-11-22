@@ -1,0 +1,22 @@
+// chamadas_BC400_ET200 v0.1 (10/11/2026) - RASCUNHO, nao compilado. Lado do 1515 para o ET200 (IM151-8): fb101_ComEt200 v0.8 + fb100_setupChaves v0.4.
+// Banco BC400 (13 chaves) -> arrays de 16. Remoto no ET200: DB39 (PUT BYTE 10 / GET BYTE 14). ID_Conexao: a PREENCHER (conexao S7 do 1515 com o ET200).
+// Ordem no OB1: 1) comunicacao (fb101_ComEt200) 2) setup (fb100_setupChaves). Instancias: criar como "fb101_ComEt200" (DB3105) e "fb100_setupChaves" (DB3104).
+// "db2000_BancoTeste2_DSE" = o antigo db52 renumerado (plano de numeracao v7.1): CONFERIR o nome do DB e os campos ledManual, potenciaKw, tensaoL1L2/L2L3/L3L1 no TIA.
+// Campo "comEt200Ok" do DB de chaves: nome mantido (so simbolico; renomear quebraria as referencias do FC100/card); significa "comunicacao com o ET200 ok".
+"db3105i_BC400_ComEt200"(Hab := TRUE, ID_Conexao := W#16#0,   /* A PREENCHER: ID da conexao S7 com o ET200 */
+    RemotoCmd := P#DB39.DBX0.0 BYTE 10, RemotoFb := P#DB39.DBX10.0 BYTE 14,   // v0.8: PEDIDO 10 B / RESPOSTA 14 B
+    ComOk => "db3100_BC400_Chaves".sbBanco.comEt200Ok, SeletoraAuto => "db3100_BC400_Chaves".sbBanco.seletoraAuto, RespEcoOk => "db3100_BC400_Chaves".sbRet.respEcoOk,
+    CbLigar := "db3100_BC400_Chaves".cb.ligar, SbLigada := "db3100_BC400_Chaves".sb.ligada, LigarBanco := "db3100_BC400_Chaves".cbBanco.ligar,
+    HabilitadaPed := "db3100_BC400_Chaves".setup.habilitada, HabResp := "db3100_BC400_Chaves".sbRet.habResp,
+    FalhaRetorno := "db3100_BC400_Chaves".sbRet.falhaRetorno, ContatorColado := "db3100_BC400_Chaves".sbRet.contatorColado);
+
+"db3104i_BC400_SetupChaves"(
+    NumChaves := 13, GeradorOperando := "db2000_BancoTeste2_DSE".ledManual, EnsaioAtivo := FALSE,   // TODO: tag real do DB "Dados do ensaio"
+    kWMedido := "db2000_BancoTeste2_DSE".potenciaKw, VaMedido := "db2000_BancoTeste2_DSE".tensaoL1L2,
+    VbMedido := "db2000_BancoTeste2_DSE".tensaoL2L3, VcMedido := "db2000_BancoTeste2_DSE".tensaoL3L1,
+    TensaoSel := "db3102_BC400_SetupPorTensao".selV.tensaoSel, ChaveSelecionada := "db3100_BC400_Chaves".setup.chaveSel, ComandoSalvar := "db3100_BC400_Chaves".setup.salvar,
+    kWNominal := "db3100_BC400_Chaves".setup.nominal, CbLigar := "db3100_BC400_Chaves".cb.ligar, SbLigada := "db3100_BC400_Chaves".sb.ligada, Habilitada := "db3100_BC400_Chaves".setup.habilitada,
+    SetupOk := "db3100_BC400_Chaves".setup.setupOk, KwReal := "db3100_BC400_Chaves".setup.kwReal, RmedidoOhm := "db3100_BC400_Chaves".setup.rMedidoOhm,
+    RteoricoOhm := "db3100_BC400_Chaves".setup.rTeoricoOhm, SetupData := "db3100_BC400_Chaves".setup.setupData,
+    KwRealV := "db3102_BC400_SetupPorTensao".setupV.kwReal, RmedidoV := "db3102_BC400_SetupPorTensao".setupV.rMedidoOhm, VmedidaV := "db3102_BC400_SetupPorTensao".setupV.vMedidaV,
+    BaseKwV := "db3102_BC400_SetupPorTensao".setupV.baseKw, SetupDataV := "db3102_BC400_SetupPorTensao".setupV.setupData, SetupOkV := "db3102_BC400_SetupPorTensao".setupV.setupOk);

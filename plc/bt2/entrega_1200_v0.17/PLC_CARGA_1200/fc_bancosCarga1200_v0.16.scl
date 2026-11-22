@@ -1,0 +1,86 @@
+FUNCTION "fc_bancosCarga1200" : Void
+TITLE = fc_bancosCarga1200 v0.16
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : RegLobo
+VERSION : 0.7
+//[F]==============================================================
+//[F] LEGENDA: //[F] (barra =====) = FUNCIONAMENTO: o que o codigo faz e por que.
+//[M]--------------------------------------------------------------
+//[M] LEGENDA: //[M] (barra -----) = MONTAGEM NO TIA: como importar, numerar, ligar tags.
+//[F]==============================================================
+//[F]==============================================================
+//[F] FUNCIONAMENTO - v0.16 (17/11/2026), RASCUNHO, nao compilado. O FC so ORGANIZA: copia tags fisicos -> DB do FB, chama o FB 1x, copia DB do FB -> tags fisicos.
+//[F]   A logica e as imagens (STAT) ficam no fb_bancosCarga1200 (DB de instancia db3006i_BancosCarga1200). Mudanca da v0.15: antes o FC tinha VAR_TEMP e 2 DBs de instancia
+//[F]   avulsos; agora e 1 chamada so (modelo validado no ET200). Sem tag escrito o bloco compila, mas nada liga (retorno FALSE, seletora FALSE, saidas nao copiadas).
+//[F]   Na 1200 o retorno e o contato auxiliar REAL (diferente do ET200, onde ainda e a propria saida em carater provisorio).
+//[M]--------------------------------------------------------------
+//[M] MONTAGEM NO TIA - 1) Importe o db3006i_BancosCarga1200 (.db) e o fb_bancosCarga1200 antes deste FC.
+//[M]   2) Preencha so os pontos marcados "<- seu tag" nas 3 REGIONs. NAO ha nomes sugeridos: use os tags que JA existem no seu projeto.
+//[M]   3) Chame este FC 1x por ciclo no OB1 (ou OB de tempo fixo). Nao chame o fb_bancosCarga1200 em outro lugar.
+//[M]   4) ESCRITOR UNICO: tire a escrita das mesmas saidas do FC7 (Resistencias) e do FC8 (Saidas Digitais) atuais; senao ha 2 escritores e a contatora pode ser acionada fora do comando do 1515.
+//[M]--------------------------------------------------------------
+BEGIN
+
+   REGION BC56 - 1 de 3: RETORNO das contatoras (contato auxiliar REAL) -> copia para o DB do FB
+      //[F] O retorno e o contato auxiliar REAL da contatora (nunca o tag do comando): e ele que prova que a chave fechou. Chaves 14 a 16 nao existem (FALSE).
+      //[M] Para cada resistencia n (1 a 13) troque FALSE pelo SEU tag de ENTRADA do contato auxiliar. Enquanto estiver FALSE o banco compila, mas a supervisao acusa falha de retorno em 2 s.
+      //[M]   formato:  "db3006i_BancosCarga1200".auxBC56[n] := "<seu tag do retorno da resistencia n>";
+      "db3006i_BancosCarga1200".auxBC56[1] := FALSE;   //[M] <- seu tag do retorno da resistencia 1
+      "db3006i_BancosCarga1200".auxBC56[2] := FALSE;   //[M] <- seu tag do retorno da resistencia 2
+      "db3006i_BancosCarga1200".auxBC56[3] := FALSE;   //[M] <- seu tag do retorno da resistencia 3
+      "db3006i_BancosCarga1200".auxBC56[4] := FALSE;   //[M] <- seu tag do retorno da resistencia 4
+      "db3006i_BancosCarga1200".auxBC56[5] := FALSE;   //[M] <- seu tag do retorno da resistencia 5
+      "db3006i_BancosCarga1200".auxBC56[6] := FALSE;   //[M] <- seu tag do retorno da resistencia 6
+      "db3006i_BancosCarga1200".auxBC56[7] := FALSE;   //[M] <- seu tag do retorno da resistencia 7
+      "db3006i_BancosCarga1200".auxBC56[8] := FALSE;   //[M] <- seu tag do retorno da resistencia 8
+      "db3006i_BancosCarga1200".auxBC56[9] := FALSE;   //[M] <- seu tag do retorno da resistencia 9
+      "db3006i_BancosCarga1200".auxBC56[10] := FALSE;   //[M] <- seu tag do retorno da resistencia 10
+      "db3006i_BancosCarga1200".auxBC56[11] := FALSE;   //[M] <- seu tag do retorno da resistencia 11
+      "db3006i_BancosCarga1200".auxBC56[12] := FALSE;   //[M] <- seu tag do retorno da resistencia 12
+      "db3006i_BancosCarga1200".auxBC56[13] := FALSE;   //[M] <- seu tag do retorno da resistencia 13
+      "db3006i_BancosCarga1200".auxBC56[14] := FALSE;   //[F] chave inexistente
+      "db3006i_BancosCarga1200".auxBC56[15] := FALSE;   //[F] chave inexistente
+      "db3006i_BancosCarga1200".auxBC56[16] := FALSE;   //[F] chave inexistente
+   END_REGION
+
+   REGION BC400 - 1 de 3: RETORNO das contatoras (contato auxiliar REAL) -> copia para o DB do FB
+      //[F] O retorno e o contato auxiliar REAL da contatora (nunca o tag do comando): e ele que prova que a chave fechou. Chaves 14 a 16 nao existem (FALSE).
+      //[M] Para cada resistencia n (1 a 13) troque FALSE pelo SEU tag de ENTRADA do contato auxiliar. Enquanto estiver FALSE o banco compila, mas a supervisao acusa falha de retorno em 2 s.
+      //[M]   formato:  "db3006i_BancosCarga1200".auxBC400[n] := "<seu tag do retorno da resistencia n>";
+      "db3006i_BancosCarga1200".auxBC400[1] := FALSE;   //[M] <- seu tag do retorno da resistencia 1
+      "db3006i_BancosCarga1200".auxBC400[2] := FALSE;   //[M] <- seu tag do retorno da resistencia 2
+      "db3006i_BancosCarga1200".auxBC400[3] := FALSE;   //[M] <- seu tag do retorno da resistencia 3
+      "db3006i_BancosCarga1200".auxBC400[4] := FALSE;   //[M] <- seu tag do retorno da resistencia 4
+      "db3006i_BancosCarga1200".auxBC400[5] := FALSE;   //[M] <- seu tag do retorno da resistencia 5
+      "db3006i_BancosCarga1200".auxBC400[6] := FALSE;   //[M] <- seu tag do retorno da resistencia 6
+      "db3006i_BancosCarga1200".auxBC400[7] := FALSE;   //[M] <- seu tag do retorno da resistencia 7
+      "db3006i_BancosCarga1200".auxBC400[8] := FALSE;   //[M] <- seu tag do retorno da resistencia 8
+      "db3006i_BancosCarga1200".auxBC400[9] := FALSE;   //[M] <- seu tag do retorno da resistencia 9
+      "db3006i_BancosCarga1200".auxBC400[10] := FALSE;   //[M] <- seu tag do retorno da resistencia 10
+      "db3006i_BancosCarga1200".auxBC400[11] := FALSE;   //[M] <- seu tag do retorno da resistencia 11
+      "db3006i_BancosCarga1200".auxBC400[12] := FALSE;   //[M] <- seu tag do retorno da resistencia 12
+      "db3006i_BancosCarga1200".auxBC400[13] := FALSE;   //[M] <- seu tag do retorno da resistencia 13
+      "db3006i_BancosCarga1200".auxBC400[14] := FALSE;   //[F] chave inexistente
+      "db3006i_BancosCarga1200".auxBC400[15] := FALSE;   //[F] chave inexistente
+      "db3006i_BancosCarga1200".auxBC400[16] := FALSE;   //[F] chave inexistente
+   END_REGION
+
+   REGION CHAMADA - 2 de 3: UMA chamada do fb_bancosCarga1200 (ele chama os dois bancos)
+      //[F] UMA chamada so por ciclo. Duas chamadas da instancia = o FB roda 2x (vida, tempos e supervisao dobram).
+      //[M] Troque FALSE pelo SEU tag da seletora do banco em Auto (1 = Auto). Com FALSE o banco nunca liga (estado seguro).
+      "db3006i_BancosCarga1200"(SeletoraBC56 := FALSE,     //[M] <- tag da seletora do BC56 em Auto
+                                SeletoraBC400 := FALSE);   //[M] <- tag da seletora do BC400 em Auto
+   END_REGION
+
+   REGION SAIDAS - 3 de 3: SAIDA das contatoras (bobinas) e "Ligar Banco" <- copia do DB do FB. Unico escritor.
+      //[F] Os tags Q so sao escritos aqui. O valor ja vem com todas as protecoes (ComOk, Ligar banco, seletora Auto, travas, supervisao do retorno).
+      //[M] Para cada resistencia n (1 a 13) escreva o SEU tag de saida:
+      //[M]    "<seu tag da saida da resistencia n>" := "db3006i_BancosCarga1200".saidaBC56[n];     (BC56)
+      //[M]    "<seu tag da saida da resistencia n>" := "db3006i_BancosCarga1200".saidaBC400[n];    (BC400)
+      //[M] "Ligar Banco" fisico (se o PLC de carga tiver essa saida): use as saidas com ComOk e trava, NAO o bit do DB direto (senao ela fica ligada com o 1515 em STOP):
+      //[M]    "<seu tag Ligar Banco BC56>"  := "db3006i_BancosCarga1200".LigarBancoBC56;
+      //[M]    "<seu tag Ligar Banco BC400>" := "db3006i_BancosCarga1200".LigarBancoBC400;
+      //[M] ComOk para sinalizacao/WinCC: "db3006i_BancosCarga1200".ComOkBC56 e .ComOkBC400.
+   END_REGION
+
+END_FUNCTION
