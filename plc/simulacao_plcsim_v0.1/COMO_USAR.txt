@@ -1,0 +1,52 @@
+SIMULACAO MINIMA NO NOTEBOOK (PLCSim Advanced) - BC56 - v0.1
+RASCUNHO NAO COMPILADO / NAO TESTADO. So para PLCSim. Nunca carregar no PLC de producao.
+
+O QUE ISTO TESTA
+  Node-RED (fluxo chaves-56-api-v3.13) <-> S7 (porta 102) <-> CPU 1515 simulada com DB3000 e DB3002.
+  Valida: leitura, habilitar, ligar chave, ligar/desligar banco, lote, fila, 409/400, e o formato dos enderecos.
+O QUE NAO TESTA
+  Tempo real de resposta e carga da CPU, ET200, PUT/GET do 1214, medicao (kW/ohm), falha de retorno, safety.
+  Medida de latencia no PLCSim NAO vale para os 504 da bancada.
+
+ARQUIVOS DESTA PASTA
+  db3000_BC56_Chaves_v0.3.db        DB3000 (mesmo do projeto)
+  db3002_BC56_SetupPorTensao_v0.2.db DB3002 (mesmo do projeto)
+  fb900_simBanco_v0.1.scl           imita ET200/PLC do banco (contator, eco, habilitacao)
+  ob1_chamada_sim_v0.1.scl          1 linha para o OB1
+  testar_simulacao_v0.1.ps1         teste minimo da API (PowerShell)
+
+PASSO A PASSO
+1) TIA Portal V19, projeto NOVO e separado (nao abra o projeto de producao).
+   Dispositivo: CPU 1515-2 PN, MLFB 6ES7 515-2FN03-0AB0 (F), firmware V3.1.
+   Mais simples: use a versao standard 6ES7 515-2AN03-0AB0 (sem F) - evita senha/programa de safety no download.
+   (MLFB da standard: confira no catalogo do TIA.)
+2) Propriedades da CPU > Protecao e Seguranca > Mecanismos de conexao:
+   marcar "Permitir acesso via comunicacao PUT/GET do parceiro remoto".
+   Interface PROFINET: IP que voce vai usar no PLCSim Advanced (ex.: 192.168.0.1 / 255.255.255.0).
+3) Fontes externas > adicionar os 2 .db e o fb900 > Gerar blocos a partir da fonte
+   (ordem: db3002, db3000, fb900). Os DBs ja vem com acesso otimizado DESLIGADO (necessario).
+   Criar DB de instancia do FB900 com o nome "db3900i_simBanco".
+   No OB1: colar a linha de ob1_chamada_sim_v0.1.scl. Compilar tudo (software e hardware).
+   Se o compilador reclamar de offset ou nome: me mande a mensagem exata.
+4) CONFERIR OS OFFSETS no TIA (coluna Deslocamento) do DB3000: cb.ligar X0.0, sb.ligada X2.0,
+   setup.habilitada X4.0, chaveSel W456, cbBanco.ligar X460.0, sbBanco X462.0, sbRet X464.0..X470.0.
+   Se algum offset diferir, o Node-RED lera/gravara no lugar errado.
+5) PLCSim Advanced: criar instancia (CPU type S7-1500, IP igual ao do TIA, "Online access":
+   PLCSIM Virtual Eth. Adapter - ou a opcao de rede que voce usa). Ligar a instancia, RUN.
+   No TIA: Baixar para o dispositivo, interface = a do PLCSim Advanced. CPU em RUN.
+6) Node-RED local (Windows): node-red-contrib-s7 instalado. Importar
+   nodered/flows/bt2/chaves-56-api-v3.13.json (esta no pacote v1.32 e na branch ccr-bt2-pacote-v1.21).
+   Importe SO o fluxo do BC56. Variaveis de ambiente do Node-RED (ou da aba):
+      PLC_IP = <IP do PLCSim Advanced>
+   Deploy. O no S7 deve ficar verde ("connected"); se nao, ver firewall do Windows (porta 102) e o IP.
+7) Rodar testar_simulacao_v0.1.ps1 (PowerShell). Esperado:
+   leitura retorna estado; ligar banco ok; ligar chave 1 ok (ligada segue em ~300 ms);
+   lote liga 2 e 3 e desliga 1 (desliga primeiro); desligar banco zera tudo.
+   Para o medidor HTML: abrir no mesmo Node-RED (mesmo host evita o bloqueio D3 de Origin).
+
+ONDE OLHAR SE FALHAR
+  - No S7 desconectado: IP, PUT/GET, firewall, PLCSim em RUN.
+  - 409 "banco desligado": ligar o banco antes de ligar chave.
+  - 400/403 origem_nao_permitida: esta chamando de outro host; use Origin igual ao host do Node-RED.
+  - Leitura 503 "aguardando 1a leitura": no S7 ainda nao leu; veja o status do no.
+  - Nome do DB ou array diferente: o fluxo usa enderecos DB3000,X0.0... (numero do DB, nao o nome).
