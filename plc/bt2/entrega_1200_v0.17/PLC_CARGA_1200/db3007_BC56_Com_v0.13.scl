@@ -1,0 +1,41 @@
+DATA_BLOCK "db3007_BC56_Com"
+TITLE = db3007_BC56_Com v0.13 (DB3007)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.6
+NON_RETAIN
+//[F]==============================================================
+//[F] LEGENDA: //[F] (barra =====) = FUNCIONAMENTO: o que o codigo faz e por que.
+//[M]--------------------------------------------------------------
+//[M] LEGENDA: //[M] (barra -----) = MONTAGEM NO TIA: como importar, numerar, ligar tags.
+//[F]==============================================================
+//[F]==============================================================
+//[F] FUNCIONAMENTO - Telegrama PEDIDO/RESPOSTA do BC56 (24 bytes, ate 16 chaves). E a "caixa de correio" entre o 1515 e este PLC.
+//[F]   PEDIDO   (bytes 0..9)  : o 1515 ESCREVE por PUT: cmd (comando de cada chave), vida1515 (contador de vida), ligarBanco, habPed, seq.
+//[F]   RESPOSTA (bytes 10..23): este PLC ESCREVE (fb_bancoCarga16) e o 1515 LE por GET: fbk (contato auxiliar), vidaET, seletoraAuto, habResp, eco, falhaRetorno, contatorColado.
+//[F]   ESCRITOR UNICO: o PEDIDO so muda pelo PUT do 1515; a RESPOSTA so muda pelo fb_bancoCarga16. Ninguem mais escreve (nem WinCC, nem outro FC).
+//[F]   Mesmo layout do ComBC do ET200 (db38/db39): o 1515 usa o mesmo FB de comunicacao para os dois PLCs.
+//[M]--------------------------------------------------------------
+//[M] MONTAGEM NO TIA - 1) Importar como FONTE EXTERNA ANTES do fb_bancoCarga16 (ele acessa estes campos pelo nome).
+//[M]   2) Numero MANUAL 3007: botao direito no DB > Propriedades > Geral > Numero. O 1515 acessa por P#DB3007 (PUT ...DBX0.0 BYTE 10 | GET ...DBX10.0 BYTE 14).
+//[M]   3) SEM "Acesso otimizado" (atributo S7_Optimized_Access := FALSE ja vem no arquivo; confira nas Propriedades). Com otimizado o ponteiro P# do 1515 nao funciona.
+//[M]   4) NAO escreva neste DB. Para depurar, use tabela de observacao so em modo leitura.
+//[M]--------------------------------------------------------------
+   STRUCT
+      cmd : Array[1..16] of Bool;            //[F] PEDIDO: comando de cada chave (1 = ligar). Byte 0..1
+      vida1515 : Int;                        //[F] PEDIDO: contador que o 1515 incrementa; parou de mudar por 2 s = comunicacao perdida
+      ligarBanco : Bool;                     //[F] PEDIDO: comando "Ligar banco" (habilita o banco inteiro)
+      resPut : Byte;                         //[F] reservado (alinhamento)
+      habPed : Array[1..16] of Bool;         //[F] PEDIDO: habilitar (1) / desabilitar (0) cada chave
+      seq : Int;                             //[F] PEDIDO: numero do pacote; este PLC devolve o mesmo valor em "eco"
+      fbk : Array[1..16] of Bool;            //[F] RESPOSTA: contato auxiliar REAL de cada contatora
+      vidaET : Int;                          //[F] RESPOSTA: contador de vida deste PLC (+1 a cada ~100 ms); o 1515 confere que muda
+      seletoraAuto : Bool;                   //[F] RESPOSTA: seletora fisica do banco em Auto
+      resGet : Byte;                         //[F] reservado (alinhamento)
+      habResp : Array[1..16] of Bool;        //[F] RESPOSTA: habilitacao realmente aplicada
+      eco : Int;                             //[F] RESPOSTA: copia de seq (o 1515 confere que o pacote foi tratado)
+      falhaRetorno : Array[1..16] of Bool;   //[F] RESPOSTA: saida ligada e contato auxiliar sem voltar por 2 s (travada)
+      contatorColado : Array[1..16] of Bool; //[F] RESPOSTA: saida desligada e contato auxiliar ligado por 2 s (travado)
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK

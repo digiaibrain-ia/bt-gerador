@@ -1,0 +1,121 @@
+  /* ---- layout por tamanho de tela (fica por último para valer sobre as regras acima) ---- */
+  @media (min-width:760px){
+    main{max-width:none}
+    #ens,#med,#bco,#gra,#reg,#sim{order:0}
+    .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      grid-template-areas:"ens med" "bco med" "gra gra" "reg reg" "sim sim"}
+    #med{display:flex;flex-direction:column}
+    #med .grid{flex:1 1 auto;align-content:stretch} /* cartões crescem e preenchem o card, sem espaço vazio */
+    #med .card{display:flex;flex-direction:column;justify-content:center;gap:2px}
+    #ens{grid-area:ens}#med{grid-area:med}#bco{grid-area:bco}#gra{grid-area:gra}#reg{grid-area:reg}#sim{grid-area:sim}
+  }
+
+  @media (min-width:1280px){
+    html{height:100%}
+    body{zoom:var(--z,1);height:calc(100vh / var(--z,1));display:flex;flex-direction:column} /* --z: reduz a tela só se o conteúdo não couber (ver fitZoom) */
+    header,.cfg,footer{flex:none}
+    header{padding:5px 14px}
+    footer{padding:2px 14px}
+    main{flex:1;min-height:0;margin:0;padding:8px 12px;gap:4px}
+    .cols{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr);gap:10px;grid-template-areas:none}
+    .col{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
+    .col>.panel{grid-area:auto}
+    .panel{padding:8px 12px 8px 18px}
+    h2{margin:8px 0 4px}
+    #ens,#bco{flex:none}
+    #gra,#med,#reg{flex:1;min-height:0;display:flex;flex-direction:column}
+    .col:has(#gra.min) #ens{flex:1} /* v1.9.36: gráfico recolhido não deixa 'buraco' — Etapas ocupa o espaço livre da coluna */
+
+    /* etapas do ensaio */
+    .clock b{font-size:44px}
+    .btns{margin:6px 0}.btns button{padding:8px 6px;font-size:17px}
+    #lamp{width:44px;height:44px;font-size:20px}
+    .st .b{height:20px;margin:3px 0}
+    .sub{margin:6px 0 3px}
+    .lb{height:20px}
+
+    /* gráfico: ocupa o espaço que sobra no card */
+    .cvw{flex:1;min-height:150px}
+    #chart{position:absolute;left:0;top:0;width:100%;height:100%}
+    .chbar{margin-top:6px;gap:6px}
+    .chbar span{flex:1 1 100%;min-width:0;font-size:11px}
+    .chbar button{flex:1;padding:5px 6px;font-size:12px}
+
+    /* leitura das grandezas: cartões crescem para preencher a coluna */
+    #med .g4{grid-template-columns:repeat(2,1fr)}
+    #med .card .v{font-size:33px} /* v1.9.30: +5% adicional (26px -> 31px na v1.9.29 -> 33px) */
+    .bar{height:30px}.bar b{top:4px}
+
+    /* banco de carga: cada banco numa linha só */
+    .hrow{margin-bottom:4px}
+    #bancos{margin:4px 0 6px!important}
+    .bk{padding:4px 8px;margin-bottom:5px}
+    .bkh{margin-bottom:3px}
+    .sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:3px}
+    .tile{width:auto;padding:3px 0 2px;font-size:10px}
+    .tile i{width:14px;height:14px;margin-bottom:2px}
+    #bco .card{padding:4px 8px}
+    #bco .card .l{font-size:11px}
+    #bco .card .v{font-size:18px;margin-top:0}
+
+    /* registro: linhas se distribuem na altura que sobra */
+    .tbw{flex:1;min-height:0}
+    .tb{min-width:0;height:100%;font-size:12.5px}
+    .tb th,.tb td{padding:1px 4px}
+    #sim{font-size:12px;padding:6px 12px 6px 18px}
+    #sim .row{margin-top:4px}
+    #autoInfo{display:none!important} /* texto explicativo da simulação: não cabe na tela única */
+    #med .card{padding:6px 10px}
+    #med .card{container-type:inline-size}
+    #med .card .v{font-size:clamp(27px,min(5.25vh,30cqw),50px)} /* v1.9.30: +5% adicional (era clamp(26px,min(5vh,29cqw),48px) na v1.9.29) — continua limitado pela largura/altura do card */
+    html.rolar body{height:auto;min-height:calc(100vh / var(--z,1))}
+    html.rolar main,html.rolar .cols{flex:none}
+    html.rolar .col>.panel{flex:none!important}
+    html.rolar .cvw{min-height:280px}
+  }
+  @media (min-width:2400px){body{zoom:calc(var(--z,1)*1.5);height:calc(100vh / (var(--z,1)*1.5))}}
+  @media (min-width:3200px){body{zoom:calc(var(--z,1)*2);height:calc(100vh / (var(--z,1)*2))}}
+
+  /* v1.9.60: Aba de Logs */
+  #tabLogs{display:none}#tabLogs.active{display:block}
+  .logcontainer{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0}
+  .logheader{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+  .logheader button{padding:6px 12px;background:#111;color:#fff;border:0;border-radius:6px;cursor:pointer;font-size:13px}
+  .logheader button:hover{background:#333}
+  .logheader select{padding:4px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px}
+  .logtable{overflow-x:auto;margin-top:10px}
+  .logtable table{border-collapse:collapse;font-size:11px;width:100%;font-family:monospace}
+  .logtable th{background:#f0f0f0;color:#333;padding:6px 8px;text-align:left;border-bottom:2px solid var(--line);font-weight:700}
+  .logtable td{padding:5px 8px;border-bottom:1px solid var(--line)}
+  .logtable tr:hover{background:#f9f9f9}
+  .logstatus.OK{color:#2e9a5f;font-weight:700}
+  .logstatus.ERRO{color:#d64545;font-weight:700}
+  .logempty{padding:20px;text-align:center;color:var(--mut)}
+
+
+  @media print{
+    .logheader{display:none}
+    .logtable table{font-size:10px}
+    .logtable th{page-break-after:avoid}
+  }
+
+
+/* v1.10.112: VISÃO SIMPLES DO OPERADOR — esconde o que o operador não usa (ver modo_operador_v0.1.js) */
+body.opsimples #bco,body.opsimples #bPau,body.opsimples #bFim,body.opsimples #bSalv,body.opsimples #bGuiado,body.opsimples #sim{display:none!important}
+/* v1.10.112: VISÃO SIMPLES DO OPERADOR — esconde o que o operador não usa (ver modo_operador_v0.1.js) */
+body.opsimples #bco,body.opsimples #bPau,body.opsimples #bFim,body.opsimples #bSalv,body.opsimples #bGuiado,body.opsimples #sim{display:none!important}
+
+/* v1.10.116: olhos do DSE simulado (card Simulação) — só cor/transform: não muda o layout */
+.dseOlhos{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--line,#c9d3de);background:#fff;border-radius:16px;padding:2px 10px 2px 6px}
+.dseOlhos svg{width:52px;height:25px;display:block;overflow:visible}
+.dseOlhos .tela{fill:#0d1b2a;stroke:#9fb4c8;stroke-width:1.2}.dseOlhos .grade{stroke:#2e4a66;stroke-width:.6;fill:none}
+.dseOlhos .onda{fill:none;stroke:#37d67a;stroke-width:2;stroke-linecap:round;stroke-dasharray:60 40;animation:dseOnda 1.6s linear infinite}
+@keyframes dseOnda{to{stroke-dashoffset:-100}}
+@media (prefers-reduced-motion:reduce){.dseOlhos .onda{animation:none;stroke-dasharray:none}}
+.dseOlhos.rep .onda{stroke:#ff5a52;stroke-dasharray:6 5;animation-duration:.5s}
+.dseOlhos small{font-size:11px;color:#455}
+.dseOlhos.rep small{color:#b02a25;font-weight:700}
+.dseSeg{display:inline-flex;border:1px solid #9fb4c8;border-radius:5px;overflow:hidden}
+.dseSeg button{border:0;background:#fff;padding:4px 10px;font-size:12px;cursor:pointer}
+.dseSeg button.on.ok{background:#1e7e34;color:#fff}.dseSeg button.on.cr{background:#c0392b;color:#fff}
+

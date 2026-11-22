@@ -1,0 +1,10 @@
+ENTREGA PARA A TI - FASE 3 (BT2) - codigo congelado no commit 51481df
+Execucao: CONJUNTA - Engenharia de Automacao (validacao funcional, tempos, regras de negocio e PLC) + TI (infraestrutura do PC BT2: PM2, settings.js, adminAuth, rede/origem).
+Ambiente: PC BT2 FISICO com a CARGA DE POTENCIA DESACOPLADA (disjuntores/contatores de potencia abertos e sinalizacao de seguranca ativa). Nao energizar carga durante as medicoes e injecoes de falha.
+
+1) Confira a integridade:   cd entrega_ti_fase3 && sha256sum -c MANIFESTO.sha256
+2) Leia 05_documentos/HANDOFF_TI_v0.1.md e 05_documentos/IMPLANTACAO_ROTEIRO_v0.5.md
+3) Execute 05_documentos/CHECKLIST_BANCADA_v0.1.md (comece pelos itens 0.7 a 0.9: carga desacoplada, papeis, estado seguro) e devolva preenchido.
+4) 02_somente_bancada/simulador-dse-demo-v7.json NUNCA vai para o PC de producao.
+5) Importe uma aba por vez; mantenha os arquivos antigos para voltar atras.
+Nada deste pacote foi validado em PLC real.

@@ -1,0 +1,107 @@
+FUNCTION_BLOCK "fb_bancosCarga1200"
+TITLE = fb_bancosCarga1200 v0.1
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+//[F]==============================================================
+//[F] LEGENDA: //[F] (barra =====) = FUNCIONAMENTO: o que o codigo faz e por que.
+//[M]--------------------------------------------------------------
+//[M] LEGENDA: //[M] (barra -----) = MONTAGEM NO TIA: como importar, numerar, ligar tags.
+//[F]==============================================================
+//[F]==============================================================
+//[F] FUNCIONAMENTO - NOVO em v0.17 (17/11/2026), RASCUNHO, nao compilado. Espelho do fb_bancosEt200 v0.2 (validado na bancada do ET200).
+//[F] O QUE FAZ: guarda as imagens de SAIDA e de RETORNO (variaveis STAT) dos bancos BC56 e BC400 e chama o fb_bancoCarga16 uma vez por banco (multi-instancia).
+//[F] POR QUE FB COM STAT (e nao FC com TEMP): o fb_bancoCarga16 usa SaidaContatora como IMAGEM DO CICLO ANTERIOR (a supervisao do retorno compara o comando
+//[F]   com o que foi escrito no ciclo passado). Variavel TEMP de FC nasce com lixo a cada chamada; STAT guarda de um ciclo para o outro.
+//[F] LIGAR BANCO SEGURO: saidas LigarBancoBC56/BC400 = comando "Ligar banco" do 1515 E ComOk E (desde a ultima queda o comando CAIU a FALSE e foi dado de novo).
+//[F]   Motivo (teste do ET200, 1515 em STOP): as saidas das chaves cairam mas a saida fisica "Ligar Banco", ligada direto ao bit do DB, ficou LIGADA.
+//[F] ESCRITOR UNICO: depois disto so o fc_bancosCarga1200 escreve nas saidas das contatoras e no "Ligar Banco" destes bancos.
+//[M]--------------------------------------------------------------
+//[M] MONTAGEM NO TIA - 1) Importe depois de db3007, db3107, fb_supervisaoChaves16 e fb_bancoCarga16.
+//[M]   2) DB de INSTANCIA pronto no pacote: db3006i_BancosCarga1200_v0.1.db (importe como fonte externa; numero MANUAL 3006). Substitui os antigos db3006i e db3106i.
+//[M]   3) O fc_bancosCarga1200 chama este FB UMA vez por ciclo. Duas chamadas da mesma instancia = o FB roda 2x por ciclo (vida, tempos e supervisao dobram).
+//[M]   4) Os ComOk ficam no proprio DB de instancia: leia "db3006i_BancosCarga1200".ComOkBC56 / .ComOkBC400 onde precisar (nao precisa de "=>").
+//[M]   5) NumChaves = 13 e T#2S / 2000 ms estao escritos nas chamadas abaixo; mude aqui se o numero de chaves ou os tempos mudarem.
+//[M]--------------------------------------------------------------
+   VAR_INPUT
+      SeletoraBC56  : Bool;          //[M] entrada fisica: seletora do BC56 em Auto (1 = Auto). O FC liga o seu tag.
+      SeletoraBC400 : Bool;          //[M] entrada fisica: seletora do BC400 em Auto (1 = Auto). O FC liga o seu tag.
+   END_VAR
+   VAR_OUTPUT
+      ComOkBC56  : Bool;             //[F] 1515 vivo para o BC56
+      ComOkBC400 : Bool;             //[F] 1515 vivo para o BC400
+      LigarBancoBC56  : Bool;        //[M] use ESTA saida para a saida fisica "Ligar Banco" do BC56 (se existir)
+      LigarBancoBC400 : Bool;        //[M] idem BC400
+   END_VAR
+   VAR
+      saidaBC56  : Array[1..16] of Bool;   //[M] SAIDA das contatoras: o FC copia daqui para os tags Q. STAT = guarda o ciclo anterior.
+      auxBC56    : Array[1..16] of Bool;   //[M] RETORNO real (contato auxiliar): o FC copia dos tags I para ca ANTES da chamada.
+      saidaBC400 : Array[1..16] of Bool;
+      auxBC400   : Array[1..16] of Bool;
+      _bc56      : "fb_bancoCarga16";      //[M] multi-instancia (nao precisa de DB avulso)
+      _bc400     : "fb_bancoCarga16";
+      _bloqBC56  : Bool;                   //[F] trava apos perda de comunicacao: so solta quando o "Ligar banco" cair a FALSE
+      _bloqBC400 : Bool;
+   END_VAR
+
+BEGIN
+   //[F] BC56: chama o banco ligando cada parametro ao campo de mesmo nome do DB de telegrama db3007_BC56_Com.
+   #_bc56(NumChaves := 13,
+          SeletoraEntrada := #SeletoraBC56,
+          TempoPerdaMs := T#2S,
+          TempoRetornoMs := 2000,
+          ComOk => #ComOkBC56,
+          Cmd := "db3007_BC56_Com".cmd,
+          Vida1515 := "db3007_BC56_Com".vida1515,
+          LigarBanco := "db3007_BC56_Com".ligarBanco,
+          HabPed := "db3007_BC56_Com".habPed,
+          Seq := "db3007_BC56_Com".seq,
+          HabResp := "db3007_BC56_Com".habResp,
+          Eco := "db3007_BC56_Com".eco,
+          FalhaRetorno := "db3007_BC56_Com".falhaRetorno,
+          ContatorColado := "db3007_BC56_Com".contatorColado,
+          VidaET := "db3007_BC56_Com".vidaET,
+          Fbk := "db3007_BC56_Com".fbk,
+          SeletoraAuto := "db3007_BC56_Com".seletoraAuto,
+          SaidaContatora := #saidaBC56,
+          EntradaContatoAux := #auxBC56);
+
+   //[F] BC400: idem, DB de telegrama db3107_BC400_Com.
+   #_bc400(NumChaves := 13,
+          SeletoraEntrada := #SeletoraBC400,
+          TempoPerdaMs := T#2S,
+          TempoRetornoMs := 2000,
+          ComOk => #ComOkBC400,
+          Cmd := "db3107_BC400_Com".cmd,
+          Vida1515 := "db3107_BC400_Com".vida1515,
+          LigarBanco := "db3107_BC400_Com".ligarBanco,
+          HabPed := "db3107_BC400_Com".habPed,
+          Seq := "db3107_BC400_Com".seq,
+          HabResp := "db3107_BC400_Com".habResp,
+          Eco := "db3107_BC400_Com".eco,
+          FalhaRetorno := "db3107_BC400_Com".falhaRetorno,
+          ContatorColado := "db3107_BC400_Com".contatorColado,
+          VidaET := "db3107_BC400_Com".vidaET,
+          Fbk := "db3107_BC400_Com".fbk,
+          SeletoraAuto := "db3107_BC400_Com".seletoraAuto,
+          SaidaContatora := #saidaBC400,
+          EntradaContatoAux := #auxBC400);
+
+   //[F] "Ligar banco" BC56 seguro: no 1o ciclo apos partida o ComOk e FALSE, entao a trava ja nasce ligada.
+   //[F] Queda de comunicacao trava; so solta quando o comando "Ligar banco" do 1515 cair a FALSE (religar exige novo comando).
+   IF NOT #ComOkBC56 THEN
+      #_bloqBC56 := TRUE;
+   ELSIF NOT "db3007_BC56_Com".ligarBanco THEN
+      #_bloqBC56 := FALSE;
+   END_IF;
+   #LigarBancoBC56 := "db3007_BC56_Com".ligarBanco AND #ComOkBC56 AND NOT #_bloqBC56;
+
+   //[F] "Ligar banco" BC400 seguro: no 1o ciclo apos partida o ComOk e FALSE, entao a trava ja nasce ligada.
+   //[F] Queda de comunicacao trava; so solta quando o comando "Ligar banco" do 1515 cair a FALSE (religar exige novo comando).
+   IF NOT #ComOkBC400 THEN
+      #_bloqBC400 := TRUE;
+   ELSIF NOT "db3107_BC400_Com".ligarBanco THEN
+      #_bloqBC400 := FALSE;
+   END_IF;
+   #LigarBancoBC400 := "db3107_BC400_Com".ligarBanco AND #ComOkBC400 AND NOT #_bloqBC400;
+END_FUNCTION_BLOCK

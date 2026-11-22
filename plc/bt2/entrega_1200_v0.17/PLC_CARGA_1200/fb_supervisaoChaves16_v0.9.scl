@@ -1,0 +1,114 @@
+FUNCTION_BLOCK "fb_supervisaoChaves16"
+TITLE = fb_supervisaoChaves16 v0.9 (1200)
+AUTHOR : 'RegLobo'
+VERSION : 0.6
+//[F]==============================================================
+//[F] LEGENDA: //[F] (barra =====) = FUNCIONAMENTO: o que o codigo faz e por que.
+//[M]--------------------------------------------------------------
+//[M] LEGENDA: //[M] (barra -----) = MONTAGEM NO TIA: como importar, numerar, ligar tags.
+//[F]==============================================================
+//[F]==============================================================
+//[F] FUNCIONAMENTO - RASCUNHO v0.9 (17/11/2026), nao compilado. Logica IGUAL a v0.8 (so comentarios novos). 1 instancia por banco, 1x por ciclo.
+//[F] POR QUE EXISTE (bancada de 06/11/2026): com o retorno (contato auxiliar, SB) bloqueado o comando (CB) ficou em 1; ao voltar o SB a chave LIGOU SOZINHA.
+//[F]   Regra do Reginaldo: SB some -> CB cai, tempo de verificacao T = 2 s, falha TRAVADA ate novo comando.
+//[F] O QUE FAZ, por chave (1..NumChaves):
+//[F]   1) FALHA DE RETORNO : saida energizada (SaidaQ=1) e contato auxiliar (AuxIn) em 0 por T -> FalhaRetorno=1 (TRAVADA) e Permite=0.
+//[F]   2) CONTATOR COLADO  : saida em 0 e contato auxiliar em 1 por T -> ContatorColado=1 (TRAVADO), Permite=0.
+//[F]   3) REARME so por novo comando: borda de subida de Cmd com AuxIn=0. Nunca rearma sozinho quando o SB volta.
+//[F]   4) HABILITAR/DESABILITAR (pedido/resposta): HabResp = copia de HabPed (so com ComOk); chave desabilitada tem Permite=0.
+//[F]   5) Eco := Seq (o 1515 confere que o pacote foi tratado). Sem ComOk: HabResp=0, contadores zerados, Permite=0.
+//[F] Contagem em ticks de 100 ms (TON_TIME do S7-1200); precisao +100 ms. T = 0 desliga a supervisao (nao usar). Reiniciar a CPU zera as falhas (nao retentivo).
+//[F] ESCRITOR UNICO: escreve HabResp, Eco, FalhaRetorno, ContatorColado (RESPOSTA do 1515). Le Cmd, HabPed, Seq (PEDIDO).
+//[M]--------------------------------------------------------------
+//[M] MONTAGEM NO TIA - nao e chamado por voce: o fb_bancoCarga16 o chama como MULTI-INSTANCIA (variavel _sup). Importe este FB ANTES do fb_bancoCarga16.
+//[M]   Nome no TIA sem versao: fb_supervisaoChaves16. SaidaQ recebe a imagem das saidas do ciclo anterior (STAT do fb_bancosCarga1200); AuxIn, os contatos auxiliares fisicos.
+//[M]--------------------------------------------------------------
+   VAR_INPUT
+      NumChaves       : Int := 16;                 //[M] chaves reais do banco (1..16); o fb_bancoCarga16 passa 13
+      TempoRetornoMs  : Int := 2000;               //[F] T de verificacao do retorno em ms (minimo util 200)
+      ComOk           : Bool;                      //[F] comunicacao com o 1515 viva (vem do vigia de vida do fb_bancoCarga16)
+      Seq             : Int;                       //[F] PEDIDO: numero do pacote do 1515 (campo seq do DB de telegrama)
+   END_VAR
+   VAR_OUTPUT
+      Eco             : Int;                       //[F] RESPOSTA: copia de Seq
+      Permite         : Array[1..16] of Bool;      //[F] TRUE = o fb_bancoCarga16 pode energizar a saida desta chave
+   END_VAR
+   VAR_IN_OUT
+      Cmd             : Array[1..16] of Bool;      //[F] PEDIDO: comando das chaves (so le)
+      HabPed          : Array[1..16] of Bool;      //[F] PEDIDO: habilitar (1) / desabilitar (0) (so le)
+      SaidaQ          : Array[1..16] of Bool;      //[F] imagem das saidas fisicas do ciclo anterior (so le)
+      AuxIn           : Array[1..16] of Bool;      //[F] contatos auxiliares fisicos = SB (so le)
+      HabResp         : Array[1..16] of Bool;      //[F] RESPOSTA: habilitacao aplicada (escreve)
+      FalhaRetorno    : Array[1..16] of Bool;      //[F] RESPOSTA: sem retorno, travada (escreve)
+      ContatorColado  : Array[1..16] of Bool;      //[F] RESPOSTA: contator colado, travado (escreve)
+   END_VAR
+   VAR
+      _tOsc100ms : TON_TIME;                       //[F] gera o tick de 100 ms
+      _tick      : Bool;                           //[F] pulso de 1 ciclo a cada 100 ms
+      _cmdAnt    : Array[1..16] of Bool;           //[F] comando do ciclo anterior (para achar a borda de subida)
+      _cRet      : Array[1..16] of Int;            //[F] ticks com saida=1 e aux=0
+      _cCol      : Array[1..16] of Int;            //[F] ticks com saida=0 e aux=1
+      _lim       : Int;                            //[F] T em ticks de 100 ms
+      _n         : Int;                            //[F] NumChaves limitado a 0..16
+      i          : Int;
+   END_VAR
+
+BEGIN
+   //[F] A logica abaixo e a mesma validada no ET200 (so TON -> TON_TIME). Ordem: tick 100 ms > limites > por chave (habilitar, rearme, contagem, Permite).
+   #_tOsc100ms(IN := NOT #_tOsc100ms.Q, PT := T#100MS);
+   #_tick := #_tOsc100ms.Q;
+
+   #_lim := #TempoRetornoMs / 100;
+   IF #_lim < 2 THEN #_lim := 2; END_IF;           //[F] piso de 200 ms (T nao pode ser menor que 2 ticks)
+   #_n := #NumChaves;
+   IF #_n < 0 THEN #_n := 0; END_IF;
+   IF #_n > 16 THEN #_n := 16; END_IF;
+
+   #Eco := #Seq;                                   //[F] pedido/resposta: o 1515 confere o eco
+
+   FOR #i := 1 TO 16 DO
+      IF #i <= #_n AND #ComOk THEN
+         //[F] --- habilitar/desabilitar: resposta = pedido aplicado
+         #HabResp[#i] := #HabPed[#i];
+
+         //[F] --- rearme: so por borda de subida do comando com o retorno em 0
+         IF #Cmd[#i] AND NOT #_cmdAnt[#i] AND NOT #AuxIn[#i] THEN
+            #FalhaRetorno[#i] := FALSE;
+            #ContatorColado[#i] := FALSE;
+            #_cRet[#i] := 0;
+            #_cCol[#i] := 0;
+         END_IF;
+
+         //[F] --- supervisao a cada 100 ms
+         IF #_tick THEN
+            IF #SaidaQ[#i] AND NOT #AuxIn[#i] THEN
+               #_cRet[#i] := #_cRet[#i] + 1;
+               IF #_cRet[#i] > 32000 THEN #_cRet[#i] := 32000; END_IF;
+            ELSE
+               #_cRet[#i] := 0;
+            END_IF;
+            IF NOT #SaidaQ[#i] AND #AuxIn[#i] THEN
+               #_cCol[#i] := #_cCol[#i] + 1;
+               IF #_cCol[#i] > 32000 THEN #_cCol[#i] := 32000; END_IF;
+            ELSE
+               #_cCol[#i] := 0;
+            END_IF;
+            IF #_cRet[#i] >= #_lim THEN #FalhaRetorno[#i] := TRUE; END_IF;
+            IF #_cCol[#i] >= #_lim THEN #ContatorColado[#i] := TRUE; END_IF;
+         END_IF;
+
+         #Permite[#i] := #HabResp[#i] AND NOT #FalhaRetorno[#i] AND NOT #ContatorColado[#i];
+      ELSE
+         //[F] fora do banco ou sem comunicacao: nada liberado; contadores zerados; falhas TRAVADAS permanecem
+         #HabResp[#i] := FALSE;
+         #Permite[#i] := FALSE;
+         #_cRet[#i] := 0;
+         #_cCol[#i] := 0;
+         IF #i > #_n THEN
+            #FalhaRetorno[#i] := FALSE;
+            #ContatorColado[#i] := FALSE;
+         END_IF;
+      END_IF;
+      #_cmdAnt[#i] := #Cmd[#i];
+   END_FOR;
+END_FUNCTION_BLOCK

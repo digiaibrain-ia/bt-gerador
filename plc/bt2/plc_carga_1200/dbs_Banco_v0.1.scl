@@ -1,0 +1,192 @@
+DATA_BLOCK "db3007_BC56_Com"
+TITLE = db3007_BC56_Com v0.1 (DB3007)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3007_BC56_Com (DB3007) v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE FAZ : area de troca PUT/GET do banco BC56 com o 1515 (telegrama rapido de 24 bytes). Mesmo NUMERO do DB do 1515 (DB3007 = base 3000 + 7).
+//// PUT do 1515 : P#DB3007.DBX0.0 BYTE 10    GET do 1515 : P#DB3007.DBX10.0 BYTE 14 (iguais aos do FB101 v0.8)
+////====================================
+   VAR
+      com : "typeComBanco16";
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3008_BC56_Competencia"
+TITLE = db3008_BC56_Competencia v0.1 (DB3008)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3008_BC56_Competencia (DB3008) v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE FAZ : DB DE COMPETENCIA de BC56 (sinais do banco para o 1515). NUMERO PROPOSTO (base 3000 + 8), mesmo no 1515. GET do 1515: P#DB3008.DBX0.0 BYTE 8.
+////====================================
+   VAR
+      compet : "typeCompetenciaBanco";
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3000_BC56_Chaves"
+TITLE = db3000_BC56_Chaves v0.1 (DB3000) ESPELHO
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3000_BC56_Chaves (DB3000) ESPELHO v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE FAZ : COPIA DE MAO UNICA do DB de chaves do 1515 (mesmo numero e MESMOS offsets), so para a IHM/Runtime deste PLC. NAO e usada para controle.
+////   bytes 0..3  (cb, sb): preenchidos AQUI pelo fc_chamadasBancosCarga a partir do DB3007 (comando e feedback ao vivo).
+////   bytes 4..199 (habilitada, setupOk, kwReal, rMedidoOhm, rTeoricoOhm = 196 B): escritos pelo PUT do 1515 numa passada (P#DB3000.DBX4.0 BYTE 196, limite do PUT/GET ~212 B).
+////   Os demais campos do DB do 1515 (setupData, nominal, chaveSel, ...) NAO sao espelhados. Escritor unico por faixa. CONFERIR os deslocamentos no TIA.
+////====================================
+   VAR
+      cb : Struct
+         ligar : Array[1..16] of Bool;   // X0.0
+      END_STRUCT;
+      sb : Struct
+         ligada : Array[1..16] of Bool;   // X2.0
+      END_STRUCT;
+      setup : Struct
+         habilitada : Array[1..16] of Bool;    // X4.0  (PUT 1515)
+         setupOk : Array[1..16] of Bool;       // X6.0  (PUT 1515)
+         kwReal : Array[1..16] of Real;        // D8    (PUT 1515)
+         rMedidoOhm : Array[1..16] of Real;    // D72   (PUT 1515)
+         rTeoricoOhm : Array[1..16] of Real;   // D136  (PUT 1515)
+      END_STRUCT;
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3107_BC400_Com"
+TITLE = db3107_BC400_Com v0.1 (DB3107)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3107_BC400_Com (DB3107) v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE FAZ : area de troca PUT/GET do banco BC400 com o 1515 (telegrama rapido de 24 bytes). Mesmo NUMERO do DB do 1515 (DB3107 = base 3100 + 7).
+//// PUT do 1515 : P#DB3107.DBX0.0 BYTE 10    GET do 1515 : P#DB3107.DBX10.0 BYTE 14 (iguais aos do FB101 v0.8)
+////====================================
+   VAR
+      com : "typeComBanco16";
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3108_BC400_Competencia"
+TITLE = db3108_BC400_Competencia v0.1 (DB3108)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3108_BC400_Competencia (DB3108) v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE FAZ : DB DE COMPETENCIA de BC400 (sinais do banco para o 1515). NUMERO PROPOSTO (base 3100 + 8), mesmo no 1515. GET do 1515: P#DB3108.DBX0.0 BYTE 8.
+////====================================
+   VAR
+      compet : "typeCompetenciaBanco";
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3100_BC400_Chaves"
+TITLE = db3100_BC400_Chaves v0.1 (DB3100) ESPELHO
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3100_BC400_Chaves (DB3100) ESPELHO v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE FAZ : COPIA DE MAO UNICA do DB de chaves do 1515 (mesmo numero e MESMOS offsets), so para a IHM/Runtime deste PLC. NAO e usada para controle.
+////   bytes 0..3  (cb, sb): preenchidos AQUI pelo fc_chamadasBancosCarga a partir do DB3107 (comando e feedback ao vivo).
+////   bytes 4..199 (habilitada, setupOk, kwReal, rMedidoOhm, rTeoricoOhm = 196 B): escritos pelo PUT do 1515 numa passada (P#DB3100.DBX4.0 BYTE 196, limite do PUT/GET ~212 B).
+////   Os demais campos do DB do 1515 (setupData, nominal, chaveSel, ...) NAO sao espelhados. Escritor unico por faixa. CONFERIR os deslocamentos no TIA.
+////====================================
+   VAR
+      cb : Struct
+         ligar : Array[1..16] of Bool;   // X0.0
+      END_STRUCT;
+      sb : Struct
+         ligada : Array[1..16] of Bool;   // X2.0
+      END_STRUCT;
+      setup : Struct
+         habilitada : Array[1..16] of Bool;    // X4.0  (PUT 1515)
+         setupOk : Array[1..16] of Bool;       // X6.0  (PUT 1515)
+         kwReal : Array[1..16] of Real;        // D8    (PUT 1515)
+         rMedidoOhm : Array[1..16] of Real;    // D72   (PUT 1515)
+         rTeoricoOhm : Array[1..16] of Real;   // D136  (PUT 1515)
+      END_STRUCT;
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3307_BC550_Com"
+TITLE = db3307_BC550_Com v0.1 (DB3307)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3307_BC550_Com (DB3307) v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE FAZ : area de troca PUT/GET do banco BC550 com o 1515 (telegrama rapido de 24 bytes). Mesmo NUMERO do DB do 1515 (DB3307 = base 3300 + 7).
+//// PUT do 1515 : P#DB3307.DBX0.0 BYTE 10    GET do 1515 : P#DB3307.DBX10.0 BYTE 14 (iguais aos do FB101 v0.8)
+////====================================
+   VAR
+      com : "typeComBanco16";
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3308_BC550_Competencia"
+TITLE = db3308_BC550_Competencia v0.1 (DB3308)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3308_BC550_Competencia (DB3308) v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE FAZ : DB DE COMPETENCIA de BC550 (sinais do banco para o 1515). NUMERO PROPOSTO (base 3300 + 8), mesmo no 1515. GET do 1515: P#DB3308.DBX0.0 BYTE 8.
+////====================================
+   VAR
+      compet : "typeCompetenciaBanco";
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3300_BC550_Chaves"
+TITLE = db3300_BC550_Chaves v0.1 (DB3300) ESPELHO
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+NON_RETAIN
+////====================================
+//// db3300_BC550_Chaves (DB3300) ESPELHO v0.1 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Faz parte do pacote plc_carga_1200 (S7-1200 real).
+//// O QUE FAZ : COPIA DE MAO UNICA do DB de chaves do 1515 (mesmo numero e MESMOS offsets), so para a IHM/Runtime deste PLC. NAO e usada para controle.
+////   bytes 0..3  (cb, sb): preenchidos AQUI pelo fc_chamadasBancosCarga a partir do DB3307 (comando e feedback ao vivo).
+////   bytes 4..199 (habilitada, setupOk, kwReal, rMedidoOhm, rTeoricoOhm = 196 B): escritos pelo PUT do 1515 numa passada (P#DB3300.DBX4.0 BYTE 196, limite do PUT/GET ~212 B).
+////   Os demais campos do DB do 1515 (setupData, nominal, chaveSel, ...) NAO sao espelhados. Escritor unico por faixa. CONFERIR os deslocamentos no TIA.
+////====================================
+   VAR
+      cb : Struct
+         ligar : Array[1..16] of Bool;   // X0.0
+      END_STRUCT;
+      sb : Struct
+         ligada : Array[1..16] of Bool;   // X2.0
+      END_STRUCT;
+      setup : Struct
+         habilitada : Array[1..16] of Bool;    // X4.0  (PUT 1515)
+         setupOk : Array[1..16] of Bool;       // X6.0  (PUT 1515)
+         kwReal : Array[1..16] of Real;        // D8    (PUT 1515)
+         rMedidoOhm : Array[1..16] of Real;    // D72   (PUT 1515)
+         rTeoricoOhm : Array[1..16] of Real;   // D136  (PUT 1515)
+      END_STRUCT;
+   END_VAR
+BEGIN
+END_DATA_BLOCK
+

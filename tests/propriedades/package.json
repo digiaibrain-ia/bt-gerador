@@ -1,0 +1,8 @@
+{
+  "name": "bt2-testes-propriedades",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Testes de propriedades (fast-check) dos modulos puros do medidor. Instalar: npm --prefix tests/propriedades ci",
+  "scripts": { "test": "node --test" },
+  "devDependencies": { "fast-check": "3.23.2" }
+}

@@ -1,3 +1,5 @@
+# v5 (19/11/2026): + testes de propriedades (fast-check) dos modulos puros e a conferencia de que o modulo testado e o entregue (Passo 7).
+# v4 (19/11/2026): antes do build, roda tests/build_modular (HTML entregue = build do src) e tests/catch_vazio (nenhum catch vazio sem motivo).
 # v3 (31/10/2026): nomes dos passos entre aspas (':' solto quebrava o YAML); publicação aceita Release já criado.
 # Gera o HTML único e publica no GitHub Release quando se cria uma tag medidor-vX.Y.Z.
 name: build-release
@@ -5,7 +7,7 @@ on:
   push:
     tags: ['medidor-v*']
   pull_request:
-    paths: ['dashboard/**']
+    paths: ['dashboard/**', 'tests/propriedades/**', 'tests/modulos_entregues.test.js']
 permissions:
   contents: write
 jobs:
@@ -15,6 +17,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
+      - name: "Testes rápidos do medidor (build modular, catch vazio e módulos entregues)"
+        run: node --test tests/build_modular.test.js tests/catch_vazio.test.js tests/modulos_entregues.test.js
+      - name: "Testes de propriedades dos módulos puros (fast-check)"
+        run: |
+          npm --prefix tests/propriedades ci
+          node --test tests/propriedades/*.test.js
       - name: "Build (PR - só valida)"
         if: github.event_name == 'pull_request'
         run: node dashboard/build/build.js

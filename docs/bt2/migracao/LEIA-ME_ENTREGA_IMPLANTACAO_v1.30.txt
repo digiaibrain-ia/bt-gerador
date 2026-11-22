@@ -1,0 +1,20 @@
+PACOTE DE IMPLANTACAO - BT2 v1.30 (20/11/2026) - LEIA PRIMEIRO
+
+Quem implanta: Reginaldo. Siga 05_documentos/ROTEIRO_IMPLANTACAO_REGINALDO_v0.2.md (passo a passo, com conferencia e retorno em cada etapa).
+
+ANTES DE QUALQUER COISA
+1. Nada aqui foi importado no PC BT2, no PLC ou no DSE. Faca BACKUP (TIA e Node-RED exportado).
+2. Carga de potencia sempre DESACOPLADA em teste.
+3. 02_somente_bancada (simulador) NUNCA vai para o PC de producao.
+4. PLC e Node-RED mudam JUNTOS: apague a aba antiga do mesmo banco antes de importar a nova (rotas iguais).
+5. Modo "registrar" (padrao). NAO mudar para "recusar" antes da bancada.
+
+O QUE MUDOU NA v1.30 (20/11/2026), em relacao a v1.29: CORRECAO DA CORRIDA DE CAPACIDADE.
+- Fluxos de chaves novos: chaves-56 v3.10, chaves-400 v3.9, chaves-550 v1.10, chaves-595 v1.10. Trazem a RESERVA DE CAPACIDADE na saida da fila: dois comandos de ligar quase juntos (mesmo banco ou bancos diferentes) nao estouram mais o limite de 110 % quando o modo e "recusar". Em modo "registrar" (padrao) nada muda. Provado com PLC simulado (a versao anterior deixava passar os dois: 25 kW com limite de 22 kW).
+- Medidor 1.10.231, arquivo de capacidade v0.2, demais fluxos e middleware opcional: iguais aos da v1.29.
+- Documentos novos: PASSO_9_CORRIDA_DE_CAPACIDADE, ROTEIRO_IMPLANTACAO_REGINALDO_v0.2 (substitui o v0.1).
+Regra de recusa: 110 % do kW a 100 % de cada gerador. Degrau descartado (degrau.max_kw = null).
+
+Conteudo funcional (medidor, PLC, ET200, DSE): igual ao da v1.28/v1.29. Pastas: 01_fluxos_importar, 02_somente_bancada, 03_front_operacao, 04_config, 05_documentos, 06_front_desenvolvimento, 07_diagnostico, 08_rnc, 09_fontes_js_atuais, 10_catalogo_dse, 11_pacote_alexandre_zip, 12_para_alexandre, 13_vendor, 14_exemplo_sintetico, plc, plc_et200.
+
+HONESTO: PLC de Carga 1200 e rascunho (nao compilado no TIA); ET200 validado na bancada com retorno provisorio; os testes automaticos rodam contra PLC simulado e nao substituem a bancada. Valores assumidos (110 %, perfis de combustivel, debounce) pendentes de datasheet.

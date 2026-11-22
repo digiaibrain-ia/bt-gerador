@@ -1,0 +1,73 @@
+FUNCTION "fc_bancosEt200" : Void
+TITLE = fc_bancosEt200 v0.4
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : RegLobo
+VERSION : 0.4
+////====================================
+//// fc_bancosEt200 v0.4 (16/11/2026): o FC agora SO ORGANIZA. A logica e as imagens (STAT) ficam no fb_bancosEt200 (DB de instancia: ibancosEt200). Antes (v0.2/v0.3) o FC tinha as imagens
+//// em VAR_TEMP e chamava o fb_bancoEt200_16 direto: TEMP nasce com lixo a cada ciclo e o FB precisa da imagem do CICLO ANTERIOR das saidas (supervisao do retorno). Pedido do Reginaldo.
+//// Base: arquivo fc_bancosEt200_vResistencias.scl do Reginaldo (BC56: retornos "Resistencia 16..28"; BC400: saidas "Resistencia 1..13", vistas no FC4). Chamar 1x por ciclo no OB1.
+//// ESCRITOR UNICO: depois disto o FC4 nao pode escrever nas mesmas saidas (apague/desligue no FC4 as networks Resistencia 1..13 do BC400 e as do BC56).
+//// PREENCHER (marcado PREENCHER): retorno do BC400 (contato auxiliar, ENTRADA) e saidas do BC56 (bobinas, SAIDA). Sem preencher, compila, mas esse banco nao liga/nao confere retorno.
+////====================================
+BEGIN
+
+	//=====================================================================
+	// 1 de 3: RETORNO das contatoras (contato auxiliar REAL, ENTRADA) -> copia para o DB do FB
+	//=====================================================================
+	// BC56 (preenchido por voce): ATENCAO - confirme que "Resistencia 16..28" sao as ENTRADAS (%I) do contato auxiliar e nao as saidas (%Q): o retorno nao pode ser o tag da bobina.
+	"ibancosEt200".auxBC56[1] := "Resistencia 16";
+	"ibancosEt200".auxBC56[2] := "Resistencia 17";
+	"ibancosEt200".auxBC56[3] := "Resistencia 18";
+	"ibancosEt200".auxBC56[4] := "Resistencia 19";
+	"ibancosEt200".auxBC56[5] := "Resistencia 20";
+	"ibancosEt200".auxBC56[6] := "Resistencia 21";
+	"ibancosEt200".auxBC56[7] := "Resistencia 22";
+	"ibancosEt200".auxBC56[8] := "Resistencia 23";
+	"ibancosEt200".auxBC56[9] := "Resistencia 24";
+	"ibancosEt200".auxBC56[10] := "Resistencia 25";
+	"ibancosEt200".auxBC56[11] := "Resistencia 26";
+	"ibancosEt200".auxBC56[12] := "Resistencia 27";
+	"ibancosEt200".auxBC56[13] := "Resistencia 28";
+	"ibancosEt200".auxBC56[14] := FALSE;
+	"ibancosEt200".auxBC56[15] := FALSE;
+	"ibancosEt200".auxBC56[16] := FALSE;
+
+	// BC400: PREENCHER com o SEU tag do contato auxiliar (retorno, ENTRADA) de cada resistencia, ex.:
+	//    "ibancosEt200".auxBC400[1] := "<seu tag do retorno da Resistencia 1>";   ... ate [13]
+	"ibancosEt200".auxBC400[14] := FALSE;
+	"ibancosEt200".auxBC400[15] := FALSE;
+	"ibancosEt200".auxBC400[16] := FALSE;
+
+	//=====================================================================
+	// 2 de 3: CHAMADA do fb_bancosEt200 (1 DB de instancia: ibancosEt200; ele chama o fb_bancoEt200_16 de cada banco)
+	//=====================================================================
+	// Seletoras (Auto = 1) que voce informou: BC56 = "Banco de Carga 02 em Automatico" (%I5.3); BC400 = "Banco de Carga 01 em Automatico" (%I5.2). Confirme.
+	// ComOk do BC56: o tag "ComOk_BC56" ja existe no seu projeto. Para o BC400, crie o tag "ComOk_BC400" (Bool) e acrescente  ComOkBC400 => "ComOk_BC400"  (ou deixe sem).
+	"ibancosEt200"(SeletoraBC56 := "Banco de Carga 02 em Automatico",
+	               SeletoraBC400 := "Banco de Carga 01 em Automatico",
+	               ComOkBC56 => "ComOk_BC56");
+
+	//=====================================================================
+	// 3 de 3: SAIDA das contatoras (bobinas, SAIDA) <- copia do DB do FB
+	//=====================================================================
+	// Depois disto, so este FC escreve nessas saidas (retire a escrita do FC4: networks "db39_ComBC400.cmd[n] -> Resistencia n").
+	// BC400 (vistas no seu FC4: %Q4.0 "Resistencia 1", %Q4.1 "Resistencia 2", ...):
+	"Resistencia 1" := "ibancosEt200".saidaBC400[1];
+	"Resistencia 2" := "ibancosEt200".saidaBC400[2];
+	"Resistencia 3" := "ibancosEt200".saidaBC400[3];
+	"Resistencia 4" := "ibancosEt200".saidaBC400[4];
+	"Resistencia 5" := "ibancosEt200".saidaBC400[5];
+	"Resistencia 6" := "ibancosEt200".saidaBC400[6];
+	"Resistencia 7" := "ibancosEt200".saidaBC400[7];
+	"Resistencia 8" := "ibancosEt200".saidaBC400[8];
+	"Resistencia 9" := "ibancosEt200".saidaBC400[9];
+	"Resistencia 10" := "ibancosEt200".saidaBC400[10];
+	"Resistencia 11" := "ibancosEt200".saidaBC400[11];
+	"Resistencia 12" := "ibancosEt200".saidaBC400[12];
+	"Resistencia 13" := "ibancosEt200".saidaBC400[13];
+
+	// BC56: PREENCHER com o SEU tag da saida (bobina) de cada resistencia, ex.:
+	//    "<seu tag da saida da resistencia 1 do BC56>" := "ibancosEt200".saidaBC56[1];   ... ate [13]
+
+END_FUNCTION

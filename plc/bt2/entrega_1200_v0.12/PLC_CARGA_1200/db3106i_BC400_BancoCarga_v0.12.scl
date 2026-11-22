@@ -1,0 +1,11 @@
+DATA_BLOCK "db3106i_BC400_BancoCarga"
+TITLE = db3106i_BC400_BancoCarga (DB3106)
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+////====================================
+//// DB de INSTANCIA ("i" no nome = instancia, padrao do projeto) do fb_bancoCarga16 para o banco BC400. Numero DB3106 (base 3100 + 6). Importe DEPOIS do fb_bancoCarga16 e ANTES do fc_bancosCarga1200.
+//// (o outro DB do banco e o de TELEGRAMA, db3107_BC400_Com, em db_ComBancos.) Se o TIA numerar diferente, ajuste o numero nas propriedades do bloco (numeracao manual).
+////====================================
+"fb_bancoCarga16"
+BEGIN
+END_DATA_BLOCK
