@@ -1,0 +1,157 @@
+
+  /* v1.9.88: TOKENS DE COR DA INTERFACE (um lugar só). POR QUÊ: verde/vermelho/amarelo são SINAL (ligado, falha, alerta) e não podem ser usados como cor de enfeite;
+     a identidade da tela (seleção, ação principal, destaque) usa o laranja sobre o azul-escuro das barras. Valores do laranja = ASSUMIDO (referência pedida: laranja estilo Itaú; paleta do site Nauka não pôde ser lida). Para trocar o tema, mude só estas linhas. */
+  :root{--ui-tinta:#1a4a78;--ui-acento:#ec7000;--ui-acento-esc:#c25a00;--ui-acento-fraco:#ec700026;--ui-superficie:#f3f5f8;--ui-borda:#9aa5b1;--ui-tinta-esc:#0f2e4d}
+  :root{--bg:#f3f5f8;--card:#fff;--txt:#141414;--mut:#5b6b7e;--line:#dde2e8;--seg:#e3e8ee;--ok:#2e9a5f;--warn:#f1b81c;--bad:#d64545;--blue:#2f7fd8;--cardin:#fafbfd;--band:#eceff3;--band2:#e1e6ec;--bandh:#d0d7e0;--h2c:#40526a;--tile:#fff}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,Segoe UI,Arial,sans-serif}
+  button{font:inherit;cursor:pointer}
+  header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;background:var(--ui-tinta);color:#fff;border-bottom:3px solid var(--ui-acento)}   /* v1.9.89: barra azul-escura + filete laranja (era preta) */
+  header h1{font-size:15px;margin:0;flex:1;min-width:150px;letter-spacing:.06em;text-transform:uppercase}
+  .pill{padding:3px 10px;border-radius:99px;background:#333;font-size:12px}
+  .pill.ok{background:#1d4d33;color:#7dffb0}.pill.bad{background:#5a1f1f;color:#ff9c9c}
+  .cfg{display:flex;flex-wrap:wrap;gap:6px 12px;padding:5px 14px;font-size:12px;align-items:center;border-bottom:1px solid var(--line);background:var(--card)}
+  .cfg .api{display:flex;align-items:center;gap:6px;margin-left:auto;flex:1 1 300px;min-width:0}
+  .cfg input[type=text]{flex:1;min-width:140px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:12px;background:var(--card);color:var(--txt)}
+  .cfg input[type=number]{padding:3px 4px;font-size:12px}
+  .cfg label{white-space:nowrap}
+  .cfg #go{background:var(--ui-acento);color:#fff;border:0;border-radius:6px;padding:4px 10px;font-size:12px}
+  .ensbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:5px 14px;font-size:12px;border-bottom:1px solid var(--line);background:var(--band)}
+  .ensbar .el{font-weight:700;color:var(--h2c)}
+  .mdl h4{margin:12px 0 5px}.mdl h4:first-child{margin-top:0}
+  .chlista{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:8px 0}
+  .chlista label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12.5px;cursor:pointer}
+  .chlista label.off{background:#fff1c9;border-color:#e0b84a;color:#6d4f00}
+  .chcard{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;background:var(--cardin)}
+  .chcard h4{margin:0 0 6px}
+  /* v1.9.40: abas por banco no popup Chaves - cada aba troca qual banco aparece nos 2 cards, em vez de empilhar os 2 bancos dentro de cada card */
+  /* v1.9.41: abas movidas pra dentro da barra azul (.jt) - estilo "pílula" translúcida sobre o fundo azul, sem o buraco que ficava acima dos cards */
+  .jtchaves{flex-wrap:wrap}
+  .jtchaves .chtabs{order:1;flex:1 1 100%}   /* v1.10.163: abas dos bancos em linha própria, abaixo do título */
+  .jtchaves .jx{order:0}                      /* v1.10.163: ✕ volta ao canto de cima à direita (com 4 bancos ia para a 2ª/3ª linha, à esquerda) */
+  .chtabs{display:flex;gap:6px;margin:0;flex-wrap:wrap}
+  .chtabs button{flex:none;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;border-radius:7px;padding:5px 12px;font-size:11.5px;font-weight:700;text-transform:none;letter-spacing:normal;cursor:pointer}
+  .chtabs button.on{background:#fff;color:var(--jazul);border-color:#fff}
+  .chtabs button b{font-weight:700}
+  .chtabs button small{display:block;font-weight:400;font-size:9.5px;opacity:.85}
+  .chlegenda{grid-column:1/-1;margin:0 0 10px;font-size:11px;color:var(--mut)}
+  .legswatch{display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(31,138,76,.22);border:1px solid #1c7a43;vertical-align:-1px;margin-right:5px}
+  /* v1.9.41: card 1 (Habilitar/Desabilitar) em lista vertical "Chave 1, Chave 2..." - libera espaço horizontal pro card 2 (Setup) */
+  .chlistv{display:flex;flex-direction:column;gap:5px}
+  .chpk .chrow{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:7px;padding:6px 9px;cursor:pointer;background:var(--card)}
+  .chpk .chrow.dis{background:#fff1c9;border-color:#e0b84a}
+  .chpk .chrow input[type=checkbox]{flex:none;width:21px;height:21px;margin:0;cursor:pointer}
+  .chpk .chrow .chrowtxt{flex:1;font-size:13px;font-weight:700;display:block}
+  .chrowkw{flex:none;font-size:14.5px;font-weight:800;text-align:right;display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+  /* v1.10.121: fórmulas do Setup — números grandes, termo nomeado, resultado em destaque; só cor/animação mudam, nunca o tamanho (REGRA_LAYOUT_ESTAVEL) */
+  .fx{padding:12px 14px;background:#f4f8fb;border:1px solid #cfdbe6;border-radius:12px;margin:10px 0}
+  .fx-t{text-align:center;font-weight:700;font-size:15px;color:#1b4a75;margin-bottom:8px}
+  .fx-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+  .fx-box{min-width:112px;text-align:center;background:#fff;border:1.5px solid #b8c7d6;border-radius:10px;padding:6px 10px}
+  .fx-box small{display:block;font-size:11.5px;color:#52606d;margin-bottom:2px}
+  .fx-box b{font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums;color:#0f2a44}.fx-box b i{font-size:13px;font-style:normal;font-weight:600;color:#52606d;margin-left:4px}
+  .fx-box.res{background:#d8f1e2;border-color:#2a8c52}.fx-box.res b{color:#14663a}.fx-box.ref{background:#eef0f3;border-color:#9aa5b1}
+  .fx-op{font-size:28px;font-weight:700;color:#2a8c52;line-height:1}.fx-op.sm{font-size:18px;align-self:flex-start;margin:6px 0 0 -6px}
+  .stlive{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin:8px 0}
+  .stlive div{border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12px;background:var(--card)}
+  .stlive small{display:block;color:var(--mut);font-size:10px}
+  .stlive b{font-size:15px;font-variant-numeric:tabular-nums}
+  .stform{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0;font-size:13px}
+  @media(min-width:900px){.chpk{display:grid;grid-template-columns:270px 1fr;gap:18px;align-items:start}}
+  /* v1.9.44: dlgChHD e dlgChSetup agora têm só 1 .chcard cada (popup dividido) - a grade de 2 colunas
+     acima (pensada pra 2 cards lado a lado) sobra em branco com só 1 filho. Cancela pra esses popups e
+     usa layout próprio dentro do card (.stgrid) só no Setup, que é quem tem conteúdo suficiente pra isso. */
+  @media(min-width:900px){#dlgChHD .chpk,#dlgChSetup .chpk{display:block}}
+  .stgrid{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:4px}
+  .stcolsel{flex:0 1 auto;max-width:100%}
+  .stcolform{flex:1 1 420px;min-width:320px}
+  .stcolform .stlive{margin-top:0}
+  /* v1.9.45: a pedido do operador - popups Chaves/Setup estavam com chip/botões grandes demais pra
+     informação secundária e muita lacuna (gap) entre blocos, forçando barra de rolagem desnecessária.
+     Aperta só esses 2 popups (não mexe no resto do app - os chips/.jlin/.jb são usados em várias outras
+     janelas que devem continuar do jeito que estão). */
+  #dlgChHD .jb,#dlgChSetup .jb{padding:8px 12px 10px}
+  #dlgChHD .chcard,#dlgChSetup .chcard{padding:8px 10px;margin-bottom:6px}
+  #dlgChHD .chlegenda,#dlgChSetup .chlegenda{margin:0 0 6px;font-size:10.5px}
+  #dlgChHD h4,#dlgChSetup h4{margin:0 0 4px;font-size:11.5px;padding-bottom:2px}
+  #dlgChHD .jlin,#dlgChSetup .jlin{margin:5px 0!important;gap:6px!important}
+  #dlgChHD .enschip,#dlgChSetup .enschip{padding:2px 7px;font-size:10.5px;font-weight:500}
+  #dlgChHD .chlistv{gap:3px}
+  #dlgChHD .chpk .chrow{padding:4px 8px}
+  #dlgChSetup .stlive{margin:5px 0;gap:4px}
+  #dlgChSetup .stlive div{padding:3px 6px}
+  #dlgChSetup .stform{margin:5px 0;gap:4px}
+  #dlgChSetup .stform .box{padding:3px 8px}
+  #dlgChSetup .jnota{margin:0 0 4px}
+  .stform .box{border:1px solid var(--line);border-radius:6px;padding:4px 10px;background:var(--card);text-align:center}
+  .stform .box small{display:block;font-size:10px;color:var(--mut)}
+  .stform .box.res{border-color:#2a8c52;background:#d5eedd;color:#17613a;font-weight:700}
+  .stform .op{font-size:18px;font-weight:700}
+  #stRes table{border-collapse:collapse;font-size:12px;width:100%;margin-top:6px}
+  #stRes th,#stRes td{border:1px solid var(--line);padding:2px 6px;text-align:center}
+  .chpk .tile.sel{outline:2px solid var(--ui-acento)}
+  .chpk #chSel .tile{cursor:pointer}
+  .chpk #chSel .tile.bloq{opacity:.4;cursor:not-allowed}
+  .chpk #chSel .tile.dis{cursor:not-allowed}
+  .chpk .sw{display:flex!important;flex-wrap:wrap;gap:6px!important;margin:0!important}
+  .chpk .tile{flex:none;width:76px!important;min-width:76px;margin:0!important;cursor:default;position:relative;padding:7px 0 5px;font-size:13.5px;font-weight:800}
+  .jan .chpk .jlin,.chpk .jlin{display:flex!important;justify-content:flex-start;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}
+  .chpk .jlin button{flex:none;width:auto!important;display:inline-block;padding:6px 12px}
+  .chpk .tile .stb{width:auto!important;padding:1px 6px!important}
+  .chpk .tile input[type=checkbox]{display:block;width:22px;height:22px;margin:0 auto 4px;cursor:pointer}
+  .chpk .tile .stb{display:block;margin:4px auto 0;font-size:10px;padding:1px 5px;border-radius:5px}
+  /* v1.9.41: selo "real" trocado de verde cheio p/ verde transparente (fundo translúcido, texto verde escuro) - a pedido do operador; palavra "real" removida (vira a legenda única acima dos cards) */
+  .chpk .tile.real{outline:2px solid #2a8c52}
+  /* v1.9.62: chave SELECIONADA no Setup bem visível, mesmo já calibrada (antes o contorno verde da calibrada cobria o azul da seleção) */
+  .chpk #chSel .sw{padding-top:16px!important}
+  .chpk #chSel .tile.sel{outline:4px solid var(--ui-acento)!important;outline-offset:1px;box-shadow:0 0 0 4px #fff,0 0 0 7px var(--ui-acento),0 5px 14px rgba(236,112,0,.55);transform:scale(1.07);z-index:2;background:#fff1e3}
+  .chpk #chSel .tile.sel::before{content:'▶ SELECIONADA';position:absolute;top:-17px;left:50%;transform:translateX(-50%);background:var(--ui-acento);color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:4px;white-space:nowrap;z-index:3}
+  .chpk .tile .realval{display:block;margin:4px -4px -4px;padding:2px 0 3px;background:rgba(31,138,76,.16);color:#176b3a;font-size:13px;font-weight:800;border-radius:0 0 5px 5px;letter-spacing:.01em}
+  .chpk .tile .realval small{display:inline;color:#176b3a;font-weight:600;font-size:10.5px;opacity:.85}
+  .chrowkw .realval{background:rgba(31,138,76,.16);color:#176b3a;font-weight:800;padding:2px 8px;border-radius:6px;font-size:13.5px}
+  .chpk.setup .tile input,.chpk.setup .tile .stb{pointer-events:none;opacity:.45}
+  .chpk.setup .tile.alvo{outline:2px solid var(--ui-acento)}
+  .chpk.setup .tile.alvo .stb{opacity:1}
+  .stpan{border:1px solid var(--ui-acento);border-radius:8px;padding:8px 10px;margin:8px 0;background:var(--cardin)}
+  /* v1.10.107: card Impressão automática (⚙ Modo). Tamanhos fixos: nada muda de altura ao ligar/desligar (REGRA_LAYOUT_ESTAVEL). */
+  .aimp{border:1px solid #b8c2cc;border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;background:rgba(120,130,140,.08)}
+  .aimp .stusa{margin-left:0}
+  .aimprow{display:flex;align-items:center;gap:8px;min-height:26px}
+  .aimprow .cfgbtn.inl{margin-left:0;flex:none}
+  .aimpnome{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  #aimpCam{flex:1;min-width:0;font:inherit;font-size:12px;padding:3px 6px;border:1px solid #9aa5b1;border-radius:4px}
+  #aimpNota{min-height:4.4em;margin:0}
+  .stusa{display:inline-flex;align-items:center;gap:6px;font-size:12px;margin-left:12px}
+  .tile.dis{background:#ffe27a!important;border-color:#c99a00!important;color:#4a3b00}
+  .tile.dis i,.tile.dis.s1 i{background:#8d8d8d!important}
+  .tile{cursor:pointer}
+  .tile.cmd{outline:2px solid #e08a00;outline-offset:-2px} /* v1.9.58: chave COMANDADA ao PLC (chaveSel) — verde só quando o feedback (sb.ligada) confirmar */
+  .ensseg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .ensseg button{border:0;background:var(--card);color:var(--txt);padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer}
+  .ensseg button+button{border-left:1px solid var(--line)}
+  .ensseg button.on{background:var(--ui-tinta);color:#fff}
+  .ensseg button:disabled{opacity:.55;cursor:not-allowed}
+  .enschip{display:inline-block;padding:3px 9px;border-radius:11px;font-size:11.5px;font-weight:600;background:var(--card);border:1px solid var(--line);color:var(--mut)}
+  .ibub{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;border:1.3px solid var(--mut);color:var(--mut);font-size:11px;font-style:italic;font-family:Georgia,serif;cursor:help;vertical-align:middle;margin-left:4px;position:relative;user-select:none}
+  .ibub:hover,.ibub:focus{border-color:var(--acc,#2563eb);color:var(--acc,#2563eb);outline:none}
+  /* v1.10.135: balão deixou de centralizar (left:50%+translateX) — num celular, ícone perto da borda esquerda jogava o balão pra fora da tela.
+     Agora a borda ESQUERDA do balão fica alinhada com a do ícone e a largura se adapta ao viewport (nunca estoura nem a esquerda nem a direita). */
+  .ibub::after{content:attr(data-tip);display:none;position:absolute;left:0;top:135%;width:max-content;max-width:min(260px,calc(100vw - 32px));background:#1f2937;color:#fff;font-size:11.5px;font-style:normal;font-weight:400;line-height:1.4;padding:8px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:50;white-space:normal}
+  .ibub:hover::after,.ibub:focus::after{display:block}
+  .enschip.ok{background:#d5eedd;border-color:#9fd3b3;color:#17613a}
+  .enschip.err{background:#fde7e5;border-color:#e3a5a0;color:#8a1c15}
+  .enschip.mock{background:#fff1c9;border-color:#e0b84a;color:#6d4f00}
+  .ensgear{margin-left:auto;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer}
+  .ensStrip{margin:6px 2px 0;font-size:11.5px;line-height:1.45;color:var(--mut)}
+  .ensStrip .e{color:#8a1c15;font-weight:600}.ensStrip .k{color:#17613a}.ensStrip .a{color:#7a5a00}
+  .tb th.err{background:#f6d4d1;color:#8a1c15}.tb th.err small{color:#8a1c15}
+  .tb td.err{background:#fdf0ee}
+  html[data-tema=escuro] .ensbar{background:#1c1d20}
+  html[data-tema=escuro] .enschip.ok{background:#1d4d33;border-color:#2c7a50;color:#9be8b9}
+  html[data-tema=escuro] .enschip.err{background:#4a1f1d;border-color:#7a3733;color:#ffb4ad}
+  html[data-tema=escuro] .enschip.mock{background:#4a3c10;border-color:#7a6320;color:#ffd666}
+  html[data-tema=escuro] .ensStrip .e{color:#ffb4ad}html[data-tema=escuro] .ensStrip .k{color:#9be8b9}html[data-tema=escuro] .ensStrip .a{color:#ffd666}
+  html[data-tema=escuro] .tb th.err{background:#5a2522;color:#ffb4ad}html[data-tema=escuro] .tb th.err small{color:#ffb4ad}
+  html[data-tema=escuro] .tb td.err{background:#3a2220}
+

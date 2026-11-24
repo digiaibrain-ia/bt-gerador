@@ -1,0 +1,9 @@
+﻿DATA_BLOCK "db3006i_BancosCarga1200"
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : RegLobo
+VERSION : 0.1
+"fb_bancosCarga1200"
+
+BEGIN
+
+END_DATA_BLOCK

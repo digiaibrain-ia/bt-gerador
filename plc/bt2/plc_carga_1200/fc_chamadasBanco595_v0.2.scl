@@ -1,0 +1,72 @@
+FUNCTION "fc_chamadasBanco595" : Void
+TITLE = fc_chamadasBanco595 v0.2
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+////====================================
+//// fc_chamadasBanco595 v0.2 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Pacote plc_carga_1200 (S7-1200 real), BC59,5.
+//// Chamar 1x por ciclo, junto do fc_chamadasBancosCarga. Tags fisicos sao NOMES PROPOSTOS; o programador ajusta (enderecos nao sao da nossa conta).
+////====================================
+   VAR_TEMP
+      saida : Array[1..32] of Bool;
+      aux : Array[1..32] of Bool;
+      comOk : Bool;
+      lib : Bool;
+   END_VAR
+BEGIN
+   #aux[1] := "BC595_K01_Aux";
+   #aux[2] := "BC595_K02_Aux";
+   #aux[3] := "BC595_K03_Aux";
+   #aux[4] := "BC595_K04_Aux";
+   #aux[5] := "BC595_K05_Aux";
+   #aux[6] := "BC595_K06_Aux";
+   #aux[7] := "BC595_K07_Aux";
+   #aux[8] := "BC595_K08_Aux";
+   #aux[9] := "BC595_K09_Aux";
+   #aux[10] := "BC595_K10_Aux";
+   #aux[11] := "BC595_K11_Aux";
+   #aux[12] := "BC595_K12_Aux";
+   #aux[13] := "BC595_K13_Aux";
+   #aux[14] := "BC595_K14_Aux";
+   #aux[15] := "BC595_K15_Aux";
+   #aux[16] := "BC595_K16_Aux";
+   #aux[17] := "BC595_K17_Aux";
+   #aux[18] := "BC595_K18_Aux";
+   #aux[19] := FALSE;
+   #aux[20] := FALSE;
+   #aux[21] := FALSE;
+   #aux[22] := FALSE;
+   #aux[23] := FALSE;
+   #aux[24] := FALSE;
+   #aux[25] := FALSE;
+   #aux[26] := FALSE;
+   #aux[27] := FALSE;
+   #aux[28] := FALSE;
+   #aux[29] := FALSE;
+   #aux[30] := FALSE;
+   #aux[31] := FALSE;
+   #aux[32] := FALSE;
+   "db3206_BC595_BancoCarga"(NumChaves := 18, SeletoraEntrada := "BC595_Seletora_Auto", IntertravamentoOk := "BC595_Intertravamento_Ok",
+        UsaVentilador := FALSE, VentiladorOk := FALSE, ContatorGeralAux := FALSE, ChaveamentoFisicoV := 0,   // ventilador, contator geral e chaveamento: nao monitorados agora (futuro, DB de competencia)
+        ComOk => #comOk, BancoLiberado => #lib, Com := "db3207_BC595_Com".com, Compet := "db3208_BC595_Competencia".compet,
+        SaidaContatora := #saida, EntradaContatoAux := #aux);
+   "BC595_K01_Saida" := #saida[1];
+   "BC595_K02_Saida" := #saida[2];
+   "BC595_K03_Saida" := #saida[3];
+   "BC595_K04_Saida" := #saida[4];
+   "BC595_K05_Saida" := #saida[5];
+   "BC595_K06_Saida" := #saida[6];
+   "BC595_K07_Saida" := #saida[7];
+   "BC595_K08_Saida" := #saida[8];
+   "BC595_K09_Saida" := #saida[9];
+   "BC595_K10_Saida" := #saida[10];
+   "BC595_K11_Saida" := #saida[11];
+   "BC595_K12_Saida" := #saida[12];
+   "BC595_K13_Saida" := #saida[13];
+   "BC595_K14_Saida" := #saida[14];
+   "BC595_K15_Saida" := #saida[15];
+   "BC595_K16_Saida" := #saida[16];
+   "BC595_K17_Saida" := #saida[17];
+   "BC595_K18_Saida" := #saida[18];
+   "db3200_BC595_Chaves".cb.ligar := "db3207_BC595_Com".com.cmd;
+   "db3200_BC595_Chaves".sb.ligada := "db3207_BC595_Com".com.fbk;
+END_FUNCTION

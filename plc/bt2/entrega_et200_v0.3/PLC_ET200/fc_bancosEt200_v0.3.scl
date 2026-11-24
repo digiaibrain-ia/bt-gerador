@@ -1,0 +1,77 @@
+FUNCTION "fc_bancosEt200" : Void
+TITLE = fc_bancosEt200 v0.3
+AUTHOR : 'RegLobo'
+VERSION : 0.3
+////====================================
+//// fc_bancosEt200 v0.3 (14/11/2026): nome da instancia ibc56_/ibc400_; linha do ComOk; parametros obrigatorios; v0.2 (14/11/2026): nomes dos DBs = db38_ComBC56 / db39_ComBC400 (reais no projeto). v0.1 (13/11/2026) - RASCUNHO, nao compilado. ET200 (IM151-8, familia S7-300): BC56 e BC400, 13 chaves cada. Chamar 1x por ciclo no OB1.
+//// NAO ha nomes de tag sugeridos: em cada trecho escreva os tags que JA existem no projeto (os do FC4). Sem tags escritos compila, mas nada liga.
+//// Os DBs de instancia NAO vem no pacote: crie ao inserir a chamada do FB (nome no COMO_USAR.txt). Sem REGION (S7-300): os titulos sao banners de comentario.
+//// ESCRITOR UNICO: depois disto o FC4 nao pode escrever nas mesmas saidas. O fb_bancoEt200_16 ja incrementa o VidaET.
+////====================================
+   VAR_TEMP
+      saidaBC56 : Array[1..16] of Bool;
+      auxBC56 : Array[1..16] of Bool;
+      saidaBC400 : Array[1..16] of Bool;
+      auxBC400 : Array[1..16] of Bool;
+   END_VAR
+BEGIN
+
+   //=====================================================================
+   // BC56 - 1 de 3: RETORNO das contatoras (contato auxiliar REAL)
+   //=====================================================================
+   // Para cada resistencia n (1 a 13) escreva o SEU tag do contato auxiliar (retorno) da contatora (os que o FC4 ja usa):
+   //    #auxBC56[n] := "<seu tag do retorno da resistencia n>";
+   // Nao use o tag do comando como retorno: tem que ser o contato auxiliar real.
+   #auxBC56[14] := FALSE;
+   #auxBC56[15] := FALSE;
+   #auxBC56[16] := FALSE;
+
+   //=====================================================================
+   // BC56 - 2 de 3: CHAMADA do fb_bancoEt200_16 (insira no TIA)
+   //=====================================================================
+   // Arraste o fb_bancoEt200_16 para ca. DB de instancia: nome  ibc56_fb_bancoEt200_16  (numero livre: o ET200 e teste provisorio).
+   // Seletora do BC56 vista no seu FC4 atual (TIA): %I5.3 "Banco de Carga 02 em Automatico" - confirme.
+   // OBRIGATORIOS (IN_OUT, o compilador exige todos): Cmd, Vida1515, LigarBanco, HabPed, Seq, HabResp, Eco, FalhaRetorno, ContatorColado, VidaET, Fbk, SeletoraAuto, SaidaContatora, EntradaContatoAux.
+   // OPCIONAL (saida): ComOk => <seu tag Bool>  (o TIA coloca "ComOk=> bool_out" ao arrastar o FB: troque pelo seu tag ou apague a linha).
+   // Parametros:  NumChaves := 13, SeletoraEntrada := "<seu tag da seletora do BC56 em Auto (1 = Auto)>", TempoPerdaMs := T#2S, TempoRetornoMs := 2000,
+   //   Cmd := "db38_ComBC56".cmd, Vida1515 := "db38_ComBC56".vida1515, LigarBanco := "db38_ComBC56".ligarBanco, HabPed := "db38_ComBC56".habPed, Seq := "db38_ComBC56".seq,
+   //   VidaET := "db38_ComBC56".vidaET, Fbk := "db38_ComBC56".fbk, SeletoraAuto := "db38_ComBC56".seletoraAuto, HabResp := "db38_ComBC56".habResp, Eco := "db38_ComBC56".eco,
+   //   FalhaRetorno := "db38_ComBC56".falhaRetorno, ContatorColado := "db38_ComBC56".contatorColado, SaidaContatora := #saidaBC56, EntradaContatoAux := #auxBC56
+
+   //=====================================================================
+   // BC56 - 3 de 3: SAIDA das contatoras
+   //=====================================================================
+   // Para cada resistencia n (1 a 13) escreva o SEU tag da saida (bobina da contatora):
+   //    "<seu tag da saida da resistencia n>" := #saidaBC56[n];
+   // Depois disto, so este FC pode escrever nessas saidas (retire a escrita do FC4 atual, senao ha 2 escritores).
+
+   //=====================================================================
+   // BC400 - 1 de 3: RETORNO das contatoras (contato auxiliar REAL)
+   //=====================================================================
+   // Para cada resistencia n (1 a 13) escreva o SEU tag do contato auxiliar (retorno) da contatora (os que o FC4 ja usa):
+   //    #auxBC400[n] := "<seu tag do retorno da resistencia n>";
+   // Nao use o tag do comando como retorno: tem que ser o contato auxiliar real.
+   #auxBC400[14] := FALSE;
+   #auxBC400[15] := FALSE;
+   #auxBC400[16] := FALSE;
+
+   //=====================================================================
+   // BC400 - 2 de 3: CHAMADA do fb_bancoEt200_16 (insira no TIA)
+   //=====================================================================
+   // Arraste o fb_bancoEt200_16 para ca. DB de instancia: nome  ibc400_fb_bancoEt200_16  (numero livre: o ET200 e teste provisorio).
+   // Seletora do BC400 vista no seu FC4 atual (TIA): %I5.2 "Banco de Carga 01 em Automatico" - confirme.
+   // OBRIGATORIOS (IN_OUT, o compilador exige todos): Cmd, Vida1515, LigarBanco, HabPed, Seq, HabResp, Eco, FalhaRetorno, ContatorColado, VidaET, Fbk, SeletoraAuto, SaidaContatora, EntradaContatoAux.
+   // OPCIONAL (saida): ComOk => <seu tag Bool>  (o TIA coloca "ComOk=> bool_out" ao arrastar o FB: troque pelo seu tag ou apague a linha).
+   // Parametros:  NumChaves := 13, SeletoraEntrada := "<seu tag da seletora do BC400 em Auto (1 = Auto)>", TempoPerdaMs := T#2S, TempoRetornoMs := 2000,
+   //   Cmd := "db39_ComBC400".cmd, Vida1515 := "db39_ComBC400".vida1515, LigarBanco := "db39_ComBC400".ligarBanco, HabPed := "db39_ComBC400".habPed, Seq := "db39_ComBC400".seq,
+   //   VidaET := "db39_ComBC400".vidaET, Fbk := "db39_ComBC400".fbk, SeletoraAuto := "db39_ComBC400".seletoraAuto, HabResp := "db39_ComBC400".habResp, Eco := "db39_ComBC400".eco,
+   //   FalhaRetorno := "db39_ComBC400".falhaRetorno, ContatorColado := "db39_ComBC400".contatorColado, SaidaContatora := #saidaBC400, EntradaContatoAux := #auxBC400
+
+   //=====================================================================
+   // BC400 - 3 de 3: SAIDA das contatoras
+   //=====================================================================
+   // Para cada resistencia n (1 a 13) escreva o SEU tag da saida (bobina da contatora):
+   //    "<seu tag da saida da resistencia n>" := #saidaBC400[n];
+   // Depois disto, so este FC pode escrever nessas saidas (retire a escrita do FC4 atual, senao ha 2 escritores).
+
+END_FUNCTION

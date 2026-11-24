@@ -1,0 +1,28 @@
+DATA_BLOCK "ComBC400"
+TITLE = ComBC400 v0.4 (DB39)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.4
+NON_RETAIN
+////====================================
+//// ComBC400 (DB39) v0.4 - RASCUNHO (06/11/2026). Layout IGUAL ao ComBC56 v0.4 (24 bytes). Ver o cabecalho do DB38.
+//// PUT do 1515 : P#DB39.DBX0.0 BYTE 10     |     GET do 1515 : P#DB39.DBX10.0 BYTE 14
+////=====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;
+      vida1515 : Int;
+      ligarBanco : Bool;
+      resPut : Byte;
+      habPed : Array[1..16] of Bool;
+      seq : Int;
+      fbk : Array[1..16] of Bool;
+      vidaET : Int;
+      seletoraAuto : Bool;
+      resGet : Byte;
+      habResp : Array[1..16] of Bool;
+      eco : Int;
+      falhaRetorno : Array[1..16] of Bool;
+      contatorColado : Array[1..16] of Bool;
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK

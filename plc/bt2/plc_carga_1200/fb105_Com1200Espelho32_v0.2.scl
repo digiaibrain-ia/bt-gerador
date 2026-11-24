@@ -1,0 +1,60 @@
+FUNCTION_BLOCK "fb105_Com1200Espelho32"
+TITLE = fb105_Com1200Espelho32 v0.2
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+////====================================
+//// fb105_Com1200Espelho32 v0.2 (09/11/2026) - RASCUNHO, NAO compilado no TIA, NAO testado no PLC. Pacote plc_carga_1200 (S7-1200 real), BC59,5.
+//// ONDE RODA : 1515. Para o BC59,5 (32 chaves). Igual ao fb104, mas o espelho (392 B) vai em TRES PUTs em sequencia + 1 GET da competencia, a cada Pausa (1 s).
+//// PUT1 8..143  PUT2 144..271  PUT3 272..399 (ADDR/SD de cada um passados pela chamada). Um job por vez na conexao. NAO compilado; ponteiro absoluto como VARIANT a confirmar.
+////====================================
+   VAR_INPUT
+      Hab : Bool;
+      ID_Conexao : Word;
+      Local1 : Variant;  Remoto1 : Remote;     // P#DB3200.DBX8.0 BYTE 136
+      Local2 : Variant;  Remoto2 : Remote;     // P#DB3200.DBX144.0 BYTE 128
+      Local3 : Variant;  Remoto3 : Remote;     // P#DB3200.DBX272.0 BYTE 128
+      RemotoCompet : Remote;                   // P#DB3208.DBX0.0 BYTE 8
+      Pausa : Time := T#1S;
+   END_VAR
+   VAR_OUTPUT
+      Falha : Bool;
+      CompetOk : Bool;
+   END_VAR
+   VAR_IN_OUT
+      Compet : "typeCompetenciaBanco";
+   END_VAR
+   VAR
+      p1 : PUT; p2 : PUT; p3 : PUT; g : GET;
+      r1 : Bool; r2 : Bool; r3 : Bool; rg : Bool;
+      d1 : Bool; e1 : Bool; d2 : Bool; e2 : Bool; d3 : Bool; e3 : Bool; ndr : Bool; eg : Bool;
+      st1 : Word; st2 : Word; st3 : Word; stg : Word;
+      estado : Int;
+      rx : "typeCompetenciaBanco";
+      tPausa : TON_TIME;
+   END_VAR
+BEGIN
+   #p1(REQ := #r1, ID := #ID_Conexao, DONE => #d1, ERROR => #e1, STATUS => #st1, ADDR_1 := #Remoto1, SD_1 := #Local1);
+   #p2(REQ := #r2, ID := #ID_Conexao, DONE => #d2, ERROR => #e2, STATUS => #st2, ADDR_1 := #Remoto2, SD_1 := #Local2);
+   #p3(REQ := #r3, ID := #ID_Conexao, DONE => #d3, ERROR => #e3, STATUS => #st3, ADDR_1 := #Remoto3, SD_1 := #Local3);
+   #g(REQ := #rg, ID := #ID_Conexao, NDR => #ndr, ERROR => #eg, STATUS => #stg, ADDR_1 := #RemotoCompet, RD_1 := #rx);
+   IF NOT #Hab THEN
+      #estado := 0; #r1 := FALSE; #r2 := FALSE; #r3 := FALSE; #rg := FALSE; #CompetOk := FALSE;
+   ELSE
+      CASE #estado OF
+         0: #r1 := TRUE; #estado := 1;
+         1: IF #d1 OR #e1 THEN #Falha := #e1; #r1 := FALSE; #estado := 2; END_IF;
+         2: #r2 := TRUE; #estado := 3;
+         3: IF #d2 OR #e2 THEN #Falha := #Falha OR #e2; #r2 := FALSE; #estado := 4; END_IF;
+         4: #r3 := TRUE; #estado := 5;
+         5: IF #d3 OR #e3 THEN #Falha := #Falha OR #e3; #r3 := FALSE; #estado := 6; END_IF;
+         6: #rg := TRUE; #estado := 7;
+         7: IF #ndr OR #eg THEN
+               #Falha := #Falha OR #eg;
+               IF #ndr THEN #Compet := #rx; #CompetOk := TRUE; END_IF;
+               #rg := FALSE; #estado := 8;
+            END_IF;
+         8: #tPausa(IN := TRUE, PT := #Pausa);
+            IF #tPausa.Q THEN #tPausa(IN := FALSE, PT := #Pausa); #estado := 0; END_IF;
+      END_CASE;
+   END_IF;
+END_FUNCTION_BLOCK

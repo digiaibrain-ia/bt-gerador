@@ -1,0 +1,116 @@
+DATA_BLOCK "db3007_BC56_Com"
+TITLE = db3007_BC56_Com v0.5 (DB3007)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+NON_RETAIN
+////====================================
+//// db3007_BC56_Com (DB3007) v0.5 - RASCUNHO. Telegrama PEDIDO/RESPOSTA do BC56 (24 B). Mesmo layout do ComBC56 do ET200 (ate 16 chaves).
+//// PUT do 1515: P#DB3007.DBX0.0 BYTE 10 | GET do 1515: P#DB3007.DBX10.0 BYTE 14. Escritor unico: PEDIDO so pelo PUT; RESPOSTA so pelo fb_bancoCarga16.
+////====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;            // PEDIDO
+      vida1515 : Int;
+      ligarBanco : Bool;
+      resPut : Byte;
+      habPed : Array[1..16] of Bool;
+      seq : Int;
+      fbk : Array[1..16] of Bool;            // RESPOSTA
+      vidaET : Int;
+      seletoraAuto : Bool;
+      resGet : Byte;
+      habResp : Array[1..16] of Bool;
+      eco : Int;
+      falhaRetorno : Array[1..16] of Bool;
+      contatorColado : Array[1..16] of Bool;
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3107_BC400_Com"
+TITLE = db3107_BC400_Com v0.5 (DB3107)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+NON_RETAIN
+////====================================
+//// db3107_BC400_Com (DB3107) v0.5 - RASCUNHO. Telegrama PEDIDO/RESPOSTA do BC400 (24 B). Mesmo layout do ComBC56 do ET200 (ate 16 chaves).
+//// PUT do 1515: P#DB3107.DBX0.0 BYTE 10 | GET do 1515: P#DB3107.DBX10.0 BYTE 14. Escritor unico: PEDIDO so pelo PUT; RESPOSTA so pelo fb_bancoCarga16.
+////====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;            // PEDIDO
+      vida1515 : Int;
+      ligarBanco : Bool;
+      resPut : Byte;
+      habPed : Array[1..16] of Bool;
+      seq : Int;
+      fbk : Array[1..16] of Bool;            // RESPOSTA
+      vidaET : Int;
+      seletoraAuto : Bool;
+      resGet : Byte;
+      habResp : Array[1..16] of Bool;
+      eco : Int;
+      falhaRetorno : Array[1..16] of Bool;
+      contatorColado : Array[1..16] of Bool;
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3307_BC550_Com"
+TITLE = db3307_BC550_Com v0.5 (DB3307)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+NON_RETAIN
+////====================================
+//// db3307_BC550_Com (DB3307) v0.5 - RASCUNHO. Telegrama PEDIDO/RESPOSTA do BC550 (24 B). Mesmo layout do ComBC56 do ET200 (ate 16 chaves).
+//// PUT do 1515: P#DB3307.DBX0.0 BYTE 10 | GET do 1515: P#DB3307.DBX10.0 BYTE 14. Escritor unico: PEDIDO so pelo PUT; RESPOSTA so pelo fb_bancoCarga16.
+////====================================
+   STRUCT
+      cmd : Array[1..16] of Bool;            // PEDIDO
+      vida1515 : Int;
+      ligarBanco : Bool;
+      resPut : Byte;
+      habPed : Array[1..16] of Bool;
+      seq : Int;
+      fbk : Array[1..16] of Bool;            // RESPOSTA
+      vidaET : Int;
+      seletoraAuto : Bool;
+      resGet : Byte;
+      habResp : Array[1..16] of Bool;
+      eco : Int;
+      falhaRetorno : Array[1..16] of Bool;
+      contatorColado : Array[1..16] of Bool;
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK
+
+DATA_BLOCK "db3207_BC595_Com"
+TITLE = db3207_BC595_Com v0.5 (DB3207)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+NON_RETAIN
+////====================================
+//// db3207_BC595_Com (DB3207) v0.5 - RASCUNHO. Telegrama PEDIDO/RESPOSTA do BC595 (36 B). Mesmo layout do ComBC56 do ET200 (ate 32 chaves).
+//// PUT do 1515: P#DB3207.DBX0.0 BYTE 14 | GET do 1515: P#DB3207.DBX14.0 BYTE 22. Escritor unico: PEDIDO so pelo PUT; RESPOSTA so pelo fb_bancoCarga32.
+////====================================
+   STRUCT
+      cmd : Array[1..32] of Bool;            // PEDIDO
+      vida1515 : Int;
+      ligarBanco : Bool;
+      resPut : Byte;
+      habPed : Array[1..32] of Bool;
+      seq : Int;
+      fbk : Array[1..32] of Bool;            // RESPOSTA
+      vidaET : Int;
+      seletoraAuto : Bool;
+      resGet : Byte;
+      habResp : Array[1..32] of Bool;
+      eco : Int;
+      falhaRetorno : Array[1..32] of Bool;
+      contatorColado : Array[1..32] of Bool;
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK
+

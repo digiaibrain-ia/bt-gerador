@@ -1,0 +1,106 @@
+FUNCTION "fc_bancosNovosEt200" : Void
+TITLE = fc_bancosNovosEt200 v0.1
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.1
+////====================================
+//// fc_bancosNovosEt200 v0.1 (03/11/2026) - GERADO por gerar_banco_v0.2.py - RASCUNHO, nao compilado
+//// ONDE RODA : ET200 (Gerador_BC015). Chamar 1x por ciclo no OB1, junto do FC4 atual (que continua cuidando de BC56/BC400).
+//// O QUE FAZ : para cada banco novo, copia as tags fisicas (tabela tags_ET200_bancos_v0.1.csv, enderecos A PREENCHER)
+////             para arrays, chama o fb_bancoEt200_16/32 e devolve as saidas. Nao inventa endereco fisico.
+//// ATENCAO   : criar no TIA do ET200 as instancias "fbEt200_<banco>" (DB de instancia) e as tags da tabela, com os enderecos reais.
+////=====================================
+   VAR_TEMP
+      saida16 : Array[1..16] of Bool;
+      aux16   : Array[1..16] of Bool;
+      saida32 : Array[1..32] of Bool;
+      aux32   : Array[1..32] of Bool;
+   END_VAR
+BEGIN
+
+   // ---------------- BC59,5 (18 chaves, remoto DB40) ----------------
+   #aux32[1] := "BC595_I01";
+   #aux32[2] := "BC595_I02";
+   #aux32[3] := "BC595_I03";
+   #aux32[4] := "BC595_I04";
+   #aux32[5] := "BC595_I05";
+   #aux32[6] := "BC595_I06";
+   #aux32[7] := "BC595_I07";
+   #aux32[8] := "BC595_I08";
+   #aux32[9] := "BC595_I09";
+   #aux32[10] := "BC595_I10";
+   #aux32[11] := "BC595_I11";
+   #aux32[12] := "BC595_I12";
+   #aux32[13] := "BC595_I13";
+   #aux32[14] := "BC595_I14";
+   #aux32[15] := "BC595_I15";
+   #aux32[16] := "BC595_I16";
+   #aux32[17] := "BC595_I17";
+   #aux32[18] := "BC595_I18";
+   #aux32[19] := FALSE;
+   #aux32[20] := FALSE;
+   #aux32[21] := FALSE;
+   #aux32[22] := FALSE;
+   #aux32[23] := FALSE;
+   #aux32[24] := FALSE;
+   #aux32[25] := FALSE;
+   #aux32[26] := FALSE;
+   #aux32[27] := FALSE;
+   #aux32[28] := FALSE;
+   #aux32[29] := FALSE;
+   #aux32[30] := FALSE;
+   #aux32[31] := FALSE;
+   #aux32[32] := FALSE;
+   "fbEt200_BC595"(NumChaves := 18, SeletoraEntrada := "BC595_SEL_AUTO", Cmd := "ComBC595".cmd, Vida1515 := "ComBC595".vida1515, LigarBanco := "ComBC595".ligarBanco,
+       VidaET := "ComBC595".vidaET, Fbk := "ComBC595".fbk, SeletoraAuto := "ComBC595".seletoraAuto, SaidaContatora := #saida32, EntradaContatoAux := #aux32);
+   "BC595_Q01" := #saida32[1];
+   "BC595_Q02" := #saida32[2];
+   "BC595_Q03" := #saida32[3];
+   "BC595_Q04" := #saida32[4];
+   "BC595_Q05" := #saida32[5];
+   "BC595_Q06" := #saida32[6];
+   "BC595_Q07" := #saida32[7];
+   "BC595_Q08" := #saida32[8];
+   "BC595_Q09" := #saida32[9];
+   "BC595_Q10" := #saida32[10];
+   "BC595_Q11" := #saida32[11];
+   "BC595_Q12" := #saida32[12];
+   "BC595_Q13" := #saida32[13];
+   "BC595_Q14" := #saida32[14];
+   "BC595_Q15" := #saida32[15];
+   "BC595_Q16" := #saida32[16];
+   "BC595_Q17" := #saida32[17];
+   "BC595_Q18" := #saida32[18];
+
+   // ---------------- BC550 (12 chaves, remoto DB41) ----------------
+   #aux16[1] := "BC550_I01";
+   #aux16[2] := "BC550_I02";
+   #aux16[3] := "BC550_I03";
+   #aux16[4] := "BC550_I04";
+   #aux16[5] := "BC550_I05";
+   #aux16[6] := "BC550_I06";
+   #aux16[7] := "BC550_I07";
+   #aux16[8] := "BC550_I08";
+   #aux16[9] := "BC550_I09";
+   #aux16[10] := "BC550_I10";
+   #aux16[11] := "BC550_I11";
+   #aux16[12] := "BC550_I12";
+   #aux16[13] := FALSE;
+   #aux16[14] := FALSE;
+   #aux16[15] := FALSE;
+   #aux16[16] := FALSE;
+   "fbEt200_BC550"(NumChaves := 12, SeletoraEntrada := "BC550_SEL_AUTO", Cmd := "ComBC550".cmd, Vida1515 := "ComBC550".vida1515, LigarBanco := "ComBC550".ligarBanco,
+       VidaET := "ComBC550".vidaET, Fbk := "ComBC550".fbk, SeletoraAuto := "ComBC550".seletoraAuto, SaidaContatora := #saida16, EntradaContatoAux := #aux16);
+   "BC550_Q01" := #saida16[1];
+   "BC550_Q02" := #saida16[2];
+   "BC550_Q03" := #saida16[3];
+   "BC550_Q04" := #saida16[4];
+   "BC550_Q05" := #saida16[5];
+   "BC550_Q06" := #saida16[6];
+   "BC550_Q07" := #saida16[7];
+   "BC550_Q08" := #saida16[8];
+   "BC550_Q09" := #saida16[9];
+   "BC550_Q10" := #saida16[10];
+   "BC550_Q11" := #saida16[11];
+   "BC550_Q12" := #saida16[12];
+END_FUNCTION

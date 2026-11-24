@@ -1,0 +1,37 @@
+PACOTE DE IMPLANTACAO - BT2 v1.13 (14/11/2026) - LEIA PRIMEIRO
+
+1. Nada aqui foi importado no PC BT2, no PLC ou no DSE. Faca BACKUP (TIA e Node-RED exportado) antes. Carga de potencia sempre DESACOPLADA em teste.
+2. O simulador (02_somente_bancada) NUNCA vai para o PC de producao.
+3. PLC e Node-RED mudam JUNTOS: DB novo no PLC pede o fluxo novo logo depois (01_fluxos_importar, uma aba por vez; apague antes a aba antiga do mesmo banco, as rotas sao iguais).
+4. Checklist e roteiro: 05_documentos/IMPLANTACAO_ROTEIRO_v0.11.md e CHECKLIST_BANCADA_v0.8.md. Padrao dos fluxos: 05_documentos/PADRAO_FLUXOS_NODERED_v0.1.md.
+
+O QUE MUDOU NA v1.13 (em relacao a v1.12)
+- medidor 1.10.206 (era 1.10.201): em "Dados do ensaio" ha agora a escolha "Origem dos dados": "Manual / print do SAP (original)" (padrao, igual ao de antes) ou "Por no de serie (MES)".
+  No modo por NS: digite ou leia o NS; o medidor decifra SO pelas normas (ETD 091 rev.05 gerador, 9 caracteres; ETD 094 rev.00 torre, 8 caracteres) e preenche Motor, Alternador e Controlador.
+  Depois use a busca de modelo (catalogo): ela preenche frequencia, tensao, potencia e controlador. O que faltar, digite. Tudo continua editavel.
+  Cada campo mostra a origem: barra azul = NS, barra verde = catalogo, sem barra = digitado. Texto longo fica no icone (i): decodificacao, avisos, conflito e exemplos da norma.
+  NS fora da norma (tamanho ou formato errado) NAO preenche nada: preencha a mao. Letra que a norma nao lista nao trava: o campo fica vazio, com aviso.
+- registro-ensaio-db2100 v1.10 (era v1.9): normaliza o NS no servidor (sem espacos e *, o O cortado vira 0, maiusculas). Antes, o O cortado ia ao PLC como "?". Aceita a origem dos dados (manual ou NS) e guarda em MEMORIA do Node-RED (some se reiniciar); GET /api/ensaio/snap devolve o campo "origem". O DB2100 do PLC NAO muda.
+- Importe o fluxo registro v1.10 JUNTO com o medidor 1.10.206 (apague antes a aba do registro v1.9). Medidor novo com fluxo antigo funciona, mas o O cortado continua indo como "?" e a leitura de volta pode acusar erro.
+- Catalogo de modelos: sem mudanca (catalogo_modelos_v0.1.csv, 1663 modelos). Conferido com a pasta do Drive em 14/11: mesmo arquivo. AINDA fora do catalogo: DSE 7420MKII, 8610MKII, 8620MKII e 8610MKII_MAR (continuam em .zip grandes no Drive; descompacte la para entrarem).
+- Documentos novos em 05_documentos: DADOS_ENSAIO_POR_NS, REGISTRO_ENSAIO_V1.10_NS, DECODIFICA_SERIE_MWM. Item BK-NS-01 no backlog (gravar a origem no PLC = mudanca de PLC, so com seu OK).
+- Sem mudanca de PLC neste pacote. plc/, plc_et200/, simulador e demais fluxos iguais aos da v1.12.
+
+TESTE RAPIDO DO NS (Demo ou bancada, sem carga): abra Dados do ensaio > "Por no de serie (MES)" e digite os exemplos das normas:
+  GDWAØ4447 = gas, motor serie 12 (2V) 4 cil, WEG, DSE 4520 | DRCBØ4447 = diesel, serie 229 3 cil 3,1 L, Cramaco, DSE 7320 | DTMFØ4447 = diesel, Yanmar, Mecc Alte, Deif AGC150 | DTMØ4447 (torre) = diesel, Yanmar, Mecc Alte.
+  Confirme os dados e abra GET /api/ensaio/snap: o NS tem que vir com zero (DTMF04447), sem * e sem ponto de interrogacao; "origem" traz origemDados "ns".
+  Os exemplos tambem estao no icone (i) do quadro do NS (botao "usar").
+NAO FAZ ainda: receber o NS direto do MES (depende da TI e do formato); decifrar a string longa do MES (aplicacao + NS); gravar a origem no PLC.
+
+ANTES DE TESTAR (licoes da bancada de 14/11)
+- O PLC de ENSAIO e o 1515 (rack 0, slot 1): e nele que o Node-RED le o DB3000/DB3100. O ET200 e outro equipamento, com outro IP.
+- DB3000 (BC56) e DB3100 (BC400) tem que ser a v0.3: pelo menos 471 bytes, "Acesso otimizado" DESMARCADO. DB antigo = "Invalid address" na leitura.
+- DB3002/DB3102 (setup por tensao): pelo menos 1358 bytes.
+- CPU do 1515: "Permitir acesso via PUT/GET" habilitado.
+- Enderecos (PLC_IP, DSE_URL) vem de variavel do processo do Node-RED; nao ha IP nem senha neste pacote. Se o Node-RED roda sob o PM2 como servico do Windows, o PM2 guarda o ambiente: use "pm2 restart <app> --update-env" e "pm2 save" (PowerShell normal, mesmo usuario do servico). Erro no Debug "getaddrinfo ENOTFOUND ${PLC_IP}" = a variavel nao chegou ao Node-RED.
+- Se o medidor mostrar "PLC nao conectado": 1) abra http://localhost:1880/api/chaves/56 (tem que vir um JSON com "habilitada"); 2) importe o teste isolado e leia o Debug; 3) ping e porta 102 abertos NAO provam a sessao S7.
+
+CONTEUDO
+03_front_operacao = medidor 1.10.206 + catalogo de modelos + menu (catalogo_ferramentas.js e menu_dev_v0.3.js) + grafico. Mantenha na MESMA pasta. A pasta 06_front_desenvolvimento NAO vai para o PC de operacao.
+Confira a integridade: sha256sum -c MANIFESTO.sha256. Pasta plc/ e plc_et200/ sao do Reginaldo/programador (rascunhos, nao compilados).
+O catalogo_ferramentas.js nao leva versao no nome; a data e o rotulo do pacote estao DENTRO dele (linha "atualizado").

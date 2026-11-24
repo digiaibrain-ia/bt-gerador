@@ -1,0 +1,17 @@
+PACOTE DE IMPLANTACAO - BT2 v1.8 (13/11/2026) - LEIA PRIMEIRO
+
+1. Nada aqui foi importado no PC BT2, no PLC ou no DSE. Tudo foi testado so com PLC simulado.
+2. Faca BACKUP antes de qualquer coisa (TIA e Node-RED exportado). Carga de potencia sempre DESACOPLADA em teste.
+3. O simulador (02_somente_bancada) NUNCA vai para o PC de producao.
+4. Siga 05_documentos/IMPLANTACAO_ROTEIRO_v0.11.md e preencha 05_documentos/CHECKLIST_BANCADA_v0.8.md.
+5. Confira a integridade: sha256sum -c MANIFESTO.sha256
+6. Enderecos (PLC_IP, DSE_URL) vem de variavel do PM2; nao ha IP nem senha neste pacote.
+7. Pasta plc/ e do Reginaldo/programador (rascunhos, nao compilados). Esta versao traz a ENTREGA 1200 v0.16: PLC_CARGA_1200 (1 DB por arquivo, COMO_USAR.txt) e PLC_1515 (inclui fb104_putDseCarga, que envia o DB2000 ao PLC de Carga).
+8. Operacao = pasta 03_front_operacao (medidor 1.10.201 + catalogo de modelos + menu ☰ (catalogo_ferramentas.js e menu_dev_v0.3.js) + grafico_ensaio). Mantenha estes arquivos na MESMA pasta do medidor: o menu ☰ da operacao abre so o Medidor e o Grafico. A pasta 06_front_desenvolvimento (menu ☰ com todas as ferramentas e index.html; dev = senha do Demo ou ?dev=1) NAO vai para o PC de operacao.
+9. PLC e Node-RED mudam JUNTOS: DB novo no PLC pede o fluxo novo logo depois (01_fluxos_importar, uma aba por vez). Se a tela mostrar "PLC sem leitura", o medidor nao e a causa: confira o fluxo das chaves e a conexao com o PLC (veja abaixo).
+
+O QUE E O PM2: programa que mantem o Node-RED rodando no PC BT2 (inicia sozinho, reinicia se cair) e guarda as variaveis PLC_IP e DSE_URL.
+  Comandos no PowerShell:  pm2 status  (esta rodando?)   pm2 logs --lines 50  (ultimas mensagens/erros)   pm2 restart all  (reinicia, depois de mudar variavel)
+
+TESTE RAPIDO DEPOIS DE ATUALIZAR: abra no navegador do PC BT2  http://localhost:1880/api/chaves/56  (e /400; troque a porta se for outra).
+  Tem que aparecer um JSON com "habilitada". Se nao abrir: Node-RED parado (pm2 status). Se abrir sem "habilitada" ou com erro: fluxo ou PLC (veja o no S7 no editor do Node-RED).

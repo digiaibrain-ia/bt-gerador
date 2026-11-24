@@ -1,0 +1,30 @@
+COMO USAR - PLC de Carga (S7-1214FC) - entrega v0.17   [rascunho: NAO compilado no TIA, nao testado no PLC]
+
+O QUE MUDOU DA v0.16 PARA A v0.17
+ 1) COMENTARIOS MARCADOS em todos os blocos. Cada linha de comentario comeca com uma etiqueta:
+      //[F]  FUNCIONAMENTO  (barra de ====)  o que o codigo faz e por que
+      //[M]  MONTAGEM NO TIA (barra de ----)  como importar, numerar, ligar tags, ordem de chamada
+    Dica: no TIA use "Localizar" por  //[M]  para ver so o roteiro de montagem, ou  //[F]  para ler so a logica.
+ 2) Blocos atualizados com o que foi validado no ET200 (16/11): wrapper FB com STAT (fb_bancosCarga1200), FC so organiza, DB de instancia pronto (.db),
+    "Ligar Banco" com ComOk + trava apos queda, UMA chamada por ciclo, telegrama acessado pelo NOME do campo (sem PEEK/POKE, que nunca foi provado).
+ 3) Os dois DBs de instancia antigos (db3006i e db3106i) viram UM: db3006i_BancosCarga1200 (numero 3006). Nao use mais o fb_bancoCarga16 v0.8 solto.
+ 4) PLC_1515 igual a v0.16 (nada mudou ali). ET200 nao foi alterado.
+
+ORDEM DE IMPORTACAO (fonte externa, um arquivo por vez)
+  1. db3007_BC56_Com_v0.13 e db3107_BC400_Com_v0.13 (numero MANUAL 3007 e 3107, sem acesso otimizado)
+  2. db2000_BancoTeste2_DSE_v0.2 (numero MANUAL 2000; so leitura)
+  3. fb_supervisaoChaves16_v0.9
+  4. fb_bancoCarga16_v0.9
+  5. fb_bancosCarga1200_v0.1
+  6. db3006i_BancosCarga1200_v0.1.db (instancia pronta do fb_bancosCarga1200; numero MANUAL 3006)
+  7. fc_bancosCarga1200_v0.16  -> preencha os tags marcados "<- seu tag" (retornos, seletoras, saidas, Ligar Banco)
+  8. OB1: chame o fc_bancosCarga1200 1x por ciclo. Tire das mesmas saidas a escrita do FC7/FC8 atuais.
+  9. CPU: Protecao e seguranca > Mecanismos de conexao > "Permitir acesso via PUT/GET". A conexao S7 e criada no 1515.
+ 10. Compile. Se der erro, mande a lista das mensagens e o nome do bloco.
+  Se o TIA reclamar de "tipo de parametro invalido" ao repassar array para o supervisor, avise: o remedio ja existe (copias STAT, como no ET200).
+
+1515 (quem carrega e o Reginaldo): igual a v0.16. LEMBRETE vindo do ET200: RespEcoOk := "db3000_BC56_Chaves".sbRet.respEcoOk (e o equivalente do BC400) tem que estar ligado na chamada do FB101.
+
+TESTE (carga de potencia DESACOPLADA): 1515 em Run: ComOk TRUE e vidaET mudando; comando de uma chave liga a saida; contato auxiliar nao volta em 2 s = a chave cai e trava;
+1515 sem vida por mais de 2 s = todas as saidas e o "Ligar Banco" caem; ao voltar, nada liga sozinho (so com novo comando). Repita os testes de STOP do 1515 e de cabo de rede feitos no ET200.
+HONESTO: nada disto foi compilado no TIA nem rodou no 1214FC. A logica e a mesma do ET200 (provada na bancada, la com retorno provisorio); o retorno real so aparece aqui.

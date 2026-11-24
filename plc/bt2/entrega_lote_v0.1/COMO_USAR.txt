@@ -1,0 +1,19 @@
+LOTE POR MASCARA - ENTREGA DE PLC v0.1 (RASCUNHO, NAO COMPILADO NO TIA) - 21/11/2026
+
+PARA QUE SERVE
+Comandar varias chaves de um banco no MESMO ciclo do PLC, com uma escrita so (duas mascaras + um contador), sem ler-e-reescrever palavra e sem escrever bit por bit.
+O FB do PLC (fb105 para ate 16 chaves, fb106 para 17 a 32) aplica: desliga os bits de ClrMask, liga os de SetMask (so chave habilitada e banco ligado) e reconhece com SeqAck = Seq.
+
+ESTADO HONESTO
+- Escrito em SCL e conferido contra o modelo em JavaScript (tests/plc_modelo/modelo_lote_mascara.js + tests/propriedades/lote_mascara.prop.test.js). NAO foi compilado no TIA.
+- Nada disto esta nos fluxos do Node-RED: os fluxos atuais comandam o lote bit a bit (POST /api/chaves/<banco>/lote). Os campos do DB nao existem no PLC ainda.
+
+ORDEM (so quando voce decidir ir para a bancada; carga SEMPRE desacoplada)
+1. TIA: acrescentar os campos de PLC_1515/db_campos_lote_v0.1.txt no fim dos DBs (guardar o snapshot dos valores antes). Importar fb105 (e fb106 para o BC59,5).
+2. TIA: chamar o fb105 ANTES do fb101_ComEt200 no mesmo ciclo, ligado aos campos do DB do banco. Compilar e corrigir o que o TIA apontar.
+3. Bancada (carga desacoplada): escrever as mascaras e o contador pelo TIA (tabela de observacao) e ver as chaves mudarem juntas; repetir o mesmo contador (nada deve acontecer); com o banco desligado nenhuma chave liga.
+4. So depois: nova versao dos fluxos de chaves com LoteSet/LoteClr/LoteSeq (modo mascara, desligado por padrao) e o lote do Node-RED passa a escrever 3 itens em vez de um bit por chave.
+
+COMO O FB EM JAVASCRIPT E O FB DO PLC CONVIVEM
+O contrato do lote (docs/bt2/contratos/CONTRATO_HTTP_COMANDO_EM_LOTE_v0.1.md) nao depende de quem executa a sequencia do Patamar: hoje o medidor (FB em JavaScript) manda um lote por degrau e cuida da pausa entre degraus;
+no futuro um bloco do PLC pode receber o plano inteiro e executar os degraus com temporizadores. A API e as mascaras continuam as mesmas.

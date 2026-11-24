@@ -1,0 +1,10 @@
+PACOTE DE IMPLANTACAO - BT2 v1.5 (10/11/2026) - LEIA PRIMEIRO
+
+1. Nada aqui foi importado no PC BT2, no PLC ou no DSE. Tudo foi testado so com PLC simulado.
+2. Faca BACKUP antes de qualquer coisa. Carga de potencia sempre DESACOPLADA em teste.
+3. O simulador (02_somente_bancada) NUNCA vai para o PC de producao.
+4. Siga 05_documentos/IMPLANTACAO_ROTEIRO_v0.10.md e preencha 05_documentos/CHECKLIST_BANCADA_v0.7.md.
+5. Confira a integridade: sha256sum -c MANIFESTO.sha256
+6. Enderecos (PLC_IP, DSE_URL) vem de variavel do PM2; nao ha IP nem senha neste pacote.
+7. Pasta plc/ e do Reginaldo/programador (rascunhos, nao compilados), nao da TI. So BC56 e BC400 (inclui fb100_setupChaves v0.4).
+8. Operacao = pasta 03_front_operacao (medidor + catalogo de modelos). A pasta 06_front_desenvolvimento NAO vai para o PC de operacao.

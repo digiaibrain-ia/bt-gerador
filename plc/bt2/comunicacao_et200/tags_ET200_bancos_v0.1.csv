@@ -1,0 +1,63 @@
+nome;tipo;endereco;comentario
+BC595_I01;Bool;;contato auxiliar da contatora 1 do BC59,5
+BC595_I02;Bool;;contato auxiliar da contatora 2 do BC59,5
+BC595_I03;Bool;;contato auxiliar da contatora 3 do BC59,5
+BC595_I04;Bool;;contato auxiliar da contatora 4 do BC59,5
+BC595_I05;Bool;;contato auxiliar da contatora 5 do BC59,5
+BC595_I06;Bool;;contato auxiliar da contatora 6 do BC59,5
+BC595_I07;Bool;;contato auxiliar da contatora 7 do BC59,5
+BC595_I08;Bool;;contato auxiliar da contatora 8 do BC59,5
+BC595_I09;Bool;;contato auxiliar da contatora 9 do BC59,5
+BC595_I10;Bool;;contato auxiliar da contatora 10 do BC59,5
+BC595_I11;Bool;;contato auxiliar da contatora 11 do BC59,5
+BC595_I12;Bool;;contato auxiliar da contatora 12 do BC59,5
+BC595_I13;Bool;;contato auxiliar da contatora 13 do BC59,5
+BC595_I14;Bool;;contato auxiliar da contatora 14 do BC59,5
+BC595_I15;Bool;;contato auxiliar da contatora 15 do BC59,5
+BC595_I16;Bool;;contato auxiliar da contatora 16 do BC59,5
+BC595_I17;Bool;;contato auxiliar da contatora 17 do BC59,5
+BC595_I18;Bool;;contato auxiliar da contatora 18 do BC59,5
+BC595_SEL_AUTO;Bool;;seletora do BC59,5 em Auto (1 = Auto)
+BC595_Q01;Bool;;saida da contatora 1 do BC59,5
+BC595_Q02;Bool;;saida da contatora 2 do BC59,5
+BC595_Q03;Bool;;saida da contatora 3 do BC59,5
+BC595_Q04;Bool;;saida da contatora 4 do BC59,5
+BC595_Q05;Bool;;saida da contatora 5 do BC59,5
+BC595_Q06;Bool;;saida da contatora 6 do BC59,5
+BC595_Q07;Bool;;saida da contatora 7 do BC59,5
+BC595_Q08;Bool;;saida da contatora 8 do BC59,5
+BC595_Q09;Bool;;saida da contatora 9 do BC59,5
+BC595_Q10;Bool;;saida da contatora 10 do BC59,5
+BC595_Q11;Bool;;saida da contatora 11 do BC59,5
+BC595_Q12;Bool;;saida da contatora 12 do BC59,5
+BC595_Q13;Bool;;saida da contatora 13 do BC59,5
+BC595_Q14;Bool;;saida da contatora 14 do BC59,5
+BC595_Q15;Bool;;saida da contatora 15 do BC59,5
+BC595_Q16;Bool;;saida da contatora 16 do BC59,5
+BC595_Q17;Bool;;saida da contatora 17 do BC59,5
+BC595_Q18;Bool;;saida da contatora 18 do BC59,5
+BC550_I01;Bool;;contato auxiliar da contatora 1 do BC550
+BC550_I02;Bool;;contato auxiliar da contatora 2 do BC550
+BC550_I03;Bool;;contato auxiliar da contatora 3 do BC550
+BC550_I04;Bool;;contato auxiliar da contatora 4 do BC550
+BC550_I05;Bool;;contato auxiliar da contatora 5 do BC550
+BC550_I06;Bool;;contato auxiliar da contatora 6 do BC550
+BC550_I07;Bool;;contato auxiliar da contatora 7 do BC550
+BC550_I08;Bool;;contato auxiliar da contatora 8 do BC550
+BC550_I09;Bool;;contato auxiliar da contatora 9 do BC550
+BC550_I10;Bool;;contato auxiliar da contatora 10 do BC550
+BC550_I11;Bool;;contato auxiliar da contatora 11 do BC550
+BC550_I12;Bool;;contato auxiliar da contatora 12 do BC550
+BC550_SEL_AUTO;Bool;;seletora do BC550 em Auto (1 = Auto)
+BC550_Q01;Bool;;saida da contatora 1 do BC550
+BC550_Q02;Bool;;saida da contatora 2 do BC550
+BC550_Q03;Bool;;saida da contatora 3 do BC550
+BC550_Q04;Bool;;saida da contatora 4 do BC550
+BC550_Q05;Bool;;saida da contatora 5 do BC550
+BC550_Q06;Bool;;saida da contatora 6 do BC550
+BC550_Q07;Bool;;saida da contatora 7 do BC550
+BC550_Q08;Bool;;saida da contatora 8 do BC550
+BC550_Q09;Bool;;saida da contatora 9 do BC550
+BC550_Q10;Bool;;saida da contatora 10 do BC550
+BC550_Q11;Bool;;saida da contatora 11 do BC550
+BC550_Q12;Bool;;saida da contatora 12 do BC550

@@ -1,0 +1,163 @@
+FUNCTION_BLOCK "fb_bancoCarga16"
+TITLE = fb_bancoCarga16 v0.5 (1200)
+AUTHOR : 'RegLobo'
+VERSION : 0.5
+////====================================
+//// fb_bancoCarga16 v0.5 (09/11/2026) - RASCUNHO, nao compilado, nao testado no PLC. PORTE para o S7-1200 do fb_bancoEt200_16 (mesma logica; TON -> TON_TIME).
+//// ONDE RODA : PLC de cargas (S7-1200). 1 instancia por banco, 1x por ciclo.
+//// O QUE FAZ : lado do banco do telegrama PUT/GET do 1515 (ate 16 chaves): vidaET a cada ~100 ms; sem vida do 1515 por TempoPerdaMs (2 s) = ComOk FALSE e saidas FALSE;
+////   religacao so com novo comando; saida = Cmd E ComOk E LigarBanco E seletora Auto E Permite (fb_supervisaoChaves16: SB some -> CB cai em 2 s, falha travada).
+//// DB_ANY    : recebe SO o numero do DB do telegrama (DbCom). Le o PEDIDO por offset (PEEK) no inicio do ciclo e escreve so a RESPOSTA (POKE) no fim. Offsets = DB ComBC (24 B).
+//// ESCRITOR UNICO : PEDIDO so pelo PUT do 1515; RESPOSTA so por este FB. DB invalido (0) = nada liga.
+//// CONFERIR no TIA: parametros de PEEK/POKE na CPU; DB do telegrama com S7_Optimized_Access := FALSE.
+////====================================
+   VAR_INPUT
+      DbCom            : DB_ANY;                    // NUMERO do DB do telegrama (ex.: DB3007)
+      NumChaves        : Int;                       // chaves reais deste banco (1..16)
+      SeletoraEntrada  : Bool;                      // entrada fisica: seletora do banco em Auto (1 = Auto)
+      TempoPerdaMs     : Time := T#2S;              // menor que o TempoVida do 1515 (3 s)
+      TempoRetornoMs   : Int := 2000;               // T de verificacao do retorno SB (decisao do Reginaldo: 2 s)
+   END_VAR
+   VAR_OUTPUT
+      ComOk : Bool;
+   END_VAR
+   VAR_IN_OUT
+      SaidaContatora    : Array[1..16] of Bool;   // saidas fisicas (copiadas pelo fc_bancosCarga1200)
+      EntradaContatoAux : Array[1..16] of Bool;   // contatos auxiliares fisicos
+   END_VAR
+   VAR
+      _tOsc100ms   : TON_TIME;
+      _sup         : "fb_supervisaoChaves16";   // v0.3: supervisao do retorno SB (multi-instancia)
+      _tPerda      : TON_TIME;
+      _vida1515Ant : Int;
+      _vidaMudou   : Bool;
+      _comOkAnt    : Bool;
+      _cmdAnt      : Array[1..16] of Bool;
+      _bloq        : Array[1..16] of Bool;   // v0.2: TRUE = caiu a comunicacao (ou partida); so solta com Cmd[i] = FALSE
+      _partiu      : Bool;                     // v0.2: FALSE no 1o ciclo apos partida
+      _n           : Int;                      // v0.2: NumChaves limitado a 0..16
+      i            : Int;
+      Cmd : Array[1..16] of Bool;
+      HabPed : Array[1..16] of Bool;
+      Vida1515 : Int;
+      LigarBanco : Bool;
+      Seq : Int;
+      HabResp : Array[1..16] of Bool;
+      FalhaRetorno : Array[1..16] of Bool;
+      ContatorColado : Array[1..16] of Bool;
+      Fbk : Array[1..16] of Bool;
+      Eco : Int;
+      VidaET : Int;
+      SeletoraAuto : Bool;
+      _dbCom : UInt;
+      _k : Int;
+   END_VAR
+
+   VAR CONSTANT
+      AREA_DB : Byte := 16#84;   // area "bloco de dados" para PEEK/POKE
+      OFS_CMD : UInt := 0;
+      OFS_VIDA : UInt := 2;
+      OFS_LIG : UInt := 4;
+      OFS_HAB : UInt := 6;
+      OFS_SEQ : UInt := 8;
+      OFS_FBK : UInt := 10;
+      OFS_VIDAET : UInt := 12;
+      OFS_SEL : UInt := 14;
+      OFS_HABR : UInt := 16;
+      OFS_ECO : UInt := 18;
+      OFS_FALHA : UInt := 20;
+      OFS_COL : UInt := 22;
+   END_VAR
+
+BEGIN
+   // 0) DB_ANY -> numero. DB invalido = estado seguro (nada liga)
+   #_dbCom := DB_ANY_TO_UINT(#DbCom);
+   IF #_dbCom = 0 THEN
+      #ComOk := FALSE;
+      FOR #i := 1 TO 16 DO #SaidaContatora[#i] := FALSE; END_FOR;
+      RETURN;
+   END_IF;
+   // 0b) LE O PEDIDO do DB (so leitura)
+   FOR #_k := 1 TO 16 DO
+      #Cmd[#_k] := PEEK_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_CMD + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8);
+   END_FOR;
+   FOR #_k := 1 TO 16 DO
+      #HabPed[#_k] := PEEK_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_HAB + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8);
+   END_FOR;
+   #Vida1515 := WORD_TO_INT(PEEK_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_VIDA));
+   #LigarBanco := PEEK_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_LIG, bitOffset := 0);
+   #Seq := WORD_TO_INT(PEEK_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_SEQ));
+
+// ---- logica do ET200 (inalterada) ----
+   #_tOsc100ms(IN := NOT #_tOsc100ms.Q, PT := T#100MS);
+   IF #_tOsc100ms.Q THEN
+      #VidaET := #VidaET + 1;
+      IF #VidaET >= 32767 THEN #VidaET := 0; END_IF;
+   END_IF;
+
+   IF #Vida1515 <> #_vida1515Ant THEN
+      #_vida1515Ant := #Vida1515;
+      #_vidaMudou := TRUE;
+   ELSE
+      #_vidaMudou := FALSE;
+   END_IF;
+   #_tPerda(IN := NOT #_vidaMudou, PT := #TempoPerdaMs);   // vida nova reseta; sem vida nova conta
+   #ComOk := NOT #_tPerda.Q;
+
+   #_n := #NumChaves;
+   IF #_n < 0 THEN #_n := 0; END_IF;
+   IF #_n > 16 THEN #_n := 16; END_IF;
+
+   // v0.2: queda de comunicacao (ou 1o ciclo) TRAVA todas as chaves; cada uma so solta quando o 1515 manda Cmd = FALSE.
+   FOR #i := 1 TO 16 DO
+      IF NOT #ComOk OR NOT #_partiu THEN
+         #_bloq[#i] := TRUE;
+      ELSIF NOT #Cmd[#i] THEN
+         #_bloq[#i] := FALSE;
+      END_IF;
+   END_FOR;
+   #_partiu := TRUE;
+
+   #SeletoraAuto := #SeletoraEntrada;
+
+   // v0.3: supervisao do retorno (SB some -> CB cai, T = TempoRetornoMs), habilitar/desabilitar com resposta e eco do seq.
+   // SaidaQ = imagem das saidas do ciclo anterior (SaidaContatora); AuxIn = contatos auxiliares fisicos.
+   #_sup(NumChaves := #_n, TempoRetornoMs := #TempoRetornoMs, ComOk := #ComOk, Seq := #Seq,
+         Cmd := #Cmd, HabPed := #HabPed, SaidaQ := #SaidaContatora, AuxIn := #EntradaContatoAux,
+         HabResp := #HabResp, FalhaRetorno := #FalhaRetorno, ContatorColado := #ContatorColado);
+   #Eco := #_sup.Eco;
+
+   FOR #i := 1 TO 16 DO
+      IF #i <= #_n THEN
+         #Fbk[#i] := #EntradaContatoAux[#i];
+         IF #ComOk AND #LigarBanco AND #SeletoraEntrada AND NOT #_bloq[#i] AND #_sup.Permite[#i] THEN   // v0.3: Permite = habilitada E sem falha travada
+            #SaidaContatora[#i] := #Cmd[#i];
+         ELSE
+            #SaidaContatora[#i] := FALSE;
+         END_IF;
+         #_cmdAnt[#i] := #Cmd[#i];
+      ELSE
+         #Fbk[#i] := FALSE;
+         #SaidaContatora[#i] := FALSE;
+      END_IF;
+   END_FOR;
+
+   #_comOkAnt := #ComOk;
+
+   // 9) ESCREVE A RESPOSTA no DB (so a faixa da RESPOSTA; o PEDIDO nunca e escrito aqui)
+   FOR #_k := 1 TO 16 DO
+      POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_FBK + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8, value := #Fbk[#_k]);
+   END_FOR;
+   FOR #_k := 1 TO 16 DO
+      POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_HABR + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8, value := #HabResp[#_k]);
+   END_FOR;
+   FOR #_k := 1 TO 16 DO
+      POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_FALHA + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8, value := #FalhaRetorno[#_k]);
+   END_FOR;
+   FOR #_k := 1 TO 16 DO
+      POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_COL + (#_k - 1) / 8, bitOffset := (#_k - 1) MOD 8, value := #ContatorColado[#_k]);
+   END_FOR;
+   POKE_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_VIDAET, value := INT_TO_WORD(#VidaET));
+   POKE_WORD(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_ECO, value := INT_TO_WORD(#Eco));
+   POKE_BOOL(area := #AREA_DB, dbNumber := #_dbCom, byteOffset := #OFS_SEL, bitOffset := 0, value := #SeletoraAuto);
+END_FUNCTION_BLOCK

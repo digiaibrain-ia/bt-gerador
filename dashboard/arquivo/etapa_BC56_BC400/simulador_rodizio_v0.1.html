@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.1"><title>Simulador de rodízio e entrada de chaves</title>
+<!-- simulador_rodizio_v0.1.html · 27/10/2026
+  PARA QUE SERVE: testar, SEM PLC, o motor de sugestão de chaves + rodízio + entrada escalonada (módulo rodizio_chaves_v0.1.js,
+  embutido abaixo). O operador pode trocar a seleção sugerida por outra à mão. Nada aqui fala com PLC/Node-RED.
+  ESTADOS DE CADA CHAVE (3 coisas diferentes, como combinado): PEDIDA (comando enviado) → SAÍDA ATIVA → CONFIRMADA (retorno físico).
+  Aqui o retorno físico é SIMULADO (atraso fixo) — no real vem do feedback do PLC. -->
+<style>
+:root{color-scheme:light;--bg:#f4f3f0;--sf:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--mut:#6f6e69;--ln:#dedcd5;--blue:#2a78d6;--ok:#006300;--bad:#d03b3b;--warn:#8a5a00}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0d0d0d;--sf:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--mut:#a09f98;--ln:#2c2c2a;--blue:#3987e5;--ok:#0ca30c;--bad:#ec5f5f;--warn:#fab219}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,"Segoe UI",sans-serif;padding:12px 16px}
+h1{font-size:18px;margin:0 0 8px}h2{font-size:14px;margin:0 0 8px}
+.g{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:12px 14px}
+label{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:4px 0;color:var(--ink2)}input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--ln);border-radius:6px;padding:4px 6px;width:120px}
+button{font:inherit;color:var(--ink);background:var(--sf);border:1px solid var(--ln);border-radius:7px;padding:6px 12px;min-height:34px;cursor:pointer}button.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.bc{margin:10px 0}.bc h3{margin:0 0 6px;font-size:14px}.ch{display:grid;grid-template-columns:repeat(13,minmax(58px,1fr));gap:6px}
+.c{border:2px solid var(--ln);border-radius:8px;padding:5px 3px;text-align:center;background:var(--bg);font-variant-numeric:tabular-nums}
+.c b{display:block;font-size:15px}.c small{display:block;color:var(--mut);font-size:11px}.c .n{font-size:10.5px;color:var(--mut)}
+.c button{min-height:26px;padding:2px 6px;width:100%;font-size:12px;margin-top:3px}
+.c.sug{border-style:dashed;border-color:var(--blue)}.c.sel{background:color-mix(in srgb,var(--blue) 22%,var(--bg))}
+.c.ped{border-color:var(--warn)}.c.ativa{border-color:var(--blue);border-style:solid}.c.conf{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 20%,var(--bg))}
+.c.dis{opacity:.45}.c .est{font-size:10.5px;font-weight:650;min-height:14px}
+.res{font-size:20px;font-weight:620}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+pre{background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:8px;max-height:180px;overflow:auto;font-size:12px;margin:6px 0 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+</style></head><body>
+<h1>Simulador de rodízio e entrada de chaves <small style="font-weight:400;color:var(--mut)">v0.1 · só protótipo, sem PLC</small></h1>
+<div class="g">
+ <div class="card"><h2>Alvo</h2>
+  <label>Bancos <span><label style="display:inline"><input type="checkbox" id="u56" style="width:auto"> BC56</label> <label style="display:inline"><input type="checkbox" id="u400" checked style="width:auto"> BC400</label></span></label>
+  <label>kW a 100 % (do modelo) <input id="kw100" type="number" value="200" step="1"></label>
+  <label>Patamar (%) <select id="pat"><option>0</option><option>30</option><option selected>50</option><option>100</option><option>107</option></select></label>
+  <label>Modo do alvo <select id="modo"><option value="abaixo">nunca acima</option><option value="minimo">atingir o mínimo</option></select></label>
+  <label>Excesso aceito (kW), modo mínimo <input id="exc" type="number" value="4" step="0.5"></label>
+  <label>Limite de segurança (% de 100 %) <input id="lim" type="number" value="110" step="1"></label>
+  <div id="limKw" style="font-size:12.5px"></div>
+  <div class="mut" style="color:var(--mut);font-size:12px">O limite de segurança (110 %) é PROVISÓRIO — a engenharia define (o usuário citou 107 a 112 %). Valor de 100 % e excesso são ENTRADAS de exemplo: digite os do modelo (a regra de 100 % ainda depende da engenharia).</div></div>
+ <div class="card"><h2>Rodízio (macio)</h2>
+  <label>Critério <select id="crit"><option value="ambos">acionamentos + horas</option><option value="acion">só acionamentos</option><option value="horas">só horas</option></select></label>
+  <label>Peso acionamentos <input id="pa" type="number" value="1" step=".1"></label><label>Peso horas <input id="ph" type="number" value="1" step=".1"></label>
+  <label>Folga de erro (kW) <input id="folga" type="number" value="0" step=".5"></label>
+  <div class="row"><button id="bSim">Simular 10 ensaios (30-50-100-107 %)</button></div></div>
+ <div class="card"><h2>Entrada escalonada</h2>
+  <label>Degrau máx. (kW) — vazio = tudo de uma vez <input id="deg" type="number" placeholder="tudo junto" step="5"></label>
+  <label>Pausa entre degraus (s) <input id="pausa" type="number" value="5" step="1"></label>
+  <label>Desligar imediato <input id="desl" type="checkbox" checked style="width:auto"></label>
+  <div style="color:var(--mut);font-size:12px">Tempos a aprender com os operadores. 0 s/vazio = sem espera.</div></div>
+</div>
+<div class="card bc" id="bancos" style="margin-top:12px"></div>
+<div class="g"><div class="card"><div class="row" style="margin:0 0 8px"><button class="pri" id="bSug">Sugerir chaves</button><button id="bAp" title="Aplica a seleção atual (sugerida ou editada) seguindo o plano de entrada">Confirmar e aplicar</button><button id="bZ">Desligar tudo</button></div>
+ <div id="res" class="res">—</div><div id="msg"></div></div>
+ <div class="card"><h2>Plano de entrada</h2><pre id="plano">—</pre></div></div>
+<p style="color:var(--mut);font-size:12.5px">Como usar: <b>Sugerir</b> mostra a sugestão (borda tracejada). Clique numa chave para <b>mudar a seleção à mão</b> (o sistema só avisa se passou do alvo, não pergunta nada). <b>Confirmar e aplicar</b> executa o plano. “trocada” zera o desgaste da chave. Marque “hab.” para habilitar/desabilitar.</p>
+<script>/* =============================================================================
+   rodizio_chaves_v0.1.js — Sugestão de chaves, rodízio de desgaste e entrada escalonada.  v0.1 · 27/10/2026
+   -----------------------------------------------------------------------------
+   PARA QUE SERVE (equipe não técnica)
+     Dado o alvo de carga em kW, sugere QUAIS chaves do banco ligar, de modo que:
+       1) o erro em relação ao alvo seja o MENOR possível;
+       2) as chaves de mesmo kW sejam usadas em RODÍZIO (as menos usadas primeiro) — de forma "macia":
+          o rodízio só desempata, nunca aumenta o erro;
+       3) mexa o MÍNIMO possível nas chaves que já estão ligadas (menos tempo).
+     Também (a) avalia uma seleção feita à mão pelo operador e (b) monta o PLANO DE ENTRADA: se o gerador precisa
+     de tempo entre um grupo de chaves e outro (ex.: gerador mecânico com regulador GOV que dispara no degrau a seco),
+     a carga entra em degraus com pausa entre eles. O tempo é parâmetro: 0 = tudo de uma vez.
+   O QUE ESTE ARQUIVO NÃO FAZ
+     Não fala com PLC/Node-RED, não liga chave, não decide aprovação do ensaio. Só calcula (funções puras):
+     é o protótipo que depois vira FB(s) no PLC (ver PROPOSTA_ARQUITETURA_FB_MAE_FILHOS_v0.1.md, filhos 4, 5, 10 e 11).
+   DE ONDE VÊM OS DADOS
+     kW de cada chave = tabela física confirmada pelo usuário em 27/10/2026 (TABELA_FISICA abaixo).
+     Todo o resto (folgas, pesos, tempos) é PARÂMETRO: o valor padrão é marcado "ASSUMIDO — a confirmar".
+   ============================================================================= */
+(function (raiz) {
+  'use strict';
+
+  /** kW de cada chave, na ORDEM FÍSICA (= ordem das "chavinhas" e do PLC). Fonte: tabela enviada pelo usuário (27/10/2026).
+   *  Por quê aqui: um único lugar; se a engenharia corrigir, só muda esta tabela. BC56 e BC400 são sistemas distintos. */
+  const TABELA_FISICA = {
+    BC400: [5, 5, 10, 10, 10, 10, 50, 50, 50, 50, 50, 50, 50],   // soma 400
+    BC56:  [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 3]               // soma 56
+  };
+
+  /** Parâmetros padrão. Tudo que é número aqui é AJUSTÁVEL pela engenharia/operadores. */
+  const PADRAO = {
+    modoAlvo: 'abaixo',      // 'abaixo' = nunca passar do alvo (regra do usuário) · 'minimo' = tem de atingir o alvo (ex.: 107 %)
+    excessoMaxKw: 0,         // só no modo 'minimo': quanto acima do alvo é aceito. ASSUMIDO — a confirmar (±2 % de 107 % vem da conversa de 27/10)
+    folgaErroKw: 0,          // diferença de erro (kW) em que o rodízio ainda pode decidir. 0 = só desempata. ASSUMIDO — a confirmar
+    rodizio: { criterio: 'ambos', pesoAcion: 1, pesoHoras: 1 }, // 'acion' | 'horas' | 'ambos' (os DOIS existem, como pedido)
+    pesoMudanca: 0.01,       // custo de cada chave que muda de estado (menos tempo/menos manobra). ASSUMIDO — a confirmar
+    escalonamento: { degrauMaxKw: null, pausaS: 0, desligaImediato: true } // null = tudo de uma vez (tempo desconhecido; aprender com operadores)
+  };
+
+  const mescla = (a, b) => Object.assign({}, a, b || {});
+  const soma = (kws, sel) => kws.reduce((t, k, i) => t + (sel[i] ? k : 0), 0);
+  const arred = x => Math.round(x * 1000) / 1000;
+
+  /** Custo de desgaste de uma chave (0..~2): quanto MAIS usada, MAIOR o custo.
+   *  Por quê normalizar: acionamentos e horas têm escalas diferentes; dividimos pelo maior valor do banco. */
+  function custosDesgaste(estado, n, cfg) {
+    const ac = estado && estado.acion || [], hr = estado && estado.horas || [];
+    const maxA = Math.max(1, ...Array.from({ length: n }, (_, i) => ac[i] || 0));
+    const maxH = Math.max(1, ...Array.from({ length: n }, (_, i) => hr[i] || 0));
+    const c = [];
+    for (let i = 0; i < n; i++) {
+      const a = (ac[i] || 0) / maxA, h = (hr[i] || 0) / maxH;
+      c.push(cfg.criterio === 'acion' ? a * cfg.pesoAcion : cfg.criterio === 'horas' ? h * cfg.pesoHoras : a * cfg.pesoAcion + h * cfg.pesoHoras);
+    }
+    return c;
+  }
+
+  /** Para UM banco: lista, para cada soma de kW possível, a MELHOR seleção (menor desgaste; depois menos mudanças).
+   *  Por quê: são no máx. 2^13 = 8192 combinações por banco — rápido, e nunca deixa escapar a melhor. Só chaves HABILITADAS entram. */
+  function opcoesDoBanco(b, p) {
+    const n = b.kws.length, hab = b.habil || b.kws.map(() => true);
+    const idx = []; for (let i = 0; i < n; i++) if (hab[i]) idx.push(i);
+    const cust = custosDesgaste(b.estado, n, p.rodizio), atual = b.atual || b.kws.map(() => false);
+    const melhor = new Map();
+    for (let m = 0; m < (1 << idx.length); m++) {
+      const sel = new Array(n).fill(false); let kw = 0, cd = 0, mud = 0;
+      for (let j = 0; j < idx.length; j++) if (m & (1 << j)) { sel[idx[j]] = true; kw += b.kws[idx[j]]; cd += cust[idx[j]]; }
+      for (let i = 0; i < n; i++) if (sel[i] !== !!atual[i]) mud++;
+      const k = arred(kw), custo = cd + p.pesoMudanca * mud, ant = melhor.get(k);
+      if (!ant || custo < ant.custo - 1e-9) melhor.set(k, { kw: k, sel, custo, mud, cd });
+    }
+    return melhor;
+  }
+
+  /** SUGERE a seleção de chaves para o alvo (kW) usando 1 ou 2 bancos combinados (BC56 + BC400).
+   *  Entrada: { bancos:[{id,kws,habil[],estado:{acion[],horas[]},atual[]}], alvoKw, ...parâmetros }
+   *  Saída: { selecao:{id:[bool]}, total, erro, dentro, aviso, candidatos } */
+  function sugere(ent) {
+    const p = mescla(PADRAO, ent); p.rodizio = mescla(PADRAO.rodizio, ent.rodizio);
+    const alvo = ent.alvoKw, ops = ent.bancos.map(b => opcoesDoBanco(b, p));
+    // combina os bancos: cada banco escolhe 1 soma; guardamos a soma total e o custo somado
+    let comb = [{ kw: 0, partes: [], custo: 0 }];
+    ops.forEach((m, bi) => {
+      const novo = [];
+      comb.forEach(c => m.forEach(o => novo.push({ kw: arred(c.kw + o.kw), partes: c.partes.concat([o]), custo: c.custo + o.custo })));
+      comb = novo;
+    });
+    // erro: 'abaixo' = alvo - total (total <= alvo) · 'minimo' = total - alvo (alvo <= total <= alvo+excesso)
+    const valido = c => p.modoAlvo === 'minimo' ? (c.kw >= alvo - 1e-9 && c.kw <= alvo + p.excessoMaxKw + 1e-9) : c.kw <= alvo + 1e-9;
+    const erroDe = c => Math.abs(c.kw - alvo);
+    const lim = limiteKw(ent.kw100, ent.pctLimite);               // a sugestão também respeita a guarda de capacidade
+    const noLimite = c => lim == null || c.kw <= lim + 1e-9;
+    let cand = comb.filter(c => valido(c) && noLimite(c)), aviso = '';
+    if (!cand.length) { // modo 'minimo' sem solução: cai para o maior valor possível e AVISA (nunca silencioso)
+      cand = comb.filter(c => c.kw <= alvo + 1e-9 && noLimite(c)); aviso = 'Não há combinação que atinja o alvo com o excesso permitido; sugerido o mais próximo abaixo.';
+    }
+    const eMin = Math.min(...cand.map(erroDe));
+    const grupo = cand.filter(c => erroDe(c) <= eMin + p.folgaErroKw + 1e-9).sort((a, b) => a.custo - b.custo || erroDe(a) - erroDe(b));
+    const esc = grupo[0], selecao = {};
+    ent.bancos.forEach((b, i) => { selecao[b.id] = esc.partes[i].sel; });
+    return { selecao, total: esc.kw, erro: arred(esc.kw - alvo), dentro: erroDe(esc) <= (p.modoAlvo === 'minimo' ? p.excessoMaxKw : 0) + 1e-9, aviso, candidatos: grupo.length };
+  }
+
+  /** AVALIA uma seleção feita à mão pelo operador (sem pedir confirmação de liga/desliga: o operador manda).
+   *  Só informa: total, diferença para o alvo e se passou do alvo (aviso, não bloqueio). */
+  function avalia(ent) {
+    const total = arred(ent.bancos.reduce((t, b) => t + soma(b.kws, ent.selecao[b.id] || []), 0));
+    const dif = arred(total - ent.alvoKw), p = mescla(PADRAO, ent);
+    const acima = dif > 1e-9 && !(p.modoAlvo === 'minimo' && dif <= p.excessoMaxKw + 1e-9);
+    return { total, dif, acima, abaixoDoMinimo: p.modoAlvo === 'minimo' && dif < -1e-9 };
+  }
+
+  /** PLANO DE ENTRADA: transforma "estado atual → seleção nova" numa lista de passos no tempo.
+   *  Por quê: alguns geradores (mecânicos com GOV) disparam se a carga entra de uma vez. O operador dá um tempo para
+   *  observar a rotação entre grupos. Aqui o tempo é PARÂMETRO (pausaS) e o tamanho do grupo também (degrauMaxKw).
+   *  degrauMaxKw null → tudo no mesmo instante (milissegundos não são perceptíveis). 0 → uma chave por passo.
+   *  Desligar: por padrão imediato (aliviar carga é seguro); pode ser escalonado também (desligaImediato:false). */
+  function planoEntrada(ent) {
+    const e = mescla(PADRAO.escalonamento, ent.escalonamento), passos = [];
+    const liga = [], desliga = [];
+    ent.bancos.forEach(b => b.kws.forEach((kw, i) => {
+      const a = !!(ent.atual[b.id] || [])[i], n = !!(ent.selecao[b.id] || [])[i];
+      if (n && !a) liga.push({ banco: b.id, idx: i, kw }); else if (!n && a) desliga.push({ banco: b.id, idx: i, kw });
+    }));
+    const agrupa = lista => {
+      lista.sort((x, y) => y.kw - x.kw);                               // maiores primeiro: o degrau mais pesado entra com o gerador "descansado"
+      if (e.degrauMaxKw == null) return lista.length ? [lista] : [];
+      const gs = []; let g = [], s = 0;
+      lista.forEach(c => { if (g.length && s + c.kw > e.degrauMaxKw) { gs.push(g); g = []; s = 0; } g.push(c); s += c.kw; });
+      if (g.length) gs.push(g); return gs;
+    };
+    let t = 0;
+    if (e.desligaImediato) { if (desliga.length) passos.push({ t: 0, liga: [], desliga }); }
+    else agrupa(desliga).forEach(g => { passos.push({ t, liga: [], desliga: g }); t += e.pausaS; });
+    agrupa(liga).forEach((g, i) => { if (i > 0 || passos.length) t = Math.max(t, 0); passos.push({ t, liga: g, desliga: [] }); t += e.pausaS; });
+    // passos que caem no mesmo instante são fundidos (ex.: desligamento imediato + 1º grupo de ligação)
+    const fund = []; passos.forEach(s => { const u = fund[fund.length - 1]; if (u && u.t === s.t) { u.liga = u.liga.concat(s.liga); u.desliga = u.desliga.concat(s.desliga); } else fund.push(s); });
+    return { passos: fund, duracaoS: fund.length ? fund[fund.length - 1].t : 0 };
+  }
+
+  /** LIMITE DE SEGURANÇA em kW = capacidade teórica do gerador (kW a 100 %) × percentual de segurança.
+   *  Por quê: ligar todas as chaves de um banco maior que o gerador pode derrubá-lo ou danificá-lo. O percentual é
+   *  PARÂMETRO da engenharia (o usuário citou algo entre 107 % e 112 %): ASSUMIDO — a confirmar. Sem os dois dados → null (e a guarda BLOQUEIA). */
+  function limiteKw(kw100, pct) { return (isFinite(kw100) && kw100 > 0 && isFinite(pct) && pct > 0) ? arred(kw100 * pct / 100) : null; }
+
+  /** GUARDA DE CAPACIDADE (filho 11): última barreira antes de qualquer comando de chave.
+   *  Regra do usuário (27/10): carga ABAIXO do alvo é permitida (o operador completa depois); ACIMA do limite é BLOQUEADO com mensagem.
+   *  Falha segura: sem limite configurado, nada é liberado. Vale para sugestão, seleção manual, plano e (futuro) automático. */
+  function guarda(ent) {
+    const lim = limiteKw(ent.kw100, ent.pctLimite);
+    const total = arred(ent.bancos.reduce((t, b) => t + soma(b.kws, ent.selecao[b.id] || []), 0));
+    if (lim == null) return { ok: false, total, limiteKw: null, excessoKw: null, mensagem: 'Bloqueado: informe a capacidade do gerador (kW a 100 %) e o percentual de segurança.' };
+    if (total > lim + 1e-9) return { ok: false, total, limiteKw: lim, excessoKw: arred(total - lim), mensagem: 'Bloqueado: ' + total + ' kW passa do limite de segurança de ' + lim + ' kW (' + ent.pctLimite + ' % de ' + ent.kw100 + ' kW). Tire chaves.' };
+    return { ok: true, total, limiteKw: lim, excessoKw: 0, mensagem: '' };
+  }
+  /** Pergunta ANTES de ligar uma chave: "se eu ligar esta, continua dentro do limite?" (usada pelo botão "pôr"). */
+  function podeLigar(ent, bancoId, idx) {
+    const sel = {}; ent.bancos.forEach(b => { sel[b.id] = (ent.selecao[b.id] || []).slice(); }); sel[bancoId][idx] = true;
+    return guarda(Object.assign({}, ent, { selecao: sel }));
+  }
+
+  /** Registra o uso de uma chave (acionamento e/ou minutos ligada). Por quê separado: quem chama (HTML/PLC) decide quando contar. */
+  function registraUso(estado, i, o) { estado.acion = estado.acion || []; estado.horas = estado.horas || [];
+    estado.acion[i] = (estado.acion[i] || 0) + (o.acionamentos || 0); estado.horas[i] = arred((estado.horas[i] || 0) + (o.horas || 0)); return estado; }
+  /** "Chave trocada" (manutenção/operador): zera o desgaste daquela chave. Por quê: chave nova não deve ser tratada como velha. */
+  function chaveTrocada(estado, i) { estado.acion = estado.acion || []; estado.horas = estado.horas || []; estado.acion[i] = 0; estado.horas[i] = 0; return estado; }
+
+  raiz.RodizioChaves = { TABELA_FISICA, PADRAO, sugere, avalia, planoEntrada, limiteKw, guarda, podeLigar, registraUso, chaveTrocada, soma };
+  if (typeof module !== 'undefined') module.exports = raiz.RodizioChaves;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+'use strict';
+const R=RodizioChaves,$=i=>document.getElementById(i);
+const BANCOS=['BC56','BC400'].map(id=>({id,kws:R.TABELA_FISICA[id],habil:R.TABELA_FISICA[id].map(()=>true),estado:{acion:[],horas:[]},
+  atual:R.TABELA_FISICA[id].map(()=>false),   // estado FÍSICO confirmado
+  sel:R.TABELA_FISICA[id].map(()=>false),     // seleção em edição (do sistema ou do operador)
+  sug:R.TABELA_FISICA[id].map(()=>false),     // última sugestão (só para desenhar a borda)
+  fase:R.TABELA_FISICA[id].map(()=>'')}));    // '' | 'ped' | 'ativa' | 'conf' (3 estados distintos)
+const ativos=()=>BANCOS.filter(b=>$('u'+b.id.slice(2)).checked);
+const alvoKw=()=>+$('kw100').value*(+$('pat').value)/100;
+function params(){const d=$('deg').value;return{modoAlvo:$('modo').value,excessoMaxKw:+$('exc').value,folgaErroKw:+$('folga').value,
+  rodizio:{criterio:$('crit').value,pesoAcion:+$('pa').value,pesoHoras:+$('ph').value},
+  escalonamento:{degrauMaxKw:d===''?null:+d,pausaS:+$('pausa').value,desligaImediato:$('desl').checked}}}
+const ent=(bs)=>Object.assign({bancos:bs.map(b=>({id:b.id,kws:b.kws,habil:b.habil,estado:b.estado,atual:b.atual})),alvoKw:alvoKw(),kw100:+$('kw100').value,pctLimite:+$('lim').value},params());
+const guardaSel=()=>{const bs=ativos();return R.guarda(Object.assign(ent(bs),{selecao:Object.fromEntries(bs.map(b=>[b.id,b.sel]))}))};
+function desenha(){
+  $('bancos').innerHTML=BANCOS.map(b=>!ativos().includes(b)?'':'<div class="bc"><h3>'+b.id+' · '+b.kws.reduce((a,c)=>a+c,0)+' kW</h3><div class="ch">'+b.kws.map((k,i)=>
+   '<div class="c'+(b.sel[i]?' sel':'')+(b.sug[i]?' sug':'')+(b.habil[i]?'':' dis')+(b.fase[i]?' '+b.fase[i]:'')+'"><b>'+k+' kW</b><small>chave '+(i+1)+'</small><div class="est">'+({ped:'pedida',ativa:'saída ativa',conf:'confirmada'}[b.fase[i]]||(b.atual[i]?'ligada':''))+'</div>'+
+   '<button data-b="'+b.id+'" data-i="'+i+'" data-a="t" '+(b.habil[i]?'':'disabled')+'>'+(b.sel[i]?'tirar':'pôr')+'</button><span class="n">ac '+(b.estado.acion[i]||0)+' · '+(b.estado.horas[i]||0).toFixed(1)+' h</span>'+
+   '<label style="font-size:11px;justify-content:center"><input type="checkbox" style="width:auto" data-b="'+b.id+'" data-i="'+i+'" data-a="h" '+(b.habil[i]?'checked':'')+'> hab.</label>'+
+   '<button data-b="'+b.id+'" data-i="'+i+'" data-a="x" title="Chave trocada: zera acionamentos e horas">trocada</button></div>').join('')+'</div></div>').join('');
+  const av=R.avalia(Object.assign({selecao:Object.fromEntries(ativos().map(b=>[b.id,b.sel]))},ent(ativos())));
+  const cl=av.acima?'bad':(av.abaixoDoMinimo?'warn':'ok');
+  const gd=guardaSel();$('limKw').innerHTML='Limite: <b>'+(gd.limiteKw==null?'—':gd.limiteKw+' kW')+'</b> (capacidade × % de segurança)';
+  $('res').innerHTML=(gd.ok?'':'<div class="bad" style="font-size:14px">'+gd.mensagem+'</div>')+'Seleção: <span class="'+cl+'">'+av.total+' kW</span> · alvo '+alvoKw().toFixed(1)+' kW · diferença '+(av.dif>0?'+':'')+av.dif.toFixed(1)+' kW';
+}
+function sugere(){
+  const bs=ativos();if(!bs.length)return;
+  BANCOS.forEach(b=>{b.sug=b.kws.map(()=>false)});
+  const r=R.sugere(ent(bs));bs.forEach(b=>{b.sel=r.selecao[b.id].slice();b.sug=r.selecao[b.id].slice()});
+  $('msg').innerHTML=(r.aviso?'<div class="warn">'+r.aviso+'</div>':'')+'<div style="color:var(--mut)">'+r.candidatos+' combinação(ões) com o mesmo erro; rodízio escolheu a menos usada.</div>';
+  mostraPlano();desenha();
+}
+function mostraPlano(){
+  const bs=ativos(),pl=R.planoEntrada(Object.assign({atual:Object.fromEntries(bs.map(b=>[b.id,b.atual])),selecao:Object.fromEntries(bs.map(b=>[b.id,b.sel]))},ent(bs)));
+  $('plano').textContent=pl.passos.length?pl.passos.map(p=>'t='+p.t+' s  '+(p.desliga.length?'DESLIGA '+p.desliga.map(c=>c.banco+'#'+(c.idx+1)).join(', ')+'  ':'')+(p.liga.length?'LIGA '+p.liga.map(c=>c.banco+'#'+(c.idx+1)+'('+c.kw+')').join(', '):'')).join('\n')+'\nduração do plano: '+pl.duracaoS+' s':'Nada a mudar.';
+  return pl;
+}
+let timers=[];
+function aplica(){
+  const gd=guardaSel();if(!gd.ok){$('msg').innerHTML='<div class="bad">'+gd.mensagem+'</div>';return}   // última barreira antes de comandar
+  timers.forEach(clearTimeout);timers=[];const pl=mostraPlano();
+  pl.passos.forEach(p=>timers.push(setTimeout(()=>{
+    p.desliga.forEach(c=>{const b=BANCOS.find(x=>x.id===c.banco);b.atual[c.idx]=false;b.fase[c.idx]=''});
+    p.liga.forEach(c=>{const b=BANCOS.find(x=>x.id===c.banco);b.fase[c.idx]='ped';
+      setTimeout(()=>{b.fase[c.idx]='ativa';desenha()},150);                       // saída do PLC ativada (simulada)
+      setTimeout(()=>{b.fase[c.idx]='conf';b.atual[c.idx]=true;R.registraUso(b.estado,c.idx,{acionamentos:1});desenha()},450); // retorno físico (simulado)
+    });desenha()},p.t*1000)));
+}
+function simula(){ // 10 ensaios: roteiro 30-50-100-107; cada patamar soma acionamentos (só chaves que mudam) e horas (min do roteiro)
+  const rot=[[30,1],[50,1],[100,5],[107,2]],bs=ativos();if(!bs.length)return;
+  for(let n=0;n<10;n++){bs.forEach(b=>b.atual=b.kws.map(()=>false));
+    rot.forEach(([pc,min])=>{const kw100=+$('kw100').value,pr=params();if(pc===107){pr.modoAlvo='minimo'}else pr.modoAlvo='abaixo';
+      const r=R.sugere(Object.assign(ent(bs),pr,{alvoKw:kw100*pc/100}));
+      bs.forEach(b=>{r.selecao[b.id].forEach((v,i)=>{if(v&&!b.atual[i])R.registraUso(b.estado,i,{acionamentos:1});if(v)R.registraUso(b.estado,i,{horas:min/60})});b.atual=r.selecao[b.id].slice()})})}
+  bs.forEach(b=>{b.atual=b.kws.map(()=>false);b.sel=b.kws.map(()=>false);b.sug=b.sel.slice()});desenha();
+}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;const b=BANCOS.find(x=>x.id===t.dataset.b),i=+t.dataset.i;
+  if(t.dataset.a==='t'){if(!b.sel[i]){const bs=ativos(),g=R.podeLigar(Object.assign(ent(bs),{selecao:Object.fromEntries(bs.map(x=>[x.id,x.sel]))}),b.id,i);
+      if(!g.ok){$('msg').innerHTML='<div class="bad">'+g.mensagem+'</div>';return}}   // GUARDA: não deixa passar do limite
+    b.sel[i]=!b.sel[i];mostraPlano()}      // o operador manda: sem pergunta de liga/desliga
+  if(t.dataset.a==='x'){R.chaveTrocada(b.estado,i)}desenha()});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.a==='h'){const b=BANCOS.find(x=>x.id===t.dataset.b);b.habil[+t.dataset.i]=t.checked;if(!t.checked)b.sel[+t.dataset.i]=false;desenha()}else{desenha();mostraPlano()}});
+$('bSug').onclick=sugere;$('bAp').onclick=aplica;$('bSim').onclick=simula;
+$('bZ').onclick=()=>{timers.forEach(clearTimeout);BANCOS.forEach(b=>{b.atual=b.kws.map(()=>false);b.sel=b.atual.slice();b.fase=b.atual.map(()=>'')});desenha();mostraPlano()};
+desenha();
+</script></body></html>

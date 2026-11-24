@@ -1,0 +1,24 @@
+DATA_BLOCK "ComBC595"
+TITLE = ComBC595 v0.2 (DB40)
+{ S7_Optimized_Access := 'FALSE' }
+AUTHOR : 'RegLobo'
+VERSION : 0.2
+NON_RETAIN
+////====================================
+//// ComBC595 (DB40) - programa "Gerador_BC015" (ET200 IM151-8 PN/DP CPU)  -  RASCUNHO v0.1 (03/11/2026), nao compilado
+//// O QUE FAZ : area de troca PUT/GET com o 1515 para o banco BC59,5 (16 bytes, 32 chaves). Par do FB103.
+//// ESCRITOR UNICO : DBB0..7 so pelo PUT do 1515; DBB8..15 so pelo FC4 do ET200 (a estender para 32 bits).
+//// Numero 40 = sugestao (apos DB38/DB39); confirmar no projeto do ET200.
+////=====================================
+   STRUCT
+      cmd : Array[1..32] of Bool;   // DBX0.0..3.7 comando das contatoras (PUT do 1515)
+      vida1515 : Int;   // DBW4 contador de vida do 1515, 0 a 32766 (PUT)
+      ligarBanco : Bool;   // DBX6.0 comando Ligar banco (PUT)
+      resPut : Byte;   // DBB7
+      fbk : Array[1..32] of Bool;   // DBX8.0..11.7 contato auxiliar de cada contatora (GET)
+      vidaET : Int;   // DBW12 contador de vida do ET200 (GET)
+      seletoraAuto : Bool;   // DBX14.0 seletora do banco em Auto, 1 = Auto (GET)
+      resGet : Byte;   // DBB15
+   END_STRUCT;
+BEGIN
+END_DATA_BLOCK

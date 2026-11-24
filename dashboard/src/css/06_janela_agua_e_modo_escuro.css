@@ -1,0 +1,73 @@
+  /* ---- janela de ajuste dos limites da água ---- */
+  .cfg-card{position:relative}
+  .cfgbtn{position:absolute;top:5px;right:6px;width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--mut);font-size:14px;line-height:1;padding:0}
+  .cfgbtn:hover{background:var(--bandh);color:var(--txt)}
+  .dlg{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--txt);padding:0;width:min(460px,92vw);box-shadow:0 14px 48px rgba(0,0,0,.4)}
+  .dlg::backdrop{background:rgba(0,0,0,.5)}
+  .dlgin{padding:18px 22px 20px}
+  .dlgtop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .dlg h3{margin:0;font-size:19px;line-height:1.25}
+  .dlgtop h3{flex:1}
+  .dlgtop .jwbtn{flex:none;margin:0;width:28px;height:28px;background:var(--band);color:var(--txt)}
+  .dlgx{flex:none;width:32px;height:32px;margin:-4px -8px 0 0;border:0;border-radius:50%;background:transparent;color:var(--mut);font-size:18px;line-height:1;padding:0}
+  .dlgx:hover{background:var(--band);color:var(--txt)}
+  .dlg p{margin:6px 0 16px;font-size:14px;color:var(--mut);line-height:1.4}
+  .dlgcampos{border:1px solid var(--line);border-radius:10px;background:var(--cardin);padding:4px 14px}
+  .dlg label{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;font-size:15px;font-weight:600}
+  .dlg label+label{border-top:1px solid var(--line)}
+  .dlg .pt{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:-1px}
+  .dlg .pt.av{background:var(--warn)}.dlg .pt.cr{background:var(--bad)}
+  .dlg .ent{display:flex;align-items:center;gap:6px;font-weight:400;color:var(--mut)}
+  .dlg input[type=number]{width:88px;font-size:20px;font-weight:700;text-align:right;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)}
+  .dlgmsg{min-height:20px;margin-top:8px;font-size:14px;font-weight:600;color:var(--bad)}
+  .dlgmsg.ok{color:var(--ok)} /* v1.9.29: feedback de "salvo" sem fechar a popup */
+  .dlgbtn{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .dlgbtn span{flex:1}
+  .dlgbtn .sec{border:0;background:transparent;color:var(--mut);font-size:14px;text-decoration:underline;padding:8px 4px}
+  .dlgbtn .sec:hover{color:var(--txt)}
+  .dlgbtn .prim{border:1px solid #000;background:#111;color:#fff;border-radius:10px;padding:11px 30px;font-size:16px;font-weight:700}
+  .dlgbtn .prim:hover{background:#000}
+  html[data-tema=escuro] .dlgbtn .prim{background:#000;border-color:#8a8a8a}
+
+  /* ---- modo escuro (opcional, botão na barra superior) ---- */
+  html[data-tema=escuro]{color-scheme:dark;--bg:#16171a;--card:#222428;--txt:#ececea;--mut:#a4a59f;--line:#3b3d43;--seg:#34363b;--ok:#3cb371;--warn:#f1b81c;--bad:#ee5a5a;--blue:#4a9be8;
+    --cardin:#2a2c30;--band:#2c2e33;--band2:#3b3e44;--bandh:#4b4e56;--h2c:#c9cac4;--tile:#33353a}
+  html[data-tema=escuro] header{background:var(--ui-tinta-esc)}
+  html[data-tema=escuro] .gchip{background:#33353a;color:#c4c5bf}
+  html[data-tema=escuro] .gchip.operando{background:#1d4d33;color:#8be3ae}
+  html[data-tema=escuro] .gchip.partindo{background:#4a3b00;color:#ffd866}
+  html[data-tema=escuro] .gbtn{background:#2c2e33;color:#eee}
+  html[data-tema=escuro] .gbtn:hover{background:#3b3e44}
+  html[data-tema=escuro] .led{background:#2a2c30;color:#ccc}
+  html[data-tema=escuro] .led i{background:#55575c}
+  html[data-tema=escuro] .led.on{border-color:#2b6a47;color:#8be3ae}
+  html[data-tema=escuro] .led.on i{background:var(--ok)}
+  html[data-tema=escuro] .led.on.red{border-color:#7a2f2f;color:#ff9c9c}
+  html[data-tema=escuro] .led.on.red i{background:var(--bad)}
+  html[data-tema=escuro] .led.na{color:#7d7e78}
+  html[data-tema=escuro] .btns button{background:#2c2e33;color:#eee}
+  html[data-tema=escuro] .btns button:active{background:#3b3e44}
+  html[data-tema=escuro] .st .b i{background:#6f7177}
+  html[data-tema=escuro] .st.done .b i{background:#8b8d93}
+  html[data-tema=escuro] .st.cur .b i{background:#e2e3df}
+  html[data-tema=escuro] .ib{background:var(--card)}
+  html[data-tema=escuro] .ib[aria-expanded=true]{background:#eee;color:#111;border-color:#eee}
+  html[data-tema=escuro] .note{background:var(--card);box-shadow:0 4px 14px rgba(0,0,0,.5)}
+  html[data-tema=escuro] .card.ok .v{color:#7ee0a6}
+  html[data-tema=escuro] .card.warn,html[data-tema=escuro] .card.al-av{background:#3d3410}
+  html[data-tema=escuro] .card.al-av .v,html[data-tema=escuro] .card.al-av .l::after{color:#ffd866}
+  html[data-tema=escuro] .card.al-cr{background:#4a1f1f}
+  html[data-tema=escuro] .card.al-cr .v,html[data-tema=escuro] .card.al-cr .l::after{color:#ff8f8f}
+  html[data-tema=escuro] .tb th.done{background:#1d4d33;color:#9be8b9}
+  html[data-tema=escuro] .tb th.done small{color:#9be8b9}
+  html[data-tema=escuro] .tb td.done{background:#1f2e25}
+  html[data-tema=escuro] .tb td.cur{background:#3d3410}
+  html[data-tema=escuro] .tb td.pend{color:#6b6c70}
+  html[data-tema=escuro] #chart{background:#1b1c1f}
+  html[data-tema=escuro] .chbar button{background:#2c2e33;color:#eee}
+  html[data-tema=escuro] #bPdf{background:#e8e8e4!important;color:#111!important;border-color:#e8e8e4!important}
+  html[data-tema=escuro] .seg button{background:#2c2e33;color:#eee}
+  html[data-tema=escuro] .seg button.on{background:#e8e8e4;color:#111}
+  html[data-tema=escuro] .cfg #go{background:#e8e8e4;color:#111}
+  html[data-tema=escuro] .cfg input[type=number]{background:#2a2c30;color:#eee;border:1px solid var(--line)}
+

@@ -1,0 +1,32 @@
+COMO USAR - teste com o ET200 (IM151-8) - entrega ET200 v0.1   [rascunho: nao compilado]
+
+O QUE E: o 1515 manda o comando de cada chave (PUT) e le o retorno (GET); o ET200 liga a contatora de verdade e devolve o contato auxiliar real.
+Mesma logica do PLC de Carga (1200). So BC56 e BC400 (13 chaves cada). ET200 = teste provisorio; DB38/DB39 e FC4 ja existem no projeto.
+
+PASTA PLC_ET200 (carregar no ET200), 1 DB por arquivo
+  db38_ComBC56 / db39_ComBC400   DB de TELEGRAMA (24 bytes). O 1515 escreve o pedido e le a resposta. Ninguem mais escreve nele.
+  fb_supervisaoChaves16          regra "contato auxiliar some -> a chave cai em 2 s". Usado dentro do fb_bancoEt200_16.
+  fb_bancoEt200_16               a logica do banco (1 por banco): vida, perda de comunicacao, religar so com novo comando, habilitar/desabilitar, SB/CB.
+  fc_bancosEt200                 onde voce liga os SEUS tags (os do FC4). E o unico bloco que voce edita.
+  DBs de INSTANCIA do fb_bancoEt200_16: NAO vem em arquivo; voce cria ao chamar o FB (passo 4).
+
+PASSO A PASSO - ET200
+ 1. Importe, um arquivo por vez, como FONTE EXTERNA, nesta ordem: db38, db39, fb_supervisaoChaves16, fb_bancoEt200_16, fc_bancosEt200.
+ 2. DB38 e DB39 JA EXISTEM com o layout antigo (12 bytes). O layout novo tem 24 bytes e SUBSTITUI o antigo: so carregue junto com o 1515 (mesma janela). Sem "Acesso otimizado".
+ 3. Abra o fc_bancosEt200: cada banco tem 3 trechos (titulo "1 de 3", "2 de 3", "3 de 3"). Siga o comentario e escreva os SEUS tags ja existentes:
+    retorno (contato auxiliar) de cada resistencia, saida de cada contatora e a seletora em Auto.
+ 4. DB DE INSTANCIA: no trecho "2 de 3" de cada banco, insira a chamada do fb_bancoEt200_16 (arraste o FB), nome ibc56_fb_bancoEt200_16 / ibc400_fb_bancoEt200_16
+    (numero livre). Os parametros estao no comentario. Apague as linhas de comentario da chamada depois.
+ 5. SAIDAS: depois disto so o fc_bancosEt200 escreve nas saidas das contatoras do BC56/BC400. Retire essa escrita do FC4 atual (senao ha 2 escritores).
+ 6. Chame o fc_bancosEt200 1 vez por ciclo no OB1. O fb_bancoEt200_16 ja incrementa o VidaET: se existir fc_vidaET, NAO chame junto.
+ 7. Se a CPU tiver a opcao de acesso PUT/GET, habilite. A conexao S7 com o 1515 e criada no 1515 (o ID vai la, em ID_Conexao).
+ 8. Compile. Se der erro, mande a lista das mensagens (e o nome do bloco).
+
+PASTA PLC_1515 (quem carrega e o Reginaldo)
+ 1. Importe: fb100_setupChaves, fb101_ComEt200, db3000_BC56_Chaves, db3100_BC400_Chaves (mesmos do PLC de Carga; so mudam o remoto e o nome da comunicacao).
+ 2. chamadas_BC56_ET200 e chamadas_BC400_ET200: PUT P#DB38.DBX0.0 BYTE 10 / GET P#DB38.DBX10.0 BYTE 14 (BC400: DB39). Preencha o ID_Conexao com o da conexao S7 do ET200.
+    As instancias (db3005i_BC56_ComEt200, db3105i_BC400_ComEt200, db3004i/db3104i ...) sao criadas ao inserir a chamada, com numero e nome manuais.
+ 3. Carregue o 1515 e o ET200 na mesma janela.
+
+TESTE (carga de potencia DESACOPLADA): vidaET mudando e ComOk TRUE; comando de uma chave liga a saida; sem retorno por 2 s a chave cai e trava e nao volta sozinha;
+sem vida do 1515 por mais de 2 s todas as saidas caem; habilitar/desabilitar (habResp e eco). Repita em BC56 e BC400.
