@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Decifrador NS/PN – espelho Dados do ensaio v0.1</title>
+<!-- =====================================================================================================================
+   decifrador_ns_card_ensaio_v0.1.html — FERRAMENTA DE VALIDAÇÃO COM A ENGENHARIA (não vai para o PC de produção) · 25/11/2026
+   GERADO por dashboard/gerador/gerar_decifrador_ns_v0.1.py a partir de decifrador_ns_template_v0.1.html. Não editar o resultado à mão.
+   PARA QUE SERVE (leigo): digita ou cola o nº de série (e o PN de 12 dígitos) e vê, letra por letra, o que cada posição significa e como o card
+   "Dados do ensaio" ficaria preenchido. A engenharia confere e responde o checklist no fim da página. Só depois disso o código vai para o HTML principal.
+   O QUE É NORMA e O QUE É HIPÓTESE:
+     · NS (ETD 091 rev.05 gerador / ETD 094 rev.00 torre) = NORMA. Usa o decodificador decodifica_serie_mwm_v0.3.js COPIADO SEM ALTERAÇÃO.
+     · PN de 12 dígitos e código MES composto = HIPÓTESE, deduzida da planilha "Mapeamento do produto gerador" (302 PN). Marcada em âmbar, "a confirmar".
+   NÃO FAZ: não fala com PLC, DSE, MES, Node-RED nem SAP; não grava nada no servidor. Sem senha, sem rede. Funciona abrindo o arquivo.
+   ===================================================================================================================== -->
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#16202b;--mut:#5b6877;--line:#c3ccd6;--azul:#2b6cb0;--azulbg:#eaf0ff;--ambar:#9a6700;--ambarbg:#fff4d6;--verde:#1f7a4d;--verm:#b42318;--vermbg:#fde8e6}
+@media (prefers-color-scheme:dark){:root:not([data-tema="claro"]){--bg:#10151b;--card:#18202a;--ink:#e6ebf1;--mut:#9aa7b6;--line:#34414f;--azul:#6aa5ee;--azulbg:#1b2a44;--ambar:#e0b341;--ambarbg:#3a3015;--verde:#4cc38a;--verm:#ff8a7e;--vermbg:#42201d}}
+:root[data-tema="escuro"]{--bg:#10151b;--card:#18202a;--ink:#e6ebf1;--mut:#9aa7b6;--line:#34414f;--azul:#6aa5ee;--azulbg:#1b2a44;--ambar:#e0b341;--ambarbg:#3a3015;--verde:#4cc38a;--verm:#ff8a7e;--vermbg:#42201d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:12px 16px 40px}
+h1{font-size:19px;margin:6px 0 2px}h2{font-size:15px;margin:0 0 8px}h3{font-size:13px;margin:12px 0 4px}
+.sub{color:var(--mut);margin:0 0 10px}
+.aviso{border:1px solid var(--ambar);background:var(--ambarbg);border-radius:8px;padding:8px 12px;margin:8px 0 12px;font-size:13px}
+.painel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0 0 12px}
+.grade{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:980px){.grade.dois{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}}
+.entrada{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:end}
+label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+input[type=text],input[type=date],input:not([type]),select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-width:0;width:100%}
+input.mono{font-family:ui-monospace,Consolas,monospace;font-size:15px;letter-spacing:.5px}
+button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+button.p{background:var(--azul);color:#fff;border-color:var(--azul)}
+.ex{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center;font-size:12px;color:var(--mut)}
+.ex button{font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:2px 8px}
+.chip{display:inline-block;padding:0 8px;border-radius:10px;border:1px solid var(--line);font-size:12px;white-space:nowrap}
+.chip.n{color:var(--azul);border-color:var(--azul)}.chip.h{color:var(--ambar);border-color:var(--ambar)}.chip.ok{color:var(--verde);border-color:var(--verde)}.chip.er{color:var(--verm);border-color:var(--verm)}
+/* espelho do card */
+.card .jt{background:#1d3a5f;color:#fff;margin:-12px -14px 10px;padding:8px 14px;border-radius:10px 10px 0 0;font-weight:600;display:flex;justify-content:space-between}
+.jlin{display:grid;gap:8px;margin:0 0 8px}.jl3{grid-template-columns:repeat(3,minmax(0,1fr))}.jl4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:620px){.jl3,.jl4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.jeqt{width:100%;border-collapse:collapse}.jeqt th{font-size:12px;color:var(--mut);text-align:left;font-weight:600;padding:2px 4px}.jeqt td{padding:2px 4px}.jeqt td:first-child{font-weight:600;white-space:nowrap;padding-right:8px}
+.jfase{display:flex;gap:14px;margin:8px 0 4px;flex-wrap:wrap}.jfase label{flex-direction:row;align-items:center;gap:5px;color:var(--ink);font-size:13px}
+input.o-ns{box-shadow:inset 4px 0 0 var(--azul);background:var(--azulbg)}
+input.o-pn{box-shadow:inset 4px 0 0 var(--ambar);background:var(--ambarbg)}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut);margin:0 0 8px}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.nocard{border:1px dashed var(--ambar);border-radius:8px;padding:8px 10px;margin-top:10px;font-size:13px}
+.nocard dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:6px 0 0}.nocard dt{color:var(--mut)}.nocard dd{margin:0;font-weight:600}
+/* decifração */
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+table.t th{font-size:12px;color:var(--mut);position:sticky;top:0;background:var(--card)}
+td.pos{white-space:nowrap;color:var(--mut)}td.ch{font:700 15px ui-monospace,Consolas,monospace}
+tr.ok td.st{color:var(--verde)}tr.av td.st{color:var(--ambar)}tr.er td.st,tr.er td.ch{color:var(--verm)}
+.hip{background:var(--ambarbg)}
+.lista{margin:4px 0;padding-left:18px}.lista li{margin:2px 0}.lista .er{color:var(--verm)}.lista .av{color:var(--ambar)}.lista .ok{color:var(--verde)}
+.rolagem{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+/* validação */
+.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0 0 8px}
+.q .qt{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.q .qt b{font-size:13.5px}
+.q p{margin:4px 0;color:var(--mut);font-size:13px}
+.q .qr{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px}.q .qr label{flex-direction:row;align-items:center;gap:4px;color:var(--ink);font-size:13px}
+.q textarea{min-height:34px;resize:vertical}
+.q[data-st="ok"]{border-left:4px solid var(--verde)}.q[data-st="ajustar"]{border-left:4px solid var(--verm)}.q[data-st="pend"]{border-left:4px solid var(--ambar)}
+.resumo{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 8px}
+footer{color:var(--mut);font-size:12px;margin-top:16px}
+</style>
+</head>
+<body>
+<main>
+<h1>Decifrador de nº de série / PN — espelho do card “Dados do ensaio”</h1>
+<p class="sub">Versão 0.1 · 25/11/2026 · para validar com a engenharia antes de mexer no HTML principal (medidor).</p>
+<div class="aviso"><b>Como ler:</b> <span class="chip n">azul = norma</span> (ETD 091 rev.05 gerador / ETD 094 rev.00 torre) · <span class="chip h">âmbar = hipótese a confirmar</span> (PN de 12 dígitos e código MES composto, deduzidos da planilha de 302 PN; não existe norma entregue para eles). Esta página não comanda nada e não fala com PLC, DSE, MES nem SAP.</div>
+
+<section class="painel" aria-label="Entrada">
+  <div class="entrada">
+    <label>Código MES composto (hipótese: M + PN + S + NS)<input id="inMes" class="mono" autocomplete="off" spellcheck="false" placeholder="M9SGD40060019SDSWA00903"></label>
+    <label>Nº de série (NS) — norma<input id="inNs" class="mono" autocomplete="off" spellcheck="false" placeholder="GDWAØ4447"></label>
+    <label>PN de 12 dígitos — hipótese<input id="inPn" class="mono" autocomplete="off" spellcheck="false" placeholder="9SGD40060019"></label>
+    <label>Data de fabricação (opcional, para avisos de data)<input id="inData" type="date"></label>
+    <div><button id="btLimpa" type="button">Limpar tudo</button></div>
+  </div>
+  <div class="ex" id="exemplos"><span>Exemplos:</span></div>
+  <p class="sub" style="margin:8px 0 0">Aceita espaços, “*” do código de barras, minúsculas e o zero cortado “Ø” (vira 0).</p>
+</section>
+
+<div class="grade dois">
+  <section class="painel card" aria-label="Espelho do card Dados do ensaio">
+    <div class="jt"><span>Dados do ensaio (espelho)</span><span id="cardSit" style="font-weight:400;font-size:12px"></span></div>
+    <div class="leg"><span><i style="background:var(--azul)"></i>veio do NS (norma)</span><span><i style="background:var(--ambar)"></i>veio do PN (hipótese)</span><span><i style="border:1px solid var(--line)"></i>digitado / sem origem</span></div>
+    <div class="jlin jl3">
+      <label>Nº de série<input id="dServ" autocomplete="off"></label>
+      <label>Versão do teste<input id="dVer" autocomplete="off"></label>
+      <label>Data<input id="dData" autocomplete="off" placeholder="dd.mm.aaaa"></label>
+    </div>
+    <div class="jlin jl4">
+      <label>Frequência (Hz)<input id="dFreq" inputmode="decimal" autocomplete="off"></label>
+      <label>Tensão (V)<input id="dTens" inputmode="decimal" autocomplete="off"></label>
+      <label>Temp. ambiente (°C)<input id="dTamb" inputmode="decimal" autocomplete="off"></label>
+      <label>Potência (kW)<input id="dPot" inputmode="decimal" autocomplete="off"></label>
+    </div>
+    <h3>Dados do equipamento</h3>
+    <table id="dEquip" class="jeqt"></table>
+    <div class="jfase">
+      <label><input type="radio" name="dFase" value="Monofásico"> Monofásico</label>
+      <label><input type="radio" name="dFase" value="Bifásico"> Bifásico</label>
+      <label><input type="radio" name="dFase" value="Trifásico"> Trifásico</label>
+    </div>
+    <div class="nocard">
+      <b>Informações que a decifração entrega mas o card de hoje NÃO tem campo</b> (decidir com a engenharia se entram):
+      <dl id="semCampo"></dl>
+    </div>
+    <p class="sub" style="margin:8px 0 0">Nomes, ordem e colunas copiados do card atual do medidor (v1.10.231). Mudar o código reescreve os campos; o que for digitado à mão não é guardado.</p>
+  </section>
+
+  <div>
+    <section class="painel" aria-label="Decifração">
+      <h2>Decifração caractere a caractere</h2>
+      <div id="decNs"></div>
+      <div id="decPn"></div>
+      <div id="decCruz"></div>
+      <div id="decVazio" class="sub">Digite um código acima para ver a decifração.</div>
+    </section>
+  </div>
+</div>
+
+<section class="painel" aria-label="Validação com a engenharia">
+  <h2>Validação com a engenharia</h2>
+  <div class="resumo" id="qResumo"></div>
+  <div class="bar"><label style="flex-direction:row;align-items:center;gap:6px;color:var(--ink)">Respondido por<input id="qQuem" placeholder="nome" style="max-width:200px"></label><button id="qExporta" class="p" type="button">Exportar respostas (.json)</button><button id="qCopia" type="button">Copiar resumo (texto)</button><button id="qImporta" type="button">Importar respostas</button><input id="qArq" type="file" accept=".json,application/json" hidden><span id="qMsg" class="sub" style="margin:0"></span></div>
+  <p class="sub" style="margin:0 0 8px">As respostas ficam guardadas só neste navegador. Para não perder e para devolver ao Reginaldo, use <b>Exportar respostas</b> e envie o arquivo.</p>
+  <div id="qLista"></div>
+</section>
+
+<section class="painel" aria-label="Planilha">
+  <h2>Planilha “Mapeamento do produto gerador” × estrutura inferida do PN</h2>
+  <p class="sub" id="plResumo"></p>
+  <div class="bar"><label style="flex-direction:row;align-items:center;gap:6px;color:var(--ink)"><input type="checkbox" id="plSo"> só divergências</label><input id="plBusca" placeholder="filtrar (ex.: 9SGD, VOLVO)" style="max-width:260px"></div>
+  <div class="rolagem"><table class="t" id="plTab"></table></div>
+</section>
+
+<footer>Fontes: ETD 091 rev.05 (gerador), ETD 094 rev.00 (torre), planilha “Mapeamento do produto gerador”, card Dados do ensaio do medidor v1.10.231. O PN segue a estrutura do QP-7323.1686 tabela 3 (citada na ETD 091 item 2), que NÃO foi entregue: por isso a decifração do PN é hipótese.</footer>
+</main>
+
+<script>
+/*@@MODULO@@*/
+</script>
+<script>
+(function () {
+  'use strict';
+  const S = window.MWM_SERIE;
+  const PLANILHA = /*@@PLANILHA@@*/[];   // [pn, combustível planilha, motor planilha, kVA planilha]
+  const $ = id => document.getElementById(id);
+  const h = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const limpa = e => { while (e.firstChild) e.removeChild(e.firstChild); return e; };
+  const num = x => String(Math.round(x * 10) / 10).replace('.', ',');
+
+  /* ===== HIPÓTESE: PN de 12 dígitos, deduzido da planilha (302 PN). Nada disto vem de norma. ===== */
+  const PN_FAB = { M: ['MWM', 'ABCRHWDFUY'], S: ['SCANIA', 'S'], V: ['VOLVO', 'V'], Y: ['YANMAR', 'T'], B: ['SDEC', 'Z'], Z: ['YUCHAI', ''], D: ['MAN', 'M'] };
+  const PN_COMB = { D: 'Diesel', G: 'Gás natural', B: 'Biogás' };
+  const FATOR_KW = 0.8;   // planilha: kW = kVA × 0,8
+  function decodificaPN(txt) {
+    const n = S.normaliza(txt), r = { pn: n, valido: false, erros: [], avisos: [] };
+    if (!/^[A-Z0-9]{12}$/.test(n)) { r.erros.push('PN deve ter 12 caracteres alfanuméricos (veio ' + n.length + ').'); return r; }
+    let m = /^(9)([A-Z])(G)([DGB])(\d{3})([56])(00)(\d)(9)$/.exec(n), lay = 3;
+    if (!m) { m = /^(9)([A-Z])(G)([DGB])(\d{4})([56])(0)(\d)(9)$/.exec(n); lay = 4; }
+    if (!m) {
+      if (n[0] !== '9') r.erros.push('Posição 1 deveria ser "9" (visto na planilha toda).');
+      if (n[2] !== 'G') r.erros.push('Posição 3 deveria ser "G" (visto na planilha toda).');
+      if (!'DGB'.includes(n[3])) r.erros.push('Posição 4 (combustível) deveria ser D, G ou B.');
+      if (!/^\d{8}$/.test(n.slice(4))) r.erros.push('Posições 5 a 12 deveriam ser só dígitos.');
+      if (!r.erros.length) r.erros.push('Fora da estrutura inferida (kVA + 5/6 + 00 + variante + 9).');
+      return r;
+    }
+    r.layout = lay; r.fabLetra = m[2]; r.fab = PN_FAB[m[2]] ? PN_FAB[m[2]][0] : null; r.comb = m[4]; r.combDesc = PN_COMB[m[4]];
+    r.kva = parseInt(m[5], 10); r.kw = r.kva * FATOR_KW; r.hz = m[6] === '5' ? 50 : 60; r.variante = parseInt(m[8], 10);
+    r.partes = m;
+    if (!r.fab) r.avisos.push('Letra de fabricante "' + m[2] + '" não consta na planilha (lista inferida).');
+    if (lay === 4) r.avisos.push('kVA com 4 dígitos (' + m[5] + '): estrutura diferente das demais (única na planilha: 9DGD12506019).');
+    r.valido = true; return r;
+  }
+  function decodificaMes(txt) {   // hipótese: M + PN(12) + S + NS(8 ou 9)
+    const n = S.normaliza(txt), m = /^M([A-Z0-9]{12})S([A-Z]{3,4}\d{5})$/.exec(n);
+    return m ? { pn: m[1], ns: m[2] } : null;
+  }
+  function cruza(ns, pn) {   // compara o que o NS e o PN dizem sobre o mesmo gerador
+    const out = [];
+    if (!ns || !ns.valido || ns.tipo !== 'gerador' || !pn || !pn.valido) return out;
+    const nsC = ns.combustivel.codigo;
+    out.push({ item: 'Combustível', ns: ns.combustivel.descricao || nsC, pn: pn.combDesc, ok: nsC === pn.comb });
+    const fab = PN_FAB[pn.fabLetra];
+    if (fab) {
+      const ok = fab[1].includes(ns.motor.codigo);
+      out.push({ item: 'Fabricante do motor', ns: ns.motor.descricao || ('letra ' + ns.motor.codigo), pn: fab[0] + ' (letra ' + pn.fabLetra + ')', ok, nota: ok ? '' : (fab[1] === '' ? 'Yuchai não existe na tabela II da ETD 091.' : 'Letra do NS não pertence à família esperada pelo PN.') });
+    }
+    return out;
+  }
+  function fabMod(cat, desc) {   // igual ao dados_ensaio_ns_v0.2.js: descrição da tabela da norma -> [fabricante, modelo]
+    if (/^Sem /i.test(desc)) return ['-', '-'];
+    if (cat === 'motor') { const p = desc.split(' · '); if (/^S[ée]rie/i.test(p[0])) return ['MWM', desc]; return [p[0], p.slice(1).join(' · ') || '-']; }
+    if (cat === 'alt') return [desc, '-'];
+    let m = /^Deep Sea (\d+)/i.exec(desc); if (m) return ['DEEP SEA', 'DSE ' + m[1]];
+    m = /^Deif (.+)/i.exec(desc); if (m) return ['DEIF', m[1]];
+    return [desc, '-'];
+  }
+
+  /* ===== espelho do card ===== */
+  const EQUIP = ['Motor', 'Alternador', 'Controlador', 'Retificador', 'RAT', 'Bateria'];
+  (function montaTabela() {
+    const t = $('dEquip'), th = h('thead'), tr = h('tr');
+    ['', 'Fabricante', 'Modelo', 'Nº de série'].forEach(x => tr.appendChild(h('th', null, x))); th.appendChild(tr); t.appendChild(th);
+    const tb = h('tbody'); EQUIP.forEach((n, i) => { const r = h('tr'); r.appendChild(h('td', null, n));
+      for (let c = 1; c <= 3; c++) { const td = h('td'), inp = h('input'); inp.dataset.r = i; inp.dataset.c = c; inp.autocomplete = 'off'; td.appendChild(inp); r.appendChild(td); } tb.appendChild(r); });
+    t.appendChild(tb);
+  })();
+  const eq = (i, c) => $('dEquip').querySelector('input[data-r="' + i + '"][data-c="' + c + '"]');
+  const setC = (el, v, o) => { el.value = v == null ? '' : v; el.classList.remove('o-ns', 'o-pn'); if (o && v) el.classList.add('o-' + o); };
+
+  /* ===== decifração (tabelas) ===== */
+  function tabela(cols) { const t = h('table', 't'), th = h('thead'), tr = h('tr'); cols.forEach(c => tr.appendChild(h('th', null, c))); th.appendChild(tr); t.appendChild(th); t.appendChild(h('tbody')); return t; }
+  function linha(t, cls, cel, hip) { const tr = h('tr', cls + (hip ? ' hip' : '')); cel.forEach((c, i) => tr.appendChild(h('td', ['pos', 'ch', '', '', 'st'][i] || '', c))); t.lastChild.appendChild(tr); }
+  const stI = { ok: '✓ ok', av: '⚠ aviso', er: '✗ inválido' };
+  function listaMsg(pai, itens, cls) { if (!itens.length) return; const u = h('ul', 'lista'); itens.forEach(i => u.appendChild(h('li', cls, i))); pai.appendChild(u); }
+
+  function renderNs(ns) {
+    const box = limpa($('decNs')); if (!ns) return;
+    const cab = h('h3', null, 'Nº de série — ' + (ns.norma || 'formato não reconhecido')); box.appendChild(cab);
+    cab.appendChild(document.createTextNode(' ')); cab.appendChild(h('span', 'chip n', 'norma'));
+    if (ns.tipo) {
+      const t = tabela(['Pos.', 'Caract.', 'Campo', 'Significado', 'Situação']), p = ns.prefixo, ger = ns.tipo === 'gerador';
+      const campos = ger ? [['combustivel', 'Combustível', 'tab. I'], ['motor', 'Família de motor', 'tab. II'], ['alternador', 'Alternador', 'tab. III'], ['controlador', 'Controlador', 'tab. IV']]
+                         : [['fonteEnergia', 'Fonte de energia', 'tab. I'], ['motor', 'Família de motor', 'tab. II'], ['alternador', 'Alternador', 'tab. III']];
+      campos.forEach(([k, nome, tab], i) => { const c = ns[k], ehErro = (k === 'combustivel' || k === 'fonteEnergia') && !c.conhecido;
+        linha(t, c.conhecido ? 'ok' : (ehErro ? 'er' : 'av'), [String(i + 1), p[i], nome + ' (' + tab + ')', c.descricao || 'letra desconhecida', c.conhecido ? stI.ok : (ehErro ? stI.er : stI.av)]); });
+      const ini = campos.length + 1, fim = ini + 4;
+      linha(t, ns.sequencial === 0 ? 'av' : 'ok', [ini + '–' + fim, String(ns.normalizado.slice(campos.length)), 'Nº sequencial (tab. V)', String(ns.sequencial) + ' (5 dígitos, zeros à esquerda)', ns.sequencial === 0 ? stI.av : stI.ok]);
+      box.appendChild(t);
+    }
+    listaMsg(box, ns.erros, 'er'); listaMsg(box, ns.avisos, 'av');
+    if (ns.valido) { const u = h('ul', 'lista'); u.appendChild(h('li', 'ok', 'Formato válido: ' + (ns.tipo === 'gerador' ? '9' : '8') + ' caracteres (' + ns.norma + ').')); box.appendChild(u); }
+  }
+  function renderPn(pn) {
+    const box = limpa($('decPn')); if (!pn) return;
+    const cab = h('h3', null, 'PN de 12 dígitos — estrutura inferida da planilha '); cab.appendChild(h('span', 'chip h', 'hipótese · a confirmar')); box.appendChild(cab);
+    if (pn.partes) {
+      const m = pn.partes, t = tabela(['Pos.', 'Caract.', 'Campo', 'Significado (hipótese)', 'Situação']);
+      const l4 = pn.layout === 4, kLen = l4 ? 4 : 3;
+      linha(t, 'ok', ['1', m[1], 'Prefixo fixo', '"9" em todos os 302 PN (significado a confirmar)', '✓ coerente'], true);
+      linha(t, pn.fab ? 'ok' : 'av', ['2', m[2], 'Fabricante do motor', pn.fab ? pn.fab + ' (planilha)' : 'letra fora da planilha', pn.fab ? '✓ coerente' : stI.av], true);
+      linha(t, 'ok', ['3', m[3], 'Letra fixa', '"G" em todos os 302 PN (gerador?)', '✓ coerente'], true);
+      linha(t, 'ok', ['4', m[4], 'Combustível', pn.combDesc + ' (mesmas letras da tabela I da ETD 091)', '✓ coerente'], true);
+      linha(t, l4 ? 'av' : 'ok', ['5–' + (4 + kLen), m[5], 'Potência (kVA)', pn.kva + ' kVA → ' + num(pn.kw) + ' kW (kVA × 0,8)', l4 ? stI.av : '✓ coerente'], true);
+      linha(t, 'ok', [String(5 + kLen), m[6], 'Frequência', pn.hz + ' Hz (5 = 50 Hz, 6 = 60 Hz)', '✓ coerente'], true);
+      linha(t, 'ok', [(6 + kLen) + (l4 ? '' : '–10'), m[7], 'Fixo', l4 ? '"0"' : '"00"', '✓ coerente'], true);
+      linha(t, 'ok', ['11', m[8], 'Variante', 'versão ' + pn.variante + ' do mesmo modelo (a confirmar o que muda)', '✓ coerente'], true);
+      linha(t, 'ok', ['12', m[9], 'Final fixo', '"9" em todos os 302 PN (dígito de controle?)', '✓ coerente'], true);
+      box.appendChild(t);
+    }
+    listaMsg(box, pn.erros, 'er'); listaMsg(box, pn.avisos, 'av');
+    const pl = PLANILHA.find(x => x[0] === pn.pn);
+    const u = h('ul', 'lista'); u.appendChild(h('li', pl ? 'ok' : 'av', pl ? 'Está na planilha: ' + pl[1] + ' · ' + pl[2] + ' · ' + pl[3] + ' kVA.' + (pn.valido && pl[3] !== pn.kva ? ' ⚠ kVA da planilha (' + pl[3] + ') ≠ kVA do código (' + pn.kva + ').' : '')
+      : 'Não consta na planilha de 302 PN.')); box.appendChild(u);
+  }
+  function renderCruz(c) {
+    const box = limpa($('decCruz')); if (!c.length) return;
+    const cab = h('h3', null, 'Cruzamento NS × PN '); cab.appendChild(h('span', 'chip h', 'hipótese')); box.appendChild(cab);
+    const t = tabela(['Item', 'Diz o NS', 'Diz o PN', 'Resultado']);
+    c.forEach(x => linha(t, x.ok ? 'ok' : 'er', [x.item, x.ns, x.pn, x.ok ? '✓ confere' : '✗ diverge' + (x.nota ? ' — ' + x.nota : '')]));
+    t.querySelectorAll('tbody td').forEach((td, i) => { td.className = i % 4 === 3 ? 'st' : ''; });
+    box.appendChild(t);
+  }
+
+  /* ===== recálculo ===== */
+  function recalcula() {
+    const nsTxt = $('inNs').value.trim(), pnTxt = $('inPn').value.trim();
+    const ns = nsTxt ? S.decodificaSerie(nsTxt, { dataFabricacao: $('inData').value || null }) : null;
+    const pn = pnTxt ? decodificaPN(pnTxt) : null;
+    $('decVazio').hidden = !!(ns || pn);
+    renderNs(ns); renderPn(pn); renderCruz(cruza(ns, pn));
+
+    // card espelho: zera e preenche só com o que tem origem
+    ['dServ', 'dVer', 'dData', 'dFreq', 'dTens', 'dTamb', 'dPot'].forEach(id => setC($(id), '', null));
+    EQUIP.forEach((_, i) => [1, 2, 3].forEach(c => setC(eq(i, c), '', null)));
+    document.querySelectorAll('input[name=dFase]').forEach(r => { r.checked = false; });
+    const sem = limpa($('semCampo')); const add = (k, v) => { sem.appendChild(h('dt', null, k)); sem.appendChild(h('dd', null, v)); };
+    if (ns && ns.valido) {
+      setC($('dServ'), ns.normalizado, 'ns');
+      [['motor', 0, ns.motor], ['alt', 1, ns.alternador], ['ctrl', 2, ns.controlador]].forEach(([cat, i, cp]) => { if (!cp || !cp.conhecido) return; const fm = fabMod(cat, cp.descricao); setC(eq(i, 1), fm[0], 'ns'); setC(eq(i, 2), fm[1], 'ns'); });
+      add('Combustível / fonte (NS)', ns.combustivel ? ns.combustivel.descricao : (ns.fonteEnergia ? ns.fonteEnergia.descricao : ''));
+      add('Tipo de produto (NS)', ns.tipo === 'gerador' ? 'Gerador' : 'Torre de iluminação');
+      add('Nº sequencial (NS)', String(ns.sequencial));
+    }
+    if (pn && pn.valido) {
+      if (!(ns && ns.valido)) { if (pn.fab) { setC(eq(0, 1), pn.fab, 'pn'); setC(eq(0, 2), '-', 'pn'); } }
+      setC($('dFreq'), String(pn.hz), 'pn'); setC($('dPot'), num(pn.kw), 'pn');
+      add('PN', pn.pn); add('Potência (kVA)', String(pn.kva)); add('Variante do PN', String(pn.variante));
+      if (!(ns && ns.valido)) add('Combustível (PN)', pn.combDesc);
+    }
+    if (!sem.firstChild) add('—', 'nada decifrado ainda');
+    const nOk = (ns && ns.valido ? 1 : 0), nP = (pn && pn.valido ? 1 : 0);
+    limpa($('cardSit')).appendChild(document.createTextNode(nOk || nP ? ((nOk ? 'NS ✓ ' : '') + (nP ? 'PN ✓' : '')) : 'sem código'));
+  }
+  function aplicaMes() {
+    const m = decodificaMes($('inMes').value);
+    if (m) { $('inPn').value = m.pn; $('inNs').value = m.ns; }
+    else if ($('inMes').value.trim()) { $('inPn').value = ''; $('inNs').value = ''; $('decVazio').hidden = false; $('decVazio').textContent = 'Código composto fora do formato inferido M + 12 caracteres + S + NS (8 ou 9). Use os campos NS e PN.'; return; }
+    recalcula();
+  }
+  $('inMes').addEventListener('input', aplicaMes);
+  ['inNs', 'inPn', 'inData'].forEach(id => $(id).addEventListener('input', recalcula));
+  $('btLimpa').onclick = () => { ['inMes', 'inNs', 'inPn', 'inData'].forEach(id => { $(id).value = ''; }); recalcula(); };
+
+  [['ETD 091 · 5.1', 'GDWAØ4447', 'ns'], ['ETD 091 · 5.2', 'DRCBØ4447', 'ns'], ['ETD 091 · 5.3', 'DTMFØ4447', 'ns'], ['ETD 094 · 5.1 torre', 'DTMØ4447', 'ns'], ['ETD 094 · 5.2 torre', 'SNNØ4447', 'ns'],
+   ['MES composto (planilha)', 'M9SGD40060019SDSWA00903', 'mes'], ['PN 1250 kVA (exceção)', '9DGD12506019', 'pn']].forEach(([nome, cod, t]) => {
+    const b = h('button', null, cod); b.type = 'button'; b.title = nome;
+    b.onclick = () => { $('inMes').value = ''; $('inNs').value = ''; $('inPn').value = ''; if (t === 'mes') { $('inMes').value = cod; aplicaMes(); } else { $(t === 'ns' ? 'inNs' : 'inPn').value = cod; recalcula(); } };
+    const w = h('span', null, nome + ': '); $('exemplos').appendChild(w); $('exemplos').appendChild(b); });
+
+  /* ===== planilha × estrutura inferida ===== */
+  const linhasPl = PLANILHA.map(([pn, comb, mot, kva]) => {
+    const r = decodificaPN(pn); let st = 'ok', nota = '';
+    if (!r.valido) { st = 'er'; nota = r.erros[0]; }
+    else {
+      const prob = [];
+      if (r.kva !== kva) prob.push('kVA código ' + r.kva + ' ≠ planilha ' + kva);
+      if (r.fab && r.fab !== mot) prob.push('fabricante código ' + r.fab + ' ≠ planilha ' + mot);
+      if ((r.comb === 'D') !== (comb === 'DIESEL')) prob.push('combustível código ' + r.combDesc + ' ≠ planilha ' + comb);
+      if (r.layout === 4) prob.push('layout de 4 dígitos de kVA');
+      if (prob.length) { st = 'av'; nota = prob.join('; '); }
+    }
+    return { pn, comb, mot, kva, r, st, nota };
+  });
+  const cnt = k => linhasPl.filter(x => x.st === k).length;
+  $('plResumo').textContent = linhasPl.length + ' PN na planilha · ' + cnt('ok') + ' seguem a estrutura inferida sem divergência · ' + cnt('av') + ' com divergência/exceção · ' + cnt('er') + ' fora da estrutura.';
+  function renderPl() {
+    const t = limpa($('plTab')), th = h('thead'), tr = h('tr'); ['PN', 'Combustível (planilha)', 'Motor (planilha)', 'kVA planilha', 'kVA / Hz do código', 'Situação'].forEach(x => tr.appendChild(h('th', null, x))); th.appendChild(tr); t.appendChild(th);
+    const tb = h('tbody'), so = $('plSo').checked, q = $('plBusca').value.trim().toUpperCase();
+    linhasPl.forEach(x => { if (so && x.st === 'ok') return; if (q && (x.pn + ' ' + x.comb + ' ' + x.mot).toUpperCase().indexOf(q) < 0) return;
+      const r = h('tr', x.st); [x.pn, x.comb, x.mot, String(x.kva), x.r.valido ? x.r.kva + ' kVA · ' + x.r.hz + ' Hz' : '—', x.st === 'ok' ? '✓ ok' : (x.st === 'av' ? '⚠ ' : '✗ ') + x.nota].forEach((c, i) => r.appendChild(h('td', i === 0 ? 'ch' : '', c))); tb.appendChild(r); });
+    t.appendChild(tb);
+  }
+  $('plSo').onchange = renderPl; $('plBusca').oninput = renderPl; renderPl();
+
+  /* ===== checklist de validação ===== */
+  const divKva = linhasPl.filter(x => x.r.valido && x.r.kva !== x.kva).map(x => x.pn + ' (código ' + x.r.kva + ' × planilha ' + x.kva + ')').join('; ');
+  const Q = [
+    ['PN', 'alta', 'Estrutura do PN de 12 dígitos', 'Deduzida da planilha: pos.1 "9" · pos.2 fabricante · pos.3 "G" · pos.4 combustível (D/G/B) · pos.5-7 kVA · pos.8 frequência (5=50 Hz, 6=60 Hz) · pos.9-10 "00" · pos.11 variante · pos.12 "9". Confere com o QP-7323.1686 tabela 3 (documento citado na ETD 091 item 2, não entregue)? O que significam o "9" inicial, o "G" e o "9" final?'],
+    ['PN×NS', 'alta', 'Letras de fabricante diferentes entre PN e NS', 'No PN: B = SDEC, D = MAN, Z = Yuchai, Y = Yanmar. No NS (ETD 091 tab. II): Z = SDEC, M = MAN, T = Yanmar e D = família 12 (2V) 4 cil. As letras trocadas são intencionais? A ferramenta cruza as duas pela família, não pela letra.'],
+    ['NS', 'alta', 'Yuchai não existe na tabela II da ETD 091', 'A planilha tem 3 PN Yuchai (9ZGD02560019, 9ZGD03360019, 9ZGD04060019). Qual letra de motor vai no NS desses geradores? Hoje o decodificador só avisa "família desconhecida" e deixa o Motor em branco.'],
+    ['PN', 'média', 'Significado do dígito de variante (pos.11)', 'Vai de 1 a 9 (1: 181 PN, 2: 61, 3: 23 …). Indica alternador, painel, versão do motor? Se mudar algo que o card mostra (alternador/controlador), o NS e o PN podem divergir.'],
+    ['PN', 'média', 'Exceção: kVA com 4 dígitos (9DGD12506019)', 'Único PN com 1250 kVA (MAN). A estrutura fica 4+1+1+1+1 em vez de 3+1+2+1+1. É regra (PN de 4 dígitos de kVA para ≥1000 kVA) ou digitação?'],
+    ['Planilha', 'média', 'Divergências kVA do código × kVA da planilha', 'A planilha e o código discordam em: ' + (divKva || 'nenhum caso') + '. Qual está certo? Corrigir a planilha ou o PN?'],
+    ['Card', 'alta', 'Potência (kW) = kVA × 0,8', 'A planilha calcula kW = kVA × 0,8 (e "kVA 110%" = kVA). O campo Potência (kW) do card deve receber esse valor? É potência prime, standby ou nominal contínua? Hoje o operador digita.'],
+    ['MES', 'alta', 'Código MES composto "M + PN + S + NS"', 'A célula "PN Geraores" tem M9SGD40060019SDSWA00903. Hipótese: M = material (PN), S = série (NS = DSWA00903: diesel, Scania, WEG, DSE 4520, nº 903). É o que o MES realmente entrega? Há outras variantes (torre, sem alternador)? A versão v0.3 do decodificador do medidor rejeita este formato de propósito.'],
+    ['Card', 'alta', 'Campos que o NS/PN não preenchem', 'Tensão (V), Versão do teste, Data, Temp. ambiente, Fase, Retificador, RAT, Bateria e todos os "Nº de série" de equipamentos não vêm do NS nem do PN. De onde vêm (SAP, MES, ficha do gerador) ou ficam manuais?'],
+    ['Card', 'média', 'Combustível, PN e kVA não têm campo no card', 'A decifração entrega Combustível, PN, kVA e variante, mas o card de hoje não tem onde guardar. Incluir como campos somente leitura e no registro do ensaio?'],
+    ['NS', 'média', 'Histórico de numeração (ETD 091 item 8)', 'NS anteriores a 29/12/2020 seguem a estrutura antiga e a letra G pode ser biogás antes de 14/12/2021. A ferramenta só AVISA quando a data de fabricação é informada. Basta avisar ou deve bloquear?'],
+    ['NS', 'baixa', 'Letra desconhecida nas tabelas II a IV', 'As tabelas são "não exaustivas". Hoje: combustível/fonte desconhecido INVALIDA o NS; motor, alternador e controlador desconhecidos só avisam e deixam o campo em branco. Está de acordo?'],
+    ['Norma', 'baixa', 'Erros de redação nas ETDs', 'ETD 091: item 7 cita "Rev.04" na rev.05; data de emissão 30.01.2019 na rev.05; a seção 3.4 chama a tabela IV de "Tipo de Painel" e a própria tabela IV de "Tipo de Controlador Aplicado". ETD 094: texto cita tabela V para o sequencial, mas a tabela é a IV; exemplos numeram as colunas 1-7 e 9 (falta o 8). Corrigir nos documentos?']
+  ];
+  const CHAVE = 'decifrador_ns_validacao_v0.1';
+  let est = {}; try { est = JSON.parse(localStorage.getItem(CHAVE) || '{}'); } catch (e) { est = {}; }
+  const grava = () => { try { localStorage.setItem(CHAVE, JSON.stringify(est)); } catch (e) { /* sem armazenamento: segue sem guardar */ } };
+  function renderQ() {
+    const box = limpa($('qLista')); let ok = 0, aj = 0, pe = 0;
+    Q.forEach((q, i) => { const e = est[i] || { s: 'pend', n: '' }; if (e.s === 'ok') ok++; else if (e.s === 'ajustar') aj++; else pe++;
+      const d = h('div', 'q'); d.dataset.st = e.s; const t = h('div', 'qt'); t.appendChild(h('b', null, 'Q' + (i + 1) + ' · ' + q[2])); t.appendChild(h('span', 'chip ' + (q[0] === 'PN' || q[0] === 'PN×NS' || q[0] === 'MES' ? 'h' : 'n'), q[0])); t.appendChild(h('span', 'chip', 'prioridade ' + q[1])); d.appendChild(t);
+      d.appendChild(h('p', null, q[3]));
+      const r = h('div', 'qr'); [['pend', 'Pendente'], ['ok', 'Confirmado'], ['ajustar', 'Ajustar']].forEach(([v, rot]) => { const l = h('label'), inp = h('input'); inp.type = 'radio'; inp.name = 'q' + i; inp.checked = e.s === v;
+        inp.onchange = () => { est[i] = { s: v, n: (est[i] || {}).n || '' }; grava(); renderQ(); }; l.appendChild(inp); l.appendChild(document.createTextNode(rot)); r.appendChild(l); });
+      const ta = h('textarea'); ta.placeholder = 'Resposta / correção da engenharia'; ta.value = e.n || ''; ta.oninput = () => { est[i] = { s: (est[i] || { s: 'pend' }).s, n: ta.value }; grava(); };
+      d.appendChild(r); d.appendChild(ta); box.appendChild(d); });
+    const rs = limpa($('qResumo')); rs.appendChild(h('span', 'chip ok', ok + ' confirmados')); rs.appendChild(h('span', 'chip er', aj + ' a ajustar')); rs.appendChild(h('span', 'chip h', pe + ' pendentes'));
+  }
+  $('qCopia').onclick = () => {
+    const tx = ['Validação do decifrador de nº de série / PN — v0.1', ''].concat(Q.map((q, i) => { const e = est[i] || { s: 'pend', n: '' }; return 'Q' + (i + 1) + ' [' + ({ pend: 'PENDENTE', ok: 'CONFIRMADO', ajustar: 'AJUSTAR' })[e.s] + '] ' + q[2] + (e.n ? '\n    Resposta: ' + e.n : ''); })).join('\n');
+    const fim = m => { $('qMsg').textContent = m; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tx).then(() => fim('Copiado.'), () => fim('Não consegui copiar: selecione o texto manualmente.'));
+    else fim('Navegador sem acesso à área de transferência.');
+  };
+  /* exportar / importar as respostas (arquivo .json que volta para o Reginaldo) */
+  const rot = { pend: 'PENDENTE', ok: 'CONFIRMADO', ajustar: 'AJUSTAR' };
+  const msg = m => { $('qMsg').textContent = m; };
+  $('qExporta').onclick = () => {
+    const o = { ferramenta: 'decifrador_ns_card_ensaio', versao: '0.1', exportadoEm: new Date().toISOString(), respondidoPor: $('qQuem').value.trim(),
+      respostas: Q.map((q, i) => { const e = est[i] || { s: 'pend', n: '' }; return { id: 'Q' + (i + 1), titulo: q[2], status: rot[e.s], resposta: e.n || '' }; }) };
+    try { const a = h('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(o, null, 2)], { type: 'application/json' }));
+      a.download = 'respostas_decifrador_v0.1_' + o.exportadoEm.slice(0, 10) + (o.respondidoPor ? '_' + o.respondidoPor.replace(/[^A-Za-z0-9]+/g, '_') : '') + '.json';
+      document.body.appendChild(a); a.click(); a.remove(); msg('Arquivo gerado: veja a pasta de downloads.'); } catch (e) { msg('Não consegui gerar o arquivo. Use "Copiar resumo".'); }
+  };
+  $('qImporta').onclick = () => $('qArq').click();
+  $('qArq').onchange = ev => { const f = ev.target.files[0]; if (!f) return; const rd = new FileReader();
+    rd.onload = () => { try { const o = JSON.parse(rd.result), inv = { PENDENTE: 'pend', CONFIRMADO: 'ok', AJUSTAR: 'ajustar' }; let n = 0;
+      (o.respostas || []).forEach(r => { const i = parseInt(String(r.id).slice(1), 10) - 1; if (i >= 0 && i < Q.length && inv[r.status]) { est[i] = { s: inv[r.status], n: String(r.resposta || '') }; n++; } });
+      if (o.respondidoPor) $('qQuem').value = o.respondidoPor; grava(); renderQ(); msg(n + ' respostas importadas.'); } catch (e) { msg('Arquivo inválido.'); } ev.target.value = ''; };
+    rd.readAsText(f); };
+  renderQ(); recalcula();
+})();
+</script>
+</body>
+</html>

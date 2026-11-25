@@ -1,0 +1,3 @@
+// No OB1 (Main) do projeto de SIMULACAO, uma unica chamada. Crie o FB900 e deixe o TIA gerar o DB de instancia "db3900i_simBanco".
+// RASCUNHO NAO COMPILADO. So para PLCSim; nunca no PLC de producao.
+"db3900i_simBanco"(NumChaves := 13, AtrasoMs := T#300MS, HabilitarNoInicio := TRUE, Reinicia := FALSE);

@@ -1,0 +1,59 @@
+// ============================================================================
+// fb900_simBanco v0.1 (RASCUNHO, NAO COMPILADO) - SO PARA PLCSIM / BANCADA DE ESCRITORIO. NUNCA CARREGAR NO PLC DE PRODUCAO.
+// O QUE FAZ: imita o "PLC do banco" + ET200 para o BC56, para o Node-RED conversar com um 1515 simulado sem FB100/FB101/DB52/DB38/DB39.
+//   - sb.ligada[i] segue (cb.ligar[i] AND cbBanco.ligar) depois de AtrasoMs (imita o contator); desligar e imediato.
+//   - sbRet.habResp[i] = setup.habilitada[i] (eco da habilitacao); falhaRetorno/contatorColado ficam FALSE.
+//   - sbBanco.seletoraAuto = TRUE, comEt200Ok = TRUE, sbRet.respEcoOk = TRUE (o Node-RED so deixa ligar assim).
+//   - Na 1a varredura (e com Reinicia) habilita as NumChaves chaves se HabilitarNoInicio = TRUE.
+//   - Salvar do Setup: quando setup.salvar = TRUE grava setupOk[chaveSel] = TRUE (nao mede nada; so fecha o handshake).
+// NAO FAZ: medicao de kW/ohm, falha de retorno, contator colado, comunicacao real com a ET200, safety.
+// ============================================================================
+FUNCTION_BLOCK "fb900_simBanco"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT
+      NumChaves        : Int  := 13;
+      AtrasoMs         : Time := T#300MS;
+      HabilitarNoInicio: Bool := TRUE;
+      Reinicia         : Bool;            // borda de subida refaz a 1a varredura
+   END_VAR
+   VAR
+      tmr       : Array[1..16] of TON_TIME;
+      iniciou   : Bool;
+      reiniAnt  : Bool;
+      i         : Int;
+   END_VAR
+
+BEGIN
+   IF NOT #iniciou OR (#Reinicia AND NOT #reiniAnt) THEN
+      FOR #i := 1 TO 16 DO
+         "db3000_BC56_Chaves".cb.ligar[#i]        := FALSE;
+         "db3000_BC56_Chaves".sb.ligada[#i]       := FALSE;
+         "db3000_BC56_Chaves".setup.habilitada[#i] := #HabilitarNoInicio AND (#i <= #NumChaves);
+         "db3000_BC56_Chaves".setup.setupOk[#i]   := (#i <= #NumChaves);
+         "db3000_BC56_Chaves".setup.kwReal[#i]    := "db3000_BC56_Chaves".setup.nominal[#i];
+      END_FOR;
+      "db3000_BC56_Chaves".cbBanco.ligar := FALSE;
+      #iniciou := TRUE;
+   END_IF;
+   #reiniAnt := #Reinicia;
+
+   FOR #i := 1 TO 16 DO
+      #tmr[#i](IN := "db3000_BC56_Chaves".cb.ligar[#i] AND "db3000_BC56_Chaves".cbBanco.ligar AND (#i <= #NumChaves),
+               PT := #AtrasoMs);
+      "db3000_BC56_Chaves".sb.ligada[#i]            := #tmr[#i].Q;
+      "db3000_BC56_Chaves".sbRet.habResp[#i]        := "db3000_BC56_Chaves".setup.habilitada[#i];
+      "db3000_BC56_Chaves".sbRet.falhaRetorno[#i]   := FALSE;
+      "db3000_BC56_Chaves".sbRet.contatorColado[#i] := FALSE;
+   END_FOR;
+
+   "db3000_BC56_Chaves".sbBanco.seletoraAuto := TRUE;
+   "db3000_BC56_Chaves".sbBanco.comEt200Ok   := TRUE;
+   "db3000_BC56_Chaves".sbRet.respEcoOk      := TRUE;
+
+   IF "db3000_BC56_Chaves".setup.salvar
+      AND "db3000_BC56_Chaves".setup.chaveSel >= 1
+      AND "db3000_BC56_Chaves".setup.chaveSel <= INT_TO_UINT(#NumChaves) THEN
+      "db3000_BC56_Chaves".setup.setupOk[UINT_TO_INT("db3000_BC56_Chaves".setup.chaveSel)] := TRUE;
+   END_IF;
+END_FUNCTION_BLOCK
