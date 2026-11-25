@@ -131,7 +131,8 @@ footer{color:var(--mut);font-size:12px;margin-top:16px}
 <section class="painel" aria-label="Validação com a engenharia">
   <h2>Validação com a engenharia</h2>
   <div class="resumo" id="qResumo"></div>
-  <div class="bar"><button id="qCopia" class="p" type="button">Copiar resumo da validação</button><span id="qMsg" class="sub" style="margin:0"></span></div>
+  <div class="bar"><label style="flex-direction:row;align-items:center;gap:6px;color:var(--ink)">Respondido por<input id="qQuem" placeholder="nome" style="max-width:200px"></label><button id="qExporta" class="p" type="button">Exportar respostas (.json)</button><button id="qCopia" type="button">Copiar resumo (texto)</button><button id="qImporta" type="button">Importar respostas</button><input id="qArq" type="file" accept=".json,application/json" hidden><span id="qMsg" class="sub" style="margin:0"></span></div>
+  <p class="sub" style="margin:0 0 8px">As respostas ficam guardadas só neste navegador. Para não perder e para devolver ao Reginaldo, use <b>Exportar respostas</b> e envie o arquivo.</p>
   <div id="qLista"></div>
 </section>
 
@@ -481,6 +482,22 @@ footer{color:var(--mut);font-size:12px;margin-top:16px}
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tx).then(() => fim('Copiado.'), () => fim('Não consegui copiar: selecione o texto manualmente.'));
     else fim('Navegador sem acesso à área de transferência.');
   };
+  /* exportar / importar as respostas (arquivo .json que volta para o Reginaldo) */
+  const rot = { pend: 'PENDENTE', ok: 'CONFIRMADO', ajustar: 'AJUSTAR' };
+  const msg = m => { $('qMsg').textContent = m; };
+  $('qExporta').onclick = () => {
+    const o = { ferramenta: 'decifrador_ns_card_ensaio', versao: '0.1', exportadoEm: new Date().toISOString(), respondidoPor: $('qQuem').value.trim(),
+      respostas: Q.map((q, i) => { const e = est[i] || { s: 'pend', n: '' }; return { id: 'Q' + (i + 1), titulo: q[2], status: rot[e.s], resposta: e.n || '' }; }) };
+    try { const a = h('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(o, null, 2)], { type: 'application/json' }));
+      a.download = 'respostas_decifrador_v0.1_' + o.exportadoEm.slice(0, 10) + (o.respondidoPor ? '_' + o.respondidoPor.replace(/[^A-Za-z0-9]+/g, '_') : '') + '.json';
+      document.body.appendChild(a); a.click(); a.remove(); msg('Arquivo gerado: veja a pasta de downloads.'); } catch (e) { msg('Não consegui gerar o arquivo. Use "Copiar resumo".'); }
+  };
+  $('qImporta').onclick = () => $('qArq').click();
+  $('qArq').onchange = ev => { const f = ev.target.files[0]; if (!f) return; const rd = new FileReader();
+    rd.onload = () => { try { const o = JSON.parse(rd.result), inv = { PENDENTE: 'pend', CONFIRMADO: 'ok', AJUSTAR: 'ajustar' }; let n = 0;
+      (o.respostas || []).forEach(r => { const i = parseInt(String(r.id).slice(1), 10) - 1; if (i >= 0 && i < Q.length && inv[r.status]) { est[i] = { s: inv[r.status], n: String(r.resposta || '') }; n++; } });
+      if (o.respondidoPor) $('qQuem').value = o.respondidoPor; grava(); renderQ(); msg(n + ' respostas importadas.'); } catch (e) { msg('Arquivo inválido.'); } ev.target.value = ''; };
+    rd.readAsText(f); };
   renderQ(); recalcula();
 })();
 </script>
